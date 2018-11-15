@@ -53,8 +53,8 @@
     <div *ngIf="valueType.value === 'boolean'" class="value-radio-options form-field">
       <div class="section-heading">Value</div>
       <mat-radio-group [formControl]="value">
-        <mat-radio-button value="true">True</mat-radio-button>
-        <mat-radio-button value="false">False</mat-radio-button>
+        <mat-radio-button color="primary" value="true">True</mat-radio-button>
+        <mat-radio-button color="primary" value="false">False</mat-radio-button>
       </mat-radio-group>
       <mat-error *ngIf="value.invalid && formDirty">Required field</mat-error>
     </div>
