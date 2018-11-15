@@ -63,27 +63,33 @@ export class ConfigFileAddEditEffects {
           if (!state.editor.inEditMode) {
             if (state.editor.inEnvMode) {
               return of(new GetFileContentSuccess({
-                fileName,
-                applicationName,
-                config: {
-                  default: { $type: 'array', $value: [] }
+                file: {
+                  fileName,
+                  applicationName,
+                  config: {
+                    default: { $type: 'array', $value: [] }
+                  },
                 },
+                isNewFile: true
               }));
             }
             return of(new GetFileContentSuccess({
-              fileName,
-              applicationName,
-              config: {
-                default: { $type: 'object' },
-                environments: { $type: 'object' }
+              file: {
+                fileName,
+                applicationName,
+                config: {
+                  default: { $type: 'object' },
+                  environments: { $type: 'object' }
+                },
               },
+              isNewFile: true
             }));
           }
 
           const file = GetConfigFile(state.backend, state.editor.fileName, state.editor.appName);
 
           if (file && file.config) {
-            return of(new GetFileContentSuccess(file));
+            return of(new GetFileContentSuccess({file}));
           }
           return of(new GetFileContent(file ? file : {fileName, applicationName}));
         })

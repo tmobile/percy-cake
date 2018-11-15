@@ -2,11 +2,9 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 import { AuthGuardService } from './services/auth-guard.service';
-import { EntryGuardService } from './services/entry-guard.service';
 
 import { LayoutComponent } from './components/layout/layout.component';
 import { LoginComponent } from './pages/login/login.component';
-import { AppEntryComponent } from './components/app-entry/app-entry.component';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { EditorComponent } from './pages/editor/editor.component';
 import { CanDeactivateGuard } from './services/can-deactivate-guard.service';
@@ -28,17 +26,11 @@ const routes: Routes = [
         pathMatch: 'full',
       },
       {
-        path: 'entry',
-        component: AppEntryComponent
-      },
-      {
         path: 'dashboard',
-        canActivate: [EntryGuardService],
         component: DashboardComponent
       },
       {
         path: 'files',
-        canActivate: [EntryGuardService],
         children: [
           {
             path: 'newenv/:appName/:fileName',

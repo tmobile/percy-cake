@@ -4,7 +4,6 @@ import { LogoutSuccess } from './auth.actions';
 import { ConfigFile } from '../../models/config-file';
 
 export enum BackendActionTypes {
-  EntryRedirect = '[Backend] Entry Redirect',
   Initialized = '[Backend] Initialized',
   ListApplications = '[Backend] List Applications',
   ListApplicationsSuccess = '[Backend] List Applications Success',
@@ -23,12 +22,6 @@ export enum BackendActionTypes {
   CommitChangesSuccess = '[Backend] Commit Changes Success',
   CommitChangesFailure = '[Backend] Commit Changes Failure',
   ResolveConficts = '[Backend] Resolve Conflicts',
-}
-
-
-export class EntryRedirect implements Action {
-  readonly type = BackendActionTypes.EntryRedirect;
-  constructor(public payload: { redirectUrl: string }) { }
 }
 
 export class Initialized implements Action {
@@ -74,7 +67,7 @@ export class GetFileContent implements Action {
 
 export class GetFileContentSuccess implements Action {
     readonly type = BackendActionTypes.GetFileContentSuccess;
-    constructor(public payload: ConfigFile) { }
+    constructor(public payload: {file: ConfigFile, isNewFile?: boolean}) { }
 }
 
 export class GetFileContentFailure implements Action {
@@ -131,7 +124,6 @@ export class ResolveConficts implements Action {
 
 
 export type DashboardActionsUnion =
-  | EntryRedirect
   | Initialized
   | ListApplications
   | ListApplicationsSuccess

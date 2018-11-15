@@ -13,7 +13,6 @@ import { AppRoutingModule } from './app-routing.module';
 import { UtilService } from './services/util.service';
 import { HttpHelperService } from './services/http-helper.service';
 import { AuthGuardService } from './services/auth-guard.service';
-import { EntryGuardService } from './services/entry-guard.service';
 import { FileManagementService } from './services/file-management.service';
 
 // main app component
@@ -25,7 +24,6 @@ import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { EditorComponent } from './pages/editor/editor.component';
 
 // components
-import { AppEntryComponent } from './components/app-entry/app-entry.component';
 import { LayoutComponent } from './components/layout/layout.component';
 import { MainHeaderComponent } from './components/main-header/main-header.component';
 import { LoaderComponent } from './components/loader/loader.component';
@@ -51,6 +49,7 @@ import { LocationStrategy, HashLocationStrategy } from '@angular/common';
 
 // directives
 import { SplitDirective } from './directives/splitter.directive';
+import { InitializerDirective } from './directives/initializer.directive';
 
 
 @NgModule({
@@ -58,7 +57,6 @@ import { SplitDirective } from './directives/splitter.directive';
     AppComponent,
     LoginComponent,
     DashboardComponent,
-    AppEntryComponent,
     LayoutComponent,
     MainHeaderComponent,
     EditorComponent,
@@ -70,7 +68,8 @@ import { SplitDirective } from './directives/splitter.directive';
     ConfirmationDialogComponent,
     AlertDialogComponent,
     ConflictDialogComponent,
-    SplitDirective
+    SplitDirective,
+    InitializerDirective
   ],
   imports: [
     BrowserModule,
@@ -94,7 +93,6 @@ import { SplitDirective } from './directives/splitter.directive';
     UtilService,
     HttpHelperService,
     AuthGuardService,
-    EntryGuardService,
     FileManagementService,
     CanDeactivateGuard,
     {provide: LocationStrategy, useClass: HashLocationStrategy}

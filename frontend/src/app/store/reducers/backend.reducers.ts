@@ -11,7 +11,6 @@ export interface ConfigFiles extends EntityState<ConfigFile> {}
 export interface State {
     applications: string[];
     files: ConfigFiles;
-    redirectUrl: string;
     initialized: boolean;
 }
 
@@ -27,19 +26,11 @@ export const GetConfigFile = (state: State, fileName: string, applicationName: s
 export const initialState: State = {
     applications: [],
     files: ConfigFileAdapter.getInitialState(),
-    redirectUrl: null,
     initialized: false,
 };
 
 export function reducer(state = initialState, action: DashboardActionsUnion): State {
     switch (action.type) {
-
-        case BackendActionTypes.EntryRedirect: {
-            return {
-                ...state,
-                redirectUrl: action.payload.redirectUrl
-            };
-        }
 
         case BackendActionTypes.Initialized: {
             return {
@@ -63,12 +54,12 @@ export function reducer(state = initialState, action: DashboardActionsUnion): St
         }
 
         case BackendActionTypes.GetFileContentSuccess: {
-          if (!action.payload.timestamp) {
+          if (action.payload.isNewFile) {
             return state;
           }
           return {
             ...state,
-            files: ConfigFileAdapter.upsertOne(action.payload, state.files)
+            files: ConfigFileAdapter.upsertOne(action.payload.file, state.files)
           };
         }
 

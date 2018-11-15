@@ -81,9 +81,9 @@ export function reducer(state = initialState, action: EditorActionsUnion): State
         case BackendActionTypes.GetFileContentSuccess: {
           return {
               ...state,
-              configuration: action.payload.config,
-              draftConfiguration: action.payload.config,
-              originalConfiguration: action.payload.originalConfig,
+              configuration: action.payload.file.config,
+              draftConfiguration: action.payload.file.config,
+              originalConfiguration: action.payload.file.originalConfig,
               isPageDirty: false
           };
         }

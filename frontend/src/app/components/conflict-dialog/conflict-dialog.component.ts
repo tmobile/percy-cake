@@ -90,7 +90,7 @@ export class ConflictDialogComponent implements OnInit {
     this.store.dispatch(new ResolveConficts(files));
 
     if (this.data.fromEditor && this.data.conflictFiles[0].resolveStrategy === 'repo') {
-      this.store.dispatch(new GetFileContentSuccess(files[0]));
+      this.store.dispatch(new GetFileContentSuccess({file: files[0]}));
     }
 
     if (toRecommit.length) {

@@ -13,7 +13,7 @@ import {
     SaveDraft, CommitChanges, CommitChangesSuccess, CommitChangesFailure,
     LoadFiles, LoadFilesSuccess, LoadFilesFailure,
     DeleteFile, DeleteFileFailure, DeleteFileSuccess,
-    GetFileContent, GetFileContentSuccess, GetFileContentFailure, Initialized
+    GetFileContent, GetFileContentSuccess, GetFileContentFailure
 } from '../actions/backend.actions';
 import { FileManagementService } from '../../services/file-management.service';
 import * as appStore from '..';
@@ -30,26 +30,6 @@ export class BackendEffects {
         private fileManagementService: FileManagementService,
         private store: Store<appStore.AppState>
     ) { }
-
-    // entry redirect effect
-    @Effect({ dispatch: false })
-    entryRedirect$ = this.actions$.pipe(
-        ofType(BackendActionTypes.EntryRedirect),
-        tap(() => {
-            this.router.navigate(['/entry']);
-        })
-    );
-
-    // initialized effect
-    @Effect({ dispatch: false })
-    initialized$ = this.actions$.pipe(
-        ofType<Initialized>(BackendActionTypes.Initialized),
-        withLatestFrom(this.store.pipe(select(appStore.backendState))),
-        tap(([action, backendState]) => {
-            const redirectUrl = backendState.redirectUrl || '/dashboard';
-            return this.router.navigate([redirectUrl]);
-        })
-    );
 
     // load applications effect
     @Effect()
@@ -96,7 +76,7 @@ export class BackendEffects {
           const user = state.auth.currentUser;
           return this.fileManagementService.getFileContent(user.repoName, user.branchName, file.applicationName, file.fileName)
               .pipe(
-                  map(data => new GetFileContentSuccess({...file, config: data, originalConfig: data })),
+                  map(data => new GetFileContentSuccess({file: {...file, config: data, originalConfig: data }})),
                   catchError(error => of(new GetFileContentFailure(error)))
               );
         })
