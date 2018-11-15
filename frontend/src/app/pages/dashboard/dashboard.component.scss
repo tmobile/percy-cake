@@ -1,0 +1,72 @@
+// dashboard page
+@import "variables";
+.dashboard-page {
+    padding: 30px 100px;
+    color: $color-text-secondary;
+
+    h1 {
+      color: black;
+    }
+    .table-header-row {
+        display: flex;
+        align-items: center;
+        padding: 25px 0 20px;
+        .btn-commit-changes {
+            margin-left: auto;
+            text-transform: uppercase;
+        }
+        .btn-add-file {
+            margin-left: 10px;
+            text-transform: uppercase;
+        }
+        .apps-label {
+          margin-left: 100px;
+          margin-right: 10px;
+        }
+        .apps-selector {
+          width: 150px;
+        }
+    }
+    .files-table {
+        width: 100%;
+        th.mat-header-cell {
+            font-size: 14px;
+            font-weight: 700;
+        }
+        th.mat-header-cell,
+        td.mat-cell {
+            padding: 7px 25px;
+            &.mat-column-id {
+              width: 10%;
+            }
+            &.mat-column-fileName {
+              width: 25%;
+            }
+            &.mat-column-applicationName {
+              width: 40%;
+            }
+            &.actions-col {
+                width: 25%;
+                .btn-group {
+                    display: flex;
+                    margin-left: -16px;
+                    .btn-with-icon {
+                      display: flex;
+                      align-items: center;
+                      .btn-icon {
+                        cursor: pointer;
+                      }
+                      button {
+                          min-width: auto;
+                          text-transform: uppercase;
+                          padding-left: 5px;
+                      }
+                    }
+                }
+            }
+            .mo-ind {
+              color: red;
+            }
+        }
+    }
+}

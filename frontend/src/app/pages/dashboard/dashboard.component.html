@@ -1,0 +1,78 @@
+<!-- dashboard page -->
+<div class="dashboard-page">
+  <h1>{{repositoryName|async}}</h1>
+
+  <!-- table header row -->
+  <div class="table-header-row">
+    <h2>Files</h2>
+
+    <label class="apps-label">Applications:</label>
+    <mat-select class="apps-selector" [value]="selectedApp|async" (selectionChange)="onSelectApp($event)">
+        <mat-option value="">Show All</mat-option>
+        <mat-option *ngFor="let app of applications|async" [value]="app">{{app}}</mat-option>
+    </mat-select>
+
+    <button type="button" mat-raised-button [disabled]="disableCommit|async" color="primary" class="btn-commit-changes" (click)="commitChanges()">
+      Commit Changes
+    </button>
+    <button type="button" mat-raised-button color="primary" class="btn-add-file" (click)="addNewFile()">
+      Add New File
+    </button>
+  </div>
+  <!-- files table -->
+  <table *ngIf="files| async; else loader" matSort [matSortDisableClear]="true" (matSortChange)="onSortChange($event)" mat-table [dataSource]="files" class="files-table mat-elevation-z8">
+
+    <!-- id column -->
+    <ng-container matColumnDef="id">
+      <th mat-header-cell *matHeaderCellDef>Id</th>
+      <td mat-cell *matCellDef="let i=index;">{{i+1}}</td>
+    </ng-container>
+
+    <!-- fileName column -->
+    <ng-container matColumnDef="fileName">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header="fileName">Filename</th>
+      <td mat-cell *matCellDef="let element">
+        <span>{{element.fileName}}<span *ngIf="element.modified" class="mo-ind">*</span></span>
+      </td>
+    </ng-container>
+
+    <!-- Application column -->
+    <ng-container matColumnDef="applicationName">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header="applicationName">Application</th>
+      <td mat-cell *matCellDef="let element">{{element.applicationName}}</td>
+    </ng-container>
+
+    <!-- actions column -->
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef class="actions-col">Actions</th>
+      <td mat-cell *matCellDef="let element;" class="actions-col">
+        <div class="btn-group">
+          <div class="btn-with-icon">
+              <mat-icon class="btn-icon" (click)="editFile(element)">create</mat-icon>
+              <button type="button" mat-button color="primary" class="btn-edit-file" (click)="editFile(element)">
+                Edit
+              </button>
+          </div>
+
+          <div class="btn-with-icon" *ngIf="element.fileName !== envFileName">
+              <mat-icon (click)="deleteFile(element)" class="btn-icon">delete</mat-icon>
+              <button type="button" mat-button color="primary" class="btn-delete-file" (click)="deleteFile(element)">
+                Delete
+              </button>
+          </div>
+        </div>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>
+  <div *ngIf="(isDeleting|async) || (isCommitting|async)">
+      <app-loader></app-loader>
+  </div>
+</div>
+
+<!-- loading indicator -->
+<ng-template #loader>
+  <app-loader></app-loader>
+</ng-template>

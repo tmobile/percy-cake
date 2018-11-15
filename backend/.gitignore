@@ -1,0 +1,14 @@
+build
+coverage
+node_modules
+
+metadata
+repos
+test-metadata
+test-repos
+
+.nyc_output
+.DS_Store
+.vscode
+
+public/

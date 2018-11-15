@@ -1,0 +1,26 @@
+// buttons
+// to remove dotted outline on button click in firefox
+button::-moz-focus-inner {
+  border: 0;
+}
+
+button {
+  border: 0;
+  background-color: transparent;
+  cursor: pointer;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// override some material design button styles
+.mat-raised-button,
+.mat-stroked-button, {
+
+  &.btn-small {
+    line-height: 24px;
+    font-size: 12px;
+    min-width: 0;
+  }
+}

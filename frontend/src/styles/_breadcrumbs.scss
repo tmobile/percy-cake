@@ -1,0 +1,28 @@
+// breadcrumbs bar
+.breadcrumbs-wrapper {
+  display: flex;
+  padding: 20px 0;
+
+  a {
+    color: #ff4081;
+  }
+
+  > * {
+    font-weight: 700;
+    margin-right: 16px;
+
+    &span {
+      color: $color-text-secondary;
+    }
+
+    &:not(:last-child) {
+      position: relative;
+
+      &:after {
+        content: "/";
+        position: absolute;
+        right: -10px;
+      }
+    }
+  }
+}

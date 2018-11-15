@@ -1,0 +1,74 @@
+// configuration editor page
+@import "variables";
+.editor-page {
+    padding: 30px 100px;
+    .btn-small {
+        line-height: 28px;
+        font-size: 13px;
+    }
+    .filename {
+        width: 40%;
+        margin-bottom: 15px;
+        label {
+          color: grey;
+        }
+        input {
+          width: 300px;
+        }
+    }
+    .col-container {
+        padding-top: 10px;
+        display: flex;
+        >* {
+            padding: 5px 0 20px;
+        }
+        .section-heading span {
+            font-weight: 400;
+        }
+        .col-default-env {
+            width: 60%;
+            padding-right: 30px;
+            .section-heading {
+                margin-bottom: 20px;
+            }
+        }
+        .col-other-envs {
+            width: 40%;
+            border-left: 1px solid rgba($black, 0.12);
+            padding-left: 30px;
+            .preview {
+                overflow-wrap: break-word;
+                background-color: white;
+                padding: 20px;
+                .section-heading {
+                    margin-bottom: 10px;
+                }
+                pre {
+                    margin-top: 20px;
+                    .hljs {
+                        padding-left: 0;
+                        background: white;
+                    }
+                }
+                .property {
+                    display: flex;
+                    margin-top: 20px;
+                    flex-direction: column;
+                    .mat-form-field {
+                        margin-bottom: 15px;
+                    }
+                }
+            }
+        }
+    }
+    .buttons-row {
+        display: flex;
+        padding-top: 50px;
+        >* {
+            margin-right: 10px;
+        }
+        button {
+          text-transform: uppercase;
+        }
+    }
+}

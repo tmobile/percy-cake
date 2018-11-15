@@ -1,0 +1,65 @@
+// nested config tree
+@import "variables";
+.nested-config-view {
+    background-color: $white;
+    padding: 10px;
+    margin-bottom: 10px;
+    ul.sub-tree {
+        padding-inline-start: 40px;
+    }
+    ::ng-deep .mat-tree {
+        overflow: auto;
+        margin-bottom: 20px;
+    }
+    .mat-tree-node {
+        overflow: visible;
+        min-height: 0;
+        flex-shrink: 0;
+        .underline {
+          border-bottom: black;
+          border-bottom-style: dotted;
+          border-bottom-width: thin;
+          display: flex;
+          align-items: center;
+          flex: 1;
+          cursor: pointer;
+        }
+        .context-menu-trigger {
+          position: absolute;
+        }
+        .btn-action {
+            margin-left: auto;
+            ::ng-deep .mat-button-wrapper {
+                position: relative;
+                top: -5px;
+            }
+        }
+        .key {
+            padding-right: 20px;
+            font-weight: 700;
+            line-height: 1.2;
+            cursor: pointer;
+            max-width:200px;
+        }
+        .value {
+            min-width: 150px;
+            padding-right: 20px;
+            flex-shrink: 1;
+            line-height: 1.2;
+            cursor: pointer;
+            max-width:300px;
+        }
+    }
+    ::ng-deep .mat-icon-button {
+        font-size: 20px;
+        font-weight: 700;
+    }
+    .btn-add-root-property {
+        margin-left: 40px;
+    }
+}
+
+.btn-action-menu {
+    display: block;
+    width: 100%;
+}

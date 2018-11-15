@@ -1,0 +1,50 @@
+@import "variables";
+
+.overlay {
+  position: fixed;
+  z-index: 100;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background-color: rgba($black, 0.3);
+}
+
+.loading-indicator-wrapper {
+  width: 70px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  animation: rorate 2s infinite linear;
+
+  span {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background-color: #fff;
+
+    &:first-child,
+    &:last-child {
+      display: block;
+      margin: 0 28px;
+    }
+
+    &:nth-child(2) {
+      margin: 0 42px 21px 0;
+    }
+
+    &:nth-child(4) {
+      margin-right: 42px;
+    }
+  }
+}
+
+@keyframes rorate {
+  from {
+    transform: rotate(0);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}

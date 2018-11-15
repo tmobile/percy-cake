@@ -1,0 +1,63 @@
+<!-- default config tree view -->
+<mat-card class="nested-config-view">
+    <ng-container *ngTemplateOutlet="treeView; context: {dataSource: defaultDataSource, treeControl: defaultTreeControl}"></ng-container>
+</mat-card>
+
+<!-- environments config tree view -->
+<mat-card class="nested-config-view" *ngIf="!isEnvMode">
+    <ng-container *ngTemplateOutlet="treeView; context: {dataSource: envDataSource, treeControl: envTreeControl}"></ng-container>
+</mat-card>
+
+<!-- Tree view template -->
+<ng-template #treeView let-dataSource="dataSource" let-treeControl="treeControl">
+    <mat-tree [dataSource]="dataSource" [treeControl]="treeControl" class="nested-tree">
+        <mat-tree-node *matTreeNodeDef="let node">
+            <ng-container *ngTemplateOutlet="treeNode; context: {$implicit: node, treeControl: treeControl}"></ng-container>
+        </mat-tree-node>
+
+        <mat-nested-tree-node *matTreeNodeDef="let node; when: hasNestedChild">
+          <div>
+            <ng-container *ngTemplateOutlet="treeNode; context: {$implicit: node, treeControl: treeControl}"></ng-container>
+            <ul class="sub-tree" *ngIf="treeControl.isExpanded(node)">
+                <ng-container matTreeNodeOutlet></ng-container>
+            </ul>
+          </div>
+        </mat-nested-tree-node>
+    </mat-tree>
+</ng-template>
+
+<!-- Tree node template -->
+<ng-template #treeNode let-node let-treeControl="treeControl">
+    <div class="mat-tree-node">
+        <button *ngIf="node.isLeaf()" mat-icon-button disabled></button>
+
+        <button *ngIf="!node.isLeaf()" mat-icon-button class="btn-tree-toggle"
+          (click)="treeControl.isExpanded(node) ? treeControl.collapse(node): treeControl.expand(node)">
+          {{treeControl.isExpanded(node) ? '-' : '+' }}
+        </button>
+
+        <span class="context-menu-trigger" #menuTrigger [matMenuTriggerFor]="menu"></span>
+
+        <div class="underline" (contextmenu)="openMenu($event, menuTrigger)"
+            (click)="showDetail(node)" (dblclick)="treeControl.isExpanded(node) ? treeControl.collapse(node): treeControl.expand(node)">
+            <div class="key" >{{node.key}} :</div>
+            <div *ngIf="node.isLeaf()" class="value">{{node.value}}</div>
+            <button mat-icon-button #menuButton class="btn-action" (click)="$event.stopPropagation()" (contextmenu)="buttonOpenMenu($event, menuButton)" [matMenuTriggerFor]="menu">...</button>
+        </div>
+
+        <mat-menu #menu="matMenu">
+          <button *ngIf="!node.isLeaf()" mat-button class="btn-action-menu" color="primary" (click)="openAddPropertyDialog(node)">
+            {{node.isDefaultNode() || node.level> 0? 'Add Property': 'Add Environment'}}
+          </button>
+          <button mat-button class="btn-action-menu" color="primary" (click)="openEditPropertyDialog(node)">
+            Edit
+          </button>
+          <button *ngIf="!node.isDefaultNode() && node.level === 1" (click)="viewCompiledYAML(node.key)" mat-button class="btn-action-menu" color="primary">
+            View Compiled YAML
+          </button>
+          <button *ngIf="node.level>0" mat-button class="btn-action-menu" color="warn" (click)="deleteProperty(node)">
+            Delete
+          </button>
+        </mat-menu>
+    </div>
+</ng-template>

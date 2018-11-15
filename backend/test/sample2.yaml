@@ -1,0 +1,16 @@
+default: !!map
+  server.url: !!str "https://www.t-mobile.com?p=4&c=3"  # TMO server url
+  mytmo.server.url: !!str "https://my.t-mobile.com"  # MYTMO server url
+  middleware.url: !!str "https://middleware.t-mobile.com"  # Backend MW url
+  api: !!map  # urls used by this application
+    host: !!str "https://pd01.qat.t-mobile.com:9000"  # qat data server
+    urls: !!map
+      getCatalog: !!str "{{api.host}}/api/catalog?device=phone&pageSize={{size}}&pageNum={{page}}"  # get the phone catalog
+      getDetails: !!str "{{api.host}}/api/product/details/{{deviceId}}"
+environments: !!map
+  prod: !!map
+    middleware.url: !!str "https://tmo-tug.t-mobile.com"  # Production middleware endpoint
+  dev: !!map
+    server.url: !!str "https://dev.t-mobile.com"  # TMo dev url
+    api: !!map
+      host: !!str "https://pd03.qat.t-mobile.com"

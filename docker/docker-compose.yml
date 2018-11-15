@@ -1,0 +1,17 @@
+version: '3'
+services:
+  yaml-editor:
+    container_name: yaml-editor
+    build: 
+      context: .
+    environment:
+        NODE_ENV: production
+        PORT: 3000
+        EXTERNAL_CONFIG_URL: null #define custom external config URL if needed
+        HEALTHCHECK_FILE: '/percy-app/backend/healthcheck.json' #define healthcheck json file path
+        REPOS_FOLDER: '/percy-repos' # repos folder
+        META_FOLDER: '/percy-meta' # metadata folder
+    ports:
+      - 3000:3000
+    volumes:
+      - ../:/percy-app

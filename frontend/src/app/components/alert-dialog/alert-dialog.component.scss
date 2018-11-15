@@ -1,0 +1,15 @@
+@import "variables";
+.alert-dialog {
+    width: 400px;
+    pre {
+      white-space: pre-wrap;
+    }
+    .button-row {
+        padding-top: 30px;
+        display: flex;
+        justify-content: center;
+        >* {
+            margin: 0 8px;
+        }
+    }
+}

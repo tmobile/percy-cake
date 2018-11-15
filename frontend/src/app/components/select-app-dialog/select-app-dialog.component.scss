@@ -1,0 +1,26 @@
+@import "variables";
+
+.select-app-dialog {
+  width: 300px;
+
+  .mat-form-field {
+    width: 300px;
+
+    textarea {
+      height: 50px;
+    }
+  }
+
+  .buttons-row {
+    padding-top: 30px;
+    display: flex;
+    justify-content: center;
+
+    > * {
+      margin: 0 8px;
+    }
+    button {
+      text-transform: uppercase;
+    }
+  }
+}

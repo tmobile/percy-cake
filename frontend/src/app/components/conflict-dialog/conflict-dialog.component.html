@@ -1,0 +1,39 @@
+<div class="conflict-dialog">
+    <div class="conflict-title">The following file(s) are already changed in the repository:</div>
+
+    <mat-accordion>
+      <ng-container *ngFor="let file of data.conflictFiles; let i = index">
+          <mat-expansion-panel [expanded]="fileIdx === i" (opened)="setFileIdx(i)">
+              <mat-expansion-panel-header>
+                <mat-panel-title class="conflict-panel-title">
+                  <mat-icon *ngIf="!file.resolveStrategy">error</mat-icon>
+                  <mat-icon *ngIf="file.resolveStrategy">check_circle</mat-icon>
+                  {{file.applicationName}} / {{file.fileName}}
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+
+              <mat-radio-group (change)="resolveConflict($event, file)">
+                  <mat-radio-button value="draft" color="primary" class="mat-radio-button draft">Use Draft</mat-radio-button>
+                  <mat-radio-button value="repo" color="primary" class="mat-radio-button repo">Use Repository</mat-radio-button>
+              </mat-radio-group>
+              <div class="view-codes" appSplit [gutterHeight]="400" [splitAreas]="['#draft-code-' + i,'#repo-code-' + i]" [splitSizes]="[50,50]">
+                  <mat-card class="view-code mat-elevation-z" id="{{'draft-code-' + i}}">
+                      <pre><code highlight [code]="file.draftCode"></code></pre>
+                  </mat-card>
+                  <mat-card class="view-code mat-elevation-z" id="{{'repo-code-' + i}}">
+                      <pre><code highlight [code]="file.repoCode"></code></pre>
+                  </mat-card>
+              </div>
+            </mat-expansion-panel>
+      </ng-container>
+    </mat-accordion>
+
+    <div class="buttons-row">
+      <button type="button" mat-button color="primary" class="btn-cancel" mat-dialog-close>
+        Cancel
+      </button>
+      <button type="submit" mat-flat-button class="btn-submit" [disabled]="!allResolved()" (click)="confirmAction()">
+        Resolve Conflicts
+      </button>
+    </div>
+  </div>

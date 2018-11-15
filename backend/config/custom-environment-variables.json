@@ -1,0 +1,15 @@
+{
+  "port": "PORT",
+  "apiVersion": "API_VERSION",
+  "logLevel": "LOG_LEVEL",
+  "reposFolder": "REPOS_FOLDER",
+  "metaFolder": "META_FOLDER",
+  "yamlAppsFolder": "YAML_APPS_FOLDER",
+  "environmentsFile": "ENVIRONMENTS_FILE",
+  "healthcheckFile": "HEALTHCHECK_FILE",
+  "jwtSecret": "JWT_SECRET",
+  "jwtExpiresIn": "JWT_EXPIRES_IN",
+  "encryptKey": "ENCRYPT_KEY",
+  "encryptSalt": "ENCRYPT_SALT",
+  "maxPayloadSize": "MAX_PAYLOAD_SIZE"
+}

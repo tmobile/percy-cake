@@ -1,0 +1,146 @@
+{
+  "default": {
+      "appVer": {
+          "$type": "string",
+          "$value": "0.1.0",
+          "$comment": ["appVer comment line1", "appVer comment line2"]
+      },
+      "host": {
+          "$comment": ["The url domain for the deployed environment"],
+          "$value": "www.mobilex.com",
+          "$type": "string"
+      },
+      "dataService": {
+          "$comment": ["url to access JSON Web API"],
+          "$value": "pd01.mobilex.com/data",
+          "$type": "string"
+      },
+      "myProp": {
+          "$type": "boolean",
+          "$value": true,
+          "$comment": ["myProp comment line1", "myProp comment line2"]
+      },
+      "$comment": [
+        "all known properties are defined in the default block.",
+        "The most common values are assigned in the default block"
+      ],
+      "$type": "object"
+  },
+  "environments": {
+      "qat": {
+          "qat-items": {
+              "$type": "array",
+              "$value": [
+                  {
+                      "item1A": {
+                          "$type": "number",
+                          "$value": 8800
+                      },
+                      "item1B": {
+                          "$type": "number",
+                          "$value": -12.3
+                      },
+                      "$type": "object"
+                  },
+                  {
+                      "item2A": {
+                          "$comment": ["#### value2A comment #####"],
+                          "$value": "value2A",
+                          "$type": "string"
+                      },
+                      "item2B": {
+                          "$comment": ["value2B comment"],
+                          "$value": "value2B",
+                          "$type": "string"
+                      },
+                      "$type": "object"
+                  }
+              ]
+          },
+          "host": {
+              "$type": "string",
+              "$value": "qat.mobilex.com"
+          },
+          "dataService": {
+              "$comment": ["'qat dataService'"],
+              "$value": "pd03.mobilex.com/data",
+              "$type": "string"
+          },
+          "$comment": ["qat team validates all compiled artifacts in separate test environment with their own data service."],
+          "$type": "object"
+      },
+      "local": {
+          "host": {
+              "$type": "string",
+              "$value": "localhost"
+          },
+          "$comment": ["local comment line1", "local comment line2"],
+          "$type": "object"
+      },
+      "dev": {
+          "host": {
+              "$type": "string",
+              "$value": "dev.mobilex.com"
+          },
+          "dev-items": {
+              "$comment": ["dev-items comments"],
+              "$value": [
+                  {
+                      "$comment": ["nest array comments"],
+                      "$value": [
+                          {
+                              "$comment": ["nest item1 comment"],
+                              "$value": "nest item1 \"",
+                              "$type": "string"
+                          },
+                          {
+                              "$comment": ["nest item2 comment"],
+                              "$value": "nest item2 \\ ",
+                              "$type": "string"
+                          }
+                      ],
+                      "$type": "array"
+                  },
+                  {
+                      "$type": "string",
+                      "$value": "dev-item2"
+                  }
+              ],
+              "$type": "array"
+          },
+          "$comment": ["environment for developer testing of fully compiled and integrated application"],
+          "$type": "object"
+      },
+      "staging": {
+          "staging-items": {
+              "$comment": ["items comment line1", "items comment line2", "items comment line3"],
+              "$value": [
+                  {
+                      "$comment": ["item1 comment"],
+                      "$value": "item1",
+                      "$type": "string"
+                  },
+                  {
+                      "$comment": ["item2 comment"],
+                      "$value": "item2",
+                      "$type": "string"
+                  },
+                  {
+                      "$type": "string",
+                      "$value": "item3"
+                  }
+              ],
+              "$type": "array"
+          },
+          "host": {
+              "$type": "string",
+              "$comment": ["host comment line1", "host comment line2"],
+              "$value": "staging.mobilex.com"
+          },
+          "$type": "object"
+      },
+      "$comment": ["specific environments can override the default values 1 property at a time"],
+      "$type": "object"
+  },
+  "$comment": ["###"," # Sample yaml."," #"," # @author TCSCODER", " # @version 1.0", " # @copyright Copyright (c) 2018 TopCoder, Inc. All rights reserved.", "###"]
+}

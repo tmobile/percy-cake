@@ -1,0 +1,79 @@
+<div class="property-form-wrapper" [ngSwitch]="(data.isDefaultNode || data.keyOptions.length || keyDisabled()) ? 'form' : 'error'">
+  <h2 mat-dialog-title>{{ data.editMode ? 'Edit Property' : 'Add Property' }}</h2>
+
+  <h4>{{getBreadCrumb()}}</h4>
+
+  <form class="property-form" *ngSwitchCase="'form'"
+    (ngSubmit)="onSubmit()">
+    <mat-form-field class="form-field">
+      <input *ngIf="data.isDefaultNode" type="text" matInput placeholder="Name" [formControl]="key" />
+
+      <mat-select *ngIf="!data.isDefaultNode" placeholder="Name" [formControl]="key"
+        (selectionChange)="setValueTypeOption($event.value)">
+        <mat-option *ngFor="let option of data.keyOptions" [value]="option.key">
+          {{option.key}}
+        </mat-option>
+      </mat-select>
+      <mat-error>Required field</mat-error>
+    </mat-form-field>
+
+    <mat-form-field class="form-field">
+      <mat-select *ngIf="!valueTypeDisabled()" placeholder="Value Type" [formControl]="valueType"
+        (selectionChange)="value.setValue('')">
+        <mat-option *ngFor="let option of valueTypeOptions" [value]="option">
+          {{option}}
+        </mat-option>
+      </mat-select>
+
+      <input *ngIf="valueTypeDisabled()" type="text" matInput placeholder="Value Type"
+        [formControl]="valueType" />
+      <mat-error>Required field</mat-error>
+    </mat-form-field>
+
+    <ng-container *ngIf="valueType.value === 'string'" [ngSwitch]="showInherits()">
+        <mat-form-field *ngSwitchCase="'string'" class="form-field">
+            <input type="text" matInput placeholder="Value" [formControl]="value" />
+            <mat-error *ngIf="value.errors && value.errors.required">Required valid {{valueType.value}}</mat-error>
+        </mat-form-field>
+        <mat-form-field *ngSwitchCase="'inherits'" class="form-field">
+          <mat-select placeholder="Env" [formControl]="value">
+            <mat-option *ngFor="let option of inheritsOptions" [value]="option">
+              {{option}}
+            </mat-option>
+          </mat-select>
+          <mat-error>Required field</mat-error>
+        </mat-form-field>
+    </ng-container>
+
+    <mat-form-field *ngIf="valueType.value === 'number'" class="form-field">
+        <input type="number" matInput placeholder="Value" [formControl]="value" />
+        <mat-error *ngIf="value.errors && value.errors.required">Required valid {{valueType.value}}</mat-error>
+    </mat-form-field>
+
+    <div *ngIf="valueType.value === 'boolean'" class="value-radio-options form-field">
+      <div class="section-heading">Value</div>
+      <mat-radio-group [formControl]="value">
+        <mat-radio-button value="true">True</mat-radio-button>
+        <mat-radio-button value="false">False</mat-radio-button>
+      </mat-radio-group>
+      <mat-error *ngIf="value.invalid && formDirty">Required field</mat-error>
+    </div>
+
+    <mat-form-field class="form-field">
+      <textarea matInput placeholder="Comments" [formControl]="comment"></textarea>
+    </mat-form-field>
+
+    <div class="buttons-row">
+      <button type="button" mat-button color="primary" class="btn-cancel" (click)="onCancel()">
+        Cancel
+      </button>
+
+      <button type="submit" mat-flat-button class="btn-submit">
+        Submit
+      </button>
+    </div>
+  </form>
+  <h4 *ngSwitchCase="'error'">
+    There is no property to add in <code>{{data.node.id}}</code>
+  </h4>
+</div>

@@ -1,0 +1,61 @@
+/* normalize */
+*, *:before, *:after {
+  margin: 0;
+  padding: 0;
+  outline: none;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  
+  &:focus {
+    outline: none;
+  }
+}
+
+/* base/common styles */
+body {
+  line-height: 1;
+  font-family: Roboto, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: $color-text-primary;
+  background-color: $color-bg-body;
+  overflow-x: hidden;
+  -ms-overflow-style: scrollbar;  // to fix IE scrollbar issue
+}
+
+a {
+  text-decoration: none;
+  outline: none;
+  cursor: pointer;
+  
+  &:hover,
+  &:active,
+  &:focus {
+    text-decoration: none;
+    outline: none;
+  }
+}
+
+
+/*** helper classes ***/
+// align child element in the center
+.align-item-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
+// text ellipsis
+.is-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gutter-horizontal {
+  cursor: col-resize;
+}
+.mat-select-panel {
+  max-height: 296px !important;
+}

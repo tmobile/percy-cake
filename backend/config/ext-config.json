@@ -1,0 +1,9 @@
+{
+  "version": "1.0",
+  "branchName": "admin",
+  "lockedBranches": [
+    "master",
+    "trunk"
+  ],
+  "repositoryUrl": "https://bitbucket.org/leviastan/sample-yaml-config"
+}
