@@ -173,7 +173,7 @@ export class NestedConfigViewComponent implements OnChanges {
     if (node.level === 0) {
       const newHeight = {
         rectangle: {
-          height: expanded ? null : 400
+          height: null
         },
       };
       if (treeControl === this.defaultTreeControl) {
