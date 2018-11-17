@@ -4,17 +4,40 @@
     background-color: $white;
     padding: 10px;
     margin-bottom: 10px;
+    overflow: auto;
+    min-height: 60px;
+    border-bottom-style: solid;
+    border-bottom-width: 2px;
+
     ul.sub-tree {
         padding-inline-start: 40px;
-    }
-    ::ng-deep .mat-tree {
-        overflow: auto;
-        margin-bottom: 20px;
     }
     .mat-tree-node {
         overflow: visible;
         min-height: 0;
         flex-shrink: 0;
+        .btn-tree-toggle {
+          cursor: pointer;
+          display: block;
+          font-weight: bold;
+          font-size: x-large;
+          height: 20px;
+          line-height: 20px;
+          text-align: center;
+          width: 20px;
+
+          &.toggle-down {
+            font-size: large;
+          }
+          &.toggle-all-down {
+            transform: rotate(90deg);
+          }
+          &.toggle-all-up {
+            transform: rotate(-90deg);
+            margin-left: -5px;
+            width: 25px;
+          }
+        }
         .underline {
           border-bottom: black;
           border-bottom-style: dotted;
@@ -47,7 +70,6 @@
             flex-shrink: 1;
             line-height: 1.2;
             cursor: pointer;
-            max-width:300px;
         }
     }
     ::ng-deep .mat-icon-button {

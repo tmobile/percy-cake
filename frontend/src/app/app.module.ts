@@ -2,6 +2,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
 import { HighlightModule } from 'ngx-highlightjs';
+import { ResizableModule } from 'angular-resizable-element';
 
 // angular material components
 import { MaterialComponentsModule } from './material-components/material-components.module';
@@ -49,6 +50,7 @@ import { LocationStrategy, HashLocationStrategy } from '@angular/common';
 
 // directives
 import { SplitDirective } from './directives/splitter.directive';
+import { ResizableDirective } from './directives/resizable.directive';
 import { InitializerDirective } from './directives/initializer.directive';
 
 
@@ -69,12 +71,14 @@ import { InitializerDirective } from './directives/initializer.directive';
     AlertDialogComponent,
     ConflictDialogComponent,
     SplitDirective,
+    ResizableDirective,
     InitializerDirective
   ],
   imports: [
     BrowserModule,
     HttpClientModule,
     AppRoutingModule,
+    ResizableModule,
     MaterialComponentsModule,
     HighlightModule.forRoot({ theme: 'default' }),
     StoreModule.forRoot(reducers, { metaReducers }),

@@ -9,6 +9,7 @@ import { MatDialog } from '@angular/material';
 import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
 import { Store } from '@ngrx/store';
 import * as appStore from '../../store';
+import { BehaviorSubject } from 'rxjs';
 
 /**
  *  Tree with nested nodes
@@ -36,6 +37,9 @@ export class NestedConfigViewComponent implements OnChanges {
 
   envTreeControl: NestedTreeControl<TreeNode>;
   envDataSource: MatTreeNestedDataSource<TreeNode>;
+
+  defaultCardHeight = new BehaviorSubject<number>(null);
+  envCardHeight = new BehaviorSubject<number>(null);
 
   /**
    * initializes the component
@@ -139,6 +143,66 @@ export class NestedConfigViewComponent implements OnChanges {
     }
 
     return node;
+  }
+
+  changeDefaultCardHeight($event) {
+    this.defaultCardHeight.next($event.rectangle.height);
+  }
+
+  changeEnvCardHeight($event) {
+    this.envCardHeight.next($event.rectangle.height);
+  }
+
+
+  toggle(treeControl, node, toggleAll?: boolean) {
+    const expanded = treeControl.isExpanded(node);
+    if (expanded) {
+      if (toggleAll) {
+        treeControl.collapseDescendants(node);
+      } else {
+        treeControl.collapse(node);
+      }
+    } else {
+      if (toggleAll) {
+        treeControl.expandDescendants(node);
+      } else {
+        treeControl.expand(node);
+      }
+    }
+
+    if (node.level === 0) {
+      const newHeight = {
+        rectangle: {
+          height: expanded ? null : 400
+        },
+      };
+      if (treeControl === this.defaultTreeControl) {
+        this.changeDefaultCardHeight(newHeight);
+      } else {
+        this.changeEnvCardHeight(newHeight);
+      }
+    }
+  }
+
+  toggleAll(treeControl, node) {
+    if (treeControl.isExpanded(node)) {
+      treeControl.collapseDescendants(node);
+    } else {
+      treeControl.expandDescendants(node);
+    }
+    if (treeControl === this.defaultTreeControl) {
+      this.changeDefaultCardHeight({
+        rectangle: {
+          height: null
+        }
+      });
+    } else {
+      this.changeEnvCardHeight({
+        rectangle: {
+          height: null
+        }
+      });
+    }
   }
 
   /*

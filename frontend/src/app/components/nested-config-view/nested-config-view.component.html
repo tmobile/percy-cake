@@ -1,11 +1,13 @@
 <!-- default config tree view -->
-<mat-card class="nested-config-view">
-    <ng-container *ngTemplateOutlet="treeView; context: {dataSource: defaultDataSource, treeControl: defaultTreeControl}"></ng-container>
+<mat-card class="nested-config-view" appResizable [resizeToHeight]="defaultCardHeight|async"
+  mwlResizable (resizing)="changeDefaultCardHeight($event)" [resizeEdges]="{bottom: true, right: false, top: false, left: false}">
+  <ng-container *ngTemplateOutlet="treeView; context: {dataSource: defaultDataSource, treeControl: defaultTreeControl}"></ng-container>
 </mat-card>
 
 <!-- environments config tree view -->
-<mat-card class="nested-config-view" *ngIf="!isEnvMode">
-    <ng-container *ngTemplateOutlet="treeView; context: {dataSource: envDataSource, treeControl: envTreeControl}"></ng-container>
+<mat-card class="nested-config-view" *ngIf="!isEnvMode" appResizable [resizeToHeight]="envCardHeight|async"
+  mwlResizable (resizing)="changeEnvCardHeight($event)" [resizeEdges]="{bottom: true, right: false, top: false, left: false}">
+  <ng-container *ngTemplateOutlet="treeView; context: {dataSource: envDataSource, treeControl: envTreeControl}"></ng-container>
 </mat-card>
 
 <!-- Tree view template -->
@@ -29,12 +31,11 @@
 <!-- Tree node template -->
 <ng-template #treeNode let-node let-treeControl="treeControl">
     <div class="mat-tree-node">
-        <button *ngIf="node.isLeaf()" mat-icon-button disabled></button>
+        <div *ngIf="node.isLeaf()" class="btn-tree-toggle"></div>
 
-        <button *ngIf="!node.isLeaf()" mat-icon-button class="btn-tree-toggle"
-          (click)="treeControl.isExpanded(node) ? treeControl.collapse(node): treeControl.expand(node)">
-          {{treeControl.isExpanded(node) ? '-' : '+' }}
-        </button>
+        <div *ngIf="!node.isLeaf() && node.level === 0" (click)="toggle(treeControl, node, true)" class="{{treeControl.isExpanded(node)?'btn-tree-toggle toggle-all-up':'btn-tree-toggle toggle-all-down'}}" >&raquo;</div>
+
+        <div *ngIf="!node.isLeaf()" class="{{treeControl.isExpanded(node)?'btn-tree-toggle toggle-up':'btn-tree-toggle toggle-down'}}" (click)="toggle(treeControl, node)">{{treeControl.isExpanded(node) ? '-' : '+' }}</div>
 
         <span class="context-menu-trigger" #menuTrigger [matMenuTriggerFor]="menu"></span>
 
