@@ -1,13 +1,17 @@
 // nested config tree
 @import "variables";
+.resize-tree-view {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  &.env {
+    margin-top: 15px;
+  }
+}
 .nested-config-view {
     background-color: $white;
     padding: 10px;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
     overflow: auto;
     min-height: 60px;
-    border-bottom-style: solid;
-    border-bottom-width: 2px;
 
     ul.sub-tree {
         padding-inline-start: 40px;

@@ -1,14 +1,16 @@
 <!-- default config tree view -->
-<mat-card class="nested-config-view" appResizable [resizeToHeight]="defaultCardHeight|async"
-  mwlResizable (resizing)="changeDefaultCardHeight($event)" [resizeEdges]="{bottom: true, right: false, top: false, left: false}">
-  <ng-container *ngTemplateOutlet="treeView; context: {dataSource: defaultDataSource, treeControl: defaultTreeControl}"></ng-container>
-</mat-card>
+<div class="resize-tree-view" mwlResizable (resizing)="changeDefaultCardHeight($event)" [resizeEdges]="{bottom: true, right: false, top: false, left: false}">
+  <mat-card class="nested-config-view" appResizable [resizeToHeight]="defaultCardHeight|async">
+    <ng-container *ngTemplateOutlet="treeView; context: {dataSource: defaultDataSource, treeControl: defaultTreeControl}"></ng-container>
+  </mat-card>
+</div>
 
 <!-- environments config tree view -->
-<mat-card class="nested-config-view" *ngIf="!isEnvMode" appResizable [resizeToHeight]="envCardHeight|async"
-  mwlResizable (resizing)="changeEnvCardHeight($event)" [resizeEdges]="{bottom: true, right: false, top: false, left: false}">
-  <ng-container *ngTemplateOutlet="treeView; context: {dataSource: envDataSource, treeControl: envTreeControl}"></ng-container>
-</mat-card>
+<div class="resize-tree-view env" mwlResizable (resizing)="changeEnvCardHeight($event)" [resizeEdges]="{bottom: true, right: false, top: false, left: false}">
+  <mat-card class="nested-config-view" *ngIf="!isEnvMode" appResizable [resizeToHeight]="envCardHeight|async">
+    <ng-container *ngTemplateOutlet="treeView; context: {dataSource: envDataSource, treeControl: envTreeControl}"></ng-container>
+  </mat-card>
+</div>
 
 <!-- Tree view template -->
 <ng-template #treeView let-dataSource="dataSource" let-treeControl="treeControl">
