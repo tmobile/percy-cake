@@ -386,7 +386,7 @@ export class NestedConfigViewComponent implements OnChanges {
   openMenu(event, menuTrigger) {
     event.preventDefault();
     menuTrigger.style.left = event.layerX + 'px';
-    menuTrigger.style.top = event.layerY + 'px';
+    menuTrigger.style.top = event.Y + 'px';
     menuTrigger.click();
   }
 
