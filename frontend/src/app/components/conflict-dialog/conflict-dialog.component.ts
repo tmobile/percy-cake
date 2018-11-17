@@ -37,7 +37,7 @@ export class ConflictDialogComponent implements OnInit {
       file.repoCode = this.utilService.convertJsonToYaml(file.config);
 
       const draftFile = _.find(this.data.draftFiles, _.pick(file, ['fileName', 'applicationName']));
-      file.draftConf = draftFile['config'];
+      file.draftConf = draftFile['draftConfig'];
       file.draftCode = this.utilService.convertJsonToYaml(file.draftConf);
     });
   }
