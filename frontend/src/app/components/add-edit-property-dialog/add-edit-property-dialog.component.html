@@ -31,11 +31,11 @@
     </mat-form-field>
 
     <ng-container *ngIf="valueType.value === 'string'" [ngSwitch]="showInherits()">
-        <mat-form-field *ngSwitchCase="'string'" class="form-field">
+        <mat-form-field *ngSwitchCase="false" class="form-field">
             <input type="text" matInput placeholder="Value" [formControl]="value" />
             <mat-error *ngIf="value.errors && value.errors.required">Required valid {{valueType.value}}</mat-error>
         </mat-form-field>
-        <mat-form-field *ngSwitchCase="'inherits'" class="form-field">
+        <mat-form-field *ngSwitchCase="true" class="form-field">
           <mat-select placeholder="Env" [formControl]="value">
             <mat-option *ngFor="let option of inheritsOptions" [value]="option">
               {{option}}
@@ -60,8 +60,14 @@
     </div>
 
     <mat-form-field class="form-field">
-      <textarea matInput placeholder="Comments" [formControl]="comment"></textarea>
+      <textarea matInput placeholder="Comments" [formControl]="comment" ></textarea>
     </mat-form-field>
+
+    <ng-container *ngIf="!data.isDefaultNode && key.value !== 'inherits' && (!data.editMode || data.node.level > 0)">
+      <div class="form-field">
+          <mat-slide-toggle color="primary" [checked]="duplicateDefault" (change)="useDefault($event)">Duplicate default properties</mat-slide-toggle>
+      </div>
+    </ng-container>
 
     <div class="buttons-row">
       <button type="button" mat-button color="primary" class="btn-cancel" (click)="onCancel()">

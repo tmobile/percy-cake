@@ -160,7 +160,7 @@ export class ConfigFileAddEditEffects {
         map(action => action.payload),
         exhaustMap(data => {
             if (!data.node.isLeaf()) {
-                const compiledYAML = this.utilService.convertJsonToYaml(data.node.jsonValue);
+                const compiledYAML = this.utilService.convertJsonToYaml({[data.node.key]: data.node.jsonValue});
                 return of(new NodeSelectedSuccess({ compiledYAML, configProperty: null }));
             } else {
                 const configProperty = data.node.toConfigProperty();

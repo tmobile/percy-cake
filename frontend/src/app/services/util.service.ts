@@ -234,4 +234,71 @@ export class UtilService {
 
     return node;
   }
+
+  /**
+   * Build the config structure tree. The `obj` is the Json object, or a sub-tree of a Json object.
+   * The return value is `TreeNode`.
+   */
+  buildConfigTree(obj: object, level: number, key: string, parentNode?: TreeNode): TreeNode {
+    const node = new TreeNode();
+    node.key = key;
+    node.id = parentNode ? `${parentNode.id}.${key}` : key;
+    node.value = obj['$value'];
+    obj['$type'] = obj['$type'] || (node.value ? typeof node.value : 'object');
+    node.valueType = obj['$type'];
+    node.comment = obj['$comment'];
+    node.parent = parentNode;
+    node.level = level;
+    node.jsonValue = obj;
+
+    if (!node.isLeaf()) {
+      node.children = [];
+
+      if (node.isArray()) {
+        let itemType;
+
+        node.value = _.isArray(node.value) ? node.value : [];
+        node.value.forEach((element, idx) => {
+          const item = this.buildConfigTree(element, level + 1, `[${idx}]`, node);
+          if (!item.isLeaf()) {
+            console.warn(`Only support array of same simple type, but got: ${item}`);
+            return;
+          }
+          if (!itemType) {
+            itemType = item.valueType;
+          } else if (itemType !== item.valueType) {
+            console.warn(`Only support array of same simple type, ${itemType} detected, but got: ${item}`);
+            return;
+          }
+          node.children.push(item);
+        });
+
+        itemType = itemType || PROPERTY_VALUE_TYPES.STRING;
+        switch (itemType) {
+          case PROPERTY_VALUE_TYPES.STRING:
+            node.valueType = PROPERTY_VALUE_TYPES.STRING_ARRAY;
+            break;
+          case PROPERTY_VALUE_TYPES.BOOLEAN:
+            node.valueType = PROPERTY_VALUE_TYPES.BOOLEAN_ARRAY;
+            break;
+          case PROPERTY_VALUE_TYPES.NUMBER:
+            node.valueType = PROPERTY_VALUE_TYPES.NUMBER_ARRAY;
+            break;
+          default:
+            break;
+        }
+      } else {
+        Object.keys(obj).forEach((nestKey) => {
+          if (nestKey === '$comment' || nestKey === '$value' || nestKey === '$type') {
+            return;
+          }
+          node.children.push(this.buildConfigTree(obj[nestKey], level + 1, nestKey, node));
+        });
+      }
+
+      node.value = undefined;
+    }
+
+    return node;
+  }
 }

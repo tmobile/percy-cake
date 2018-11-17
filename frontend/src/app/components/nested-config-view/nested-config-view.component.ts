@@ -10,6 +10,8 @@ import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation
 import { Store } from '@ngrx/store';
 import * as appStore from '../../store';
 import { BehaviorSubject } from 'rxjs';
+import { UtilService } from '../../services/util.service';
+import { Configuration } from '../../models/config-file';
 
 /**
  *  Tree with nested nodes
@@ -46,7 +48,7 @@ export class NestedConfigViewComponent implements OnChanges {
    * @param dialog the material dialog instance
    * @param store the application store
    */
-  constructor(private dialog: MatDialog, private store: Store<appStore.AppState>, ) {
+  constructor(private dialog: MatDialog, private store: Store<appStore.AppState>, private utilService: UtilService) {
     this.defaultTreeControl = new NestedTreeControl<TreeNode>(this._getChildren);
     this.defaultDataSource = new MatTreeNestedDataSource();
     this.envTreeControl = new NestedTreeControl<TreeNode>(this._getChildren);
@@ -57,14 +59,14 @@ export class NestedConfigViewComponent implements OnChanges {
    * handle component initialization
    */
   ngOnChanges() {
-    const defaultNode = this.buildConfigTree(this.configuration.default || {}, 0, 'default', null);
+    const defaultNode = this.utilService.buildConfigTree(this.configuration.default || {}, 0, 'default', null);
 
     if (!this.defaultDataSource.data || !this.defaultDataSource.data.length
       || !_.isEqual(this.defaultDataSource.data[0].jsonValue, defaultNode.jsonValue)) {
       this.defaultDataSource.data = [defaultNode];
     }
 
-    const environmentsNode = this.buildConfigTree(this.configuration.environments || {}, 0, 'environments', null);
+    const environmentsNode = this.utilService.buildConfigTree(this.configuration.environments || {}, 0, 'environments', null);
     if (!this.envDataSource.data || !this.envDataSource.data.length
       || !_.isEqual(this.envDataSource.data[0].jsonValue, environmentsNode.jsonValue)) {
       this.envDataSource.data = [environmentsNode];
@@ -73,77 +75,6 @@ export class NestedConfigViewComponent implements OnChanges {
 
   // get a node's children
   private _getChildren = (node: TreeNode) => node.children;
-
-  /**
-   * Build the config structure tree. The `value` is the Json object, or a sub-tree of a Json object.
-   * The return value is the list of `TreeNode`.
-   */
-  buildConfigTree(obj: object, level: number, key: string, parentNode?: TreeNode): TreeNode {
-    const node = new TreeNode();
-    node.key = key;
-    node.id = parentNode ? `${parentNode.id}.${key}` : key;
-    node.value = obj['$value'];
-    obj['$type'] = obj['$type'] || (node.value ? typeof node.value : 'object');
-    node.valueType = obj['$type'];
-    node.comment = obj['$comment'];
-    node.parent = parentNode;
-    node.level = level;
-    node.jsonValue = {[key]: obj};
-
-    if (!node.isLeaf()) {
-      node.children = [];
-
-      if (node.isArray()) {
-        let itemType;
-
-        node.value = _.isArray(node.value) ? node.value : [];
-        node.value.forEach((element, idx) => {
-          const item = this.buildConfigTree(element, level + 1, `[${idx}]`, node);
-          if (!item.isLeaf()) {
-            console.warn(`Only support array of same simple type, but got: ${item}`);
-            return;
-          }
-          if (!itemType) {
-            itemType = item.valueType;
-          } else if (itemType !== item.valueType) {
-            console.warn(`Only support array of same simple type, ${itemType} detected, but got: ${item}`);
-            return;
-          }
-          node.children.push(item);
-        });
-
-        if (!itemType && this.isEnvMode) {
-          itemType = PROPERTY_VALUE_TYPES.STRING;
-        }
-
-        itemType = itemType || PROPERTY_VALUE_TYPES.STRING;
-        switch (itemType) {
-          case PROPERTY_VALUE_TYPES.STRING:
-            node.valueType = PROPERTY_VALUE_TYPES.STRING_ARRAY;
-            break;
-          case PROPERTY_VALUE_TYPES.BOOLEAN:
-            node.valueType = PROPERTY_VALUE_TYPES.BOOLEAN_ARRAY;
-            break;
-          case PROPERTY_VALUE_TYPES.NUMBER:
-            node.valueType = PROPERTY_VALUE_TYPES.NUMBER_ARRAY;
-            break;
-          default:
-            break;
-        }
-      } else {
-        Object.keys(obj).forEach((nestKey) => {
-          if (nestKey === '$comment' || nestKey === '$value' || nestKey === '$type') {
-            return;
-          }
-          node.children.push(this.buildConfigTree(obj[nestKey], level + 1, nestKey, node));
-        });
-      }
-
-      node.value = undefined;
-    }
-
-    return node;
-  }
 
   changeDefaultCardHeight($event) {
     this.defaultCardHeight.next($event.rectangle.height);
@@ -214,7 +145,7 @@ export class NestedConfigViewComponent implements OnChanges {
   /**
    * prepare the dropdown options based node and mode
    */
-  getKeyOptions(node: TreeNode, editMode: boolean) {
+  private getKeyOptions(node: TreeNode, editMode: boolean) {
     let keyOptions = [];
 
     if (node.isDefaultNode()) {
@@ -287,7 +218,8 @@ export class NestedConfigViewComponent implements OnChanges {
       level: node.level,
       isDefaultNode: node.isDefaultNode(),
       keyOptions: this.getKeyOptions(node, false),
-      node
+      node,
+      defaultNode: this.defaultDataSource.data[0]
     };
     this.addEditProperty.emit(this.currentAddEditPropertyOptions);
   }
@@ -304,6 +236,7 @@ export class NestedConfigViewComponent implements OnChanges {
       isDefaultNode: node.isDefaultNode(),
       keyOptions: this.getKeyOptions(node, true),
       node,
+      defaultNode: this.defaultDataSource.data[0],
       configProperty: node.toConfigProperty(),
     };
     this.addEditProperty.emit(this.currentAddEditPropertyOptions);
@@ -321,10 +254,9 @@ export class NestedConfigViewComponent implements OnChanges {
     this.envDataSource.data = null;
     this.envDataSource.data = _data;
 
-    const newConfig = {};
-    Object.assign(newConfig, this.defaultDataSource.data[0].jsonValue);
+    const newConfig: Configuration = {default: this.defaultDataSource.data[0].jsonValue};
     if (!this.isEnvMode) {
-      Object.assign(newConfig, this.envDataSource.data[0].jsonValue);
+      newConfig.environments = this.envDataSource.data[0].jsonValue;
     }
 
     this.configurationChange.emit(newConfig);
@@ -359,7 +291,8 @@ export class NestedConfigViewComponent implements OnChanges {
       if (node.isLeaf()) {
         this.currentAddEditProperty.children = undefined;
       } else {
-        this.currentAddEditProperty.children = this.currentAddEditProperty.children || [];
+        this.currentAddEditProperty.children = node.children && node.children.length ?
+          node.children : this.currentAddEditProperty.children || [];
       }
 
       this.updateJsonValue(this.currentAddEditProperty);
@@ -413,20 +346,20 @@ export class NestedConfigViewComponent implements OnChanges {
         const arr = [];
         node.children.forEach(child => {
           this.doUpdateJsonValue(child);
-          arr.push(child.jsonValue[child.key]);
+          arr.push(child.jsonValue);
         });
         json['$value'] = arr;
       } else {
         node.children.forEach(child => {
           this.doUpdateJsonValue(child);
-          Object.assign(json, child.jsonValue);
+          json[child.key] = child.jsonValue;
         });
       }
     } else {
       json['$value'] = node.value;
     }
 
-    node.jsonValue = {[node.key]: json};
+    node.jsonValue = json;
   }
 
   /**
