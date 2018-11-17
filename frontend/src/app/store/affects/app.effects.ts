@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Actions, Effect, ofType } from '@ngrx/effects';
 import { map, tap, exhaustMap } from 'rxjs/operators';
-import { Alert, CommonActionTypes, AlertClosed, APIError } from '../actions/common.actions';
+import { Alert, CommonActionTypes, AlertClosed, APIError, Navigate } from '../actions/common.actions';
 import { MatDialog } from '@angular/material';
 import { AlertDialogComponent } from '../../components/alert-dialog/alert-dialog.component';
 import { Router } from '@angular/router';
@@ -62,5 +62,16 @@ export class AppEffects {
             });
             return of(new Alert({ message: data.payload.error.message, editorType: 'error' }));
         }),
+    );
+
+    /**
+     * navigate effect
+     */
+    @Effect({ dispatch: false })
+    navigate$ = this.actions$.pipe(
+        ofType<Navigate>(CommonActionTypes.Navigate),
+        tap(action => {
+          this.router.navigate(action.payload);
+        })
     );
 }

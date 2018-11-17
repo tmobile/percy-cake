@@ -67,7 +67,7 @@ export class GetFileContent implements Action {
 
 export class GetFileContentSuccess implements Action {
     readonly type = BackendActionTypes.GetFileContentSuccess;
-    constructor(public payload: {file: ConfigFile, isNewFile?: boolean}) { }
+    constructor(public payload: ConfigFile) { }
 }
 
 export class GetFileContentFailure implements Action {

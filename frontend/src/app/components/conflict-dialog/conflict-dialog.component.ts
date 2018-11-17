@@ -5,7 +5,7 @@ import * as _ from 'lodash';
 
 import * as appStore from '../../store';
 import { UtilService } from '../../services/util.service';
-import { ResolveConficts, GetFileContentSuccess, CommitChanges } from '../../store/actions/backend.actions';
+import { ResolveConficts, GetFileContentSuccess, CommitChanges, LoadFiles } from '../../store/actions/backend.actions';
 import { ConfigFile } from '../../models/config-file';
 
 /**
@@ -68,11 +68,11 @@ export class ConflictDialogComponent implements OnInit {
         applicationName: file.applicationName,
         timestamp: file.timestamp,
         size: file.size,
-        config: file.resolveStrategy === 'draft' ? file.draftConf : file.config,
+        draftConfig: file.resolveStrategy === 'draft' ? file.draftConf : file.config,
         originalConfig: file.config,
       };
 
-      result.modified = !_.isEqual(result.config, result.originalConfig);
+      result.modified = !_.isEqual(result.draftConfig, result.originalConfig);
 
       if (result.modified) {
         toRecommit.push(result);
@@ -80,7 +80,7 @@ export class ConflictDialogComponent implements OnInit {
       return result;
     });
 
-    // Filter the unconlict draft file(s)
+    // Add back the unconlict draft file(s)
     this.data.draftFiles.forEach(draftFile => {
       if (!_.find(this.data.conflictFiles, _.pick(draftFile, ['applicationName', 'fileName']))) {
         toRecommit.push(draftFile);
@@ -90,7 +90,7 @@ export class ConflictDialogComponent implements OnInit {
     this.store.dispatch(new ResolveConficts(files));
 
     if (this.data.fromEditor && this.data.conflictFiles[0].resolveStrategy === 'repo') {
-      this.store.dispatch(new GetFileContentSuccess({file: files[0]}));
+      this.store.dispatch(new GetFileContentSuccess(files[0]));
     }
 
     if (toRecommit.length) {
@@ -99,6 +99,8 @@ export class ConflictDialogComponent implements OnInit {
         message: this.data.commitMessage,
         fromEditor: this.data.fromEditor
       }));
+    } else {
+      this.store.dispatch(new LoadFiles()); // reload files
     }
     this.dialogRef.close(true);
   }

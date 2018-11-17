@@ -79,6 +79,7 @@ export class NestedConfigViewComponent implements OnChanges {
     node.key = key;
     node.id = parentNode ? `${parentNode.id}.${key}` : key;
     node.value = obj['$value'];
+    obj['$type'] = obj['$type'] || (node.value ? typeof node.value : 'object');
     node.valueType = obj['$type'];
     node.comment = obj['$comment'];
     node.parent = parentNode;

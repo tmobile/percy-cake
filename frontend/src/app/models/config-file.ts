@@ -9,6 +9,6 @@ export interface ConfigFile {
   timestamp?: number;
   size?: number;
   modified?: boolean;
-  config?: Configuration;
+  draftConfig?: Configuration;
   originalConfig?: Configuration;
 }

@@ -79,7 +79,10 @@ export class FileManagementService {
      * @param message the commit message
      */
     commitFiles(repoName: string, branchName: string, configFiles: ConfigFile[], message: string): Observable<any> {
-        const files = configFiles.map(file => ({..._.pick(file, ['fileName', 'applicationName', 'timestamp']), fileContent: file.config}));
+        const files = configFiles.map(file => ({
+          ..._.pick(file, ['fileName', 'applicationName', 'timestamp']),
+          fileContent: file.draftConfig
+        }));
         const body = { message, files };
         return this.httpHelperService.post(
             `/repos/${encodeURIComponent(repoName)}/branches/${encodeURIComponent(branchName)}/commit`, body);

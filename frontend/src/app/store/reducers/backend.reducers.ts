@@ -19,8 +19,7 @@ const ConfigFileAdapter: EntityAdapter<ConfigFile> = createEntityAdapter<ConfigF
 });
 
 export const GetConfigFile = (state: State, fileName: string, applicationName: string) => {
-  return ConfigFileAdapter.getSelectors().selectEntities(state.files)
-    [ConfigFileAdapter.selectId({ fileName, applicationName}) + ''];
+  return state.files.entities[ConfigFileAdapter.selectId({ fileName, applicationName})];
 };
 
 export const initialState: State = {
@@ -47,19 +46,35 @@ export function reducer(state = initialState, action: DashboardActionsUnion): St
         }
 
         case BackendActionTypes.LoadFilesSuccess: {
-            return {
-                ...state,
-                files: ConfigFileAdapter.upsertMany(action.payload, state.files)
-            };
+          const freshFiles = _.mapKeys(action.payload, configFile => ConfigFileAdapter.selectId(configFile));
+          let files = state.files;
+
+          _.each(state.files.ids, (id: string) => {
+            if (!freshFiles[id]) {
+              files = ConfigFileAdapter.removeOne(id, files);
+            } else {
+              const freshFile = freshFiles[id];
+              const existingFile = state.files.entities[id];
+              if (freshFile.timestamp !== existingFile.timestamp) {
+                freshFile.originalConfig = null; // Timestamp changes, Nullify the original config (so it will reload)
+                files = ConfigFileAdapter.upsertOne(freshFile, files);
+              }
+              delete freshFiles[id];
+            }
+          });
+
+          files = ConfigFileAdapter.addMany(_.values(freshFiles), files);
+
+          return {
+            ...state,
+            files
+          };
         }
 
         case BackendActionTypes.GetFileContentSuccess: {
-          if (action.payload.isNewFile) {
-            return state;
-          }
           return {
             ...state,
-            files: ConfigFileAdapter.upsertOne(action.payload.file, state.files)
+            files: ConfigFileAdapter.upsertOne(action.payload, state.files)
           };
         }
 
@@ -73,7 +88,7 @@ export function reducer(state = initialState, action: DashboardActionsUnion): St
         case BackendActionTypes.CommitChangesSuccess: {
           action.payload.files.forEach((f) => {
             f.modified = false;
-            f.originalConfig = f.config;
+            f.originalConfig = f.draftConfig;
           });
           return {
               ...state,

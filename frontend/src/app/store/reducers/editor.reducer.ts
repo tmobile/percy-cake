@@ -14,9 +14,9 @@ export interface State {
     fileName: string;
     inEditMode: boolean;
     inEnvMode: boolean;
-    configuration: Configuration;
-    draftConfiguration: Configuration;
-    originalConfiguration: Configuration;
+    configuration: Configuration; // In-edit config
+    draftConfiguration: Configuration; // Saved draft config
+    originalConfiguration: Configuration; // Original config from server
     showAsCode: boolean;
     previewCode: string;
     showAsCompiledYAMLEnvironment: string;
@@ -79,11 +79,14 @@ export function reducer(state = initialState, action: EditorActionsUnion): State
         }
 
         case BackendActionTypes.GetFileContentSuccess: {
+          const originalConfiguration = action.payload.originalConfig;
+          const draftConfiguration = action.payload.draftConfig || originalConfiguration;
+          const configuration = draftConfiguration;
           return {
               ...state,
-              configuration: action.payload.file.config,
-              draftConfiguration: action.payload.file.config,
-              originalConfiguration: action.payload.file.originalConfig,
+              configuration,
+              draftConfiguration,
+              originalConfiguration,
               isPageDirty: false
           };
         }
@@ -96,15 +99,12 @@ export function reducer(state = initialState, action: EditorActionsUnion): State
         }
 
         case EditorActionTypes.ConfigurationChange: {
-
-            const isPageDirty = !_.isEqual(state.draftConfiguration, action.payload);
+            const configuration = {...action.payload};
 
             return {
                 ...state,
-                configuration: {
-                    ...action.payload
-                },
-                isPageDirty
+                configuration,
+                isPageDirty: !_.isEqual(state.draftConfiguration, configuration)
             };
         }
 
@@ -133,9 +133,9 @@ export function reducer(state = initialState, action: EditorActionsUnion): State
         }
 
         case EditorActionTypes.SaveFile: {
-          state.draftConfiguration = state.configuration;
           return {
               ...state,
+              draftConfiguration: state.configuration,
               isPageDirty: false,
           };
         }
@@ -155,9 +155,10 @@ export function reducer(state = initialState, action: EditorActionsUnion): State
               return state;
             }
 
-            state.originalConfiguration = state.draftConfiguration = state.configuration;
             return {
                 ...state,
+                draftConfiguration: state.configuration,
+                originalConfiguration: state.configuration,
                 isCommitting: false,
                 isPageDirty: false,
             };

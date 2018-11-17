@@ -15,6 +15,7 @@ import {
     SaveFile,
     NodeSelectedSuccess,
     NodeSelected,
+    ConfigurationChange,
 } from '../actions/editor.actions';
 import { GetFileContent, GetFileContentSuccess } from '../actions/backend.actions';
 import { SaveDraft } from '../actions/backend.actions';
@@ -61,35 +62,22 @@ export class ConfigFileAddEditEffects {
           const applicationName = state.editor.appName;
 
           if (!state.editor.inEditMode) {
+            // Add new file, set an initial config
             if (state.editor.inEnvMode) {
-              return of(new GetFileContentSuccess({
-                file: {
-                  fileName,
-                  applicationName,
-                  config: {
-                    default: { $type: 'array', $value: [] }
-                  },
-                },
-                isNewFile: true
+              return of(new ConfigurationChange({
+                default: { $type: 'array', $value: [] }
               }));
             }
-            return of(new GetFileContentSuccess({
-              file: {
-                fileName,
-                applicationName,
-                config: {
-                  default: { $type: 'object' },
-                  environments: { $type: 'object' }
-                },
-              },
-              isNewFile: true
+            return of(new ConfigurationChange({
+              default: { $type: 'object' },
+              environments: { $type: 'object' }
             }));
           }
 
           const file = GetConfigFile(state.backend, state.editor.fileName, state.editor.appName);
 
-          if (file && file.config) {
-            return of(new GetFileContentSuccess({file}));
+          if (file && (file.originalConfig || !file.timestamp)) { // No timestamp means uncommitted (but draft saved) new file
+            return of(new GetFileContentSuccess(file));
           }
           return of(new GetFileContent(file ? file : {fileName, applicationName}));
         })
@@ -101,21 +89,20 @@ export class ConfigFileAddEditEffects {
         ofType<SaveFile>(EditorActionTypes.SaveFile),
         withLatestFrom(this.store.pipe(select(appStore.editorState))),
         switchMap(([action, editorState]) => {
+            const draftConfig = editorState.configuration;
             if (editorState.inEditMode) {
               const file: ConfigFile = {
                 fileName: editorState.fileName,
                 applicationName: editorState.appName,
-                config: editorState.configuration,
-                originalConfig: editorState.originalConfiguration,
-                modified: !_.isEqual(editorState.originalConfiguration, editorState.configuration),
+                draftConfig,
+                modified: !_.isEqual(editorState.originalConfiguration, draftConfig),
               };
               return of(new SaveDraft({file, redirect: action.payload.redirectToDashboard}));
             } else {
               const file: ConfigFile = {
                 fileName: editorState.fileName,
                 applicationName: editorState.appName,
-                config: editorState.configuration,
-                originalConfig: null,
+                draftConfig,
                 modified: true,
               };
               return of(new SaveDraft({file, redirect: action.payload.redirectToDashboard}));

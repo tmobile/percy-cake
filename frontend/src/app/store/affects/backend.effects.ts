@@ -3,7 +3,7 @@ import { MatDialog } from '@angular/material';
 import { Router } from '@angular/router';
 import { Actions, Effect, ofType } from '@ngrx/effects';
 import { Store, select } from '@ngrx/store';
-import { of } from 'rxjs';
+import { of, from } from 'rxjs';
 import { catchError, tap, map, withLatestFrom, switchMap } from 'rxjs/operators';
 import * as _ from 'lodash';
 
@@ -17,7 +17,7 @@ import {
 } from '../actions/backend.actions';
 import { FileManagementService } from '../../services/file-management.service';
 import * as appStore from '..';
-import { Alert, APIError, AlertClosed } from '../actions/common.actions';
+import { Alert, APIError, AlertClosed, Navigate } from '../actions/common.actions';
 import { ConflictDialogComponent } from '../../components/conflict-dialog/conflict-dialog.component';
 
 // defines the backend related effects
@@ -76,7 +76,7 @@ export class BackendEffects {
           const user = state.auth.currentUser;
           return this.fileManagementService.getFileContent(user.repoName, user.branchName, file.applicationName, file.fileName)
               .pipe(
-                  map(data => new GetFileContentSuccess({file: {...file, config: data, originalConfig: data }})),
+                  map(data => new GetFileContentSuccess({...file, originalConfig: data })), // set the original config from server
                   catchError(error => of(new GetFileContentFailure(error)))
               );
         })
@@ -95,19 +95,22 @@ export class BackendEffects {
         ofType<SaveDraft>(BackendActionTypes.SaveDraft),
         tap((action) => {
           if (action.payload.redirect) {
-            return this.router.navigate(['/dashboard']);
+            this.router.navigate(['/dashboard']);
           }
         })
     );
 
     // commit change success effect
-    @Effect({ dispatch: false })
+    @Effect()
     commitChangesSuccess$ = this.actions$.pipe(
         ofType<CommitChangesSuccess>(BackendActionTypes.CommitChangesSuccess),
-        tap((action) => {
+        switchMap((action) => {
+          const results = [];
+          results.push(new LoadFiles()); // reload files
           if (action.payload.fromEditor) {
-            return this.router.navigate(['/dashboard']);
+            results.push(new Navigate(['/dashboard']));
           }
+          return results;
         })
     );
 
@@ -179,9 +182,14 @@ export class BackendEffects {
     @Effect()
     deleteFileSuccess$ = this.actions$.pipe(
         ofType<DeleteFileSuccess>(BackendActionTypes.DeleteFileSuccess),
-        map((action) => new Alert({
-          message: `${action.payload.applicationName} / ${action.payload.fileName} deleted successfully.`,
-          editorType: 'delete'}))
+        switchMap((action) => {
+          const results = [];
+          results.push(new LoadFiles()); // reload files
+          results.push(new Alert({
+            message: `${action.payload.applicationName} / ${action.payload.fileName} deleted successfully.`,
+            editorType: 'delete'}));
+          return results;
+        })
     );
 
     // delete file failure effect

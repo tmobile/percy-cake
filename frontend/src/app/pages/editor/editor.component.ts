@@ -181,16 +181,16 @@ export class EditorComponent implements OnInit {
       const appState = result.appState;
       const fileName = appState.editor.fileName;
       const applicationName = appState.editor.appName;
-      const config = appState.editor.configuration;
+      const draftConfig = appState.editor.configuration;
 
-      if (_.isEqual(config, appState.editor.originalConfiguration)) {
+      if (_.isEqual(draftConfig, appState.editor.originalConfiguration)) {
         return this.store.dispatch(new Alert({ message: 'No changes made', editorType: 'info' }));
       }
 
       const file: ConfigFile = {
         fileName,
         applicationName,
-        config,
+        draftConfig,
       };
 
       const configFile = GetConfigFile(appState.backend, fileName, applicationName);
