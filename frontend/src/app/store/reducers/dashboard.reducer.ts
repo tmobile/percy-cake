@@ -10,7 +10,7 @@ export interface State {
     committingFile: boolean;
     selectedApp: string;
     tableSort: any;
-    collapsedApps: any;
+    collapsedApps: string[];
 }
 
 export const initialState: State = {
@@ -22,7 +22,7 @@ export const initialState: State = {
       applicationName: 'asc',
       fileName: 'asc',
     },
-    collapsedApps: {},
+    collapsedApps: [],
 };
 
 export function reducer(state = initialState, action: DashboardActionsUnion): State {
@@ -40,9 +40,15 @@ export function reducer(state = initialState, action: DashboardActionsUnion): St
             };
         }
         case DashboardActionTypes.ToggleApp: {
+            let collapsedApps;
+            if (_.includes(state.collapsedApps, action.payload)) {
+              collapsedApps = _.without(state.collapsedApps, action.payload);
+            } else {
+              collapsedApps = _.concat(state.collapsedApps, action.payload);
+            }
             return {
                 ...state,
-                collapsedApps: {...state.collapsedApps, [action.payload]: !state.collapsedApps[action.payload]}
+                collapsedApps
             };
         }
         case DashboardActionTypes.TableSort: {

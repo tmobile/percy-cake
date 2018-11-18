@@ -3,7 +3,7 @@ import { MatDialog, Sort } from '@angular/material';
 import { Router } from '@angular/router';
 import { Store, select } from '@ngrx/store';
 import { Observable, combineLatest } from 'rxjs';
-import { take, map } from 'rxjs/operators';
+import { take, map, withLatestFrom } from 'rxjs/operators';
 
 import { ConfigFile } from '../../models/config-file';
 import * as appStore from '../../store';
@@ -26,12 +26,8 @@ import * as _ from 'lodash';
   styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent implements OnInit {
-  sort = {
-    applicationName: 'asc',
-    fileName: 'asc',
-  };
-
-  collapsedApps: Observable<any> = this.store.pipe(select(appStore.getCollapsedApps));
+  collapsedApps: Observable<string[]> = this.store.pipe(select(appStore.getCollapsedApps));
+  allAppsExpanded: Observable<boolean> = this.collapsedApps.pipe(map(c => !c.length));
   tableSort: Observable<any> = this.store.pipe(select(appStore.getTableSort));
   repositoryName: Observable<string> = this.store.pipe(select(appStore.getRepositoryName));
   selectedApp: Observable<string> = this.store.pipe(select(appStore.getSelectedApp));
@@ -44,17 +40,17 @@ export class DashboardComponent implements OnInit {
   );
 
   folders = combineLatest(this.allFiles, this.tableSort, this.collapsedApps).pipe(
-    map(([files, _sort, _collapsedFolders]) => {
+    map(([files, sort, collapsedFolders]) => {
       const apps = _.groupBy(files, (file) => file.applicationName);
 
       const result = [];
 
-      _.orderBy(_.keys(apps), [], [_sort.applicationName]).forEach(app => {
-        const appFiles = _.orderBy(apps[app], ['fileName'], [_sort.fileName]);
+      _.orderBy(_.keys(apps), [], [sort.applicationName]).forEach(app => {
+        const appFiles = _.orderBy(apps[app], ['fileName'], [sort.fileName]);
         result.push({
           app
         });
-        if (!_collapsedFolders[app]) {
+        if (!_.includes(collapsedFolders, app)) {
           appFiles.forEach(appFile => {
             result.push({
               app,
@@ -103,12 +99,13 @@ export class DashboardComponent implements OnInit {
     this.store.dispatch(new ToggleApp(app));
   }
 
-  toggleAllApps(expand) {
-    this.applications.pipe(take(1)).subscribe(apps => {
-      const result = {};
-      if (!expand) {
+  toggleAllApps($event) {
+    $event.stopPropagation();
+    this.allAppsExpanded.pipe(take(1), withLatestFrom(this.applications)).subscribe(([allExpanded, apps]) => {
+      const result = [];
+      if (allExpanded) {
         apps.forEach(app => {
-          result[app] = true;
+          result.push(app);
         });
       }
       this.store.dispatch(new CollapseApps(result));

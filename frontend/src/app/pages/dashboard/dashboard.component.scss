@@ -82,6 +82,14 @@
               color: #FFFFFF;
               background-color: #000000;
               border-radius: 10px;
+              .folder-toggle-all-down {
+                transform: rotate(90deg);
+                margin-left: 6px;
+              }
+              .folder-toggle-all-up {
+                transform: rotate(-90deg);
+                margin-left: 3px;
+              }
             }
             .mo-ind {
               color: red;
