@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { Overlay } from '@angular/cdk/overlay';
 import {
   MatListModule,
   MatAutocompleteModule,
@@ -20,7 +21,8 @@ import {
   MatExpansionModule,
   MatIconModule,
   MatSortModule,
-  MatSlideToggleModule
+  MatSlideToggleModule,
+  MAT_DIALOG_SCROLL_STRATEGY
 } from '@angular/material';
 
 
@@ -72,6 +74,13 @@ import {
     MatIconModule,
     MatSortModule,
     MatSlideToggleModule
+  ],
+  providers: [
+    {
+      provide: MAT_DIALOG_SCROLL_STRATEGY,
+      deps: [Overlay],
+      useFactory: (overlay: Overlay) => () => overlay.scrollStrategies.noop()
+    }
   ]
 })
 

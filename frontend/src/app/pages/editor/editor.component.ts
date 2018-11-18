@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener, ViewChild } from '@angular/core';
+import { Component, OnInit, HostListener, ViewChild, Inject, ElementRef } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatDialog, MatInput } from '@angular/material';
@@ -23,6 +23,7 @@ import {
 } from '../../store/actions/editor.actions';
 import { GetConfigFile } from '../../store/reducers/backend.reducers';
 import { CommitChanges } from '../../store/actions/backend.actions';
+import { DOCUMENT } from '@angular/platform-browser';
 
 /*
   Configurations editor page
@@ -73,6 +74,9 @@ export class EditorComponent implements OnInit {
   @ViewChild('fileNameInput') fileNameInput: MatInput;
 
   @ViewChild('nestedConfig') nestedConfig: NestedConfigViewComponent;
+
+  @ViewChild('detailPanel') detailPanel: ElementRef;
+
   @HostListener('window:beforeunload', ['$event'])
   onLeavePage($event: any) {
     if (this.isPageDirty) {
@@ -80,10 +84,22 @@ export class EditorComponent implements OnInit {
     }
   }
 
+  @HostListener('window:scroll', [])
+  onWindowScroll() {
+    const paddingTop = this.document.documentElement.scrollTop - 230;
+
+    if (paddingTop > 0) {
+      this.detailPanel.nativeElement.style['padding-top'] = paddingTop + 'px';
+    } else {
+      this.detailPanel.nativeElement.style['padding-top'] = '0';
+    }
+  }
+
   constructor(
     private route: ActivatedRoute,
     private store: Store<appStore.AppState>,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    @Inject(DOCUMENT) private document: Document
   ) { }
 
   ngOnInit() {

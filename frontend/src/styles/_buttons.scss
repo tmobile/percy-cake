@@ -12,6 +12,13 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
+  &.cdk-program-focused 
+  {
+      .mat-button-focus-overlay
+      {
+          opacity: 0 !important;  // hide overlay for program focused 
+      }
+  }
 }
 
 // override some material design button styles
