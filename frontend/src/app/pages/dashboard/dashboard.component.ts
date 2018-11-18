@@ -2,13 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { MatDialog, Sort } from '@angular/material';
 import { Router } from '@angular/router';
 import { Store, select } from '@ngrx/store';
-import { Observable, BehaviorSubject, combineLatest } from 'rxjs';
+import { Observable, combineLatest } from 'rxjs';
 import { take, map } from 'rxjs/operators';
 
 import { ConfigFile } from '../../models/config-file';
 import * as appStore from '../../store';
 import { Alert } from '../../store/actions/common.actions';
-import { SelectApp } from '../../store/actions/dashboard.actions';
+import { SelectApp, CollapseApps, ToggleApp, TableSort } from '../../store/actions/dashboard.actions';
 import { DeleteFile, CommitChanges } from '../../store/actions/backend.actions';
 import { GetConfigFile } from '../../store/reducers/backend.reducers';
 import { ConfirmationDialogComponent } from '../../components/confirmation-dialog/confirmation-dialog.component';
@@ -30,11 +30,9 @@ export class DashboardComponent implements OnInit {
     applicationName: 'asc',
     fileName: 'asc',
   };
-  sort$: BehaviorSubject<any> = new BehaviorSubject(this.sort);
 
-  collapsedFolders = {};
-  collapsedFolders$: BehaviorSubject<any> = new BehaviorSubject(this.collapsedFolders);
-
+  collapsedApps: Observable<any> = this.store.pipe(select(appStore.getCollapsedApps));
+  tableSort: Observable<any> = this.store.pipe(select(appStore.getTableSort));
   repositoryName: Observable<string> = this.store.pipe(select(appStore.getRepositoryName));
   selectedApp: Observable<string> = this.store.pipe(select(appStore.getSelectedApp));
   applications: Observable<string[]> = this.store.pipe(select(appStore.getApplications));
@@ -45,7 +43,7 @@ export class DashboardComponent implements OnInit {
     })
   );
 
-  folders = combineLatest(this.allFiles, this.sort$, this.collapsedFolders$).pipe(
+  folders = combineLatest(this.allFiles, this.tableSort, this.collapsedApps).pipe(
     map(([files, _sort, _collapsedFolders]) => {
       const apps = _.groupBy(files, (file) => file.applicationName);
 
@@ -101,26 +99,24 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  toggleFolder(app) {
-    this.collapsedFolders[app] = !this.collapsedFolders[app];
-    this.collapsedFolders$.next(this.collapsedFolders);
+  toggleApp(app) {
+    this.store.dispatch(new ToggleApp(app));
   }
 
-  toggleAllFolders(expand) {
+  toggleAllApps(expand) {
     this.applications.pipe(take(1)).subscribe(apps => {
-      this.collapsedFolders = {};
+      const result = {};
       if (!expand) {
         apps.forEach(app => {
-          this.collapsedFolders[app] = true;
+          result[app] = true;
         });
       }
-      this.collapsedFolders$.next(this.collapsedFolders);
+      this.store.dispatch(new CollapseApps(result));
     });
   }
 
   onSortChange(sort: Sort) {
-    this.sort[sort.active] = sort.direction;
-    this.sort$.next(this.sort);
+    this.store.dispatch(new TableSort({[sort.active]: sort.direction}));
   }
 
   /**

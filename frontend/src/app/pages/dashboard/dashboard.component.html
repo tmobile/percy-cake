@@ -12,10 +12,10 @@
         <mat-option *ngFor="let app of applications|async" [value]="app">{{app}}</mat-option>
     </mat-select>
 
-    <button type="button" mat-raised-button color="primary" class="btn-expand-all" (click)="toggleAllFolders(true)">
+    <button type="button" mat-raised-button color="primary" class="btn-expand-all" (click)="toggleAllApps(true)">
       Expand All
     </button>
-    <button type="button" mat-raised-button color="primary" class="btn-collapse-all" (click)="toggleAllFolders(false)">
+    <button type="button" mat-raised-button color="primary" class="btn-collapse-all" (click)="toggleAllApps(false)">
       Collapse All
     </button>
 
@@ -34,7 +34,7 @@
       <th mat-header-cell *matHeaderCellDef mat-sort-header="applicationName">Application</th>
       <td mat-cell *matCellDef="let element">
         <div *ngIf="!element.appFile">
-          <span class="folder-toggle" (click)="toggleFolder(element.app)">{{collapsedFolders[element.app] ? '+' : '-' }}</span>
+          <span class="folder-toggle" (click)="toggleApp(element.app)">{{(collapsedApps|async)[element.app] ? '+' : '-' }}</span>
           <span >{{element.app}}</span>
         </div>
       </td>

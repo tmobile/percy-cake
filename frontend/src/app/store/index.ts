@@ -51,6 +51,8 @@ export const getAllFiles = createSelector(backendState, fromBackend.getAllFiles)
 // dashboard related selectors
 export const dashboardState = createFeatureSelector<AppState, fromDashboard.State>('dashboard');
 export const getSelectedApp = createSelector(dashboardState, fromDashboard.getSelectedApp);
+export const getCollapsedApps = createSelector(dashboardState, fromDashboard.getCollapsedApps);
+export const getTableSort = createSelector(dashboardState, fromDashboard.getTableSort);
 export const getDashboardError = createSelector(dashboardState, fromDashboard.getError);
 export const getDashboardFileDeleting = createSelector(dashboardState, fromDashboard.isDeletingFile);
 export const getDashboardCommittingFile = createSelector(dashboardState, fromDashboard.isCommittingFile);
