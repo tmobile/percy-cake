@@ -11,6 +11,10 @@
         display: flex;
         align-items: center;
         padding: 25px 0 20px;
+        .btn-expand-all {
+          margin-right: 20px;
+          margin-left: auto;
+        }
         .btn-commit-changes {
             margin-left: auto;
             text-transform: uppercase;
@@ -36,14 +40,15 @@
         th.mat-header-cell,
         td.mat-cell {
             padding: 7px 25px;
-            &.mat-column-id {
-              width: 10%;
+            &.mat-column-applicationName {
+              width: 20%;
+              div {
+                display: flex;
+                align-items: center;
+              }
             }
             &.mat-column-fileName {
-              width: 25%;
-            }
-            &.mat-column-applicationName {
-              width: 40%;
+              width: 55%;
             }
             &.actions-col {
                 width: 25%;
@@ -63,6 +68,20 @@
                       }
                     }
                 }
+            }
+            .folder-toggle {
+              cursor: pointer;
+              display: block;
+              font-weight: bold;
+              font-size: large;
+              height: 20px;
+              line-height: 20px;
+              margin-right: 5px;
+              text-align: center;
+              width: 20px;
+              color: #FFFFFF;
+              background-color: #000000;
+              border-radius: 10px;
             }
             .mo-ind {
               color: red;

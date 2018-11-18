@@ -26,31 +26,58 @@ import * as _ from 'lodash';
   styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent implements OnInit {
-  sort$: BehaviorSubject<Sort> = new BehaviorSubject(undefined);
+  sort = {
+    applicationName: 'asc',
+    fileName: 'asc',
+  };
+  sort$: BehaviorSubject<any> = new BehaviorSubject(this.sort);
+
+  collapsedFolders = {};
+  collapsedFolders$: BehaviorSubject<any> = new BehaviorSubject(this.collapsedFolders);
 
   repositoryName: Observable<string> = this.store.pipe(select(appStore.getRepositoryName));
   selectedApp: Observable<string> = this.store.pipe(select(appStore.getSelectedApp));
   applications: Observable<string[]> = this.store.pipe(select(appStore.getApplications));
-  files: Observable<ConfigFile[]> = combineLatest(this.store.pipe(select(appStore.getAppFiles)), this.selectedApp, this.sort$).pipe(
-    map(([appFiles, applicationName, sort]) => {
-      const result = appFiles.filter((f) => !applicationName || applicationName === f.applicationName);
-      if (!sort || !sort.active || !sort.direction) {
-        return result;
-      }
-      const sorted = _.sortBy(result, sort.active);
-      return sort.direction === 'asc' ? sorted : _.reverse(sorted);
+
+  allFiles = combineLatest(this.store.pipe(select(appStore.getAllFiles)), this.selectedApp).pipe(
+    map(([files, applicationName]) => {
+      return files.filter((file) => !applicationName || applicationName === file.applicationName);
+    })
+  );
+
+  folders = combineLatest(this.allFiles, this.sort$, this.collapsedFolders$).pipe(
+    map(([files, _sort, _collapsedFolders]) => {
+      const apps = _.groupBy(files, (file) => file.applicationName);
+
+      const result = [];
+
+      _.orderBy(_.keys(apps), [], [_sort.applicationName]).forEach(app => {
+        const appFiles = _.orderBy(apps[app], ['fileName'], [_sort.fileName]);
+        result.push({
+          app
+        });
+        if (!_collapsedFolders[app]) {
+          appFiles.forEach(appFile => {
+            result.push({
+              app,
+              appFile
+            });
+          });
+        }
+      });
+      return result;
     })
   );
 
   isDeleting = this.store.pipe(select(appStore.getDashboardFileDeleting));
   isCommitting = this.store.pipe(select(appStore.getDashboardCommittingFile));
 
-  displayedColumns: string[] = ['id', 'fileName', 'applicationName', 'actions'];
+  displayedColumns: string[] = ['applicationName', 'fileName', 'actions'];
 
   envFileName: string;
 
-  disableCommit = this.files.pipe(map(appFiles => {
-    const modified = appFiles.filter((f) => f.modified).map(f => ({...f}));
+  disableCommit = this.allFiles.pipe(map(files => {
+    const modified = files.filter((f) => f.modified).map(f => ({...f}));
     return !modified.length;
   }));
   /**
@@ -74,8 +101,26 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  toggleFolder(app) {
+    this.collapsedFolders[app] = !this.collapsedFolders[app];
+    this.collapsedFolders$.next(this.collapsedFolders);
+  }
+
+  toggleAllFolders(expand) {
+    this.applications.pipe(take(1)).subscribe(apps => {
+      this.collapsedFolders = {};
+      if (!expand) {
+        apps.forEach(app => {
+          this.collapsedFolders[app] = true;
+        });
+      }
+      this.collapsedFolders$.next(this.collapsedFolders);
+    });
+  }
+
   onSortChange(sort: Sort) {
-    this.sort$.next(sort);
+    this.sort[sort.active] = sort.direction;
+    this.sort$.next(this.sort);
   }
 
   /**
@@ -127,8 +172,8 @@ export class DashboardComponent implements OnInit {
    * Commit changes.
    */
   commitChanges() {
-    this.files.pipe(take(1)).subscribe(appFiles => {
-      const modified = appFiles.filter((f) => f.modified).map(f => ({...f}));
+    this.allFiles.pipe(take(1)).subscribe(files => {
+      const modified = files.filter((f) => f.modified).map(f => ({...f}));
 
       if (!modified.length) {
         return this.store.dispatch(new Alert({ message: 'No files changed', editorType: 'info' }));

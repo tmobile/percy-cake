@@ -121,5 +121,5 @@ export function reducer(state = initialState, action: DashboardActionsUnion): St
 }
 
 export const getApplications = (state: State) => state.applications;
-export const getAppFiles = (state: State) => ConfigFileAdapter.getSelectors().selectAll(state.files);
+export const getAllFiles = (state: State) => ConfigFileAdapter.getSelectors().selectAll(state.files);
 
