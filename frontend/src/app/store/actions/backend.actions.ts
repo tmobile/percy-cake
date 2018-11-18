@@ -1,6 +1,5 @@
 import { Action } from '@ngrx/store';
 
-import { LogoutSuccess } from './auth.actions';
 import { ConfigFile } from '../../models/config-file';
 
 export enum BackendActionTypes {
@@ -123,7 +122,7 @@ export class ResolveConficts implements Action {
 }
 
 
-export type DashboardActionsUnion =
+export type BackendActionsUnion =
   | Initialized
   | ListApplications
   | ListApplicationsSuccess
@@ -142,5 +141,4 @@ export type DashboardActionsUnion =
   | CommitChangesSuccess
   | CommitChangesFailure
   | ResolveConficts
-  | LogoutSuccess
   ;

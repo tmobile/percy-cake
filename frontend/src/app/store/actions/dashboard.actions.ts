@@ -1,8 +1,4 @@
 import { Action } from '@ngrx/store';
-import { LogoutSuccess } from './auth.actions';
-import {
-  CommitChanges, CommitChangesSuccess, CommitChangesFailure,
-  DeleteFile, DeleteFileSuccess, DeleteFileFailure } from './backend.actions';
 
 export enum DashboardActionTypes {
   SelectApp = '[Dashboard] Select Application',
@@ -41,10 +37,4 @@ export type DashboardActionsUnion =
   | TableSort
   | ToggleApp
   | CollapseApps
-  | DeleteFile
-  | DeleteFileSuccess
-  | DeleteFileFailure
-  | CommitChanges
-  | CommitChangesSuccess
-  | CommitChangesFailure
-  | LogoutSuccess;
+  ;

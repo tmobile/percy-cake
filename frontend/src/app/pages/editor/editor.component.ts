@@ -88,10 +88,12 @@ export class EditorComponent implements OnInit {
   onWindowScroll() {
     const paddingTop = this.document.documentElement.scrollTop - 230;
 
-    if (paddingTop > 0) {
-      this.detailPanel.nativeElement.style['padding-top'] = paddingTop + 'px';
-    } else {
-      this.detailPanel.nativeElement.style['padding-top'] = '0';
+    if (this.detailPanel && this.detailPanel.nativeElement) {
+      if (paddingTop > 0) {
+        this.detailPanel.nativeElement.style['padding-top'] = paddingTop + 'px';
+      } else {
+        this.detailPanel.nativeElement.style['padding-top'] = '0';
+      }
     }
   }
 

@@ -1,6 +1,5 @@
 import { DashboardActionsUnion, DashboardActionTypes } from '../actions/dashboard.actions';
-import { AuthActionTypes } from '../actions/auth.actions';
-import { BackendActionTypes } from '../actions/backend.actions';
+import { BackendActionsUnion , BackendActionTypes } from '../actions/backend.actions';
 
 import * as _ from 'lodash';
 
@@ -25,7 +24,7 @@ export const initialState: State = {
     collapsedApps: [],
 };
 
-export function reducer(state = initialState, action: DashboardActionsUnion): State {
+export function reducer(state = initialState, action: BackendActionsUnion | DashboardActionsUnion): State {
     switch (action.type) {
         case DashboardActionTypes.SelectApp: {
             return {
@@ -104,10 +103,6 @@ export function reducer(state = initialState, action: DashboardActionsUnion): St
                 error: action.payload.message,
                 deletingFile: false,
             };
-        }
-
-        case AuthActionTypes.LogoutSuccess: {
-            return initialState;
         }
 
         default: {

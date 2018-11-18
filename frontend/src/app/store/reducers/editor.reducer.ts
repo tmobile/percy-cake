@@ -1,10 +1,11 @@
-import { Configuration } from '../../models/config-file';
-import { AuthActionTypes } from '../actions/auth.actions';
-import { BackendActionTypes } from '../actions/backend.actions';
-import { EditorActionTypes, EditorActionsUnion } from '../actions/editor.actions';
 import * as _ from 'lodash';
+
+import { Configuration } from '../../models/config-file';
 import { TreeNode } from '../../models/tree-node';
 import { ConfigProperty } from '../../models/config-property';
+
+import { BackendActionsUnion, BackendActionTypes } from '../actions/backend.actions';
+import { EditorActionTypes, EditorActionsUnion } from '../actions/editor.actions';
 
 export interface State {
     error: any;
@@ -55,7 +56,7 @@ const cancelRightPanel = {
     currentAddEditProperty: null,
 };
 
-export function reducer(state = initialState, action: EditorActionsUnion): State {
+export function reducer(state = initialState, action: EditorActionsUnion | BackendActionsUnion): State {
     switch (action.type) {
         case EditorActionTypes.PageLoad: {
             return {
@@ -221,10 +222,6 @@ export function reducer(state = initialState, action: EditorActionsUnion): State
                 previewCode: action.payload.compiledYAML,
                 selectedConfigProperty: action.payload.configProperty
             };
-        }
-
-        case AuthActionTypes.LogoutSuccess: {
-            return initialState;
         }
 
         default: {

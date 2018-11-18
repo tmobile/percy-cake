@@ -11,6 +11,9 @@ import * as fromBackend from './reducers/backend.reducers';
 import * as fromDashboard from './reducers/dashboard.reducer';
 import * as fromEditor from './reducers/editor.reducer';
 
+import { CommonActionTypes } from './actions/common.actions';
+import { AuthActionTypes } from './actions/auth.actions';
+
 export interface AppState {
   auth: fromAuth.State;
   backend: fromBackend.State;
@@ -29,7 +32,19 @@ export function localStorageSyncReducer(reducer: ActionReducer<AppState>): Actio
   return localStorageSync({ keys: [{ 'auth': ['currentUser', 'loggedIn'] }], rehydrate: true })(reducer);
 }
 
-export const metaReducers: MetaReducer<AppState>[] = [localStorageSyncReducer];
+export function clearState(reducer) {
+  return function (state, action) {
+
+    if (action.type === AuthActionTypes.LogoutSuccess
+      || action.type === CommonActionTypes.Reset) {
+      state = undefined;
+    }
+
+    return reducer(state, action);
+  };
+}
+
+export const metaReducers: MetaReducer<AppState>[] = [localStorageSyncReducer, clearState];
 
 // dashboard related selectors
 export const authState = createFeatureSelector<AppState, fromAuth.State>('auth');

@@ -1,16 +1,18 @@
 import { Component, OnInit, ViewChild, Inject } from '@angular/core';
-import { FormControl, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { DOCUMENT } from '@angular/common';
+import { FormControl, Validators } from '@angular/forms';
+import { MatAutocompleteTrigger } from '@angular/material';
 
+import { Store, select } from '@ngrx/store';
 import { Observable, of } from 'rxjs';
 import { map, startWith, debounceTime, distinctUntilChanged, switchMap, withLatestFrom, tap } from 'rxjs/operators';
-import { MaintenanceService } from '../../services/maintenance.service';
-import { MatAutocompleteTrigger } from '@angular/material';
+
 import * as _ from 'lodash';
-import { DOCUMENT } from '@angular/common';
-import { Store, select } from '@ngrx/store';
+
 import * as appStore from '../../store';
 import * as AuthActions from '../../store/actions/auth.actions';
+import { MaintenanceService } from '../../services/maintenance.service';
 
 const urlFormat = /^(http[s]?:\/\/){0,1}(www\.){0,1}[a-zA-Z0-9\.\-]+\.[a-zA-Z]{2,5}[\.]{0,1}/;
 

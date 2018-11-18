@@ -1,10 +1,9 @@
 import { EntityState, EntityAdapter, createEntityAdapter } from '@ngrx/entity';
 
 import { ConfigFile } from '../../models/config-file';
-import { DashboardActionsUnion, BackendActionTypes } from '../actions/backend.actions';
+import { BackendActionsUnion, BackendActionTypes } from '../actions/backend.actions';
 
 import * as _ from 'lodash';
-import { AuthActionTypes } from '../actions/auth.actions';
 
 export interface ConfigFiles extends EntityState<ConfigFile> {}
 
@@ -28,7 +27,7 @@ export const initialState: State = {
     initialized: false,
 };
 
-export function reducer(state = initialState, action: DashboardActionsUnion): State {
+export function reducer(state = initialState, action: BackendActionsUnion): State {
     switch (action.type) {
 
         case BackendActionTypes.Initialized: {
@@ -108,10 +107,6 @@ export function reducer(state = initialState, action: DashboardActionsUnion): St
                 ...state,
                 files: ConfigFileAdapter.removeOne(ConfigFileAdapter.selectId(action.payload) + '', state.files)
             };
-        }
-
-        case AuthActionTypes.LogoutSuccess: {
-            return initialState;
         }
 
         default: {

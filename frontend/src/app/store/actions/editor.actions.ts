@@ -1,8 +1,7 @@
 import { Action } from '@ngrx/store';
+
 import { TreeNode } from '../../models/tree-node';
 import { ConfigProperty } from '../../models/config-property';
-import { LogoutSuccess } from './auth.actions';
-import { CommitChangesSuccess, CommitChanges, CommitChangesFailure, GetFileContentFailure, GetFileContentSuccess } from './backend.actions';
 import { Configuration } from '../../models/config-file';
 
 export enum EditorActionTypes {
@@ -101,9 +100,4 @@ export type EditorActionsUnion =
     | NodeSelected
     | NodeSelectedSuccess
     | ConfigurationChange
-    | CommitChanges
-    | CommitChangesSuccess
-    | CommitChangesFailure
-    | GetFileContentSuccess
-    | GetFileContentFailure
-    | LogoutSuccess;
+    ;
