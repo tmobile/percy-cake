@@ -7,7 +7,7 @@ import { environment } from '../../environments/environment';
 import { UtilService } from './util.service';
 import { LOGGED_IN_USER_KEY } from '../config/index';
 
-const API_BASE_URL = environment.api.baseUrl;
+export const API_BASE_URL = environment.api.baseUrl;
 
 /**
  * This service provides the helper method for calling Http endpoints

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { Actions, Effect, ofType } from '@ngrx/effects';
 import { of } from 'rxjs';
-import { catchError, exhaustMap, map, tap, withLatestFrom, switchMap } from 'rxjs/operators';
+import { catchError, exhaustMap, map, tap, withLatestFrom } from 'rxjs/operators';
 import * as _ from 'lodash';
 
 import {
@@ -37,7 +37,7 @@ export class AuthEffects {
     @Effect()
     getDefaultRepo$ = this.actions$.pipe(
         ofType<GetDefaultRepo>(AuthActionTypes.GetDefaultRepo),
-        switchMap(() =>
+        exhaustMap(() =>
           this.maintenanceService.getDefaultRepo()
             .pipe(
               map(defaultRepo => new GetDefaultRepoSuccess(defaultRepo)),

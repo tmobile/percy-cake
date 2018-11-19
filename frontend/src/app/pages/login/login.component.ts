@@ -62,8 +62,7 @@ export class LoginComponent implements OnInit {
       withLatestFrom(this.store.pipe(select(appStore.getRedirectUrl))),
       tap(([isAuthenticated, redirectUrl]) => {
         if (isAuthenticated) {
-          redirectUrl = redirectUrl || '/dashboard';
-          return this.router.navigate([redirectUrl]);
+          return this.router.navigate([redirectUrl || '/dashboard']);
         }
       })
     ).subscribe();

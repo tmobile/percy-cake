@@ -1,4 +1,5 @@
 import { Component, OnInit, HostListener, ViewChild, Inject, ElementRef } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { FormControl, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatDialog, MatInput } from '@angular/material';
@@ -23,7 +24,6 @@ import {
 } from '../../store/actions/editor.actions';
 import { GetConfigFile } from '../../store/reducers/backend.reducers';
 import { CommitChanges } from '../../store/actions/backend.actions';
-import { DOCUMENT } from '@angular/platform-browser';
 
 /*
   Configurations editor page
