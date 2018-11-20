@@ -86,7 +86,7 @@ export class EditorComponent implements OnInit {
 
   @HostListener('window:scroll', [])
   onWindowScroll() {
-    const paddingTop = this.document.documentElement.scrollTop - 150;
+    const paddingTop = (this.document.documentElement.scrollTop || this.document.body.scrollTop) - 150;
 
     if (this.detailPanel && this.detailPanel.nativeElement) {
       if (paddingTop > 0) {

@@ -24,11 +24,11 @@
 
     <!-- Application column -->
     <ng-container matColumnDef="applicationName">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header="applicationName">
+      <th mat-header-cell *matHeaderCellDef >
         <div class="folder-toggle" (click)="toggleAllApps($event)">
           <span class="{{(allAppsExpanded|async) ? 'folder-toggle-all-up' : 'folder-toggle-all-down'}}">&raquo;</span>
         </div>
-        Application
+        <div mat-sort-header="applicationName">Application</div>
       </th>
       <td mat-cell *matCellDef="let element">
         <div *ngIf="!element.appFile">

@@ -43,7 +43,7 @@
             &.mat-column-applicationName {
               width: 20%;
               div {
-                display: flex;
+                display: inline-flex;
                 align-items: center;
               }
             }
@@ -84,11 +84,11 @@
               border-radius: 10px;
               .folder-toggle-all-down {
                 transform: rotate(90deg);
-                margin-left: 6px;
+                margin-left: 7px;
               }
               .folder-toggle-all-up {
                 transform: rotate(-90deg);
-                margin-left: 3px;
+                margin-left: 4px;
               }
             }
             .mo-ind {
