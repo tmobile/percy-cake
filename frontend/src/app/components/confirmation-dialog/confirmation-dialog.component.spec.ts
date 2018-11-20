@@ -9,4 +9,9 @@ describe('ConfirmationDialogComponent', () => {
   it('should create ConfirmationDialogComponent', () => {
     expect(ctx().component).toBeTruthy();
   });
+
+  it('should confirm action', () => {
+    ctx().component.confirmAction();
+    expect(ctx().dialogStub.output.value).toBeTruthy();
+  });
 });
