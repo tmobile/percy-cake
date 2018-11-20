@@ -3,7 +3,7 @@ import { MatDialog } from '@angular/material';
 import { Router } from '@angular/router';
 import { Actions, Effect, ofType } from '@ngrx/effects';
 import { Store, select } from '@ngrx/store';
-import { of, from } from 'rxjs';
+import { of } from 'rxjs';
 import { catchError, tap, map, withLatestFrom, switchMap } from 'rxjs/operators';
 import * as _ from 'lodash';
 
@@ -17,7 +17,7 @@ import {
 } from '../actions/backend.actions';
 import { FileManagementService } from '../../services/file-management.service';
 import * as appStore from '..';
-import { Alert, APIError, AlertClosed, Navigate } from '../actions/common.actions';
+import { Alert, APIError, Navigate } from '../actions/common.actions';
 import { ConflictDialogComponent } from '../../components/conflict-dialog/conflict-dialog.component';
 
 // defines the backend related effects
@@ -63,7 +63,7 @@ export class BackendEffects {
     @Effect()
     loadFilesFailure$ = this.actions$.pipe(
         ofType<LoadFilesFailure>(BackendActionTypes.LoadFilesFailure),
-        map((error) => new APIError(error))
+        map((action) => new APIError(action.payload))
     );
 
     // get file content effect
@@ -86,7 +86,7 @@ export class BackendEffects {
     @Effect()
     getFileContentFailure$ = this.actions$.pipe(
         ofType<GetFileContentFailure>(BackendActionTypes.GetFileContentFailure),
-        map((error) => new APIError(error))
+        map((action) => new APIError(action.payload))
     );
 
     // save draft success effect
@@ -106,6 +106,7 @@ export class BackendEffects {
         ofType<CommitChangesSuccess>(BackendActionTypes.CommitChangesSuccess),
         switchMap((action) => {
           const results = [];
+          results.push(new ListApplications());
           results.push(new LoadFiles()); // reload files
           if (action.payload.fromEditor) {
             results.push(new Navigate(['/dashboard']));
@@ -151,9 +152,9 @@ export class BackendEffects {
                     commitMessage: action.payload.commitMessage
                 }
             });
-            return of(new AlertClosed({}));
+            return of();
           } else {
-            return of(new APIError({payload: action.payload.error}));
+            return of(new APIError(action.payload.error));
           }
         })
     );
@@ -184,6 +185,7 @@ export class BackendEffects {
         ofType<DeleteFileSuccess>(BackendActionTypes.DeleteFileSuccess),
         switchMap((action) => {
           const results = [];
+          results.push(new ListApplications());
           results.push(new LoadFiles()); // reload files
           results.push(new Alert({
             message: `${action.payload.applicationName} / ${action.payload.fileName} deleted successfully.`,
@@ -196,6 +198,6 @@ export class BackendEffects {
     @Effect()
     deleteFileFailure$ = this.actions$.pipe(
         ofType<DeleteFileFailure>(BackendActionTypes.DeleteFileFailure),
-        map((error) => new APIError(error))
+        map((action) => new APIError(action.payload))
     );
 }

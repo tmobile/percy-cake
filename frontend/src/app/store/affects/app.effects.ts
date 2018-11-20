@@ -27,12 +27,7 @@ export class AppEffects {
         ofType<Alert>(CommonActionTypes.Alert),
         map(action => action.payload),
         tap(data => {
-            this.dialog.open(AlertDialogComponent, {
-                data: {
-                    message: data.message,
-                    editorType: data.editorType
-                }
-            });
+            this.dialog.open(AlertDialogComponent, { data });
         })
     );
 
@@ -55,12 +50,12 @@ export class AppEffects {
     apiError$ = this.actions$.pipe(
         ofType<APIError>(CommonActionTypes.APIError),
         map(action => action.payload),
-        exhaustMap(data => {
-            const message = `[${data.payload.status}]: ${data.payload.error.message}`;
+        exhaustMap(response => {
+            const message = `[${response.status}]: ${response.error.message}`;
             this.maintenanceService.logError(message).subscribe(() => { }, error => {
                 console.error('An error occurred while saving the log error', error);
             });
-            return of(new Alert({ message: data.payload.error.message, editorType: 'error' }));
+            return of(new Alert({ message: response.error.message, editorType: 'error' }));
         }),
     );
 

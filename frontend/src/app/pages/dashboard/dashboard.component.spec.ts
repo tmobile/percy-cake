@@ -7,6 +7,7 @@ import { TestUser, Setup } from 'test/test-helper';
 
 import { DashboardComponent } from './dashboard.component';
 import { LoadFiles, ListApplications } from 'store/actions/backend.actions';
+import { ConfigFile } from 'models/config-file';
 
 describe('DashboardComponent', () => {
 
@@ -291,7 +292,7 @@ describe('DashboardComponent', () => {
 
   it('should navigate to add new file', () => {
     ctx().component.addNewFile();
-    expect(_.pick(ctx().dialogStub.input.value, ['envFileName', 'applications', 'selectedApp'])).toEqual({
+    expect(_.pick(ctx().dialogStub.input.value.data, ['envFileName', 'applications', 'selectedApp'])).toEqual({
       envFileName: TestUser.envFileName,
       applications: apps,
       selectedApp: '',
@@ -318,8 +319,7 @@ describe('DashboardComponent', () => {
     expect(ctx().routerStub.value).toEqual(['/files/editenv', file.applicationName, file.fileName]);
   });
 
-
-  it('should delete file', () => {
+  it('should successfully delete file', () => {
 
     const file = {
       fileName: 'sample.yaml',
@@ -338,20 +338,94 @@ describe('DashboardComponent', () => {
     ctx().httpMock.expectOne(path).flush({});
     expect(ctx().observables.isDeleting.value).toBeFalsy();
 
-    expect(ctx().observables.folders.value.filter(f => f.appFile && f.appFile.fileName === file.fileName
-      && f.appFile.applicationName === file.applicationName).length).toEqual(0);
+    // File should be removed
+    expect(ctx().observables.folders.value.filter(f => f.appFile && f.appFile.fileName === file.fileName &&
+      f.appFile.applicationName === file.applicationName).length).toEqual(0);
+
+    // Alert should be shown
+    expect(ctx().dialogStub.input.value.data.message).toEqual(
+      `${file.applicationName} / ${file.fileName} deleted successfully.`);
+
+    // Should reload from repo
+    const newRepoFile = {
+      applicationName: 'app2',
+      fileName: TestUser.envFileName,
+      timestamp: Date.now(),
+      size: 100,
+    };
+    ctx().httpMock.expectOne(`${API_BASE_URL}/${url}/files`).flush([newRepoFile]);
+    ctx().httpMock.expectOne(`${API_BASE_URL}/${url}/applications`).flush(['app2']);
+
+    expect(ctx().observables.folders.value).toEqual([
+      {
+        app: 'app2',
+      },
+      {
+        app: 'app2',
+        appFile: newRepoFile,
+      },
+    ]);
   });
 
-  // describe('commitChanges', () => {
-  //   it('makes expected calls', () => {
-  //     const matDialogStub: MatDialog = fixture.debugElement.injector.get(MatDialog);
-  //     const storeStub: Store = fixture.debugElement.injector.get(Store);
-  //     spyOn(matDialogStub, 'open');
-  //     spyOn(storeStub, 'dispatch');
-  //     comp.commitChanges();
-  //     expect(matDialogStub.open).toHaveBeenCalled();
-  //     expect(storeStub.dispatch).toHaveBeenCalled();
-  //   });
-  // });
+  it('should show alert if failed to delete file', () => {
+
+    const file = {
+      fileName: 'sample.yaml',
+      applicationName: 'app1',
+      timestamp: Date.now()
+    };
+
+    const path = `${API_BASE_URL}/${url}/applications/${file.applicationName}/files/${file.fileName}`;
+    ctx().component.deleteFile(file);
+    ctx().dialogStub.output.next(true);
+
+    expect(ctx().observables.isDeleting.value).toBeTruthy();
+    ctx().httpMock.expectOne(path).flush(
+      {
+        message: 'Failed to delete file',
+        statusCode: 500
+      },
+      {
+        status: 500,
+        statusText: 'Internal Server Error'
+      }
+    );
+    expect(ctx().observables.isDeleting.value).toBeFalsy();
+
+    expect(ctx().dialogStub.input.value.data.message).toEqual('Failed to delete file');
+  });
+
+  it('should commit changes', () => {
+    const file = ctx().observables.folders.value[1].appFile;
+    const modifiedFile: ConfigFile = {
+      fileName: file.fileName,
+      applicationName: file.applicationName,
+      draftConfig: {
+        default: {$type: 'object', key: {$value: 'value', $type: 'string'}},
+        environments: {$type: 'object'}
+      },
+      modified: true,
+      timestamp: Date.now(),
+      size: 100
+    };
+
+    ctx().observables.folders.value[1].appFile = modifiedFile;
+
+    ctx().component.commitChanges();
+
+    ctx().dialogStub.output.next('commit message');
+
+    const path = `${API_BASE_URL}/${url}/commit`;
+    ctx().httpMock.expectOne(path).flush([
+      _.pick(modifiedFile, ['fileName', 'applicationName', 'timestamp', 'size'])
+    ]);
+
+    const committedFile: ConfigFile = {
+      ...modifiedFile,
+      modified: false,
+      originalConfig: modifiedFile.draftConfig
+    };
+    expect(ctx().observables.folders.value[1].appFile).toEqual(committedFile);
+  });
 
 });

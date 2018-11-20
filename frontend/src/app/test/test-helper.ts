@@ -99,7 +99,7 @@ export const Setup = <T>(componentType: Type<T>, initActions?: Action[], noInit?
         {
           provide: MatDialog, useValue: {
             open(dialogType, options) {
-              DialogStub.input.next(options.data);
+              DialogStub.input.next(options);
               return {
                 afterClosed: () => {
                   DialogStub.output = new BehaviorSubject(undefined);

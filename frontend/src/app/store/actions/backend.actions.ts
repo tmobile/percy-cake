@@ -1,6 +1,7 @@
 import { Action } from '@ngrx/store';
 
 import { ConfigFile } from '../../models/config-file';
+import { HttpErrorResponse } from '@angular/common/http';
 
 export enum BackendActionTypes {
   Initialized = '[Backend] Initialized',
@@ -40,7 +41,7 @@ export class ListApplicationsSuccess implements Action {
 export class ListApplicationsFailure implements Action {
   readonly type = BackendActionTypes.ListApplicationsFailure;
 
-  constructor(public payload: any) { }
+  constructor(public payload: HttpErrorResponse) { }
 }
 
 export class LoadFiles implements Action {
@@ -56,7 +57,7 @@ export class LoadFilesSuccess implements Action {
 export class LoadFilesFailure implements Action {
   readonly type = BackendActionTypes.LoadFilesFailure;
 
-  constructor(public payload: any) { }
+  constructor(public payload: HttpErrorResponse) { }
 }
 
 export class GetFileContent implements Action {
@@ -71,7 +72,7 @@ export class GetFileContentSuccess implements Action {
 
 export class GetFileContentFailure implements Action {
     readonly type = BackendActionTypes.GetFileContentFailure;
-    constructor(public payload: any) { }
+    constructor(public payload: HttpErrorResponse) { }
 }
 
 export class DeleteFile implements Action {
@@ -88,7 +89,7 @@ export class DeleteFileSuccess implements Action {
 export class DeleteFileFailure implements Action {
   readonly type = BackendActionTypes.DeleteFileFailure;
 
-  constructor(public payload: any) { }
+  constructor(public payload: HttpErrorResponse) { }
 }
 
 export class SaveDraft implements Action {
@@ -112,7 +113,7 @@ export class CommitChangesSuccess implements Action {
 export class CommitChangesFailure implements Action {
   readonly type = BackendActionTypes.CommitChangesFailure;
 
-  constructor(public payload: {error: any, files: ConfigFile[], commitMessage: string, fromEditor?: boolean}) { }
+  constructor(public payload: {error: HttpErrorResponse, files: ConfigFile[], commitMessage: string, fromEditor?: boolean}) { }
 }
 
 export class ResolveConficts implements Action {
