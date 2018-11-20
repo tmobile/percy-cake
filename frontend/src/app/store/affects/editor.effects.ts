@@ -173,6 +173,6 @@ export class EditorEffects {
     @Effect()
     pageLoadFailure$ = this.actions$.pipe(
         ofType<PageLoadFailure>(EditorActionTypes.PageLoadFailure),
-        map((error) => new APIError(error))
+        map((action) => new APIError(action.payload))
     );
 }
