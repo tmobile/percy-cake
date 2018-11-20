@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
-import * as appStore from '../../store';
 import { Store } from '@ngrx/store';
-import * as AuthActions from '../../store/actions/auth.actions';
+
+import * as appStore from 'store';
+import * as AuthActions from 'store/actions/auth.actions';
 
 @Component({
   selector: 'app-main-header',

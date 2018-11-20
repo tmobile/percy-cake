@@ -9,4 +9,9 @@ describe('MainHeaderComponent', () => {
   it('should create MainHeaderComponent', () => {
     expect(ctx().component).toBeTruthy();
   });
+
+  it('should logout successfully', () => {
+    ctx().component.logout();
+    expect(ctx().routerStub.value).toEqual(['/login']);
+  });
 });
