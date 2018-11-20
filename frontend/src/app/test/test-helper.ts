@@ -134,7 +134,12 @@ export const Setup = <T>(componentType: Type<T>, triggerLifecyle: boolean = true
   let ctx: TestContext<T>;
 
   beforeEach(async () => {
+    // Reset the stub values before each test
+    RouterStub.next(undefined);
+    DialogStub.output.next(undefined);
+    DialogStub.input.next(undefined);
 
+    // Create component and the test context
     ctx = new TestContext(createTestContext(componentType));
 
     if (initActions) {

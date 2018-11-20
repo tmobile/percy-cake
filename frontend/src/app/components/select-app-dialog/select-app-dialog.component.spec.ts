@@ -32,7 +32,7 @@ describe('SelectAppDialogComponent', () => {
 
     // Shouldn't close without app selected
     ctx().component.selectApp();
-    expect(ctx().dialogStub.output.value).toBeFalsy();
+    expect(ctx().dialogStub.output.value).toBeUndefined();
 
     ctx().component.appname.setValue('app3');
     await new Promise(resolve => setTimeout(resolve, 150)); // wait for debouce time
