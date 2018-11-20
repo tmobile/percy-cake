@@ -4,7 +4,7 @@ import { AddEditPropertyDialogComponent } from './add-edit-property-dialog.compo
 
 describe('AddEditPropertyDialogComponent', () => {
 
-  const ctx = Setup(AddEditPropertyDialogComponent, null, true);
+  const ctx = Setup(AddEditPropertyDialogComponent, false);
 
   it('should create AddEditPropertyDialogComponent', () => {
     expect(ctx().component).toBeTruthy();

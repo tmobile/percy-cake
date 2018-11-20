@@ -77,7 +77,7 @@ export const assertDialogOpened = <T>(dialogType: Type<T>, options) => {
   expect(DialogStub.input.value).toEqual({dialogType, options});
 };
 
-export const Setup = <T>(componentType: Type<T>, initActions?: Action[], noInit?: boolean) => {
+export const Setup = <T>(componentType: Type<T>, triggerLifecyle: boolean = true, initActions?: Action[]) => {
 
   configureTestSuite(() => {
     TestBed.configureTestingModule({
@@ -151,7 +151,7 @@ export const Setup = <T>(componentType: Type<T>, initActions?: Action[], noInit?
       }
     });
 
-    if (!noInit) {
+    if (triggerLifecyle) {
       ctx.fixture.detectChanges(); // This will trigger lifecyle ngOnInit/ngOnChanges
     }
 

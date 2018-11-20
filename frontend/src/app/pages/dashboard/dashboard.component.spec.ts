@@ -16,7 +16,7 @@ describe('DashboardComponent', () => {
 
   const url = `repos/${TestUser.repoName}/branches/${TestUser.branchName}`;
 
-  const ctx = Setup(DashboardComponent, [new LoginSuccess(TestUser)]);
+  const ctx = Setup(DashboardComponent, true, [new LoginSuccess(TestUser)]);
 
   const files = [
     {

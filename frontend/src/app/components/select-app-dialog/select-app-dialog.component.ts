@@ -1,7 +1,7 @@
 import { Component, Inject, OnInit, ViewChild } from '@angular/core';
-import { MatDialogRef, MAT_DIALOG_DATA, MatAutocompleteTrigger } from '@angular/material';
 import { FormControl, Validators } from '@angular/forms';
-import { Observable } from 'rxjs';
+import { MatDialogRef, MAT_DIALOG_DATA, MatAutocompleteTrigger } from '@angular/material';
+import { BehaviorSubject } from 'rxjs';
 import { startWith, debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 
 import * as _ from 'lodash';
@@ -19,7 +19,7 @@ export class SelectAppDialogComponent implements OnInit {
   appname = new FormControl('', [Validators.required]);
   createEnv = new FormControl();
 
-  filteredApps: Observable<string[]>;
+  filteredApps = new BehaviorSubject<string[]>([]);
 
   @ViewChild('trigger') trigger: MatAutocompleteTrigger;
 
@@ -38,15 +38,17 @@ export class SelectAppDialogComponent implements OnInit {
       this.onAppChange(selectedApp);
     }
 
-    this.filteredApps = this.appname.valueChanges
+    this.appname.valueChanges
       .pipe(
-        startWith(selectedApp || ''),
+        startWith(selectedApp),
+        map(value => {
+          this.onAppChange(value);
+          return value;
+        }),
         debounceTime(100),
         distinctUntilChanged(),
         map(value => {
           value = _.trim(value);
-
-          this.onAppChange(value);
 
           if (!value || _.includes(this.data.applications, value)) {
             return this.data.applications;
@@ -54,7 +56,7 @@ export class SelectAppDialogComponent implements OnInit {
 
           return this.data.applications.filter(option => _.includes(option.toLowerCase(), value));
         })
-      );
+      ).subscribe(this.filteredApps);
   }
 
   private onAppChange(app) {
@@ -76,6 +78,6 @@ export class SelectAppDialogComponent implements OnInit {
     if (!appName) {
       return;
     }
-    this.dialogRef.close({appName, createEnv: this.createEnv.value});
+    this.dialogRef.close({appName, createEnv: !!this.createEnv.value});
   }
 }
