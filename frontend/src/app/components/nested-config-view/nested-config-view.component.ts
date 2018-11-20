@@ -40,8 +40,8 @@ export class NestedConfigViewComponent implements OnChanges {
   envTreeControl: NestedTreeControl<TreeNode>;
   envDataSource: MatTreeNestedDataSource<TreeNode>;
 
-  defaultCardHeight = new BehaviorSubject<number>(null);
-  envCardHeight = new BehaviorSubject<number>(null);
+  defaultCardHeight = new BehaviorSubject<number|string>(null);
+  envCardHeight = new BehaviorSubject<number|string>(null);
 
   /**
    * initializes the component
@@ -76,14 +76,13 @@ export class NestedConfigViewComponent implements OnChanges {
   // get a node's children
   private _getChildren = (node: TreeNode) => node.children;
 
-  changeDefaultCardHeight($event) {
-    this.defaultCardHeight.next($event.rectangle.height);
+  changeDefaultCardHeight(height) {
+    this.defaultCardHeight.next(height);
   }
 
-  changeEnvCardHeight($event) {
-    this.envCardHeight.next($event.rectangle.height);
+  changeEnvCardHeight(height) {
+    this.envCardHeight.next(height);
   }
-
 
   toggle(treeControl, node, toggleAll?: boolean) {
     const expanded = treeControl.isExpanded(node);
@@ -99,40 +98,6 @@ export class NestedConfigViewComponent implements OnChanges {
       } else {
         treeControl.expand(node);
       }
-    }
-
-    if (node.level === 0) {
-      const newHeight = {
-        rectangle: {
-          height: null
-        },
-      };
-      if (treeControl === this.defaultTreeControl) {
-        this.changeDefaultCardHeight(newHeight);
-      } else {
-        this.changeEnvCardHeight(newHeight);
-      }
-    }
-  }
-
-  toggleAll(treeControl, node) {
-    if (treeControl.isExpanded(node)) {
-      treeControl.collapseDescendants(node);
-    } else {
-      treeControl.expandDescendants(node);
-    }
-    if (treeControl === this.defaultTreeControl) {
-      this.changeDefaultCardHeight({
-        rectangle: {
-          height: null
-        }
-      });
-    } else {
-      this.changeEnvCardHeight({
-        rectangle: {
-          height: null
-        }
-      });
     }
   }
 

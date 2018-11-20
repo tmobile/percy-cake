@@ -1,14 +1,13 @@
 // configuration editor page
 @import "variables";
 .editor-page {
-    padding: 30px 100px;
+    padding: 10px 100px;
     .btn-small {
         line-height: 28px;
         font-size: 13px;
     }
     .filename {
         width: 40%;
-        margin-bottom: 15px;
         label {
           color: grey;
         }
@@ -17,11 +16,7 @@
         }
     }
     .col-container {
-        padding-top: 10px;
         display: flex;
-        >* {
-            padding: 5px 0 20px;
-        }
         .section-heading span {
             font-weight: 400;
         }
@@ -63,7 +58,7 @@
     }
     .buttons-row {
         display: flex;
-        padding-top: 50px;
+        padding-top: 20px;
         >* {
             margin-right: 10px;
         }

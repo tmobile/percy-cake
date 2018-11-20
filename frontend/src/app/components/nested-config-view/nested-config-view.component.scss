@@ -5,12 +5,15 @@
   &.env {
     margin-top: 15px;
   }
+  .panel-expander {
+    margin: 5px;
+  }
 }
 .nested-config-view {
     background-color: $white;
     padding: 10px;
-    margin-bottom: 15px;
     overflow: auto;
+    height: 28vh;
     min-height: 60px;
 
     ul.sub-tree {

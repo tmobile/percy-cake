@@ -1,15 +1,17 @@
 <!-- default config tree view -->
-<div class="resize-tree-view" mwlResizable (resizing)="changeDefaultCardHeight($event)" [resizeEdges]="{bottom: true, right: false, top: false, left: false}">
+<div class="resize-tree-view" mwlResizable (resizing)="changeDefaultCardHeight($event.rectangle.height)" [resizeEdges]="{bottom: true, right: false, top: false, left: false}">
   <mat-card class="nested-config-view" appResizable [resizeToHeight]="defaultCardHeight|async">
     <ng-container *ngTemplateOutlet="treeView; context: {dataSource: defaultDataSource, treeControl: defaultTreeControl}"></ng-container>
   </mat-card>
+  <mat-slide-toggle color="primary" class="panel-expander" (change)="changeDefaultCardHeight($event.checked ? 'auto' : '')">AutoFit Pane</mat-slide-toggle>
 </div>
 
 <!-- environments config tree view -->
-<div class="resize-tree-view env" mwlResizable (resizing)="changeEnvCardHeight($event)" [resizeEdges]="{bottom: true, right: false, top: false, left: false}">
-  <mat-card class="nested-config-view" *ngIf="!isEnvMode" appResizable [resizeToHeight]="envCardHeight|async">
+<div class="resize-tree-view env" *ngIf="!isEnvMode" mwlResizable (resizing)="changeEnvCardHeight($event.rectangle.height)" [resizeEdges]="{bottom: true, right: false, top: false, left: false}">
+  <mat-card class="nested-config-view" appResizable [resizeToHeight]="envCardHeight|async">
     <ng-container *ngTemplateOutlet="treeView; context: {dataSource: envDataSource, treeControl: envTreeControl}"></ng-container>
   </mat-card>
+  <mat-slide-toggle color="primary" class="panel-expander" (change)="changeEnvCardHeight($event.checked ? 'auto' : '')">AutoFit Pane</mat-slide-toggle>
 </div>
 
 <!-- Tree view template -->
