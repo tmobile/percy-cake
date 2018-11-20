@@ -128,7 +128,7 @@ export class EditorEffects {
               if (inherits) {
                 const inheritEnv = inherits.$value;
                 if (inheritEnv === env) {
-                  return of(new Alert({ message: 'Cylic env inherits detected!', editorType: 'error' }));
+                  return of(new Alert({ message: 'Cylic env inherits detected!', alertType: 'error' }));
                 }
                 envNode = config.environments[inheritEnv];
               } else {

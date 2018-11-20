@@ -9,7 +9,6 @@ import { ConfigFile } from 'models/config-file';
 import * as appStore from 'store';
 import { SelectApp, CollapseApps, ToggleApp, TableSort } from 'store/actions/dashboard.actions';
 import { DeleteFile, CommitChanges } from 'store/actions/backend.actions';
-import { GetConfigFile } from 'store/reducers/backend.reducers';
 import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
 import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.component';
 import { SelectAppDialogComponent } from 'components/select-app-dialog/select-app-dialog.component';
@@ -36,7 +35,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   folders = new BehaviorSubject<any[]>(null);
   disableCommit = new BehaviorSubject<boolean>(true);
-  foldersSub: Subscription;
+  foldersSubscription: Subscription;
 
   displayedColumns: string[] = ['applicationName', 'fileName', 'actions'];
   envFileName: string;
@@ -70,7 +69,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.disableCommit.next(!modified.length);
     });
 
-    this.foldersSub = combineLatest(this.store.pipe(select(appStore.getAllFiles)),
+    this.foldersSubscription = combineLatest(this.store.pipe(select(appStore.getAllFiles)),
       this.store.pipe(select(appStore.dashboardState))).pipe(
       map(([grouped, dashboardState]) => {
 
@@ -101,7 +100,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.foldersSub.unsubscribe();
+    this.foldersSubscription.unsubscribe();
   }
 
   toggleApp(app) {
@@ -146,7 +145,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           envFileName,
           applications: appState.backend.applications,
           selectedApp: appState.dashboard.selectedApp,
-          backendState: appState.backend
+          files: _.values(appState.backend.files.entities)
         },
         autoFocus: false
       });

@@ -47,8 +47,6 @@ describe('LoginComponent', () => {
   });
 
   it('input should trigger auto complete change', () => {
-    ctx().fixture.detectChanges(); // Need change detection for the auto complete trigger
-
     ctx().component.username.setValue('');
     expect(ctx().component.username.valid).toBeFalsy();
 

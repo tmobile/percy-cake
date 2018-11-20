@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
-import { AuthActionsUnion, AuthActionTypes } from '../actions/auth.actions';
-import { User, Repo } from '../../models/auth';
+import { AuthActionsUnion, AuthActionTypes } from 'store/actions/auth.actions';
+import { User, Repo } from 'models/auth';
 
 export interface State {
     loggedIn: boolean;
@@ -84,5 +84,3 @@ export const getError = (state: State) => state.loginError;
 export const getFormProcessing = (state: State) => state.formProcessing;
 export const getRedirectUrl = (state: State) => state.redirectUrl;
 export const getRepositoryName = (state: State) => state.currentUser ? state.currentUser.repoName : null;
-
-

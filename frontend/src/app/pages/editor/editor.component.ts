@@ -202,7 +202,7 @@ export class EditorComponent implements OnInit {
       const draftConfig = appState.editor.configuration;
 
       if (_.isEqual(draftConfig, appState.editor.originalConfiguration)) {
-        return this.store.dispatch(new Alert({ message: 'No changes made', editorType: 'info' }));
+        return this.store.dispatch(new Alert({ message: 'No changes made', alertType: 'info' }));
       }
 
       const file: ConfigFile = {

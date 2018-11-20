@@ -5,7 +5,7 @@ import { FormControl, Validators } from '@angular/forms';
 import { MatAutocompleteTrigger } from '@angular/material';
 
 import { Store, select } from '@ngrx/store';
-import { Observable, of } from 'rxjs';
+import { Observable, of, BehaviorSubject } from 'rxjs';
 import { map, startWith, debounceTime, distinctUntilChanged, switchMap, withLatestFrom, tap } from 'rxjs/operators';
 
 import * as _ from 'lodash';
@@ -34,7 +34,7 @@ export class LoginComponent implements OnInit {
   formProcessing = this.store.pipe(select(appStore.getFormProcessing));
 
   usernameTypeAhead: string[] = [];
-  filteredUsernames: Observable<string[]>;
+  filteredUsernames = new BehaviorSubject<string[]>([]);
 
   // use to trigger the change in the input from browser auto fill
   @ViewChild('autoTrigger') private autoTrigger: MatAutocompleteTrigger;
@@ -67,13 +67,13 @@ export class LoginComponent implements OnInit {
       })
     ).subscribe();
 
-    this.filteredUsernames = this.username.valueChanges
+    this.username.valueChanges
       .pipe(
         startWith(null),
         debounceTime(200),
         distinctUntilChanged(),
-        switchMap(value => this._filter(value || ''))
-      );
+        switchMap(value => this._filter(value))
+      ).subscribe(this.filteredUsernames);
 
     this.store.pipe(select(appStore.getDefaultRepo)).pipe(
       tap((repo) => {
@@ -147,7 +147,7 @@ export class LoginComponent implements OnInit {
    * @param value the prefix
    */
   private _filter(value: string): Observable<string[]> {
-    const filterValue = value.trim().toLowerCase();
+    const filterValue = _.trim(value).toLowerCase();
     // only call API if first character else filter from cache value
     if (filterValue.length === 1) {
       return this.maintenanceService.getUserTypeAhead(filterValue).pipe(

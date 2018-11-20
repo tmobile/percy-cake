@@ -1,14 +1,13 @@
 import * as _ from 'lodash';
 
-import { Configuration } from '../../models/config-file';
-import { TreeNode } from '../../models/tree-node';
-import { ConfigProperty } from '../../models/config-property';
+import { Configuration } from 'models/config-file';
+import { TreeNode } from 'models/tree-node';
+import { ConfigProperty } from 'models/config-property';
 
-import { BackendActionsUnion, BackendActionTypes } from '../actions/backend.actions';
-import { EditorActionTypes, EditorActionsUnion } from '../actions/editor.actions';
+import { BackendActionsUnion, BackendActionTypes } from 'store/actions/backend.actions';
+import { EditorActionTypes, EditorActionsUnion } from 'store/actions/editor.actions';
 
 export interface State {
-    error: any;
     isCommitting: boolean;
     environments: Array<string>;
     appName: string;
@@ -28,7 +27,6 @@ export interface State {
 }
 
 export const initialState: State = {
-    error: null,
     isCommitting: false,
     appName: null,
     fileName: null,
@@ -72,13 +70,6 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
             };
         }
 
-        case EditorActionTypes.PageLoadFailure: {
-            return {
-                ...state,
-                error: action.payload.message,
-            };
-        }
-
         case BackendActionTypes.GetFileContentSuccess: {
           const originalConfiguration = action.payload.originalConfig;
           const draftConfiguration = action.payload.draftConfig || originalConfiguration;
@@ -89,13 +80,6 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
               draftConfiguration,
               originalConfiguration,
               isPageDirty: false
-          };
-        }
-
-        case BackendActionTypes.GetFileContentFailure: {
-          return {
-              ...state,
-              error: action.payload.message,
           };
         }
 
@@ -231,7 +215,6 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
 }
 
 export const getConfiguration = (state: State) => state.configuration;
-export const getError = (state: State) => state.error;
 export const isCommitting = (state: State) => state.isCommitting;
 export const getEnvironments = (state: State) => state.environments;
 export const getMode = (state: State) => state.inEditMode;
@@ -243,7 +226,3 @@ export const getSelectedNode = (state: State) => state.selectedNode;
 export const getCurrentAddEditProperty = (state: State) => state.currentAddEditProperty;
 export const getSelectedConfigProperty = (state: State) => state.selectedConfigProperty;
 export const getIsPageDirty = (state: State) => state.isPageDirty;
-
-
-
-

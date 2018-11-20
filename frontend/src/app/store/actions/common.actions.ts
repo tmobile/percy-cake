@@ -12,7 +12,7 @@ export enum CommonActionTypes {
 export class Alert implements Action {
     readonly type = CommonActionTypes.Alert;
 
-    constructor(public payload: { message: string, editorType?: string }) { }
+    constructor(public payload: { message: string, alertType?: string }) { }
 }
 
 export class AlertClosed implements Action {

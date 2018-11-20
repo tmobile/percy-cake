@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
-import { Router } from '@angular/router';
+import { Store, select } from '@ngrx/store';
 import { Actions, Effect, ofType } from '@ngrx/effects';
 import { of } from 'rxjs';
-import { catchError, exhaustMap, map, tap, withLatestFrom } from 'rxjs/operators';
+import { catchError, exhaustMap, map, withLatestFrom } from 'rxjs/operators';
 import * as _ from 'lodash';
 
+import * as appStore from 'store';
 import {
     AuthActionTypes,
     Login,
@@ -14,19 +15,17 @@ import {
     GetDefaultRepo,
     GetDefaultRepoSuccess,
     GetDefaultRepoFailure,
-} from '../actions/auth.actions';
-import { Authenticate } from '../../models/auth';
-import { MaintenanceService } from '../../services/maintenance.service';
-import { FileManagementService } from '../../services/file-management.service';
-import { Store, select } from '@ngrx/store';
-import * as appStore from '..';
+} from 'store/actions/auth.actions';
+import { Navigate } from 'store/actions/common.actions';
+import { Authenticate } from 'models/auth';
+import { MaintenanceService } from 'services/maintenance.service';
+import { FileManagementService } from 'services/file-management.service';
 
 // defines the authentication effects
 @Injectable()
 export class AuthEffects {
     constructor(
         private actions$: Actions,
-        private router: Router,
         private maintenanceService: MaintenanceService,
         private fileManagementService: FileManagementService,
         private store: Store<appStore.AppState>
@@ -61,23 +60,18 @@ export class AuthEffects {
     );
 
     // login success effect
-    @Effect({ dispatch: false })
+    @Effect()
     loginSuccess$ = this.actions$.pipe(
         ofType<LoginSuccess>(AuthActionTypes.LoginSuccess),
         withLatestFrom(this.store.pipe(select(appStore.getRedirectUrl))),
-        tap(([action, redirectUrl]) => {
-            redirectUrl = redirectUrl || '/dashboard';
-            return this.router.navigate([redirectUrl]);
-        })
+        map(([action, redirectUrl]) => new Navigate([redirectUrl || '/dashboard']))
     );
 
     // login redirect effect
-    @Effect({ dispatch: false })
+    @Effect()
     loginRedirect$ = this.actions$.pipe(
         ofType(AuthActionTypes.LoginRedirect, AuthActionTypes.LogoutSuccess),
-        tap(() => {
-            this.router.navigate(['/login']);
-        })
+        map(() => new Navigate(['/login']))
     );
 
     // logout request effect

@@ -1,10 +1,9 @@
-import { DashboardActionsUnion, DashboardActionTypes } from '../actions/dashboard.actions';
-import { BackendActionsUnion , BackendActionTypes } from '../actions/backend.actions';
+import { DashboardActionsUnion, DashboardActionTypes } from 'store/actions/dashboard.actions';
+import { BackendActionsUnion , BackendActionTypes } from 'store/actions/backend.actions';
 
 import * as _ from 'lodash';
 
 export interface State {
-    error: any;
     deletingFile: boolean;
     committingFile: boolean;
     selectedApp: string;
@@ -13,7 +12,6 @@ export interface State {
 }
 
 export const initialState: State = {
-    error: null,
     deletingFile: false,
     committingFile: false,
     selectedApp: '',
@@ -61,7 +59,6 @@ export function reducer(state = initialState, action: BackendActionsUnion | Dash
           return {
               ...state,
               committingFile: true,
-              error: null,
           };
         }
 
@@ -69,7 +66,6 @@ export function reducer(state = initialState, action: BackendActionsUnion | Dash
           return {
               ...state,
               committingFile: false,
-              error: null,
           };
         }
 
@@ -77,7 +73,6 @@ export function reducer(state = initialState, action: BackendActionsUnion | Dash
           return {
               ...state,
               committingFile: false,
-              error: action.payload.error.message,
           };
         }
 
@@ -85,14 +80,12 @@ export function reducer(state = initialState, action: BackendActionsUnion | Dash
             return {
                 ...state,
                 deletingFile: true,
-                error: null,
             };
         }
 
         case BackendActionTypes.DeleteFileSuccess: {
             return {
                 ...state,
-                error: null,
                 deletingFile: false,
             };
         }
@@ -100,7 +93,6 @@ export function reducer(state = initialState, action: BackendActionsUnion | Dash
         case BackendActionTypes.DeleteFileFailure: {
             return {
                 ...state,
-                error: action.payload.message,
                 deletingFile: false,
             };
         }
@@ -114,7 +106,5 @@ export function reducer(state = initialState, action: BackendActionsUnion | Dash
 export const getSelectedApp = (state: State) => state.selectedApp;
 export const getTableSort = (state: State) => state.tableSort;
 export const getCollapsedApps = (state: State) => state.collapsedApps;
-export const getError = (state: State) => state.error;
 export const isDeletingFile = (state: State) => state.deletingFile;
 export const isCommittingFile = (state: State) => state.committingFile;
-

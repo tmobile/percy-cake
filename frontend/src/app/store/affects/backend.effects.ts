@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material';
-import { Router } from '@angular/router';
-import { Actions, Effect, ofType } from '@ngrx/effects';
 import { Store, select } from '@ngrx/store';
+import { Actions, Effect, ofType } from '@ngrx/effects';
 import { of } from 'rxjs';
-import { catchError, tap, map, withLatestFrom, switchMap } from 'rxjs/operators';
+import { catchError, map, withLatestFrom, switchMap } from 'rxjs/operators';
 import * as _ from 'lodash';
 
+import * as appStore from 'store';
+import { Alert, APIError, Navigate } from 'store/actions/common.actions';
 import {
     BackendActionTypes,
     ListApplications, ListApplicationsSuccess, ListApplicationsFailure,
@@ -14,18 +15,15 @@ import {
     LoadFiles, LoadFilesSuccess, LoadFilesFailure,
     DeleteFile, DeleteFileFailure, DeleteFileSuccess,
     GetFileContent, GetFileContentSuccess, GetFileContentFailure
-} from '../actions/backend.actions';
-import { FileManagementService } from '../../services/file-management.service';
-import * as appStore from '..';
-import { Alert, APIError, Navigate } from '../actions/common.actions';
-import { ConflictDialogComponent } from '../../components/conflict-dialog/conflict-dialog.component';
+} from 'store/actions/backend.actions';
+import { FileManagementService } from 'services/file-management.service';
+import { ConflictDialogComponent } from 'components/conflict-dialog/conflict-dialog.component';
 
 // defines the backend related effects
 @Injectable()
 export class BackendEffects {
     constructor(
         private actions$: Actions,
-        private router: Router,
         private dialog: MatDialog,
         private fileManagementService: FileManagementService,
         private store: Store<appStore.AppState>
@@ -43,6 +41,13 @@ export class BackendEffects {
                     catchError(error => of(new ListApplicationsFailure(error)))
                 )
         )
+    );
+
+    // load applications failure effect
+    @Effect()
+    listApplicationsFailure$ = this.actions$.pipe(
+        ofType<ListApplicationsFailure>(BackendActionTypes.ListApplicationsFailure),
+        map((action) => new APIError(action.payload))
     );
 
     // load files effect
@@ -90,28 +95,14 @@ export class BackendEffects {
     );
 
     // save draft success effect
-    @Effect({ dispatch: false })
+    @Effect()
     saveDraft$ = this.actions$.pipe(
         ofType<SaveDraft>(BackendActionTypes.SaveDraft),
-        tap((action) => {
-          if (action.payload.redirect) {
-            this.router.navigate(['/dashboard']);
-          }
-        })
-    );
-
-    // commit change success effect
-    @Effect()
-    commitChangesSuccess$ = this.actions$.pipe(
-        ofType<CommitChangesSuccess>(BackendActionTypes.CommitChangesSuccess),
         switchMap((action) => {
-          const results = [];
-          results.push(new ListApplications());
-          results.push(new LoadFiles()); // reload files
-          if (action.payload.fromEditor) {
-            results.push(new Navigate(['/dashboard']));
+          if (action.payload.redirect) {
+            return of(new Navigate(['/dashboard']));
           }
-          return results;
+          return of();
         })
     );
 
@@ -136,6 +127,21 @@ export class BackendEffects {
               catchError(error => of(new CommitChangesFailure({error, files, commitMessage, fromEditor})))
           );
       })
+    );
+
+    // commit change success effect
+    @Effect()
+    commitChangesSuccess$ = this.actions$.pipe(
+        ofType<CommitChangesSuccess>(BackendActionTypes.CommitChangesSuccess),
+        switchMap((action) => {
+          const results = [];
+          results.push(new ListApplications());
+          results.push(new LoadFiles()); // reload files
+          if (action.payload.fromEditor) {
+            results.push(new Navigate(['/dashboard']));
+          }
+          return results;
+        })
     );
 
     // commit files failure effect
@@ -185,11 +191,14 @@ export class BackendEffects {
         ofType<DeleteFileSuccess>(BackendActionTypes.DeleteFileSuccess),
         switchMap((action) => {
           const results = [];
-          results.push(new ListApplications());
-          results.push(new LoadFiles()); // reload files
+          if (action.payload.timestamp) {
+            // reload files
+            results.push(new ListApplications());
+            results.push(new LoadFiles());
+          }
           results.push(new Alert({
             message: `${action.payload.applicationName} / ${action.payload.fileName} deleted successfully.`,
-            editorType: 'delete'}));
+            alertType: 'delete'}));
           return results;
         })
     );

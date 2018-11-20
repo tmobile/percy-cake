@@ -68,7 +68,6 @@ export const dashboardState = createFeatureSelector<AppState, fromDashboard.Stat
 export const getSelectedApp = createSelector(dashboardState, fromDashboard.getSelectedApp);
 export const getCollapsedApps = createSelector(dashboardState, fromDashboard.getCollapsedApps);
 export const getTableSort = createSelector(dashboardState, fromDashboard.getTableSort);
-export const getDashboardError = createSelector(dashboardState, fromDashboard.getError);
 export const getDashboardFileDeleting = createSelector(dashboardState, fromDashboard.isDeletingFile);
 export const getDashboardCommittingFile = createSelector(dashboardState, fromDashboard.isCommittingFile);
 
@@ -78,7 +77,6 @@ export const editorState = createFeatureSelector<AppState, fromEditor.State>('ed
 export const getConfiguration = createSelector(editorState, fromEditor.getConfiguration);
 export const getEnvironments = createSelector(editorState, fromEditor.getEnvironments);
 export const getIsCommitting = createSelector(editorState, fromEditor.isCommitting);
-export const getEditorError = createSelector(editorState, fromEditor.getError);
 export const getMode = createSelector(editorState, fromEditor.getMode);
 export const getFilePath = createSelector(editorState, fromEditor.getFilePath);
 export const getShowAsCode = createSelector(editorState, fromEditor.getShowAsCode);

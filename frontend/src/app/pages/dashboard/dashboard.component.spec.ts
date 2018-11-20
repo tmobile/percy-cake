@@ -3,17 +3,20 @@ import * as _ from 'lodash';
 
 import { LoginSuccess } from 'store/actions/auth.actions';
 import { API_BASE_URL } from 'services/http-helper.service';
-import { TestUser, Setup } from 'test/test-helper';
+import { TestUser, Setup, assertDialogOpened } from 'test/test-helper';
 
 import { DashboardComponent } from './dashboard.component';
-import { LoadFiles, ListApplications } from 'store/actions/backend.actions';
+import { SaveDraft } from 'store/actions/backend.actions';
 import { ConfigFile } from 'models/config-file';
+import { SelectAppDialogComponent } from 'components/select-app-dialog/select-app-dialog.component';
+import { AlertDialogComponent } from 'components/alert-dialog/alert-dialog.component';
+import { ConflictDialogComponent } from 'components/conflict-dialog/conflict-dialog.component';
 
 describe('DashboardComponent', () => {
 
   const url = `repos/${TestUser.repoName}/branches/${TestUser.branchName}`;
 
-  const ctx = Setup(DashboardComponent, [new LoginSuccess(TestUser), new LoadFiles(), new ListApplications()]);
+  const ctx = Setup(DashboardComponent, [new LoginSuccess(TestUser)]);
 
   const files = [
     {
@@ -52,7 +55,7 @@ describe('DashboardComponent', () => {
     expect(ctx().component).toBeTruthy();
     expect(ctx().component.envFileName).toEqual(TestUser.envFileName);
     ctx().component.ngOnDestroy();
-    expect(ctx().component.foldersSub.closed).toBeTruthy();
+    expect(ctx().component.foldersSubscription.closed).toBeTruthy();
   });
 
   it('should show apps and files properly', () => {
@@ -292,10 +295,14 @@ describe('DashboardComponent', () => {
 
   it('should navigate to add new file', () => {
     ctx().component.addNewFile();
-    expect(_.pick(ctx().dialogStub.input.value.data, ['envFileName', 'applications', 'selectedApp'])).toEqual({
-      envFileName: TestUser.envFileName,
-      applications: apps,
-      selectedApp: '',
+    assertDialogOpened(SelectAppDialogComponent, {
+      data: {
+        envFileName: TestUser.envFileName,
+        applications: apps,
+        selectedApp: '',
+        files
+      },
+      autoFocus: false
     });
 
     ctx().dialogStub.output.next({createEnv: true, appName: 'app3'});
@@ -307,10 +314,7 @@ describe('DashboardComponent', () => {
 
   it('should navigate to edit file', () => {
 
-    const file = {
-      fileName: 'sample.yaml',
-      applicationName: 'app1',
-    };
+    const file = files[0];
     ctx().component.editFile(file);
     expect(ctx().routerStub.value).toEqual(['/files/edit', file.applicationName, file.fileName]);
 
@@ -319,13 +323,9 @@ describe('DashboardComponent', () => {
     expect(ctx().routerStub.value).toEqual(['/files/editenv', file.applicationName, file.fileName]);
   });
 
-  it('should successfully delete file', () => {
+  it('should delete file successfully', () => {
 
-    const file = {
-      fileName: 'sample.yaml',
-      applicationName: 'app1',
-      timestamp: Date.now()
-    };
+    const file = files[0];
 
     const path = `${API_BASE_URL}/${url}/applications/${file.applicationName}/files/${file.fileName}`;
     ctx().component.deleteFile(file);
@@ -343,8 +343,12 @@ describe('DashboardComponent', () => {
       f.appFile.applicationName === file.applicationName).length).toEqual(0);
 
     // Alert should be shown
-    expect(ctx().dialogStub.input.value.data.message).toEqual(
-      `${file.applicationName} / ${file.fileName} deleted successfully.`);
+    assertDialogOpened(AlertDialogComponent, {
+      data: {
+        message: `${file.applicationName} / ${file.fileName} deleted successfully.`,
+        alertType: 'delete'
+      }
+    });
 
     // Should reload from repo
     const newRepoFile = {
@@ -367,13 +371,46 @@ describe('DashboardComponent', () => {
     ]);
   });
 
+  it('should delete uncommitted new draft file successfully', () => {
+    // At fist save a new draft file
+    const newDraftFile: ConfigFile = {
+      fileName: 'new.yaml',
+      applicationName: apps[0],
+      draftConfig: {
+        default: {$type: 'object', key: {$value: 'new value', $type: 'string'}},
+        environments: {$type: 'object'}
+      },
+      modified: true,
+    };
+
+    ctx().store.dispatch(new SaveDraft({ file: newDraftFile, redirect: false }));
+    expect(ctx().observables.folders.value.filter(f => f.appFile && f.appFile.fileName === newDraftFile.fileName &&
+      f.appFile.applicationName === newDraftFile.applicationName).length).toEqual(1);
+
+    // Delete file
+    ctx().component.deleteFile(newDraftFile);
+    ctx().dialogStub.output.next(true);
+
+    // File should be removed
+    expect(ctx().observables.folders.value.filter(f => f.appFile && f.appFile.fileName === newDraftFile.fileName &&
+      f.appFile.applicationName === newDraftFile.applicationName).length).toEqual(0);
+
+    // Alert should be shown
+    assertDialogOpened(AlertDialogComponent, {
+      data: {
+        message: `${newDraftFile.applicationName} / ${newDraftFile.fileName} deleted successfully.`,
+        alertType: 'delete'
+      }
+    });
+
+    // Shouldn't reload
+    ctx().httpMock.expectNone(`${API_BASE_URL}/${url}/files`);
+    ctx().httpMock.expectNone(`${API_BASE_URL}/${url}/applications`);
+  });
+
   it('should show alert if failed to delete file', () => {
 
-    const file = {
-      fileName: 'sample.yaml',
-      applicationName: 'app1',
-      timestamp: Date.now()
-    };
+    const file = files[0];
 
     const path = `${API_BASE_URL}/${url}/applications/${file.applicationName}/files/${file.fileName}`;
     ctx().component.deleteFile(file);
@@ -392,21 +429,29 @@ describe('DashboardComponent', () => {
     );
     expect(ctx().observables.isDeleting.value).toBeFalsy();
 
-    expect(ctx().dialogStub.input.value.data.message).toEqual('Failed to delete file');
+    assertDialogOpened(AlertDialogComponent, {
+      data: {
+        message: 'Failed to delete file',
+        alertType: 'error'
+      }
+    });
   });
 
-  it('should commit changes', () => {
+  it('should commit changes successfully', () => {
     const file = ctx().observables.folders.value[1].appFile;
     const modifiedFile: ConfigFile = {
-      fileName: file.fileName,
-      applicationName: file.applicationName,
-      draftConfig: {
+      ...file,
+      originalConfig: {
         default: {$type: 'object', key: {$value: 'value', $type: 'string'}},
         environments: {$type: 'object'}
       },
+      draftConfig: {
+        default: {$type: 'object', key: {$value: 'new value', $type: 'string'}},
+        environments: {$type: 'object'}
+      },
       modified: true,
-      timestamp: Date.now(),
-      size: 100
+      timestamp: Date.now() - 1000,
+      size: 90,
     };
 
     ctx().observables.folders.value[1].appFile = modifiedFile;
@@ -415,17 +460,148 @@ describe('DashboardComponent', () => {
 
     ctx().dialogStub.output.next('commit message');
 
+    expect(ctx().observables.isCommitting.value).toBeTruthy();
     const path = `${API_BASE_URL}/${url}/commit`;
-    ctx().httpMock.expectOne(path).flush([
-      _.pick(modifiedFile, ['fileName', 'applicationName', 'timestamp', 'size'])
-    ]);
-
     const committedFile: ConfigFile = {
+      fileName: modifiedFile.fileName,
+      applicationName: modifiedFile.applicationName,
+      timestamp: Date.now(),
+      size: 100
+    };
+    ctx().httpMock.expectOne(path).flush([committedFile]);
+    expect(ctx().observables.isCommitting.value).toBeFalsy();
+
+    const result: ConfigFile = {
       ...modifiedFile,
+      ...committedFile,
       modified: false,
       originalConfig: modifiedFile.draftConfig
     };
-    expect(ctx().observables.folders.value[1].appFile).toEqual(committedFile);
+    expect(ctx().observables.folders.value[1].appFile).toEqual(result);
+
+    // Should reload from repo
+    const newRepoFile = {
+      applicationName: 'app2',
+      fileName: TestUser.envFileName,
+      timestamp: Date.now(),
+      size: 100,
+    };
+    ctx().httpMock.expectOne(`${API_BASE_URL}/${url}/files`).flush([newRepoFile]);
+    ctx().httpMock.expectOne(`${API_BASE_URL}/${url}/applications`).flush(['app2']);
+
+    expect(ctx().observables.folders.value).toEqual([
+      {
+        app: 'app2',
+      },
+      {
+        app: 'app2',
+        appFile: newRepoFile,
+      },
+    ]);
+  });
+
+  it('should show alert if failed to commit changes', () => {
+
+    const file = ctx().observables.folders.value[1].appFile;
+    const modifiedFile: ConfigFile = {
+      ...file,
+      originalConfig: {
+        default: {$type: 'object', key: {$value: 'value', $type: 'string'}},
+        environments: {$type: 'object'}
+      },
+      draftConfig: {
+        default: {$type: 'object', key: {$value: 'new value', $type: 'string'}},
+        environments: {$type: 'object'}
+      },
+      modified: true,
+      timestamp: Date.now() - 1000,
+      size: 90,
+    };
+
+    ctx().observables.folders.value[1].appFile = modifiedFile;
+
+    ctx().component.commitChanges();
+
+    ctx().dialogStub.output.next('commit message');
+
+    expect(ctx().observables.isCommitting.value).toBeTruthy();
+    const path = `${API_BASE_URL}/${url}/commit`;
+    ctx().httpMock.expectOne(path).flush(
+      {
+        message: 'Failed to commit file',
+        statusCode: 500
+      },
+      {
+        status: 500,
+        statusText: 'Internal Server Error'
+      }
+    );
+    expect(ctx().observables.isCommitting.value).toBeFalsy();
+
+    assertDialogOpened(AlertDialogComponent, {
+      data: {
+        message: 'Failed to commit file',
+        alertType: 'error'
+      }
+    });
+  });
+
+  it('should show resolve conflict dialog if commit conflict', () => {
+
+    const file = ctx().observables.folders.value[1].appFile;
+    const modifiedFile: ConfigFile = {
+      ...file,
+      originalConfig: {
+        default: {$type: 'object', key: {$value: 'value', $type: 'string'}},
+        environments: {$type: 'object'}
+      },
+      draftConfig: {
+        default: {$type: 'object', key: {$value: 'new value', $type: 'string'}},
+        environments: {$type: 'object'}
+      },
+      modified: true,
+      timestamp: Date.now() - 1000,
+      size: 90,
+    };
+
+    ctx().observables.folders.value[1].appFile = modifiedFile;
+
+    ctx().component.commitChanges();
+
+    ctx().dialogStub.output.next('commit message');
+
+    expect(ctx().observables.isCommitting.value).toBeTruthy();
+    const path = `${API_BASE_URL}/${url}/commit`;
+    const conflictFiles = [{
+      ..._.pick(modifiedFile, ['fileName', 'applicationName']),
+      config: {
+        default: {$type: 'object', key: {$value: 'conflict value', $type: 'string'}},
+        environments: {$type: 'object'}
+      },
+      timestamp: Date.now(),
+      size: 100,
+    }];
+    ctx().httpMock.expectOne(path).flush(
+      {
+        message: 'Conflict to commit file',
+        statusCode: 409,
+        conflictFiles
+      },
+      {
+        status: 409,
+        statusText: 'Conflict'
+      }
+    );
+    expect(ctx().observables.isCommitting.value).toBeFalsy();
+
+    assertDialogOpened(ConflictDialogComponent, {
+      data: {
+        fromEditor: undefined,
+        draftFiles : [modifiedFile],
+        conflictFiles,
+        commitMessage: 'commit message'
+      }
+    });
   });
 
 });

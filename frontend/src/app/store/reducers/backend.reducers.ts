@@ -1,7 +1,7 @@
 import { EntityState, EntityAdapter, createEntityAdapter } from '@ngrx/entity';
 
-import { ConfigFile } from '../../models/config-file';
-import { BackendActionsUnion, BackendActionTypes } from '../actions/backend.actions';
+import { ConfigFile } from 'models/config-file';
+import { BackendActionsUnion, BackendActionTypes } from 'store/actions/backend.actions';
 
 import * as _ from 'lodash';
 
@@ -126,4 +126,3 @@ export const getAllFiles = (state: State) => {
   });
   return grouped;
 };
-

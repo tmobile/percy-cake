@@ -1,7 +1,7 @@
 import { Router, ActivatedRoute } from '@angular/router';
 import { Type, NO_ERRORS_SCHEMA } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
-import { of, Observable, isObservable, BehaviorSubject, Subscription } from 'rxjs';
+import { Observable, isObservable, BehaviorSubject, Subscription } from 'rxjs';
 import { Store, StoreModule, Action } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
 
@@ -17,6 +17,7 @@ import { BackendEffects } from 'store/affects/backend.effects';
 import { EditorEffects } from 'store/affects/editor.effects';
 import { DashboardEffects } from 'store/affects/dashboard.effects';
 
+import { InitializerDirective } from 'directives/initializer.directive';
 import { MaterialComponentsModule } from 'material-components/material-components.module';
 
 import * as _ from 'lodash';
@@ -35,7 +36,6 @@ export const TestUser: User = {
 };
 
 const ActivatedRouteStub = {};
-const DialogDataStub = {};
 const DialogStub = {
   input: new BehaviorSubject(undefined),
   output: new BehaviorSubject(undefined)
@@ -46,7 +46,6 @@ export class TestContext<T> extends TestCtx<T> {
 
   readonly routerStub = RouterStub;
   readonly dialogStub = DialogStub;
-  readonly dialogDataStub = DialogDataStub;
   readonly activatedRouteStub = ActivatedRouteStub;
   readonly httpMock: HttpTestingController;
   readonly store: Store<any>;
@@ -74,6 +73,10 @@ class ValueOfObservable<T> extends BehaviorSubject<T> {
   }
 }
 
+export const assertDialogOpened = <T>(dialogType: Type<T>, options) => {
+  expect(DialogStub.input.value).toEqual({dialogType, options});
+};
+
 export const Setup = <T>(componentType: Type<T>, initActions?: Action[], noInit?: boolean) => {
 
   configureTestSuite(() => {
@@ -85,6 +88,7 @@ export const Setup = <T>(componentType: Type<T>, initActions?: Action[], noInit?
         EffectsModule.forRoot([AppEffects, AuthEffects, BackendEffects, DashboardEffects, EditorEffects])
       ],
       declarations: [
+        InitializerDirective,
         componentType
       ],
       providers: [
@@ -99,7 +103,7 @@ export const Setup = <T>(componentType: Type<T>, initActions?: Action[], noInit?
         {
           provide: MatDialog, useValue: {
             open(dialogType, options) {
-              DialogStub.input.next(options);
+              DialogStub.input.next({dialogType, options});
               return {
                 afterClosed: () => {
                   DialogStub.output = new BehaviorSubject(undefined);
@@ -120,7 +124,7 @@ export const Setup = <T>(componentType: Type<T>, initActions?: Action[], noInit?
           provide: ActivatedRoute, useValue: ActivatedRouteStub,
         },
         {
-          provide: MAT_DIALOG_DATA, useValue: DialogDataStub,
+          provide: MAT_DIALOG_DATA, useValue: {},
         },
       ],
       schemas: [ NO_ERRORS_SCHEMA ],
@@ -137,16 +141,19 @@ export const Setup = <T>(componentType: Type<T>, initActions?: Action[], noInit?
       initActions.forEach(action => ctx.store.dispatch(action));
     }
 
-    if (!noInit && typeof ctx.component['ngOnInit'] === 'function') {
-      ctx.component['ngOnInit']();
-    }
-
+    // For best practice, the component's observables should be
+    // created directly as component's instance properties
+    // (instead of created during ngOnInit/ngOnChanges)
     _.keys(ctx.component).forEach(key => {
       const obs = ctx.component[key];
       if (isObservable(obs)) {
         ctx.observables[key] = new ValueOfObservable(obs);
       }
     });
+
+    if (!noInit) {
+      ctx.fixture.detectChanges(); // This will trigger lifecyle ngOnInit/ngOnChanges
+    }
 
     await ctx.fixture.whenStable();
   });

@@ -1,12 +1,14 @@
 import { Injectable } from '@angular/core';
-import { Actions, Effect, ofType } from '@ngrx/effects';
-import { map, tap, exhaustMap } from 'rxjs/operators';
-import { Alert, CommonActionTypes, AlertClosed, APIError, Navigate } from '../actions/common.actions';
-import { MatDialog } from '@angular/material';
-import { AlertDialogComponent } from '../../components/alert-dialog/alert-dialog.component';
 import { Router } from '@angular/router';
-import { MaintenanceService } from '../../services/maintenance.service';
+import { MatDialog } from '@angular/material';
 import { of } from 'rxjs';
+import { map, tap, exhaustMap } from 'rxjs/operators';
+import { Actions, Effect, ofType } from '@ngrx/effects';
+
+import { Logout } from 'store/actions/auth.actions';
+import { Alert, CommonActionTypes, AlertClosed, APIError, Navigate } from 'store/actions/common.actions';
+import { MaintenanceService } from 'services/maintenance.service';
+import { AlertDialogComponent } from 'components/alert-dialog/alert-dialog.component';
 
 // defines the common effects
 @Injectable()
@@ -34,14 +36,15 @@ export class AppEffects {
     /**
      * alert closed effect
      */
-    @Effect({ dispatch: false })
+    @Effect()
     alertClosed$ = this.actions$.pipe(
         ofType<AlertClosed>(CommonActionTypes.AlertClosed),
         map(action => action.payload),
-        tap(data => {
-            if (data.editorType === 'add') {
-                return of(this.router.navigate(['/']));
+        exhaustMap(data => {
+            if (data.alertType === 'logout') {
+                return of(new Logout());
             }
+            return of();
         })
     );
 
@@ -55,7 +58,10 @@ export class AppEffects {
             this.maintenanceService.logError(message).subscribe(() => { }, error => {
                 console.error('An error occurred while saving the log error', error);
             });
-            return of(new Alert({ message: response.error.message, editorType: 'error' }));
+            return of(new Alert({
+              message: response.error.message,
+              alertType: response.status === 401 || response.status === 403 ? 'logout' : 'error'
+            }));
         }),
     );
 

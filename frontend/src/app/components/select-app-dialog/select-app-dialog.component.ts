@@ -5,7 +5,6 @@ import { Observable } from 'rxjs';
 import { startWith, debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 
 import * as _ from 'lodash';
-import { GetConfigFile } from 'store/reducers/backend.reducers';
 
 /**
  * The select app dialog component
@@ -59,7 +58,7 @@ export class SelectAppDialogComponent implements OnInit {
   }
 
   private onAppChange(app) {
-    const result = GetConfigFile(this.data.backendState, this.data.envFileName, app);
+    const result = _.find(this.data.files, {fileName: this.data.envFileName, applicationName: app});
     if (result) {
       // Env file already exists
       this.createEnv.disable();
