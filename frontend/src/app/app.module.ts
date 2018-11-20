@@ -45,7 +45,7 @@ import { AppEffects } from './store/affects/app.effects';
 import { BackendEffects } from './store/affects/backend.effects';
 import { DashboardEffects } from './store/affects/dashboard.effects';
 import { AuthEffects } from './store/affects/auth.effects';
-import { ConfigFileAddEditEffects } from './store/affects/editor.effects';
+import { EditorEffects } from './store/affects/editor.effects';
 import { LocationStrategy, HashLocationStrategy } from '@angular/common';
 
 // directives
@@ -83,7 +83,7 @@ import { InitializerDirective } from './directives/initializer.directive';
     HighlightModule.forRoot({ theme: 'default' }),
     StoreModule.forRoot(reducers, { metaReducers }),
     !environment.production ? StoreDevtoolsModule.instrument() : [],
-    EffectsModule.forRoot([AuthEffects, AppEffects, BackendEffects, DashboardEffects, ConfigFileAddEditEffects])
+    EffectsModule.forRoot([AuthEffects, AppEffects, BackendEffects, DashboardEffects, EditorEffects])
   ],
   entryComponents: [
     AddEditPropertyDialogComponent,

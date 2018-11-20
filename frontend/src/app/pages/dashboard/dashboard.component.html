@@ -20,7 +20,7 @@
     </button>
   </div>
   <!-- files table -->
-  <table *ngIf="folders| async; else loader" matSort [matSortDisableClear]="true" (matSortChange)="onSortChange($event)" mat-table [dataSource]="folders" class="files-table mat-elevation-z8">
+  <table *ngIf="folders| async as _folders; else loader" matSort [matSortDisableClear]="true" (matSortChange)="onSortChange($event)" mat-table [dataSource]="_folders" class="files-table mat-elevation-z8">
 
     <!-- Application column -->
     <ng-container matColumnDef="applicationName">

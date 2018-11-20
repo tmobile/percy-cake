@@ -28,7 +28,7 @@ import { Alert, APIError } from '../actions/common.actions';
 
 // defines the editor page related effects
 @Injectable()
-export class ConfigFileAddEditEffects {
+export class EditorEffects {
     constructor(
         private actions$: Actions,
         private store: Store<appStore.AppState>,

@@ -1,9 +1,9 @@
-import { Component, Inject } from '@angular/core';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
+import { Component } from '@angular/core';
+import { MatDialogRef } from '@angular/material';
 import { FormControl, Validators } from '@angular/forms';
 import * as _ from 'lodash';
 /**
- * The confirm dialog component
+ * The commit dialog component
  */
 @Component({
   selector: 'app-commit-dialog',
@@ -17,10 +17,8 @@ export class CommitDialogComponent {
   /**
    * initializes the component
    * @param dialogRef the reference to a dialog opened via the MatDialog service
-   * @param data the injection token that can be used to access the data that was passed in to a dialog
    */
-  constructor(public dialogRef: MatDialogRef<CommitDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data) { }
+  constructor(public dialogRef: MatDialogRef<CommitDialogComponent>) { }
 
   /**
    * handles the commit action

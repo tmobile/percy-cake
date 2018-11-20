@@ -1,7 +1,8 @@
 <div class="select-app-dialog">
     <form (ngSubmit)="selectApp()">
       <mat-form-field class="form-field">
-          <input type="text" placeholder="Application" readonly #trigger="matAutocompleteTrigger" [matAutocomplete]="auto" matInput [formControl]="appname" (click)="triggerOpen()" />
+          <input type="text" matInput placeholder="Application" readonly #trigger="matAutocompleteTrigger" [matAutocomplete]="auto"
+           [formControl]="appname" (click)="trigger.openPanel()" />
           <mat-autocomplete #auto="matAutocomplete">
             <mat-option *ngFor="let name of filteredApps|async" [value]="name">
               {{name}}
@@ -10,7 +11,7 @@
           <mat-error>*Required</mat-error>
       </mat-form-field>
 
-      <mat-checkbox [disabled]="!canCreateEnv()" [(ngModel)]="createEnv" name="createEnv">
+      <mat-checkbox color="primary" [formControl]="createEnv" name="createEnv">
         Create {{data.envFileName}}
       </mat-checkbox>
 

@@ -1,25 +1,12 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { Setup } from 'test/test-helper';
 
 import { ConflictDialogComponent } from './conflict-dialog.component';
 
 describe('ConflictDialogComponent', () => {
-  let component: ConflictDialogComponent;
-  let fixture: ComponentFixture<ConflictDialogComponent>;
 
-  beforeEach(async(() => {
-    TestBed.configureTestingModule({
-      declarations: [ ConflictDialogComponent ]
-    })
-    .compileComponents();
-  }));
+  const ctx = Setup(ConflictDialogComponent, null, true);
 
-  beforeEach(() => {
-    fixture = TestBed.createComponent(ConflictDialogComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
-
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  it('should create ConflictDialogComponent', () => {
+    expect(ctx().component).toBeTruthy();
   });
 });

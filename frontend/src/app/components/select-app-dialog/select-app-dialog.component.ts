@@ -1,12 +1,14 @@
 import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA, MatAutocompleteTrigger } from '@angular/material';
 import { FormControl, Validators } from '@angular/forms';
-import { Observable, of } from 'rxjs';
-import { startWith, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { startWith, debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 
 import * as _ from 'lodash';
+import { GetConfigFile } from 'store/reducers/backend.reducers';
+
 /**
- * The confirm dialog component
+ * The select app dialog component
  */
 @Component({
   selector: 'app-select-dialog',
@@ -15,10 +17,11 @@ import * as _ from 'lodash';
 })
 export class SelectAppDialogComponent implements OnInit {
 
-  appname: FormControl = new FormControl('', [Validators.required]);
-  createEnv: boolean;
+  appname = new FormControl('', [Validators.required]);
+  createEnv = new FormControl();
 
   filteredApps: Observable<string[]>;
+
   @ViewChild('trigger') trigger: MatAutocompleteTrigger;
 
   /**
@@ -30,34 +33,40 @@ export class SelectAppDialogComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data) { }
 
   ngOnInit() {
-    if (this.data.selectedApp) {
-      this.appname.setValue(this.data.selectedApp);
+    const { selectedApp } = this.data;
+    if (selectedApp) {
+      this.appname.setValue(selectedApp);
+      this.onAppChange(selectedApp);
     }
+
     this.filteredApps = this.appname.valueChanges
       .pipe(
-        startWith(null),
+        startWith(selectedApp || ''),
         debounceTime(100),
         distinctUntilChanged(),
-        switchMap(value => {
+        map(value => {
           value = _.trim(value);
+
+          this.onAppChange(value);
+
           if (!value || _.includes(this.data.applications, value)) {
-            return of(this.data.applications);
+            return this.data.applications;
           }
-          return of(this.data.applications.filter(option => _.includes(option.toLowerCase(), value)));
+
+          return this.data.applications.filter(option => _.includes(option.toLowerCase(), value));
         })
       );
   }
 
-  triggerOpen() {
-    this.trigger.openPanel();
-  }
-
-  canCreateEnv() {
-    const result = this.data.canCreateEnv(_.trim(this.appname.value));
-    if (!result) {
-      this.createEnv = false;
+  private onAppChange(app) {
+    const result = GetConfigFile(this.data.backendState, this.data.envFileName, app);
+    if (result) {
+      // Env file already exists
+      this.createEnv.disable();
+      this.createEnv.setValue(false);
+    } else {
+      this.createEnv.enable();
     }
-    return result;
   }
 
   /**
@@ -68,6 +77,6 @@ export class SelectAppDialogComponent implements OnInit {
     if (!appName) {
       return;
     }
-    this.dialogRef.close({appName, createEnv: this.createEnv});
+    this.dialogRef.close({appName, createEnv: this.createEnv.value});
   }
 }

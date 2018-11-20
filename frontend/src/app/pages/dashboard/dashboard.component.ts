@@ -1,19 +1,18 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { MatDialog, Sort } from '@angular/material';
 import { Router } from '@angular/router';
 import { Store, select } from '@ngrx/store';
-import { Observable, combineLatest } from 'rxjs';
+import { Observable, combineLatest, Subject, BehaviorSubject, Subscription } from 'rxjs';
 import { take, map, withLatestFrom } from 'rxjs/operators';
 
-import { ConfigFile } from '../../models/config-file';
-import * as appStore from '../../store';
-import { Alert } from '../../store/actions/common.actions';
-import { SelectApp, CollapseApps, ToggleApp, TableSort } from '../../store/actions/dashboard.actions';
-import { DeleteFile, CommitChanges } from '../../store/actions/backend.actions';
-import { GetConfigFile } from '../../store/reducers/backend.reducers';
-import { ConfirmationDialogComponent } from '../../components/confirmation-dialog/confirmation-dialog.component';
-import { CommitDialogComponent } from '../../components/commit-dialog/commit-dialog.component';
-import { SelectAppDialogComponent } from '../../components/select-app-dialog/select-app-dialog.component';
+import { ConfigFile } from 'models/config-file';
+import * as appStore from 'store';
+import { SelectApp, CollapseApps, ToggleApp, TableSort } from 'store/actions/dashboard.actions';
+import { DeleteFile, CommitChanges } from 'store/actions/backend.actions';
+import { GetConfigFile } from 'store/reducers/backend.reducers';
+import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
+import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.component';
+import { SelectAppDialogComponent } from 'components/select-app-dialog/select-app-dialog.component';
 
 import * as _ from 'lodash';
 
@@ -25,55 +24,23 @@ import * as _ from 'lodash';
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   collapsedApps: Observable<string[]> = this.store.pipe(select(appStore.getCollapsedApps));
   allAppsExpanded: Observable<boolean> = this.collapsedApps.pipe(map(c => !c.length));
   tableSort: Observable<any> = this.store.pipe(select(appStore.getTableSort));
   repositoryName: Observable<string> = this.store.pipe(select(appStore.getRepositoryName));
   selectedApp: Observable<string> = this.store.pipe(select(appStore.getSelectedApp));
   applications: Observable<string[]> = this.store.pipe(select(appStore.getApplications));
+  isDeleting: Observable<boolean> = this.store.pipe(select(appStore.getDashboardFileDeleting));
+  isCommitting: Observable<boolean> = this.store.pipe(select(appStore.getDashboardCommittingFile));
 
-  allFiles = combineLatest(this.store.pipe(select(appStore.getAllFiles)), this.selectedApp).pipe(
-    map(([files, applicationName]) => {
-      return files.filter((file) => !applicationName || applicationName === file.applicationName);
-    })
-  );
-
-  folders = combineLatest(this.allFiles, this.tableSort, this.collapsedApps).pipe(
-    map(([files, sort, collapsedFolders]) => {
-      const apps = _.groupBy(files, (file) => file.applicationName);
-
-      const result = [];
-
-      _.orderBy(_.keys(apps), [], [sort.applicationName]).forEach(app => {
-        const appFiles = _.orderBy(apps[app], ['fileName'], [sort.fileName]);
-        result.push({
-          app
-        });
-        if (!_.includes(collapsedFolders, app)) {
-          appFiles.forEach(appFile => {
-            result.push({
-              app,
-              appFile
-            });
-          });
-        }
-      });
-      return result;
-    })
-  );
-
-  isDeleting = this.store.pipe(select(appStore.getDashboardFileDeleting));
-  isCommitting = this.store.pipe(select(appStore.getDashboardCommittingFile));
+  folders = new BehaviorSubject<any[]>(null);
+  disableCommit = new BehaviorSubject<boolean>(true);
+  foldersSub: Subscription;
 
   displayedColumns: string[] = ['applicationName', 'fileName', 'actions'];
-
   envFileName: string;
 
-  disableCommit = this.allFiles.pipe(map(files => {
-    const modified = files.filter((f) => f.modified).map(f => ({...f}));
-    return !modified.length;
-  }));
   /**
    * initializes the component
    * @param store the application store
@@ -93,6 +60,48 @@ export class DashboardComponent implements OnInit {
     this.store.pipe(select(appStore.getCurrentUser)).pipe(take(1)).subscribe(user => {
       this.envFileName = user.envFileName;
     });
+
+    const folders$ = new Subject<any[]>();
+
+    folders$.subscribe(this.folders);
+
+    folders$.subscribe((files) => {
+      const modified = files.filter((f) => f.appFile && f.appFile.modified);
+      this.disableCommit.next(!modified.length);
+    });
+
+    this.foldersSub = combineLatest(this.store.pipe(select(appStore.getAllFiles)),
+      this.store.pipe(select(appStore.dashboardState))).pipe(
+      map(([grouped, dashboardState]) => {
+
+        const apps = _.keys(grouped);
+
+        const result = [];
+
+        _.orderBy(apps, [], [dashboardState.tableSort.applicationName]).forEach(app => {
+          if (dashboardState.selectedApp && dashboardState.selectedApp !== app) {
+            return;
+          }
+          const appFiles = _.orderBy(grouped[app], ['fileName'], [dashboardState.tableSort.fileName]);
+          result.push({
+            app
+          });
+          if (!_.includes(dashboardState.collapsedApps, app)) {
+            appFiles.forEach(appFile => {
+              result.push({
+                app,
+                appFile
+              });
+            });
+          }
+        });
+        return result;
+      })
+    ).subscribe(folders$);
+  }
+
+  ngOnDestroy() {
+    this.foldersSub.unsubscribe();
   }
 
   toggleApp(app) {
@@ -137,10 +146,7 @@ export class DashboardComponent implements OnInit {
           envFileName,
           applications: appState.backend.applications,
           selectedApp: appState.dashboard.selectedApp,
-          canCreateEnv: (appName) => {
-            const envFile = GetConfigFile(appState.backend, envFileName, appName);
-            return !envFile;
-          }
+          backendState: appState.backend
         },
         autoFocus: false
       });
@@ -165,22 +171,18 @@ export class DashboardComponent implements OnInit {
    * Commit changes.
    */
   commitChanges() {
-    this.allFiles.pipe(take(1)).subscribe(files => {
-      const modified = files.filter((f) => f.modified).map(f => ({...f}));
 
-      if (!modified.length) {
-        return this.store.dispatch(new Alert({ message: 'No files changed', editorType: 'info' }));
+    const files = this.folders.value;
+    const modified = files.filter((f) => f.appFile && f.appFile.modified).map(f => ({...f.appFile}));
+    const dialogRef = this.dialog.open(CommitDialogComponent);
+
+    dialogRef.afterClosed().subscribe(response => {
+      if (response) {
+        this.store.dispatch(new CommitChanges({
+          files: modified,
+          message: response,
+        }));
       }
-      const dialogRef = this.dialog.open(CommitDialogComponent);
-
-      dialogRef.afterClosed().subscribe(response => {
-        if (response) {
-          this.store.dispatch(new CommitChanges({
-            files: modified,
-            message: response,
-          }));
-        }
-      });
     });
   }
 

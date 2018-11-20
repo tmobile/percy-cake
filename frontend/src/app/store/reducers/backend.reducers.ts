@@ -116,5 +116,14 @@ export function reducer(state = initialState, action: BackendActionsUnion): Stat
 }
 
 export const getApplications = (state: State) => state.applications;
-export const getAllFiles = (state: State) => ConfigFileAdapter.getSelectors().selectAll(state.files);
+export const getAllFiles = (state: State) => {
+  const files = ConfigFileAdapter.getSelectors().selectAll(state.files);
+  const grouped = _.groupBy(files, (file) => file.applicationName);
+  _.each(state.applications, (app) => {
+    if (!grouped[app]) {
+      grouped[app] = [];
+    }
+  });
+  return grouped;
+};
 

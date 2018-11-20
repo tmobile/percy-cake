@@ -1,25 +1,12 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { Setup } from 'test/test-helper';
 
 import { NestedConfigViewComponent } from './nested-config-view.component';
 
 describe('NestedConfigViewComponent', () => {
-  let component: NestedConfigViewComponent;
-  let fixture: ComponentFixture<NestedConfigViewComponent>;
 
-  beforeEach(async(() => {
-    TestBed.configureTestingModule({
-      declarations: [ NestedConfigViewComponent ]
-    })
-    .compileComponents();
-  }));
+  const ctx = Setup(NestedConfigViewComponent);
 
-  beforeEach(() => {
-    fixture = TestBed.createComponent(NestedConfigViewComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
-
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  it('should create NestedConfigViewComponent', () => {
+    expect(ctx().component).toBeTruthy();
   });
 });
