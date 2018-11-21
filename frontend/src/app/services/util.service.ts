@@ -301,4 +301,45 @@ export class UtilService {
 
     return node;
   }
+
+  /*
+   * Do update TreeNode's json value
+   */
+  private doUpdateJsonValue(node: TreeNode) {
+    const json = {};
+    if (node.comment) {
+      json['$comment'] = node.comment;
+    }
+    json['$type'] = node.valueType;
+    if (node.isArray()) {
+      json['$type'] = 'array';
+    }
+    if (node.children) {
+      if (node.isArray()) {
+        const arr = [];
+        node.children.forEach(child => {
+          this.doUpdateJsonValue(child);
+          arr.push(child.jsonValue);
+        });
+        json['$value'] = arr;
+      } else {
+        node.children.forEach(child => {
+          this.doUpdateJsonValue(child);
+          json[child.key] = child.jsonValue;
+        });
+      }
+    } else {
+      json['$value'] = node.value;
+    }
+
+    node.jsonValue = json;
+  }
+
+  /**
+   * updates the json value of node and its all parent
+   * @param node the node to update
+   */
+  updateJsonValue(node: TreeNode) {
+    this.doUpdateJsonValue(!node.parent ? node : node.getTopParent());
+  }
 }

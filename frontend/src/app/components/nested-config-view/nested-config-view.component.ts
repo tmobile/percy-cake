@@ -40,10 +40,8 @@ export class NestedConfigViewComponent implements OnChanges {
   envTreeControl: NestedTreeControl<TreeNode>;
   envDataSource: MatTreeNestedDataSource<TreeNode>;
 
-  defaultCardHeight = new BehaviorSubject<number|string>(null);
-  envCardHeight = new BehaviorSubject<number|string>(null);
-
   firstInit = true;
+
   /**
    * initializes the component
    * @param dialog the material dialog instance
@@ -86,14 +84,6 @@ export class NestedConfigViewComponent implements OnChanges {
 
   // get a node's children
   private _getChildren = (node: TreeNode) => node.children;
-
-  changeDefaultCardHeight(height) {
-    this.defaultCardHeight.next(height);
-  }
-
-  changeEnvCardHeight(height) {
-    this.envCardHeight.next(height);
-  }
 
   toggle(treeControl, node, toggleAll?: boolean) {
     const expanded = treeControl.isExpanded(node);
@@ -271,7 +261,7 @@ export class NestedConfigViewComponent implements OnChanges {
           node.children : this.currentAddEditProperty.children || [];
       }
 
-      this.updateJsonValue(this.currentAddEditProperty);
+      this.utilService.updateJsonValue(this.currentAddEditProperty);
     } else {
       node.level = this.currentAddEditProperty.level + 1;
       node.parent = this.currentAddEditProperty;
@@ -285,7 +275,7 @@ export class NestedConfigViewComponent implements OnChanges {
       } else {
         this.envTreeControl.expand(this.currentAddEditProperty);
       }
-      this.updateJsonValue(node);
+      this.utilService.updateJsonValue(node);
     }
 
     this.refreshTree();
@@ -303,47 +293,6 @@ export class NestedConfigViewComponent implements OnChanges {
     event.preventDefault();
     event.stopPropagation();
     menuButton._elementRef.nativeElement.click();
-  }
-
-  /*
-   * Do update TreeNode's json value
-   */
-  private doUpdateJsonValue(node: TreeNode) {
-    const json = {};
-    if (node.comment) {
-      json['$comment'] = node.comment;
-    }
-    json['$type'] = node.valueType;
-    if (node.isArray()) {
-      json['$type'] = 'array';
-    }
-    if (node.children) {
-      if (node.isArray()) {
-        const arr = [];
-        node.children.forEach(child => {
-          this.doUpdateJsonValue(child);
-          arr.push(child.jsonValue);
-        });
-        json['$value'] = arr;
-      } else {
-        node.children.forEach(child => {
-          this.doUpdateJsonValue(child);
-          json[child.key] = child.jsonValue;
-        });
-      }
-    } else {
-      json['$value'] = node.value;
-    }
-
-    node.jsonValue = json;
-  }
-
-  /**
-   * updates the json value of node and its all parent
-   * @param node the node to update
-   */
-  private updateJsonValue(node: TreeNode) {
-    this.doUpdateJsonValue(!node.parent ? node : node.getTopParent());
   }
 
   /**
@@ -375,7 +324,7 @@ export class NestedConfigViewComponent implements OnChanges {
             element.id = `${parent.id}.${element.key}`;
           });
         }
-        this.updateJsonValue(node);
+        this.utilService.updateJsonValue(node);
         // if deleted node is from default tree, delete respective properties from environments tree
         if (node.isDefaultNode()) {
           this.deleteEnvironmentProperties(node);
@@ -422,7 +371,7 @@ export class NestedConfigViewComponent implements OnChanges {
     }
 
     if (foundAny) {
-      this.updateJsonValue(envsNode);
+      this.utilService.updateJsonValue(envsNode);
     }
   }
 }

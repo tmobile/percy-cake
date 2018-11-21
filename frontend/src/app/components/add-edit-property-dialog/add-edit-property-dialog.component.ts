@@ -55,21 +55,20 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     this.duplicateDefault = false;
     this.inheritsOptions = null;
 
-    const node: TreeNode = this.data.node;
+    const { editMode, node, configProperty } = this.data;
 
-    if (this.data.editMode) {
-      const { configProperty } = this.data;
+    if (editMode) {
 
       this.key.setValue(configProperty.key);
       this.valueType.setValue(configProperty.valueType);
 
-      if (configProperty.valueType === PROPERTY_VALUE_TYPES.BOOLEAN) {
-        this.value.setValue(configProperty.value !== undefined ? configProperty.value.toString() : '');
+      if (configProperty.valueType === PROPERTY_VALUE_TYPES.NUMBER) {
+        this.value.setValue(_.isNumber(configProperty.value) ? configProperty.value : '');
       } else {
-        this.value.setValue(configProperty.value ? configProperty.value : '');
+        this.value.setValue(_.toString(configProperty.value));
       }
 
-      this.comment.setValue(configProperty.comment ? configProperty.comment : '');
+      this.comment.setValue(_.toString(configProperty.comment));
     } else {
       if (node.isArray()) {
         this.key.setValue(`[${node.children.length}]`);
@@ -84,6 +83,24 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     if (this.valueTypeDisabled()) {
       this.valueType.disable();
     }
+  }
+
+  keyDisabled() {
+    return this.isEditRootNode() || this.isEditArrayItem() || (this.data.editMode && !this.data.isDefaultNode);
+  }
+
+  valueTypeDisabled() {
+    return this.isEditRootNode() || this.isEditArrayItem() || !this.data.isDefaultNode;
+  }
+
+  isEditArrayItem() {
+    const node: TreeNode = this.data.node;
+
+    return (this.data.editMode && node.parent && node.parent.isArray()) || (!this.data.editMode && node.isArray());
+  }
+
+  isEditRootNode() {
+    return this.data.editMode && !this.data.node.parent;
   }
 
   showInherits() {
@@ -127,24 +144,6 @@ export class AddEditPropertyDialogComponent implements OnChanges {
       }
     };
     return envsNode.children.filter(child => child.key !== thisEnvKey && !hasCylic(child)).map(child => child.key);
-  }
-
-  isEditArrayItem() {
-    const node: TreeNode = this.data.node;
-
-    return (this.data.editMode && node.parent && node.parent.isArray()) || (!this.data.editMode && node.isArray());
-  }
-
-  isEditRootNode() {
-    return this.data.editMode && !this.data.node.parent;
-  }
-
-  keyDisabled() {
-    return this.isEditRootNode() || this.isEditArrayItem() || (this.data.editMode && !this.data.isDefaultNode);
-  }
-
-  valueTypeDisabled() {
-    return this.isEditRootNode() || this.isEditArrayItem() || !this.data.isDefaultNode;
   }
 
   getBreadCrumb() {
@@ -227,9 +226,5 @@ export class AddEditPropertyDialogComponent implements OnChanges {
 
   onCancel() {
     this.cancel.emit();
-  }
-
-  isChecked(value, flag) {
-    return value === flag;
   }
 }
