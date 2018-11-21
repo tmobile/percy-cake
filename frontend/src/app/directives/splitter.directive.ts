@@ -1,6 +1,5 @@
 import { Directive, Input, AfterViewInit } from '@angular/core';
 
-import * as _ from 'lodash';
 import * as Split from 'split.js';
 
 @Directive({
@@ -10,9 +9,9 @@ export class SplitDirective implements AfterViewInit {
   private _areas: string[] | null = null;
   private _sizes: number[] | null = null;
   private _minSizes: number[] | null = null;
+  private _gutterHeight: number | null = null;
+  private _gutterWidth: number | null = null;
   private _direction = 'horizontal';
-  private _gutterHeight: number | string = null;
-  private _gutterWidth: number | string = null;
 
   @Input() set splitAreas(v: string[]) {
     this._areas = v;
@@ -26,11 +25,11 @@ export class SplitDirective implements AfterViewInit {
   @Input() set splitDirection(v: string) {
     this._direction = v;
   }
-  @Input() set gutterHeight(v: number|string) {
-    this._gutterHeight = _.isNumber(v) ? `${v}px` : v;
+  @Input() set gutterHeight(v: number) {
+    this._gutterHeight = v;
   }
-  @Input() set gutterWidth(v: number|string) {
-    this._gutterWidth = _.isNumber(v) ? `${v}px` : v;
+  @Input() set gutterWidth(v: number) {
+    this._gutterWidth = v;
   }
 
   constructor() {}
@@ -43,10 +42,16 @@ export class SplitDirective implements AfterViewInit {
     if (this._gutterHeight || this._gutterWidth) {
       const gutterStyles: any = {};
       if (this._gutterHeight) {
-        gutterStyles.height = this._gutterHeight;
+        if (this._direction === 'vertical') {
+          options.gutterSize = this._gutterHeight;
+        }
+        gutterStyles.height = this._gutterHeight + 'px';
       }
       if (this._gutterWidth) {
-        gutterStyles.width = this._gutterWidth;
+        if (this._direction === 'horizontal') {
+          options.gutterSize = this._gutterWidth;
+        }
+        gutterStyles.width = this._gutterWidth + 'px';
       }
       options.gutterStyle = () => gutterStyles;
     }

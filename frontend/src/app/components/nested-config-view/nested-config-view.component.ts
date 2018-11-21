@@ -43,6 +43,7 @@ export class NestedConfigViewComponent implements OnChanges {
   defaultCardHeight = new BehaviorSubject<number|string>(null);
   envCardHeight = new BehaviorSubject<number|string>(null);
 
+  firstInit = true;
   /**
    * initializes the component
    * @param dialog the material dialog instance
@@ -66,10 +67,20 @@ export class NestedConfigViewComponent implements OnChanges {
       this.defaultDataSource.data = [defaultNode];
     }
 
-    const environmentsNode = this.utilService.buildConfigTree(this.configuration.environments || {}, 0, 'environments', null);
-    if (!this.envDataSource.data || !this.envDataSource.data.length
-      || !_.isEqual(this.envDataSource.data[0].jsonValue, environmentsNode.jsonValue)) {
-      this.envDataSource.data = [environmentsNode];
+    if (!this.isEnvMode) {
+      const environmentsNode = this.utilService.buildConfigTree(this.configuration.environments || {}, 0, 'environments', null);
+      if (!this.envDataSource.data || !this.envDataSource.data.length
+        || !_.isEqual(this.envDataSource.data[0].jsonValue, environmentsNode.jsonValue)) {
+        this.envDataSource.data = [environmentsNode];
+      }
+    }
+
+    if (this.firstInit) {
+      this.firstInit = false;
+      this.toggle(this.defaultTreeControl, this.defaultDataSource.data[0], true);
+      if (!this.isEnvMode) {
+        this.toggle(this.envTreeControl, this.envDataSource.data[0], true);
+      }
     }
   }
 
