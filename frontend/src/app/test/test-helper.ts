@@ -35,7 +35,6 @@ export const TestUser: User = {
   envFileName: 'environments.yaml',
 };
 
-const ActivatedRouteStub = {};
 const DialogStub = {
   input: new BehaviorSubject(undefined),
   output: new BehaviorSubject(undefined)
@@ -46,7 +45,7 @@ export class TestContext<T> extends TestCtx<T> {
 
   readonly routerStub = RouterStub;
   readonly dialogStub = DialogStub;
-  readonly activatedRouteStub = ActivatedRouteStub;
+  readonly activatedRouteStub: any;
   readonly httpMock: HttpTestingController;
   readonly store: Store<any>;
   readonly observables: { [name: string]: BehaviorSubject<any>} = {};
@@ -55,6 +54,7 @@ export class TestContext<T> extends TestCtx<T> {
     super(testCtx.fixture);
     this.httpMock = TestBed.get(HttpTestingController);
     this.store = this.resolve(Store);
+    this.activatedRouteStub = this.resolve(ActivatedRoute);
   }
 }
 
@@ -121,7 +121,7 @@ export const Setup = <T>(componentType: Type<T>, triggerLifecyle: boolean = true
           },
         },
         {
-          provide: ActivatedRoute, useValue: ActivatedRouteStub,
+          provide: ActivatedRoute, useValue: {},
         },
         {
           provide: MAT_DIALOG_DATA, useValue: {},

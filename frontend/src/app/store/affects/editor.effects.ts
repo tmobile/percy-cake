@@ -121,10 +121,10 @@ export class EditorEffects {
 
             let envNode = config.environments[env] || {};
             while (envNode) {
-              const shallowCopy = {...envNode};
-              const inherits = shallowCopy.inherits;
-              delete shallowCopy.inherits;
-              mergeStack.unshift({[env]: shallowCopy});
+              const deepCopy = _.cloneDeep(envNode);
+              const inherits = deepCopy.inherits;
+              delete deepCopy.inherits;
+              mergeStack.unshift({[env]: deepCopy});
               if (inherits) {
                 const inheritEnv = inherits.$value;
                 if (inheritEnv === env) {
@@ -136,7 +136,7 @@ export class EditorEffects {
               }
             }
 
-            mergeStack.unshift({[env]: { ...config.default }});
+            mergeStack.unshift({[env]: _.cloneDeep(config.default)});
 
             let merged = {};
             mergeStack.forEach(m => {
