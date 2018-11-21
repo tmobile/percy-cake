@@ -13,7 +13,7 @@
   </mat-form-field>
 
   <div *ngIf="(environments|async) && (configuration | async); else loader"
-    class="col-container" appSplit [splitAreas]="['#editor-tree-view','#editor-detail-view']" [splitSizes]="[60,40]">
+    class="col-container" appSplit [gutterWidth]="20" [splitAreas]="['#editor-tree-view','#editor-detail-view']" [splitSizes]="[60,40]">
 
     <!-- col which shows tree view -->
     <div class="col-default-env" id="editor-tree-view">

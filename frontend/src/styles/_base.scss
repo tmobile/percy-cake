@@ -53,11 +53,29 @@ a {
   text-overflow: ellipsis;
 }
 
-.gutter-horizontal {
-  cursor: col-resize;
-}
 .gutter-vertical {
   cursor: row-resize;
+  position: relative;
+}
+.gutter-horizontal {
+  cursor: col-resize;
+  position: relative;
+}
+.gutter::before {
+  content: '';
+  position: absolute;
+}
+.gutter-vertical::before {
+  left: 0;
+  top: 50%;
+  width: 100%;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+.gutter-horizontal::before {
+  top: 0;
+  left: 50%;
+  height: 100%;
+  border-left: 1px solid rgba(0, 0, 0, 0.12);
 }
 .mat-select-panel {
   max-height: 296px !important;
