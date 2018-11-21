@@ -157,7 +157,7 @@ export const Setup = <T>(componentType: Type<T>, triggerLifecyle: boolean = true
     });
 
     if (triggerLifecyle) {
-      ctx.fixture.detectChanges(); // This will trigger lifecyle ngOnInit/ngOnChanges
+      ctx.fixture.detectChanges(); // This will trigger lifecyle ngOnInit
     }
 
     await ctx.fixture.whenStable();

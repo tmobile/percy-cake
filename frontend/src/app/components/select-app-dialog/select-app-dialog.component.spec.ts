@@ -24,7 +24,7 @@ describe('SelectAppDialogComponent', () => {
       ],
     };
     ctx().component.data = data;
-    ctx().component.ngOnInit();
+    ctx().detectChanges();
 
     await new Promise(resolve => setTimeout(resolve, 150)); // wait for debouce time
     expect(ctx().observables.filteredApps.value).toEqual(data.applications);
@@ -56,7 +56,7 @@ describe('SelectAppDialogComponent', () => {
       ],
     };
     ctx().component.data = data;
-    ctx().component.ngOnInit();
+    ctx().detectChanges();
 
     expect(ctx().component.appname.value).toEqual(data.selectedApp);
     expect(ctx().component.createEnv.disabled).toBeTruthy();

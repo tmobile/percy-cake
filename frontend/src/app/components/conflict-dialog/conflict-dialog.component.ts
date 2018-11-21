@@ -36,9 +36,9 @@ export class ConflictDialogComponent implements OnInit {
     this.data.conflictFiles.forEach(file => {
       file.repoCode = this.utilService.convertJsonToYaml(file.config);
 
-      const draftFile = _.find(this.data.draftFiles, _.pick(file, ['fileName', 'applicationName']));
-      file.draftConf = draftFile['draftConfig'];
-      file.draftCode = this.utilService.convertJsonToYaml(file.draftConf);
+      const draftFile: any = _.find(this.data.draftFiles, _.pick(file, ['fileName', 'applicationName']));
+      file.draftConfig = draftFile.draftConfig;
+      file.draftCode = this.utilService.convertJsonToYaml(file.draftConfig);
     });
   }
 
@@ -68,7 +68,7 @@ export class ConflictDialogComponent implements OnInit {
         applicationName: file.applicationName,
         timestamp: file.timestamp,
         size: file.size,
-        draftConfig: file.resolveStrategy === 'draft' ? file.draftConf : file.config,
+        draftConfig: file.resolveStrategy === 'draft' ? file.draftConfig : file.config,
         originalConfig: file.config,
       };
 
