@@ -151,8 +151,8 @@ export class NestedConfigViewComponent implements OnChanges {
       }
 
       // Build key hierarchy
-      const keyHierarchy = node.level > 1 ? [node.key] : [];
-      let parentNode = node.parent;
+      const keyHierarchy: string[] = [];
+      let parentNode = node;
       while (parentNode && parentNode.level > 1) {
         keyHierarchy.unshift(parentNode.key);
         parentNode = parentNode.parent;
