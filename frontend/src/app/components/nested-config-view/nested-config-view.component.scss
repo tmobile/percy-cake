@@ -1,93 +1,96 @@
 // nested config tree
 @import "variables";
 .resize-tree-view {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-  &.env {
-    margin-top: 15px;
-  }
-  .panel-expander {
-    margin: 5px;
-  }
-}
-.nested-config-view {
-    background-color: $white;
-    padding: 10px;
-    overflow: auto;
-    height: 28vh;
-    min-height: 60px;
+  height: 65vh;
 
-    ul.sub-tree {
-        padding-inline-start: 40px;
+  .tree-view {
+    display: flex;
+
+    &.env {
+      border-top: 1px solid rgba(0, 0, 0, 0.12);
+      padding-top: 10px;
     }
-    .mat-tree-node {
-        overflow: visible;
-        min-height: 0;
-        flex-shrink: 0;
-        .btn-tree-toggle {
-          cursor: pointer;
-          display: block;
-          font-weight: bold;
-          font-size: x-large;
-          height: 20px;
-          line-height: 20px;
-          text-align: center;
-          width: 20px;
 
-          &.toggle-down {
-            font-size: large;
-          }
-          &.toggle-all-down {
-            transform: rotate(90deg);
-          }
-          &.toggle-all-up {
-            transform: rotate(-90deg);
-            margin-left: -5px;
-            width: 25px;
-          }
-        }
-        .underline {
-          border-bottom: black;
-          border-bottom-style: dotted;
-          border-bottom-width: thin;
-          display: flex;
-          align-items: center;
-          flex: 1;
-          cursor: pointer;
-        }
-        .context-menu-trigger {
-          position: absolute;
-        }
-        .btn-action {
-            margin-left: auto;
-            ::ng-deep .mat-button-wrapper {
-                position: relative;
-                top: -5px;
+    .nested-config-view {
+      flex-basis: 100%;
+      background-color: $white;
+      padding: 5px;
+      overflow: auto;
+      min-height: 60px;
+  
+      .sub-tree {
+          padding-left: 40px;
+      }
+      .mat-tree-node {
+          overflow: visible;
+          min-height: 0;
+          flex-shrink: 0;
+          .btn-tree-toggle {
+            cursor: pointer;
+            display: block;
+            font-weight: bold;
+            font-size: x-large;
+            height: 20px;
+            line-height: 20px;
+            text-align: center;
+            width: 20px;
+  
+            &.toggle-down {
+              font-size: large;
             }
-        }
-        .key {
-            padding-right: 20px;
-            font-weight: 700;
-            line-height: 1.2;
+            &.toggle-all-down {
+              transform: rotate(90deg);
+            }
+            &.toggle-all-up {
+              transform: rotate(-90deg);
+              margin-left: -5px;
+              width: 25px;
+            }
+          }
+          .underline {
+            border-bottom: black;
+            border-bottom-style: dotted;
+            border-bottom-width: thin;
+            display: flex;
+            align-items: center;
+            flex: 1;
             cursor: pointer;
-            max-width:200px;
-        }
-        .value {
-            min-width: 150px;
-            padding-right: 20px;
-            flex-shrink: 1;
-            line-height: 1.2;
-            cursor: pointer;
-        }
+          }
+          .context-menu-trigger {
+            position: absolute;
+          }
+          .btn-action {
+              margin-left: auto;
+              ::ng-deep .mat-button-wrapper {
+                  position: relative;
+                  top: -5px;
+              }
+          }
+          .key {
+              padding-right: 20px;
+              font-weight: 700;
+              line-height: 1.2;
+              cursor: pointer;
+              max-width:200px;
+          }
+          .value {
+              min-width: 150px;
+              padding-right: 20px;
+              flex-shrink: 1;
+              line-height: 1.2;
+              cursor: pointer;
+          }
+      }
+      ::ng-deep .mat-icon-button {
+          font-size: 20px;
+          font-weight: 700;
+      }
+      .btn-add-root-property {
+          margin-left: 40px;
+      }
     }
-    ::ng-deep .mat-icon-button {
-        font-size: 20px;
-        font-weight: 700;
-    }
-    .btn-add-root-property {
-        margin-left: 40px;
-    }
+  }
 }
-
 .btn-action-menu {
     display: block;
     width: 100%;

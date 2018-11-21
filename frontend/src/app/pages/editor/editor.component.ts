@@ -84,19 +84,6 @@ export class EditorComponent implements OnInit {
     }
   }
 
-  @HostListener('window:scroll', [])
-  onWindowScroll() {
-    const paddingTop = (this.document.documentElement.scrollTop || this.document.body.scrollTop) - 150;
-
-    if (this.detailPanel && this.detailPanel.nativeElement) {
-      if (paddingTop > 0) {
-        this.detailPanel.nativeElement.style['padding-top'] = paddingTop + 'px';
-      } else {
-        this.detailPanel.nativeElement.style['padding-top'] = '0';
-      }
-    }
-  }
-
   constructor(
     private route: ActivatedRoute,
     private store: Store<appStore.AppState>,
