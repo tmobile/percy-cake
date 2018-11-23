@@ -342,4 +342,33 @@ export class UtilService {
   updateJsonValue(node: TreeNode) {
     this.doUpdateJsonValue(!node.parent ? node : node.getTopParent());
   }
+
+  private escapeRegExp(text) {
+    return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+  }
+
+  replace(target, options) {
+    const regexPattern = `${this.escapeRegExp(options.prefix)}(.+?)${this.escapeRegExp(options.suffix)}`;
+    const includeRegExp = new RegExp(regexPattern, 'g');
+    const text = JSON.stringify(target);
+
+    let retVal = text;
+    let regExpResult;
+
+    while (regExpResult = includeRegExp.exec(text)) {
+      const fullMatch = regExpResult[0];
+      const tokenName = regExpResult[1];
+      let tokenValue = options.tokens[tokenName];
+
+      if (tokenValue !== null && tokenValue !== undefined) {
+        if (typeof tokenValue === 'string') {
+          tokenValue = tokenValue.replace(/"/g, '\\"');
+        }
+
+        retVal = retVal.replace(fullMatch, tokenValue);
+      }
+    }
+
+    return JSON.parse(retVal);
+  }
 }

@@ -5,6 +5,10 @@ import { map, exhaustMap, catchError, withLatestFrom, switchMap } from 'rxjs/ope
 import { Store, select } from '@ngrx/store';
 import * as _ from 'lodash';
 
+import { VARIABLE_SUBSTITUTE } from 'config';
+import * as appStore from 'store';
+import { SaveDraft, GetFileContent, GetFileContentSuccess } from 'store/actions/backend.actions';
+import { Alert, APIError } from 'store/actions/common.actions';
 import {
     EditorActionTypes,
     PageLoad,
@@ -16,15 +20,12 @@ import {
     NodeSelectedSuccess,
     NodeSelected,
     ConfigurationChange,
-} from '../actions/editor.actions';
-import { GetFileContent, GetFileContentSuccess } from '../actions/backend.actions';
-import { SaveDraft } from '../actions/backend.actions';
-import { GetConfigFile } from '../reducers/backend.reducers';
-import { ConfigFile } from '../../models/config-file';
-import { FileManagementService } from '../../services/file-management.service';
-import * as appStore from '..';
-import { UtilService } from '../../services/util.service';
-import { Alert, APIError } from '../actions/common.actions';
+} from 'store/actions/editor.actions';
+import { GetConfigFile } from 'store/reducers/backend.reducers';
+import { ConfigFile } from 'models/config-file';
+import { TreeNode } from 'models/tree-node';
+import { UtilService } from 'services/util.service';
+import { FileManagementService } from 'services/file-management.service';
 
 // defines the editor page related effects
 @Injectable()
@@ -148,7 +149,20 @@ export class EditorEffects {
               });
             });
 
-            const compiledYAML = this.utilService.convertJsonToYaml(merged);
+            const tokens = {};
+            _.each(merged[env], (value, key) => {
+              if (value && TreeNode.isLeafType(value.$type)) {
+                tokens[key] = value.$value;
+              }
+            });
+
+            const substituted = this.utilService.replace(merged[env], {
+              tokens,
+              prefix: VARIABLE_SUBSTITUTE.PREFIX,
+              suffix: VARIABLE_SUBSTITUTE.SUFFIX,
+            });
+
+            const compiledYAML = this.utilService.convertJsonToYaml(substituted);
             return of(new ViewCompiledYAMLSuccess({ compiledYAML }));
         }),
     );

@@ -8,22 +8,22 @@ import { map, take, tap } from 'rxjs/operators';
 import { Store, select } from '@ngrx/store';
 import * as _ from 'lodash';
 
-import * as appStore from '../../store';
-import { TreeNode } from '../../models/tree-node';
-import { Configuration, ConfigFile } from '../../models/config-file';
-import { NestedConfigViewComponent } from '../../components/nested-config-view/nested-config-view.component';
-import { ConfirmationDialogComponent } from '../../components/confirmation-dialog/confirmation-dialog.component';
-import { CommitDialogComponent } from '../../components/commit-dialog/commit-dialog.component';
-import { Alert } from '../../store/actions/common.actions';
+import * as appStore from 'store';
+import { Alert } from 'store/actions/common.actions';
+import { CommitChanges } from 'store/actions/backend.actions';
 import {
   PageLoad, ViewCompiledYAML, OpenAddEditProperty,
   CancelAddEditProperty, SaveAddEditProperty, ConfigurationChange,
   NodeSelected,
   SaveFile,
   ChangeFileName,
-} from '../../store/actions/editor.actions';
-import { GetConfigFile } from '../../store/reducers/backend.reducers';
-import { CommitChanges } from '../../store/actions/backend.actions';
+} from 'store/actions/editor.actions';
+import { GetConfigFile } from 'store/reducers/backend.reducers';
+import { TreeNode } from 'models/tree-node';
+import { Configuration, ConfigFile } from 'models/config-file';
+import { NestedConfigViewComponent } from 'components/nested-config-view/nested-config-view.component';
+import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
+import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.component';
 
 /*
   Configurations editor page

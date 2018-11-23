@@ -1,15 +1,18 @@
 import { convertToParamMap } from '@angular/router';
+import { select } from '@ngrx/store';
 
 import { Setup, TestUser, assertDialogOpened } from 'test/test-helper';
 
-import { API_BASE_URL } from 'services/http-helper.service';
+import * as appStore from 'store';
 import { LoginSuccess } from 'store/actions/auth.actions';
+import { ConfigurationChange } from 'store/actions/editor.actions';
+import { API_BASE_URL } from 'services/http-helper.service';
+
+import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.component';
+import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
 
 import { EditorComponent } from './editor.component';
-import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
-import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.component';
-import { UtilService } from 'services/util.service';
-import { ConfigurationChange } from 'store/actions/editor.actions';
+import { take } from '../../../../node_modules/rxjs/operators';
 
 describe('EditorComponent', () => {
 
@@ -221,94 +224,54 @@ describe('EditorComponent', () => {
     expect(ctx().routerStub.value).toEqual(['/dashboard']);
   });
 
-  it('should view compiled yaml code', () => {
+  it('should view compiled yaml code', async () => {
     const config = {
       'default': {
+        'dcp.host': {
+          '$type': 'string',
+          '$value': 'prod.dcp.com'
+        },
+        'size': {
+          '$type': 'number',
+          '$value': 10
+        },
+        'sort': {
+          '$type': 'boolean',
+          '$value': true
+        },
         'api': {
-          '$comment': ['urls used by this application'],
           '$type': 'object',
-          'host': {
-            '$comment': ['qat data server'],
-            '$type': 'string',
-            '$value': 'https://pd01.qat.t-mobile.com:9000'
-          },
           'urls': {
             '$type': 'object',
-            'getCatalog': {
+            'dcpcart': {
               '$type': 'string',
-              '$value': '{{api.host}}/api/catalog?device=phone&pageSize={{size}}&pageNum={{page}}'
+              '$value': '_{dcp.host}_/api/cart?size=_{size}_&sort=_{sort}_'
             },
-            'getDetails': {
+            'dcpupdate': {
               '$type': 'string',
-              '$value': '{{api.host}}/api/product/details/{{deviceId}}'
+              '$value': '_{dcp.host}_/api/update?size=_{size}_&sort=_{sort}_'
             },
-            '$comment': [
-              'all known properties are defined in the default block.',
-              'The most common values are assigned in the default block'
-            ],
           },
-          'staging-items': {
-            '$value': [
-                {
-                    '$comment': ['item1 comment'],
-                    '$value': 'item1',
-                    '$type': 'string'
-                },
-                {
-                    '$comment': ['item2 comment'],
-                    '$value': 'item2',
-                    '$type': 'string'
-                },
-            ],
-            '$type': 'array'
-          },
-        },
-        '$type': 'object'
+        }
       },
       'environments': {
         'dev': {
-          'inherits' : {
-            '$type': 'string',
-            '$value': 'qat'
-          },
-          'staging-items': {
-            '$value': [
-                {
-                    '$comment': ['item1 comment'],
-                    '$value': 'new item1',
-                    '$type': 'string'
-                },
-            ],
-            '$type': 'array'
+          'size': {
+            '$type': 'number',
+            '$value': 20
           },
           '$type': 'object'
         },
         'qat': {
-            'api': {
-              '$type': 'object',
-              'urls': {
-                '$type': 'object',
-                'getCatalog': {
-                  '$type': 'string',
-                  '$value': '{{api.host}}/api/catalog?device=phone&pageSize={{size}}&pageNum={{page}}'
-                },
-                '$comment': [
-                  'all known properties are defined in the default block.',
-                  'The most common values are assigned in the default block'
-                ],
-              },
-              'staging-items': {
-                '$value': [
-                    {
-                        '$comment': ['item1 comment'],
-                        '$value': 'item1',
-                        '$type': 'string'
-                    },
-                ],
-                '$type': 'array'
-              },
-            },
-            '$type': 'object'
+          'inherits' : {
+            '$type': 'string',
+            '$value': 'dev'
+          },
+          'sort': {
+            '$type': 'boolean',
+            '$value': false
+          },
+          '$type': 'object'
         },
         '$type': 'object'
       }
@@ -316,5 +279,25 @@ describe('EditorComponent', () => {
     ctx().store.dispatch(new ConfigurationChange(config));
 
     ctx().component.showCompiledYAML('dev');
+    let editorState = await ctx().store.pipe(select(appStore.editorState), take(1)).toPromise();
+    expect(editorState.previewCode).toEqual(`dcp.host: !!str "prod.dcp.com"
+size: !!int 20
+sort: !!bool true
+api: !!map
+  urls: !!map
+    dcpcart: !!str "prod.dcp.com/api/cart?size=20&sort=true"
+    dcpupdate: !!str "prod.dcp.com/api/update?size=20&sort=true"
+`);
+
+    ctx().component.showCompiledYAML('qat');
+    editorState = await ctx().store.pipe(select(appStore.editorState), take(1)).toPromise();
+    expect(editorState.previewCode).toEqual(`dcp.host: !!str "prod.dcp.com"
+size: !!int 20
+sort: !!bool false
+api: !!map
+  urls: !!map
+    dcpcart: !!str "prod.dcp.com/api/cart?size=20&sort=false"
+    dcpupdate: !!str "prod.dcp.com/api/update?size=20&sort=false"
+`);
   });
 });
