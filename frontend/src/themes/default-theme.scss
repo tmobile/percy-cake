@@ -1,7 +1,7 @@
 // define 3 theme color
 // mat-palette accepts $palette-name, main, lighter and darker variants
 $default-theme-primary: mat-palette($mat-pink, A200);
-$default-theme-accent: mat-palette($mat-light-blue);
+$default-theme-accent: mat-palette($mat-pink, 800);
 $default-theme-warn: mat-palette($mat-deep-orange, A400, A200, A700);
 
 // create theme (use mat-dark-theme for themes with dark backgrounds)

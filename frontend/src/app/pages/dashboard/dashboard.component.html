@@ -42,7 +42,9 @@
     <ng-container matColumnDef="fileName">
       <th mat-header-cell *matHeaderCellDef mat-sort-header="fileName">Filename</th>
       <td mat-cell *matCellDef="let element">
-        <span *ngIf="element.appFile">{{element.appFile.fileName}}<span *ngIf="element.appFile.modified" class="mo-ind">*</span></span>
+        <a *ngIf="element.appFile" mat-button color="accent" (click)="editFile(element.appFile)" >
+          {{element.appFile.fileName}}<span *ngIf="element.appFile.modified" class="mo-ind">*</span>
+        </a>
       </td>
     </ng-container>
 
@@ -51,13 +53,6 @@
       <th mat-header-cell *matHeaderCellDef class="actions-col">Actions</th>
       <td mat-cell *matCellDef="let element;" class="actions-col">
         <div class="btn-group" *ngIf="element.appFile">
-          <div class="btn-with-icon">
-              <mat-icon class="btn-icon" (click)="editFile(element.appFile)">create</mat-icon>
-              <button type="button" mat-button color="primary" class="btn-edit-file" (click)="editFile(element.appFile)">
-                Edit
-              </button>
-          </div>
-
           <div class="btn-with-icon" *ngIf="element.appFile.fileName !== envFileName">
               <mat-icon (click)="deleteFile(element.appFile)" class="btn-icon">delete</mat-icon>
               <button type="button" mat-button color="primary" class="btn-delete-file" (click)="deleteFile(element.appFile)">

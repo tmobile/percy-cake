@@ -49,6 +49,13 @@
             }
             &.mat-column-fileName {
               width: 55%;
+
+              a {
+                padding: 5px;
+              }
+              .mo-ind {
+                color: red;
+              }
             }
             &.actions-col {
                 width: 25%;
@@ -90,9 +97,6 @@
                 transform: rotate(-90deg);
                 margin-left: 4px;
               }
-            }
-            .mo-ind {
-              color: red;
             }
         }
     }

@@ -326,7 +326,7 @@ export class NestedConfigViewComponent implements OnChanges {
         }
         this.utilService.updateJsonValue(node);
         // if deleted node is from default tree, delete respective properties from environments tree
-        if (node.isDefaultNode()) {
+        if (node.isDefaultNode() && !this.isEnvMode) {
           this.deleteEnvironmentProperties(node);
         }
         this.refreshTree();
