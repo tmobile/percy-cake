@@ -1,6 +1,9 @@
 // configuration editor page
 @import "variables";
 .editor-page {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
     padding: 10px 100px;
     .btn-small {
         line-height: 28px;
@@ -17,13 +20,16 @@
     }
     .col-container {
         display: flex;
+        flex: 1; // This will make the tree view to fill the vertical space
         margin-top: 5px;
         .section-heading span {
             font-weight: 400;
         }
         .col-default-env {
             width: 60%;
-            padding-right: 20px;
+            margin-right: 20px;
+            position: relative;
+
             .section-heading {
                 margin-bottom: 20px;
             }

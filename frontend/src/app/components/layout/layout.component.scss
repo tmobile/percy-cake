@@ -1,0 +1,9 @@
+.page-wrapper {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  .main-content {
+    flex: 1; // let main-content to fill the vertical space
+  }
+}

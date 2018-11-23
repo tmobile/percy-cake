@@ -17,13 +17,11 @@
 
     <!-- col which shows tree view -->
     <div class="col-default-env" id="editor-tree-view">
-      <div class="default-env" *ngIf="configuration">
         <!-- property tree -->
-        <app-nested-config-view #nestedConfig [configuration]="configuration | async" [environments]="environments| async"
+        <app-nested-config-view *ngIf="configuration" #nestedConfig [configuration]="configuration | async" [environments]="environments| async"
           [isEnvMode]="isEnvMode" (configurationChange)="onConfigChange($event)"
           (selectedNode)="onNodeSelected($event)" (cancelAddEditPropertyChange)="onCancelAddEditProperty()"
           (viewCompiledYAMLEvent)="showCompiledYAML($event)" (addEditProperty)="onAddEditProperty($event)"></app-nested-config-view>
-      </div>
     </div>
 
     <!-- detail panel -->

@@ -1,13 +1,12 @@
 // nested config tree
 @import "variables";
-.resize-tree-view {
-  height: 65vh;
-
-  .tree-view {
-    display: flex;
+.split-tree-view {
+  position: absolute;
+  width: 100%;
+  height: 100%;
 
     .nested-config-view {
-      flex-basis: 100%;
+      height: 100%;
       background-color: $white;
       padding: 5px;
       overflow: auto;
@@ -83,7 +82,6 @@
           margin-left: 40px;
       }
     }
-  }
 }
 .btn-action-menu {
     display: block;
