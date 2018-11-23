@@ -93,12 +93,6 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
             };
         }
 
-        case EditorActionTypes.ViewCompiledYAML: {
-            return {
-                ...state,
-                showAsCompiledYAMLEnvironment: action.payload.environment,
-            };
-        }
         case EditorActionTypes.ViewCompiledYAMLSuccess: {
             return {
                 ...state,
@@ -106,6 +100,7 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
                 selectedNode: null,
                 selectedConfigProperty: null,
                 currentAddEditProperty: null,
+                showAsCompiledYAMLEnvironment: action.payload.environment,
                 previewCode: action.payload.compiledYAML,
             };
         }

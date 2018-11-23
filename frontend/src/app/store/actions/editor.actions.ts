@@ -8,7 +8,6 @@ export enum EditorActionTypes {
     PageLoad = '[Editor] Page Load',
     PageLoadSuccess = '[Editor] Page Load Success',
     PageLoadFailure = '[Editor] Page Load Failure',
-    ViewCompiledYAML = '[Editor] View Compiled YAML',
     ViewCompiledYAMLSuccess = '[Editor] View Compiled YAML Success',
     ChangeFileName = '[Editor] Change File Name',
     SaveFile = '[Editor] Save File',
@@ -42,14 +41,9 @@ export class ConfigurationChange implements Action {
     constructor(public payload: Configuration) { }
 }
 
-export class ViewCompiledYAML implements Action {
-    readonly type = EditorActionTypes.ViewCompiledYAML;
-    constructor(public payload: { environment: string }) { }
-}
-
 export class ViewCompiledYAMLSuccess implements Action {
     readonly type = EditorActionTypes.ViewCompiledYAMLSuccess;
-    constructor(public payload: { compiledYAML: string }) { }
+    constructor(public payload: { environment: string, compiledYAML: string }) { }
 }
 
 export class ChangeFileName implements Action {
@@ -90,7 +84,6 @@ export type EditorActionsUnion =
     | PageLoad
     | PageLoadSuccess
     | PageLoadFailure
-    | ViewCompiledYAML
     | ViewCompiledYAMLSuccess
     | ChangeFileName
     | SaveFile

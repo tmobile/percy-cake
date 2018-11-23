@@ -12,11 +12,12 @@ import * as appStore from 'store';
 import { Alert } from 'store/actions/common.actions';
 import { CommitChanges } from 'store/actions/backend.actions';
 import {
-  PageLoad, ViewCompiledYAML, OpenAddEditProperty,
+  PageLoad, OpenAddEditProperty,
   CancelAddEditProperty, SaveAddEditProperty, ConfigurationChange,
   NodeSelected,
   SaveFile,
   ChangeFileName,
+  ViewCompiledYAMLSuccess,
 } from 'store/actions/editor.actions';
 import { GetConfigFile } from 'store/reducers/backend.reducers';
 import { TreeNode } from 'models/tree-node';
@@ -24,6 +25,7 @@ import { Configuration, ConfigFile } from 'models/config-file';
 import { NestedConfigViewComponent } from 'components/nested-config-view/nested-config-view.component';
 import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
 import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.component';
+import { UtilService } from 'services/util.service';
 
 /*
   Configurations editor page
@@ -88,6 +90,7 @@ export class EditorComponent implements OnInit {
     private route: ActivatedRoute,
     private store: Store<appStore.AppState>,
     private dialog: MatDialog,
+    private utilService: UtilService,
     @Inject(DOCUMENT) private document: Document
   ) { }
 
@@ -234,13 +237,21 @@ export class EditorComponent implements OnInit {
 
   // handles the save add/edit property request
   onSaveAddEditProperty(node: TreeNode) {
-    this.nestedConfig.saveAddEditProperty(node);
-    this.store.dispatch(new SaveAddEditProperty({ node }));
+    if (this.nestedConfig.saveAddEditProperty(node)) {
+      this.store.dispatch(new SaveAddEditProperty({ node }));
+    }
   }
 
   // handles the compiled YAML view request
   showCompiledYAML(environment: string) {
-    this.store.dispatch(new ViewCompiledYAML({ environment }));
+    this.store.pipe(select(appStore.getConfiguration), take(1), tap(config => {
+      try {
+        const compiledYAML = this.utilService.compileYAML(environment, config);
+        this.store.dispatch(new ViewCompiledYAMLSuccess({ environment, compiledYAML }));
+      } catch (err) {
+        this.store.dispatch(new Alert({message: err.message, alertType: 'error'}));
+      }
+    })).subscribe();
   }
 
 }

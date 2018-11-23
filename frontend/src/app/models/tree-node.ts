@@ -68,18 +68,14 @@ export class TreeNode {
     }
 
     isDefaultNode() {
-        if (this.level === 0 && this.key === 'default') {
-            return true;
-        }
-        if (this.level === 0 && this.key === 'environments') {
-            return false;
-        }
-        const parentNode = this.getTopParent();
-        return parentNode && parentNode.level === 0 && parentNode.key === 'default';
+        return this.getTopParent().key === 'default';
     }
 
     getTopParent() {
         let parentNode = this.parent;
+        if (!parentNode) {
+          return this;
+        }
         while (parentNode && parentNode.parent) {
             parentNode = parentNode.parent;
         }

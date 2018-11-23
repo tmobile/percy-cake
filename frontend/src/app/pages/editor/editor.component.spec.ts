@@ -1,5 +1,6 @@
 import { convertToParamMap } from '@angular/router';
 import { select } from '@ngrx/store';
+import { take } from 'rxjs/operators';
 
 import { Setup, TestUser, assertDialogOpened } from 'test/test-helper';
 
@@ -8,11 +9,11 @@ import { LoginSuccess } from 'store/actions/auth.actions';
 import { ConfigurationChange } from 'store/actions/editor.actions';
 import { API_BASE_URL } from 'services/http-helper.service';
 
+import { AlertDialogComponent } from 'components/alert-dialog/alert-dialog.component';
 import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.component';
 import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
 
 import { EditorComponent } from './editor.component';
-import { take } from '../../../../node_modules/rxjs/operators';
 
 describe('EditorComponent', () => {
 
@@ -227,9 +228,21 @@ describe('EditorComponent', () => {
   it('should view compiled yaml code', async () => {
     const config = {
       'default': {
+        'server.url': {
+          '$type': 'string',
+          '$value': '_{dcp.host}_/api'
+        },
+        'client.url': {
+          '$type': 'string',
+          '$value': '_{dcp.host}_/client'
+        },
         'dcp.host': {
           '$type': 'string',
-          '$value': 'prod.dcp.com'
+          '$value': '_{protocol}_prod.dcp.com'
+        },
+        'protocol': {
+          '$type': 'string',
+          '$value': 'https://'
         },
         'size': {
           '$type': 'number',
@@ -245,11 +258,11 @@ describe('EditorComponent', () => {
             '$type': 'object',
             'dcpcart': {
               '$type': 'string',
-              '$value': '_{dcp.host}_/api/cart?size=_{size}_&sort=_{sort}_'
+              '$value': '_{server.url}_/cart?size=_{size}_&sort=_{sort}_'
             },
             'dcpupdate': {
               '$type': 'string',
-              '$value': '_{dcp.host}_/api/update?size=_{size}_&sort=_{sort}_'
+              '$value': '_{server.url}_/update?size=_{size}_&sort=_{sort}_'
             },
           },
         }
@@ -280,24 +293,371 @@ describe('EditorComponent', () => {
 
     ctx().component.showCompiledYAML('dev');
     let editorState = await ctx().store.pipe(select(appStore.editorState), take(1)).toPromise();
-    expect(editorState.previewCode).toEqual(`dcp.host: !!str "prod.dcp.com"
+    expect(editorState.previewCode).toEqual(`server.url: !!str "https://prod.dcp.com/api"
+client.url: !!str "https://prod.dcp.com/client"
+dcp.host: !!str "https://prod.dcp.com"
+protocol: !!str "https://"
 size: !!int 20
 sort: !!bool true
 api: !!map
   urls: !!map
-    dcpcart: !!str "prod.dcp.com/api/cart?size=20&sort=true"
-    dcpupdate: !!str "prod.dcp.com/api/update?size=20&sort=true"
+    dcpcart: !!str "https://prod.dcp.com/api/cart?size=20&sort=true"
+    dcpupdate: !!str "https://prod.dcp.com/api/update?size=20&sort=true"
 `);
 
     ctx().component.showCompiledYAML('qat');
     editorState = await ctx().store.pipe(select(appStore.editorState), take(1)).toPromise();
-    expect(editorState.previewCode).toEqual(`dcp.host: !!str "prod.dcp.com"
+    expect(editorState.previewCode).toEqual(`server.url: !!str "https://prod.dcp.com/api"
+client.url: !!str "https://prod.dcp.com/client"
+dcp.host: !!str "https://prod.dcp.com"
+protocol: !!str "https://"
 size: !!int 20
 sort: !!bool false
 api: !!map
   urls: !!map
-    dcpcart: !!str "prod.dcp.com/api/cart?size=20&sort=false"
-    dcpupdate: !!str "prod.dcp.com/api/update?size=20&sort=false"
+    dcpcart: !!str "https://prod.dcp.com/api/cart?size=20&sort=false"
+    dcpupdate: !!str "https://prod.dcp.com/api/update?size=20&sort=false"
 `);
+  });
+
+
+  it('should show error alert when loop variable reference exists', async () => {
+    const config = {
+      'default': {
+        'server.url': {
+          '$type': 'string',
+          '$value': '_{dcp.host}_/api'
+        },
+        'dcp.host': {
+          '$type': 'string',
+          '$value': '_{protocol}_prod.dcp.com'
+        },
+        'protocol': {
+          '$type': 'string',
+          '$value': 'https://_{server.url}_'
+        },
+        'size': {
+          '$type': 'number',
+          '$value': 10
+        },
+        'sort': {
+          '$type': 'boolean',
+          '$value': true
+        },
+        'api': {
+          '$type': 'object',
+          'urls': {
+            '$type': 'object',
+            'dcpcart': {
+              '$type': 'string',
+              '$value': '_{server.url}_/cart?size=_{size}_&sort=_{sort}_'
+            },
+            'dcpupdate': {
+              '$type': 'string',
+              '$value': '_{server.url}_/update?size=_{size}_&sort=_{sort}_'
+            },
+          },
+        }
+      },
+      'environments': {
+        'dev': {
+          'size': {
+            '$type': 'number',
+            '$value': 20
+          },
+          '$type': 'object'
+        },
+        'qat': {
+          'inherits' : {
+            '$type': 'string',
+            '$value': 'dev'
+          },
+          'sort': {
+            '$type': 'boolean',
+            '$value': false
+          },
+          '$type': 'object'
+        },
+        '$type': 'object'
+      }
+    };
+    ctx().store.dispatch(new ConfigurationChange(config));
+
+    ctx().component.showCompiledYAML('dev');
+    assertDialogOpened(AlertDialogComponent,
+      {
+        data: {
+          message: 'Loop variable reference: server.url->dcp.host->protocol->server.url',
+          alertType: 'error'
+        }
+      });
+  });
+  it('should show error alert when refer to the property itself', async () => {
+    const config = {
+      'default': {
+        'server.url': {
+          '$type': 'string',
+          '$value': '_{dcp.host}_/api'
+        },
+        'dcp.host': {
+          '$type': 'string',
+          '$value': 'prod.dcp.com'
+        },
+        'protocol': {
+          '$type': 'string',
+          '$value': 'https://_{protocol}_'
+        },
+        'size': {
+          '$type': 'number',
+          '$value': 10
+        },
+        'sort': {
+          '$type': 'boolean',
+          '$value': true
+        },
+        'api': {
+          '$type': 'object',
+          'urls': {
+            '$type': 'object',
+            'dcpcart': {
+              '$type': 'string',
+              '$value': '_{server.url}_/cart?size=_{size}_&sort=_{sort}_'
+            },
+            'dcpupdate': {
+              '$type': 'string',
+              '$value': '_{server.url}_/update?size=_{size}_&sort=_{sort}_'
+            },
+          },
+        }
+      },
+      'environments': {
+        'dev': {
+          'size': {
+            '$type': 'number',
+            '$value': 20
+          },
+          '$type': 'object'
+        },
+        'qat': {
+          'inherits' : {
+            '$type': 'string',
+            '$value': 'dev'
+          },
+          'sort': {
+            '$type': 'boolean',
+            '$value': false
+          },
+          '$type': 'object'
+        },
+        '$type': 'object'
+      }
+    };
+    ctx().store.dispatch(new ConfigurationChange(config));
+
+    ctx().component.showCompiledYAML('dev');
+    assertDialogOpened(AlertDialogComponent,
+      {
+        data: {
+          message: 'Loop variable reference: protocol->protocol',
+          alertType: 'error'
+        }
+      });
+  });
+  it('should show error alert when reference property not found', async () => {
+    const config = {
+      'default': {
+        'server.url': {
+          '$type': 'string',
+          '$value': '_{dcp.host}_/api'
+        },
+        'dcp.host': {
+          '$type': 'string',
+          '$value': 'prod.dcp.com'
+        },
+        'protocol': {
+          '$type': 'string',
+          '$value': 'https://_{NoSuchProperty}_'
+        },
+        'size': {
+          '$type': 'number',
+          '$value': 10
+        },
+        'sort': {
+          '$type': 'boolean',
+          '$value': true
+        },
+        'api': {
+          '$type': 'object',
+          'urls': {
+            '$type': 'object',
+            'dcpcart': {
+              '$type': 'string',
+              '$value': '_{server.url}_/cart?size=_{size}_&sort=_{sort}_'
+            },
+            'dcpupdate': {
+              '$type': 'string',
+              '$value': '_{server.url}_/update?size=_{size}_&sort=_{sort}_'
+            },
+          },
+        }
+      },
+      'environments': {
+        'dev': {
+          'size': {
+            '$type': 'number',
+            '$value': 20
+          },
+          '$type': 'object'
+        },
+        'qat': {
+          'inherits' : {
+            '$type': 'string',
+            '$value': 'dev'
+          },
+          'sort': {
+            '$type': 'boolean',
+            '$value': false
+          },
+          '$type': 'object'
+        },
+        '$type': 'object'
+      }
+    };
+    ctx().store.dispatch(new ConfigurationChange(config));
+
+    ctx().component.showCompiledYAML('dev');
+    assertDialogOpened(AlertDialogComponent,
+      {
+        data: {
+          message: 'Variable property not found: NoSuchProperty',
+          alertType: 'error'
+        }
+      });
+  });
+
+  it('should show error alert when reference property not found', async () => {
+    const config = {
+      'default': {
+        'server.url': {
+          '$type': 'string',
+          '$value': '_{dcp.host}_/api'
+        },
+        'dcp.host': {
+          '$type': 'string',
+          '$value': 'prod.dcp.com'
+        },
+        'size': {
+          '$type': 'number',
+          '$value': 10
+        },
+        'sort': {
+          '$type': 'boolean',
+          '$value': true
+        },
+        'api': {
+          '$type': 'object',
+          'urls': {
+            '$type': 'object',
+            'dcpcart': {
+              '$type': 'string',
+              '$value': '_{NoSuchProperty}_/cart?size=_{size}_&sort=_{sort}_'
+            },
+            'dcpupdate': {
+              '$type': 'string',
+              '$value': '_{server.url}_/update?size=_{size}_&sort=_{sort}_'
+            },
+          },
+        }
+      },
+      'environments': {
+        'dev': {
+          'size': {
+            '$type': 'number',
+            '$value': 20
+          },
+          '$type': 'object'
+        },
+        'qat': {
+          'inherits' : {
+            '$type': 'string',
+            '$value': 'dev'
+          },
+          'sort': {
+            '$type': 'boolean',
+            '$value': false
+          },
+          '$type': 'object'
+        },
+        '$type': 'object'
+      }
+    };
+    ctx().store.dispatch(new ConfigurationChange(config));
+
+    ctx().component.showCompiledYAML('dev');
+    assertDialogOpened(AlertDialogComponent,
+      {
+        data: {
+          message: 'Variable property not found: NoSuchProperty',
+          alertType: 'error'
+        }
+      });
+  });
+
+  it('should show error alert when loop env inherits', async () => {
+    const config = {
+      'default': {
+        'server.url': {
+          '$type': 'string',
+          '$value': '_{dcp.host}_/api'
+        },
+        'dcp.host': {
+          '$type': 'string',
+          '$value': 'prod.dcp.com'
+        },
+        'size': {
+          '$type': 'number',
+          '$value': 10
+        },
+        'sort': {
+          '$type': 'boolean',
+          '$value': true
+        },
+      },
+      'environments': {
+        'dev': {
+          'inherits' : {
+            '$type': 'string',
+            '$value': 'qat'
+          },
+          'size': {
+            '$type': 'number',
+            '$value': 20
+          },
+          '$type': 'object'
+        },
+        'qat': {
+          'inherits' : {
+            '$type': 'string',
+            '$value': 'dev'
+          },
+          'sort': {
+            '$type': 'boolean',
+            '$value': false
+          },
+          '$type': 'object'
+        },
+        '$type': 'object'
+      }
+    };
+    ctx().store.dispatch(new ConfigurationChange(config));
+
+    ctx().component.showCompiledYAML('dev');
+    assertDialogOpened(AlertDialogComponent,
+      {
+        data: {
+          message: 'Cylic env inherits detected!',
+          alertType: 'error'
+        }
+      });
   });
 });

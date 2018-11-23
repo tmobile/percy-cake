@@ -9,9 +9,9 @@ import { MatDialog } from '@angular/material';
 import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
 import { Store } from '@ngrx/store';
 import * as appStore from '../../store';
-import { BehaviorSubject } from 'rxjs';
 import { UtilService } from '../../services/util.service';
 import { Configuration } from '../../models/config-file';
+import { Alert } from 'store/actions/common.actions';
 
 /**
  *  Tree with nested nodes
@@ -71,6 +71,8 @@ export class NestedConfigViewComponent implements OnChanges {
         || !_.isEqual(this.envDataSource.data[0].jsonValue, environmentsNode.jsonValue)) {
         this.envDataSource.data = [environmentsNode];
       }
+    } else {
+      this.envDataSource.data = [];
     }
 
     if (this.firstInit) {
@@ -229,57 +231,124 @@ export class NestedConfigViewComponent implements OnChanges {
   }
 
   /**
-   * saves the node
+   * Do save property
    * @param node the added/edited node
+   * @param test the flag indiates whether to test (in which case the node will be cloned without affecting state)
+   * @returns the modified top-level default and environments node
    */
-  saveAddEditProperty(node: TreeNode) {
+  private doSaveAddEditProperty(node: TreeNode, test: boolean) {
+    const currentNode = test ? _.cloneDeep(this.currentAddEditProperty) : this.currentAddEditProperty;
+
+    let envsNode = this.envDataSource.data[0];
+
+    const isDefaultNode = currentNode.isDefaultNode();
+
     if (this.currentAddEditPropertyOptions.editMode) {
-      if (this.currentAddEditProperty.isDefaultNode()) {
+      if (isDefaultNode) {
         // for default tree, if key or value type changes, delete respective nodes from environments tree
-        if (this.currentAddEditProperty.key !== node.key || this.currentAddEditProperty.valueType !== node.valueType) {
-          this.deleteEnvironmentProperties(this.currentAddEditProperty);
+        if (!this.isEnvMode && (currentNode.key !== node.key || currentNode.valueType !== node.valueType)) {
+          if (test) {
+            envsNode = _.cloneDeep(envsNode);
+          }
+          this.deleteEnvironmentProperties(currentNode, envsNode);
         }
 
         // array type changes
-        if (this.currentAddEditProperty.isArray() && this.currentAddEditProperty.valueType !== node.valueType) {
-          this.currentAddEditProperty.children = [];
+        if (currentNode.isArray() && currentNode.valueType !== node.valueType) {
+          currentNode.children = [];
         }
       } else {
         // for environments tree, value types can not be changed
-        node.valueType = this.currentAddEditProperty.valueType;
+        node.valueType = currentNode.valueType;
       }
 
-      this.currentAddEditProperty.key = node.key;
-      this.currentAddEditProperty.value = node.value;
-      this.currentAddEditProperty.valueType = node.valueType;
-      this.currentAddEditProperty.comment = node.comment;
+      currentNode.key = node.key;
+      currentNode.value = node.value;
+      currentNode.valueType = node.valueType;
+      currentNode.comment = node.comment;
 
       if (node.isLeaf()) {
-        this.currentAddEditProperty.children = undefined;
+        currentNode.children = undefined;
       } else {
-        this.currentAddEditProperty.children = node.children && node.children.length ?
-          node.children : this.currentAddEditProperty.children || [];
+        currentNode.children = node.children && node.children.length ?
+          node.children : currentNode.children || [];
       }
 
-      this.utilService.updateJsonValue(this.currentAddEditProperty);
+      this.utilService.updateJsonValue(currentNode);
+
     } else {
-      node.level = this.currentAddEditProperty.level + 1;
-      node.parent = this.currentAddEditProperty;
-      node.id = `${this.currentAddEditProperty.id}.${node.key}`;
+      node.level = currentNode.level + 1;
+      node.parent = currentNode;
+      node.id = `${currentNode.id}.${node.key}`;
 
-      this.currentAddEditProperty.children = this.currentAddEditProperty.children || [];
-      this.currentAddEditProperty.children.push(node);
+      currentNode.children = currentNode.children || [];
+      currentNode.children.push(node);
+      this.utilService.updateJsonValue(currentNode);
+    }
 
-      if (this.currentAddEditProperty.isDefaultNode()) {
+    return {
+      defaultNode: isDefaultNode ? currentNode.getTopParent() : this.defaultDataSource.data[0],
+      environmentsNode: !isDefaultNode ? currentNode.getTopParent() : envsNode
+    };
+  }
+
+  /**
+   * saves the node
+   * @param node the added/edited node
+   * @return true if succesfully saved; false otherwise (like validation fails)
+   */
+  saveAddEditProperty(node: TreeNode) {
+    const isDefaultNode = this.currentAddEditProperty.isDefaultNode();
+
+    // Do a test and check can compile YAML
+    if (!this.validateYAML(node, false)) {
+      return false;
+    }
+
+    this.doSaveAddEditProperty(node, false);
+
+    if (!this.currentAddEditPropertyOptions.editMode) {
+      if (isDefaultNode) {
         this.defaultTreeControl.expand(this.currentAddEditProperty);
       } else {
         this.envTreeControl.expand(this.currentAddEditProperty);
       }
-      this.utilService.updateJsonValue(node);
     }
 
     this.refreshTree();
     this.cancelAddEditProperty();
+    return true;
+  }
+
+  /**
+   * Validates can compile to YAML
+   * @param node the added/edited/deleted node
+   * @param forDelete the flag indicates to add/edit or to delete node
+   * @return true if succesfully validated; false otherwise
+   */
+  private validateYAML(node, forDelete): boolean {
+    if (!this.isEnvMode) {
+      const {defaultNode, environmentsNode} = forDelete ? this.doDeleteProperty(node, true) : this.doSaveAddEditProperty(node, true);
+      const newConfig = {
+        default: defaultNode.jsonValue,
+        environments: environmentsNode.jsonValue
+      };
+      try {
+        _.forEach(this.environments, (env) => {
+          if (_.has(newConfig.environments, env)) {
+            this.utilService.compileYAML(env, newConfig);
+          }
+        });
+      } catch (err) {
+        if (forDelete) {
+          err.message = err.message.replace('Variable property not found', 'Property can not be deleted because it is referenced');
+        }
+        this.store.dispatch(new Alert({message: err.message, alertType: 'error'}));
+        return false;
+      }
+    }
+
+    return true;
   }
 
   openMenu(event, menuTrigger) {
@@ -315,23 +384,55 @@ export class NestedConfigViewComponent implements OnChanges {
 
     dialogRef.afterClosed().subscribe(response => {
       if (response) {
-        this.cancelAddEditProperty();
-        const parent = node.parent;
-        _.remove(parent.children, item => item.key === node.key);
-        if (parent.isArray()) {
-          parent.children.forEach((element, idx) => {
-            element.key = `[${idx}]`;
-            element.id = `${parent.id}.${element.key}`;
-          });
+
+        // Do a test and check can compile YAML
+        if (!this.validateYAML(node, true)) {
+          return;
         }
-        this.utilService.updateJsonValue(node);
-        // if deleted node is from default tree, delete respective properties from environments tree
-        if (node.isDefaultNode() && !this.isEnvMode) {
-          this.deleteEnvironmentProperties(node);
-        }
+
+        this.doDeleteProperty(node, false);
         this.refreshTree();
+        this.cancelAddEditProperty();
       }
     });
+  }
+
+  /**
+   * Do delete property
+   * @param node the deleted node
+   * @param test the flag indiates whether to test (in which case the node will be cloned without affecting state)
+   * @returns the modified top-level default and environments node
+   */
+  private doDeleteProperty(node: TreeNode, test: boolean) {
+    if (test) {
+      node = _.cloneDeep(node);
+    }
+
+    const parent = node.parent;
+    _.remove(parent.children, item => item.key === node.key);
+    if (parent.isArray()) {
+      parent.children.forEach((element, idx) => {
+        element.key = `[${idx}]`;
+        element.id = `${parent.id}.${element.key}`;
+      });
+    }
+    this.utilService.updateJsonValue(parent);
+
+    const isDefaultNode = parent.isDefaultNode();
+    let envsNode = this.envDataSource.data[0];
+
+    // if deleted node is from default tree, delete respective properties from environments tree
+    if (isDefaultNode && !this.isEnvMode) {
+      if (test) {
+        envsNode = _.cloneDeep(envsNode);
+      }
+      this.deleteEnvironmentProperties(node, envsNode);
+    }
+
+    return {
+      defaultNode: isDefaultNode ? parent.getTopParent() : this.defaultDataSource.data[0],
+      environmentsNode: !isDefaultNode ? parent.getTopParent() : envsNode
+    };
   }
 
   /**
@@ -354,8 +455,7 @@ export class NestedConfigViewComponent implements OnChanges {
    * deletes the corresponding nodes from other environments
    * @param node node which is deleted
    */
-  private deleteEnvironmentProperties(node: TreeNode) {
-    const envsNode = this.envDataSource.data[0];
+  private deleteEnvironmentProperties(node: TreeNode, envsNode: TreeNode) {
     const descendants = this.envTreeControl.getDescendants(envsNode);
     let foundAny = false;
 

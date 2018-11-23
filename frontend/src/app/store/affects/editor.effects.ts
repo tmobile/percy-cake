@@ -5,17 +5,14 @@ import { map, exhaustMap, catchError, withLatestFrom, switchMap } from 'rxjs/ope
 import { Store, select } from '@ngrx/store';
 import * as _ from 'lodash';
 
-import { VARIABLE_SUBSTITUTE } from 'config';
 import * as appStore from 'store';
 import { SaveDraft, GetFileContent, GetFileContentSuccess } from 'store/actions/backend.actions';
-import { Alert, APIError } from 'store/actions/common.actions';
+import { APIError } from 'store/actions/common.actions';
 import {
     EditorActionTypes,
     PageLoad,
     PageLoadSuccess,
     PageLoadFailure,
-    ViewCompiledYAML,
-    ViewCompiledYAMLSuccess,
     SaveFile,
     NodeSelectedSuccess,
     NodeSelected,
@@ -23,7 +20,6 @@ import {
 } from 'store/actions/editor.actions';
 import { GetConfigFile } from 'store/reducers/backend.reducers';
 import { ConfigFile } from 'models/config-file';
-import { TreeNode } from 'models/tree-node';
 import { UtilService } from 'services/util.service';
 import { FileManagementService } from 'services/file-management.service';
 
@@ -109,62 +105,6 @@ export class EditorEffects {
               return of(new SaveDraft({file, redirect: action.payload.redirectToDashboard}));
             }
         })
-    );
-
-    // view compiled YAML effect
-    @Effect()
-    viewCompiledYaml$ = this.actions$.pipe(
-        ofType<ViewCompiledYAML>(EditorActionTypes.ViewCompiledYAML),
-        withLatestFrom(this.store.pipe(select(appStore.getConfiguration))),
-        switchMap(([action, config]) => {
-            const env = action.payload.environment;
-            const mergeStack = [];
-
-            let envNode = config.environments[env] || {};
-            while (envNode) {
-              const deepCopy = _.cloneDeep(envNode);
-              const inherits = deepCopy.inherits;
-              delete deepCopy.inherits;
-              mergeStack.unshift({[env]: deepCopy});
-              if (inherits) {
-                const inheritEnv = inherits.$value;
-                if (inheritEnv === env) {
-                  return of(new Alert({ message: 'Cylic env inherits detected!', alertType: 'error' }));
-                }
-                envNode = config.environments[inheritEnv];
-              } else {
-                break;
-              }
-            }
-
-            mergeStack.unshift({[env]: _.cloneDeep(config.default)});
-
-            let merged = {};
-            mergeStack.forEach(m => {
-              merged = _.mergeWith(merged, m, (dst, src) => {
-                if (_.isArray(dst)) {
-                  // Copy array instead of merge
-                  return src;
-                }
-              });
-            });
-
-            const tokens = {};
-            _.each(merged[env], (value, key) => {
-              if (value && TreeNode.isLeafType(value.$type)) {
-                tokens[key] = value.$value;
-              }
-            });
-
-            const substituted = this.utilService.replace(merged[env], {
-              tokens,
-              prefix: VARIABLE_SUBSTITUTE.PREFIX,
-              suffix: VARIABLE_SUBSTITUTE.SUFFIX,
-            });
-
-            const compiledYAML = this.utilService.convertJsonToYaml(substituted);
-            return of(new ViewCompiledYAMLSuccess({ compiledYAML }));
-        }),
     );
 
     // node selected effect to show detail

@@ -1,9 +1,11 @@
 import { Injectable } from '@angular/core';
 import * as _ from 'lodash';
 import * as jsYaml from 'js-yaml';
-import { ConfigProperty } from '../models/config-property';
-import { TreeNode } from '../models/tree-node';
-import { PROPERTY_VALUE_TYPES } from '../config';
+
+import { TreeNode } from 'models/tree-node';
+import { Configuration } from 'models/config-file';
+import { ConfigProperty } from 'models/config-property';
+import { PROPERTY_VALUE_TYPES, VARIABLE_SUBSTITUTE } from 'config';
 
 /**
  * This service provides the utility methods
@@ -340,35 +342,155 @@ export class UtilService {
    * @param node the node to update
    */
   updateJsonValue(node: TreeNode) {
-    this.doUpdateJsonValue(!node.parent ? node : node.getTopParent());
+    this.doUpdateJsonValue(node.getTopParent());
   }
 
   private escapeRegExp(text) {
     return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
   }
 
-  replace(target, options) {
-    const regexPattern = `${this.escapeRegExp(options.prefix)}(.+?)${this.escapeRegExp(options.suffix)}`;
-    const includeRegExp = new RegExp(regexPattern, 'g');
+  private createRegExp() {
+    const regexPattern = `${this.escapeRegExp(VARIABLE_SUBSTITUTE.PREFIX)}(.+?)${this.escapeRegExp(VARIABLE_SUBSTITUTE.SUFFIX)}`;
+    return new RegExp(regexPattern, 'g');
+  }
+
+  private addReference(referenceLinks, refBy, ref) {
+    if (refBy === ref) {
+      throw new Error('Loop variable reference: ' + [refBy, ref].join('->'));
+    }
+    let added = false;
+    _.each(referenceLinks, referenceLink => {
+      if (referenceLink[referenceLink.length - 1] === refBy) {
+        const idx = referenceLink.indexOf(ref);
+        if (idx > -1) {
+          const cyclic = referenceLink.slice(idx);
+          cyclic.push(ref);
+          throw new Error('Loop variable reference: ' + cyclic.join('->'));
+        }
+        referenceLink.push(ref);
+        added = true;
+      }
+    });
+
+    if (!added) {
+      referenceLinks.push([refBy, ref]);
+    }
+  }
+
+  private resolveTokens(tokens) {
+    const result = _.cloneDeep(tokens);
+    const referenceLinks = [];
+
+    while (true) {
+      let referenceFound = false;
+
+      _.each(result, (value, key) => {
+        let retValue = value;
+
+        if (typeof value === 'string') {
+          const regExp = this.createRegExp();
+          let regExpResult;
+          while (regExpResult = regExp.exec(value)) {
+
+            const fullMatch = regExpResult[0];
+            const tokenName = regExpResult[1];
+            let tokenValue = result[tokenName];
+
+            if (tokenValue === undefined) {
+              throw new Error('Variable property not found: ' + tokenName);
+            }
+
+            if (typeof tokenValue === 'string') {
+              if (this.createRegExp().exec(tokenValue)) {
+                referenceFound = true;
+                this.addReference(referenceLinks, key, tokenName);
+                continue;
+              }
+              tokenValue = tokenValue.replace(/"/g, '\\"');
+            }
+
+            retValue = retValue.replace(fullMatch, tokenValue);
+          }
+        }
+
+        result[key] = retValue;
+      });
+
+      if (!referenceFound) {
+        break;
+      }
+    }
+
+    return result;
+  }
+
+  private substitute(target, tokens) {
+    const regExp = this.createRegExp();
     const text = JSON.stringify(target);
 
     let retVal = text;
     let regExpResult;
 
-    while (regExpResult = includeRegExp.exec(text)) {
+    while (regExpResult = regExp.exec(text)) {
       const fullMatch = regExpResult[0];
       const tokenName = regExpResult[1];
-      let tokenValue = options.tokens[tokenName];
+      let tokenValue = tokens[tokenName];
 
-      if (tokenValue !== null && tokenValue !== undefined) {
-        if (typeof tokenValue === 'string') {
-          tokenValue = tokenValue.replace(/"/g, '\\"');
-        }
-
-        retVal = retVal.replace(fullMatch, tokenValue);
+      if (tokenValue === undefined) {
+        throw new Error('Variable property not found: ' + tokenName);
       }
+
+      if (typeof tokenValue === 'string') {
+        tokenValue = tokenValue.replace(/"/g, '\\"');
+      }
+
+      retVal = retVal.replace(fullMatch, tokenValue);
     }
 
     return JSON.parse(retVal);
+  }
+
+  compileYAML(env: string, config: Configuration) {
+    const mergeStack = [];
+
+    let envNode = config.environments[env] || {};
+    while (envNode) {
+      const deepCopy = _.cloneDeep(envNode);
+      const inherits = deepCopy.inherits;
+      delete deepCopy.inherits;
+      mergeStack.unshift({[env]: deepCopy});
+      if (inherits) {
+        const inheritEnv = inherits.$value;
+        if (inheritEnv === env) {
+          throw new Error('Cylic env inherits detected!');
+        }
+        envNode = config.environments[inheritEnv];
+      } else {
+        break;
+      }
+    }
+
+    mergeStack.unshift({[env]: _.cloneDeep(config.default)});
+
+    let merged = {};
+    mergeStack.forEach(m => {
+      merged = _.mergeWith(merged, m, (dst, src) => {
+        if (_.isArray(dst)) {
+          // Copy array instead of merge
+          return src;
+        }
+      });
+    });
+
+    const tokens = {};
+    _.each(merged[env], (value, key) => {
+      if (value && TreeNode.isLeafType(value.$type)) {
+        tokens[key] = value.$value;
+      }
+    });
+
+    const substituted = this.substitute(merged[env], this.resolveTokens(tokens));
+
+    return this.convertJsonToYaml(substituted);
   }
 }
