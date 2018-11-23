@@ -233,11 +233,11 @@ export class NestedConfigViewComponent implements OnChanges {
   /**
    * Do save property
    * @param node the added/edited node
-   * @param test the flag indiates whether to test (in which case the node will be cloned without affecting state)
+   * @param dryRun the flag indiates whether dry run to validate (in which case the node will be cloned without affecting state)
    * @returns the modified top-level default and environments node
    */
-  private doSaveAddEditProperty(node: TreeNode, test: boolean) {
-    const currentNode = test ? _.cloneDeep(this.currentAddEditProperty) : this.currentAddEditProperty;
+  private doSaveAddEditProperty(node: TreeNode, dryRun: boolean) {
+    const currentNode = dryRun ? _.cloneDeep(this.currentAddEditProperty) : this.currentAddEditProperty;
 
     let envsNode = this.envDataSource.data[0];
 
@@ -247,7 +247,7 @@ export class NestedConfigViewComponent implements OnChanges {
       if (isDefaultNode) {
         // for default tree, if key or value type changes, delete respective nodes from environments tree
         if (!this.isEnvMode && (currentNode.key !== node.key || currentNode.valueType !== node.valueType)) {
-          if (test) {
+          if (dryRun) {
             envsNode = _.cloneDeep(envsNode);
           }
           this.deleteEnvironmentProperties(currentNode, envsNode);
@@ -400,11 +400,11 @@ export class NestedConfigViewComponent implements OnChanges {
   /**
    * Do delete property
    * @param node the deleted node
-   * @param test the flag indiates whether to test (in which case the node will be cloned without affecting state)
+   * @param dryRun the flag indiates whether dry run to validate (in which case the node will be cloned without affecting state)
    * @returns the modified top-level default and environments node
    */
-  private doDeleteProperty(node: TreeNode, test: boolean) {
-    if (test) {
+  private doDeleteProperty(node: TreeNode, dryRun: boolean) {
+    if (dryRun) {
       node = _.cloneDeep(node);
     }
 
@@ -423,7 +423,7 @@ export class NestedConfigViewComponent implements OnChanges {
 
     // if deleted node is from default tree, delete respective properties from environments tree
     if (isDefaultNode && !this.isEnvMode) {
-      if (test) {
+      if (dryRun) {
         envsNode = _.cloneDeep(envsNode);
       }
       this.deleteEnvironmentProperties(node, envsNode);
