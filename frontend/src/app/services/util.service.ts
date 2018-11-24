@@ -396,10 +396,6 @@ export class UtilService {
             const tokenName = regExpResult[1];
             let tokenValue = result[tokenName];
 
-            if (tokenValue === undefined) {
-              throw new Error('Variable property not found: ' + tokenName);
-            }
-
             if (typeof tokenValue === 'string') {
               if (this.createRegExp().exec(tokenValue)) {
                 referenceFound = true;
@@ -424,21 +420,39 @@ export class UtilService {
     return result;
   }
 
-  private substitute(target, tokens) {
-    const regExp = this.createRegExp();
-    const text = JSON.stringify(target);
+  private substitute(target, tokens, depth) {
+    if (target.$type === PROPERTY_VALUE_TYPES.OBJECT) {
+      _.each(target, (item, key) => {
+        if (depth === 0 && item.$type && _.has(tokens, key)) {
+          item.$value = tokens[key];
+        } else {
+          this.substitute(item, tokens, depth++);
+        }
+      });
+      return target;
+    }
 
+    if (target.$type === PROPERTY_VALUE_TYPES.STRING_ARRAY
+      || target.$type === 'array') {
+      _.each(target.$value, (item) => {
+        this.substitute(item, tokens, depth++);
+      });
+      return target;
+    }
+
+    if (target.$type !== PROPERTY_VALUE_TYPES.STRING) {
+      return target;
+    }
+
+    const text = target.$value;
     let retVal = text;
-    let regExpResult;
 
+    const regExp = this.createRegExp();
+    let regExpResult;
     while (regExpResult = regExp.exec(text)) {
       const fullMatch = regExpResult[0];
       const tokenName = regExpResult[1];
       let tokenValue = tokens[tokenName];
-
-      if (tokenValue === undefined) {
-        throw new Error('Variable property not found: ' + tokenName);
-      }
 
       if (typeof tokenValue === 'string') {
         tokenValue = tokenValue.replace(/"/g, '\\"');
@@ -446,8 +460,8 @@ export class UtilService {
 
       retVal = retVal.replace(fullMatch, tokenValue);
     }
-
-    return JSON.parse(retVal);
+    target.$value = retVal;
+    return target;
   }
 
   compileYAML(env: string, config: Configuration) {
@@ -489,7 +503,7 @@ export class UtilService {
       }
     });
 
-    const substituted = this.substitute(merged[env], this.resolveTokens(tokens));
+    const substituted = this.substitute(merged[env], this.resolveTokens(tokens), 0);
 
     return this.convertJsonToYaml(substituted);
   }

@@ -301,9 +301,9 @@ export class NestedConfigViewComponent implements OnChanges {
     const isDefaultNode = this.currentAddEditProperty.isDefaultNode();
 
     // Do a test and check can compile YAML
-    if (!this.validateYAML(node, false)) {
-      return false;
-    }
+    // if (!this.validateYAML(node, false)) {
+    //   return false;
+    // }
 
     this.doSaveAddEditProperty(node, false);
 
@@ -326,30 +326,30 @@ export class NestedConfigViewComponent implements OnChanges {
    * @param forDelete the flag indicates to add/edit or to delete node
    * @return true if succesfully validated; false otherwise
    */
-  private validateYAML(node, forDelete): boolean {
-    if (!this.isEnvMode) {
-      const {defaultNode, environmentsNode} = forDelete ? this.doDeleteProperty(node, true) : this.doSaveAddEditProperty(node, true);
-      const newConfig = {
-        default: defaultNode.jsonValue,
-        environments: environmentsNode.jsonValue
-      };
-      try {
-        _.forEach(this.environments, (env) => {
-          if (_.has(newConfig.environments, env)) {
-            this.utilService.compileYAML(env, newConfig);
-          }
-        });
-      } catch (err) {
-        if (forDelete) {
-          err.message = err.message.replace('Variable property not found', 'Property can not be deleted because it is referenced');
-        }
-        this.store.dispatch(new Alert({message: err.message, alertType: 'error'}));
-        return false;
-      }
-    }
+  // private validateYAML(node, forDelete): boolean {
+  //   if (!this.isEnvMode) {
+  //     const {defaultNode, environmentsNode} = forDelete ? this.doDeleteProperty(node, true) : this.doSaveAddEditProperty(node, true);
+  //     const newConfig = {
+  //       default: defaultNode.jsonValue,
+  //       environments: environmentsNode.jsonValue
+  //     };
+  //     try {
+  //       _.forEach(this.environments, (env) => {
+  //         if (_.has(newConfig.environments, env)) {
+  //           this.utilService.compileYAML(env, newConfig);
+  //         }
+  //       });
+  //     } catch (err) {
+  //       if (forDelete) {
+  //         err.message = err.message.replace('Variable property not found', 'Property can not be deleted because it is referenced');
+  //       }
+  //       this.store.dispatch(new Alert({message: err.message, alertType: 'error'}));
+  //       return false;
+  //     }
+  //   }
 
-    return true;
-  }
+  //   return true;
+  // }
 
   openMenu(event, menuTrigger) {
     event.preventDefault();
@@ -386,9 +386,9 @@ export class NestedConfigViewComponent implements OnChanges {
       if (response) {
 
         // Do a test and check can compile YAML
-        if (!this.validateYAML(node, true)) {
-          return;
-        }
+        // if (!this.validateYAML(node, true)) {
+        //   return;
+        // }
 
         this.doDeleteProperty(node, false);
         this.refreshTree();
