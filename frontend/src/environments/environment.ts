@@ -6,6 +6,10 @@ export const environment = {
   production: false,
   api: {
     baseUrl: 'http://localhost:3000/api/1.0'
+  },
+  variableSubstitute: {
+    prefix: '_{',
+    suffix: '}_'
   }
 };
 

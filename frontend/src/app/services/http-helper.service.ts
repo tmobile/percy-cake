@@ -3,9 +3,8 @@ import { Observable } from 'rxjs';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { isString, isNil, forEach } from 'lodash';
 
-import { environment } from '../../environments/environment';
 import { UtilService } from './util.service';
-import { LOGGED_IN_USER_KEY } from '../config/index';
+import { LOGGED_IN_USER_KEY, environment } from 'config';
 
 export const API_BASE_URL = environment.api.baseUrl;
 

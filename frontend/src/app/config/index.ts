@@ -12,7 +12,4 @@ export enum PROPERTY_VALUE_TYPES {
   BOOLEAN_ARRAY = 'boolean[]',
 }
 
-export const VARIABLE_SUBSTITUTE = {
-  PREFIX: '_{',
-  SUFFIX: '}_'
-};
+export { environment } from '../../environments/environment';

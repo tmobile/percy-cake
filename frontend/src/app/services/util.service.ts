@@ -5,7 +5,7 @@ import * as jsYaml from 'js-yaml';
 import { TreeNode } from 'models/tree-node';
 import { Configuration } from 'models/config-file';
 import { ConfigProperty } from 'models/config-property';
-import { PROPERTY_VALUE_TYPES, VARIABLE_SUBSTITUTE } from 'config';
+import { PROPERTY_VALUE_TYPES, environment } from 'config';
 
 /**
  * This service provides the utility methods
@@ -350,7 +350,8 @@ export class UtilService {
   }
 
   private createRegExp() {
-    const regexPattern = `${this.escapeRegExp(VARIABLE_SUBSTITUTE.PREFIX)}(.+?)${this.escapeRegExp(VARIABLE_SUBSTITUTE.SUFFIX)}`;
+    const regexPattern =
+      `${this.escapeRegExp(environment.variableSubstitute.prefix)}(.+?)${this.escapeRegExp(environment.variableSubstitute.suffix)}`;
     return new RegExp(regexPattern, 'g');
   }
 
