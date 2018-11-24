@@ -29,7 +29,7 @@ environments: !!map  # specific environments can override the default values 1 p
     host: !!str "dev.mobilex.com"
     dev-items: !!seq  # dev-items comments
       - !!seq  # nest array comments
-        - !!str "\\aa\\\"bb"  # nest item1 comment
+        - !!str "\\aa\\\"bb\\\"cc"  # nest item1 comment
         - !!str "nest item2 \\ "  # nest item2 comment
       - !!str "dev-item2"
   staging: !!map

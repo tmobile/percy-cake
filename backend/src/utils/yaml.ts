@@ -343,7 +343,7 @@ function walkJsonTree(jsonNode, indent: string = '') {
       // Append simple value and inline comment
       if (type === 'str') {
         value = value.replace(/\\/g, '\\\\');
-        value = value.replace('"', '\\"');
+        value = value.replace(/\"/g, '\\"');
         result += ' "' + value + '"';
       } else {
         result += ' ' + value;

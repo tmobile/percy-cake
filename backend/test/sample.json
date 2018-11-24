@@ -90,7 +90,7 @@
                       "$value": [
                           {
                               "$comment": ["nest item1 comment"],
-                              "$value": "\\aa\\\"bb",
+                              "$value": "\\aa\\\"bb\\\"cc",
                               "$type": "string"
                           },
                           {

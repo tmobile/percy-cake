@@ -154,7 +154,7 @@ export class UtilService {
         // Append simple value and inline comment
         if (type === 'str') {
           value = value.replace(/\\/g, '\\\\');
-          value = value.replace('"', '\\"');
+          value = value.replace(/\"/g, '\\"');
           result += ' "' + value + '"';
         } else {
           result += ' ' + value;
@@ -451,11 +451,7 @@ export class UtilService {
     while (regExpResult = regExp.exec(text)) {
       const fullMatch = regExpResult[0];
       const tokenName = regExpResult[1];
-      let tokenValue = tokens[tokenName];
-
-      if (typeof tokenValue === 'string') {
-        tokenValue = tokenValue.replace(/"/g, '\\"');
-      }
+      const tokenValue = tokens[tokenName];
 
       retVal = retVal.replace(fullMatch, tokenValue);
     }
