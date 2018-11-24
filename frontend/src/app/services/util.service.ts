@@ -394,7 +394,7 @@ export class UtilService {
 
             const fullMatch = regExpResult[0];
             const tokenName = regExpResult[1];
-            let tokenValue = result[tokenName];
+            const tokenValue = result[tokenName];
 
             if (typeof tokenValue === 'string') {
               if (this.createRegExp().exec(tokenValue)) {
@@ -402,7 +402,6 @@ export class UtilService {
                 this.addReference(referenceLinks, key, tokenName);
                 continue;
               }
-              tokenValue = tokenValue.replace(/"/g, '\\"');
             }
 
             retValue = retValue.replace(fullMatch, tokenValue);
