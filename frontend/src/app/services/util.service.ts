@@ -153,7 +153,7 @@ export class UtilService {
       } else {
         // Append simple value and inline comment
         if (type === 'str') {
-          value = value.replace('\\', '\\\\');
+          value = value.replace(/\\/g, '\\\\');
           value = value.replace('"', '\\"');
           result += ' "' + value + '"';
         } else {
