@@ -12,4 +12,4 @@ export enum PROPERTY_VALUE_TYPES {
   BOOLEAN_ARRAY = 'boolean[]',
 }
 
-export { environment } from '../../environments/environment';
+export * from '../../environments/environment';

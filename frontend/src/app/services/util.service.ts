@@ -1,17 +1,33 @@
 import { Injectable } from '@angular/core';
 import * as _ from 'lodash';
 import * as jsYaml from 'js-yaml';
+import * as yamlJS from 'yaml-js';
+import * as aesjs from 'aes-js';
+import * as pbkdf2 from 'pbkdf2';
 
 import { TreeNode } from 'models/tree-node';
 import { Configuration } from 'models/config-file';
 import { ConfigProperty } from 'models/config-property';
-import { PROPERTY_VALUE_TYPES, environment } from 'config';
+import { PROPERTY_VALUE_TYPES, percyConfig } from 'config';
+
+const aesKey = pbkdf2.pbkdf2Sync(percyConfig.encryptKey, percyConfig.encryptSalt, 1, 32);
 
 /**
  * This service provides the utility methods
  */
 @Injectable({ providedIn: 'root' })
 export class UtilService {
+
+  // mapping of type from YAML to JSON
+  private typeMap = {
+    str: 'string',
+    int: 'number',
+    float: 'number',
+    map: 'object',
+    seq: 'array',
+    bool: 'boolean',
+    null: 'string',
+  };
 
   // mapping of type from JSON to YAML
   private typeMapReverse = {
@@ -63,11 +79,225 @@ export class UtilService {
   }
 
   /**
+   * Extract yaml comment.
+   * @param comment The comment to extract
+   * @returns extracted comment or undefined if it is not a comment
+   * @private
+   */
+  private extractYamlComment(comment: string) {
+    const trimmed = _.trim(comment);
+    const idx = _.indexOf(trimmed, '#');
+    if (!trimmed || idx === -1) {
+      // Does not contain '#', it's not a comment, return undefined
+      return;
+    }
+    if (trimmed[idx + 1] === '#') {
+      return _.trim(trimmed.substring(idx));
+    }
+    return _.trim(trimmed.substring(idx + 1));
+  }
+  
+  /**
+   * Extract yaml data type.
+   * @param comment The comment to extract
+   * @returns extracted comment or undefined if it is not a comment
+   * @private
+   */
+  private extractYamlDataType(dataType: string) {
+    const trimmed = _.trim(dataType);
+    // Extract the data type
+    const extracted = trimmed.replace(/^tag:yaml.org,2002:/, '');
+  
+    // Return extracted data type
+    // note if there is more data types need to map then add on mapping of types of YAML and JSON
+    return this.typeMap[extracted] ? this.typeMap[extracted] : _.trim(extracted);
+  }
+  
+  /**
+   * Parse yaml comments from multiple lines.
+   * @param startMark The start mark
+   * @param lines The split lines of yaml file
+   * @returns parsed comments or undefined if there is not any
+   * @private
+   */
+  private parseYamlCommentLines(startMark, lines: string[]) {
+  
+    const comments = [];
+  
+    let lineNum = startMark.line;
+    const startLine = lines[lineNum];
+    const inlineComment = this.extractYamlComment(startLine.substring(startMark.column + 1));
+    if (_.isString(inlineComment)) {
+      comments.push(inlineComment);
+    }
+  
+    while (lineNum < lines.length - 1) {
+      ++lineNum;
+      if (_.isEmpty(_.trim(lines[lineNum]))) {
+        continue;
+      }
+      const match = lines[lineNum].match(/^(\s)*(#.*)/);
+      if (match && match[2]) {
+        const lineComment = this.extractYamlComment(match[2]);
+        comments.push(lineComment);
+      } else {
+        break;
+      }
+    }
+  
+    return comments.length === 0 ? undefined : comments;
+  }
+  
+  /**
+   * Set comment to $comment property.
+   * @param obj The object to set comment.
+   * @param comment The comment
+   * @returns object with comment set
+   * @private
+   */
+  private setComment(obj, comment: string[]) {
+    if (_.isArray(comment)) {
+      if (_.isObject(obj) && !_.isArray(obj)) {
+        obj.$comment = comment;
+      } else {
+        obj = {
+          $comment: comment,
+          $value: obj,
+        };
+      }
+    }
+  
+    return obj;
+  }
+  
+  /**
+   * Set data type to $type property.
+   * @param obj The object to set type.
+   * @param type The type
+   * @returns object with type set
+   * @private
+   */
+  private setDataType(obj, type: string) {
+    if (_.isString(type)) {
+      if (_.isObject(obj) && !_.isArray(obj)) {
+        obj.$type = type;
+      } else {
+        obj = {
+          $type: type,
+          $value: obj,
+        };
+      }
+    }
+    if (type === 'object') {
+      delete obj.$value;
+    }
+    return obj;
+  }
+  
+  /**
+   * Walk yaml tree, parse comments, construct json object.
+   * @param yamlNode The yaml tree node
+   * @param lines The split lines of yaml file
+   * @returns Json object constructed from yaml tree
+   * @private
+   */
+  private walkYamlTree(yamlNode, lines: string[]) {
+    if (yamlNode.id === 'mapping') {
+      // Mapping node, represents an object
+      const result = {};
+  
+      _.each(yamlNode.value, ([keyNode, valueNode]) => {
+  
+        // Recursively walk the value node
+        const nestResult = this.walkYamlTree(valueNode, lines);
+  
+        let comment;
+        let type;
+        if (valueNode.id !== 'scalar') {
+          // This will parse inline comment and after multiple lines comments like:
+          // key:  # some inline comment...
+          //   # multiple line 1
+          //   # multiple line 2
+          comment = this.parseYamlCommentLines(keyNode.end_mark, lines);
+          type = this.extractYamlDataType(valueNode.tag);
+        }
+        result[keyNode.value] = this.setDataType(this.setComment(nestResult, comment), type);
+      });
+  
+      return result;
+    } else if (yamlNode.id === 'sequence') {
+      // Sequence node, represents an array
+      let result = [];
+  
+      _.each(yamlNode.value, (node, idx) => {
+        const type = this.extractYamlDataType(node.tag);
+        result[idx] = this.setDataType(this.walkYamlTree(node, lines), type);
+      });
+  
+      if (yamlNode.value.length) {
+        const comment = this.parseYamlCommentLines(yamlNode.start_mark, lines);
+        result = this.setComment(result, comment);
+      }
+  
+      return result;
+    } else {
+      // Scalar node, represents a string/number..
+  
+      // This will parse inline comment like:
+      // key: value  # some inline comment...
+      // const line = lines[yamlNode.end_mark.line];
+      // extractYamlComment(line.substring(yamlNode.end_mark.column));
+      const comment = this.parseYamlCommentLines(yamlNode.end_mark, lines);
+  
+      // Parse number if possible
+      let value = yamlNode.value;
+      const type = this.extractYamlDataType(yamlNode.tag);
+      if (type === 'number') {
+        value = _.toNumber(value);
+      }
+  
+      if (type === 'boolean') {
+        value = JSON.parse(value);
+      }
+  
+      return this.setDataType(this.setComment(value, comment), type);
+    }
+  }
+  
+  /**
+   * Convert yaml to json object.
+   * @param yaml The yaml string
+   * @returns json object
+   */
+  convertYamlToJson(yaml) {
+    const yamlNode = yamlJS.compose(yaml);
+    const lines = yaml.split(/\r?\n/);
+  
+    // Walk yaml tree
+    const result = !yamlNode ? null : this.walkYamlTree(yamlNode, lines);
+  
+    // Parse root comments
+    let rootComments;
+    if (yamlNode) {
+      for (let i = 0; i < yamlNode.start_mark.line; i++) {
+        const match = lines[i].match(/^(\s)*(#.*)/);
+        if ((match && match[2]) || _.isEmpty(lines[i])) {
+          // For root comment, keep it as is
+          rootComments = rootComments || [];
+          rootComments.push(lines[i]);
+        }
+      }
+    }
+  
+    return this.setComment(result, rootComments);
+  }
+
+  /**
    * Render yaml comment.
    * @param comment The comment to render
    * @returns the comment rendered
    */
-  renderYamlComment(comment: string) {
+  private renderYamlComment(comment: string) {
     if (!comment) {
       return '  #';
     }
@@ -87,7 +317,7 @@ export class UtilService {
    * @param indent The indent spaces
    * @returns Yaml format string
    */
-  walkJsonTree(jsonNode, indent: string = '') {
+  private walkJsonTree(jsonNode, indent: string = '') {
 
     let result = '';
     const isArray = _.isArray(jsonNode);
@@ -351,7 +581,7 @@ export class UtilService {
 
   private createRegExp() {
     const regexPattern =
-      `${this.escapeRegExp(environment.variableSubstitute.prefix)}(.+?)${this.escapeRegExp(environment.variableSubstitute.suffix)}`;
+      `${this.escapeRegExp(percyConfig.variableSubstitute.prefix)}(.+?)${this.escapeRegExp(percyConfig.variableSubstitute.suffix)}`;
     return new RegExp(regexPattern, 'g');
   }
 
@@ -502,5 +732,92 @@ export class UtilService {
     const substituted = this.substitute(merged[env], this.resolveTokens(tokens), 0);
 
     return this.convertJsonToYaml(substituted);
+  }
+
+  /**
+   * Encrypt.
+   * @param text The text to encrypt
+   * @returns encrypted text
+   */
+  encrypt(text: string): string {
+    const textBytes = aesjs.utils.utf8.toBytes(text);
+  
+    const aesCtr = new aesjs.ModeOfOperation.ctr(aesKey);
+    const encryptedBytes = aesCtr.encrypt(textBytes);
+  
+    return aesjs.utils.hex.fromBytes(encryptedBytes);
+  }
+  
+  /**
+   * Decrypt.
+   * @param encrypted The encrypted text
+   * @returns decrypted text
+   */
+  decrypt(encrypted: string): string {
+    const encryptedBytes = aesjs.utils.hex.toBytes(encrypted);
+  
+    const aesCtr = new aesjs.ModeOfOperation.ctr(aesKey);
+    const decryptedBytes = aesCtr.decrypt(encryptedBytes);
+  
+    return aesjs.utils.utf8.fromBytes(decryptedBytes);
+  }
+  
+  /**
+   * Convert Git error.
+   * @param err The Git error
+   * @returns converted error
+   */
+  convertGitError(err) {
+  
+    if (_.includes(err.message, 'remote: Invalid username or password')) {
+      return new Error('Invalid username or password');
+    }
+  
+    if (_.includes(err.message, 'remote: Unauthorized') || _.includes(err.message, 'remote: Forbidden')) {
+      return new Error('Git authorization forbidden');
+    }
+  
+    if (_.includes(err.message, 'remote: Repository') && _.includes(err.message, 'not found')) {
+      return new Error('Repository not found');
+    }
+  
+    if (_.includes(err.message, 'Could not find remote branch')) {
+      return new Error('Branch not found');
+    }
+  
+    return err;
+  }
+
+  // Construct folder name by combining username, repoName and branchName
+  private getRepoFolder(metadata) {
+    return encodeURIComponent(`${metadata.username}!${metadata.repoName}!${metadata.branchName}`);
+  }
+
+  /**
+   * Get repo name.
+   * @param url The repo url
+   * @returns the repo name
+   */
+  getRepoName(url: URL) {
+    const split = url.pathname.split('/');
+    return split.filter((e) => e).join('/');
+  }
+  
+  /**
+   * Get repo folder path.
+   * @param metadata The metadata contains username, repo name and branch name
+   * @returns the path to repo folder
+   */
+  getRepoPath(metadata) {
+    return `${percyConfig.reposFolder}/${this.getRepoFolder(metadata)}`;
+  }
+  
+  /**
+   * Get metadata file path.
+   * @param metadata The metadata contains username, repo name and branch name
+   * @returns the path to metadata file
+   */
+  getMetadataPath(metadata) {
+    return `${percyConfig.metaFolder}/${this.getRepoFolder(metadata)}.meta`;
   }
 }

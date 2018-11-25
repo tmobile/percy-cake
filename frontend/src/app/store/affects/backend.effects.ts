@@ -10,7 +10,6 @@ import * as appStore from 'store';
 import { Alert, APIError, Navigate } from 'store/actions/common.actions';
 import {
     BackendActionTypes,
-    ListApplications, ListApplicationsSuccess, ListApplicationsFailure,
     SaveDraft, CommitChanges, CommitChangesSuccess, CommitChangesFailure,
     LoadFiles, LoadFilesSuccess, LoadFilesFailure,
     DeleteFile, DeleteFileFailure, DeleteFileSuccess,
@@ -29,39 +28,19 @@ export class BackendEffects {
         private store: Store<appStore.AppState>
     ) { }
 
-    // load applications effect
-    @Effect()
-    loadApplications$ = this.actions$.pipe(
-        ofType<ListApplications>(BackendActionTypes.ListApplications),
-        withLatestFrom(this.store.pipe(select(appStore.getCurrentUser))),
-        switchMap(([action, user]) =>
-            this.fileManagementService.listApplications(user.repoName, user.branchName)
-                .pipe(
-                    map(result => new ListApplicationsSuccess(result)),
-                    catchError(error => of(new ListApplicationsFailure(error)))
-                )
-        )
-    );
-
-    // load applications failure effect
-    @Effect()
-    listApplicationsFailure$ = this.actions$.pipe(
-        ofType<ListApplicationsFailure>(BackendActionTypes.ListApplicationsFailure),
-        map((action) => new APIError(action.payload))
-    );
-
     // load files effect
     @Effect()
     loadFiles$ = this.actions$.pipe(
         ofType<LoadFiles>(BackendActionTypes.LoadFiles, BackendActionTypes.DeleteFileFailure),
         withLatestFrom(this.store.pipe(select(appStore.getCurrentUser))),
-        switchMap(([action, user]) =>
-            this.fileManagementService.getFiles(user.repoName, user.branchName)
-                .pipe(
-                    map(result => new LoadFilesSuccess(result)),
-                    catchError(error => of(new LoadFilesFailure(error)))
-                )
-        )
+        switchMap(async ([action, user]) => {
+          try {
+            const result = await this.fileManagementService.getFiles(user.repoPath, user.branchName);
+            return new LoadFilesSuccess(result);
+          } catch (error) {
+            return new LoadFilesFailure(error);
+          }
+        })
     );
 
     // load files failure effect
@@ -75,15 +54,15 @@ export class BackendEffects {
     @Effect()
     getFileContent$ = this.actions$.pipe(
         ofType<GetFileContent>(BackendActionTypes.GetFileContent),
-        withLatestFrom(this.store.pipe(select(appStore.getAppState))),
-        switchMap(([action, state]) => {
+        withLatestFrom(this.store.pipe(select(appStore.getCurrentUser))),
+        switchMap(async ([action, user]) => {
           const file = action.payload;
-          const user = state.auth.currentUser;
-          return this.fileManagementService.getFileContent(user.repoName, user.branchName, file.applicationName, file.fileName)
-              .pipe(
-                  map(data => new GetFileContentSuccess({...file, originalConfig: data })), // set the original config from server
-                  catchError(error => of(new GetFileContentFailure(error)))
-              );
+          try {
+            const result = await this.fileManagementService.getFileContent(user.repoPath, file.applicationName, file.fileName);
+            return new GetFileContentSuccess({...file, originalConfig: result }); // set the original config from server
+          } catch (error) {
+            return new GetFileContentFailure(error);
+          }
         })
     );
 
@@ -135,7 +114,6 @@ export class BackendEffects {
         ofType<CommitChangesSuccess>(BackendActionTypes.CommitChangesSuccess),
         switchMap((action) => {
           const results = [];
-          results.push(new ListApplications());
           results.push(new LoadFiles()); // reload files
           if (action.payload.fromEditor) {
             results.push(new Navigate(['/dashboard']));
@@ -193,7 +171,6 @@ export class BackendEffects {
           const results = [];
           if (action.payload.timestamp) {
             // reload files
-            results.push(new ListApplications());
             results.push(new LoadFiles());
           }
           results.push(new Alert({

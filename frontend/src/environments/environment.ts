@@ -5,13 +5,25 @@
 export const environment = {
   production: false,
   api: {
-    baseUrl: 'http://localhost:3000/api/1.0'
-  },
+    baseUrl: 'http://localhost:3000/api/1.0',
+    corsProxy: 'http://localhost:9999'
+  }
+};
+
+export const percyConfig = {
+  storeName: 'PercyGitRepo-Dev',
+  reposFolder: '/percy-repo-dev',
+  metaFolder: '/percy-meta-dev',
+  yamlAppsFolder: 'apps',
+  environmentsFile: 'environments.yaml',
+  encryptKey: '&Ddf23&*Dksd',
+  encryptSalt: '23E80(9Dls6$s',
+  loggedInUsersMetaFile: 'logged-in-users.json',
   variableSubstitute: {
     prefix: '_{',
     suffix: '}_'
   }
-};
+}
 
 /*
  * For easier debugging in development mode, you can import the following file

@@ -3,7 +3,7 @@ import { Store, select } from '@ngrx/store';
 import { take } from 'rxjs/operators';
 
 import * as appStore from '../store';
-import { ListApplications, LoadFiles, Initialized } from '../store/actions/backend.actions';
+import { LoadFiles, Initialized } from '../store/actions/backend.actions';
 
 @Directive({
   selector: '[appInitializer]'
@@ -17,7 +17,6 @@ export class InitializerDirective implements OnInit {
       (backendState) => {
         if (!backendState.initialized) {
 
-          this.store.dispatch(new ListApplications());
           this.store.dispatch(new LoadFiles());
           this.store.dispatch(new Initialized());
         }

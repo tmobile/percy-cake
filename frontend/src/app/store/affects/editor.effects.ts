@@ -38,15 +38,14 @@ export class EditorEffects {
     pageLoad$ = this.actions$.pipe(
         ofType<PageLoad>(EditorActionTypes.PageLoad),
         withLatestFrom(this.store.pipe(select(appStore.getCurrentUser))),
-        switchMap(([action, user]) =>
-            this.fileManagementService.getEnvironments(user.repoName, user.branchName, action.payload.appName)
-                .pipe(
-                    map(environments => {
-                        return new PageLoadSuccess({environments});
-                    }),
-                    catchError(error => of(new PageLoadFailure(error)))
-                )
-        )
+        switchMap(async ([action, user]) => {
+          try {
+            const environments = await this.fileManagementService.getEnvironments(user.repoPath, action.payload.appName);
+            return new PageLoadSuccess({ environments });
+          } catch (error) {
+            return new PageLoadFailure(error);
+          }
+        })
     );
 
     // page load success effect

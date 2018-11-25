@@ -22,7 +22,7 @@ export const GetConfigFile = (state: State, fileName: string, applicationName: s
 };
 
 export const initialState: State = {
-    applications: [],
+    applications: null,
     files: ConfigFileAdapter.getInitialState(),
     initialized: false,
 };
@@ -37,15 +37,8 @@ export function reducer(state = initialState, action: BackendActionsUnion): Stat
             };
         }
 
-        case BackendActionTypes.ListApplicationsSuccess: {
-            return {
-                ...state,
-                applications: action.payload
-            };
-        }
-
         case BackendActionTypes.LoadFilesSuccess: {
-          const freshFiles = _.mapKeys(action.payload, configFile => ConfigFileAdapter.selectId(configFile));
+          const freshFiles = _.mapKeys(action.payload.files, configFile => ConfigFileAdapter.selectId(configFile));
           let files = state.files;
 
           _.each(state.files.ids, (id: string) => {
@@ -66,7 +59,8 @@ export function reducer(state = initialState, action: BackendActionsUnion): Stat
 
           return {
             ...state,
-            files
+            files,
+            applications: action.payload.applications
           };
         }
 

@@ -28,22 +28,6 @@ export class Initialized implements Action {
   readonly type = BackendActionTypes.Initialized;
 }
 
-export class ListApplications implements Action {
-  readonly type = BackendActionTypes.ListApplications;
-}
-
-export class ListApplicationsSuccess implements Action {
-  readonly type = BackendActionTypes.ListApplicationsSuccess;
-
-  constructor(public payload: string[]) { }
-}
-
-export class ListApplicationsFailure implements Action {
-  readonly type = BackendActionTypes.ListApplicationsFailure;
-
-  constructor(public payload: HttpErrorResponse) { }
-}
-
 export class LoadFiles implements Action {
   readonly type = BackendActionTypes.LoadFiles;
 }
@@ -51,7 +35,7 @@ export class LoadFiles implements Action {
 export class LoadFilesSuccess implements Action {
   readonly type = BackendActionTypes.LoadFilesSuccess;
 
-  constructor(public payload: ConfigFile[]) { }
+  constructor(public payload: {files: ConfigFile[], applications: string[]}) { }
 }
 
 export class LoadFilesFailure implements Action {
@@ -125,9 +109,6 @@ export class ResolveConficts implements Action {
 
 export type BackendActionsUnion =
   | Initialized
-  | ListApplications
-  | ListApplicationsSuccess
-  | ListApplicationsFailure
   | LoadFiles
   | LoadFilesSuccess
   | LoadFilesFailure

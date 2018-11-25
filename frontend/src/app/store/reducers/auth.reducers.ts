@@ -74,9 +74,7 @@ export function reducer(state = initialState, action: AuthActionsUnion): State {
     }
 }
 
-export const getLoggedIn = (state: State) =>
-    state.loggedIn && state.currentUser.token
-    && Date.parse(state.currentUser.validUntil) > (new Date()).getTime();
+export const getLoggedIn = (state: State) => state.loggedIn;
 
 export const getDefaultRepo = (state: State) => state.defaultRepo;
 export const getLoggedInUser = (state: State) => state.currentUser;

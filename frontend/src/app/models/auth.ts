@@ -9,10 +9,11 @@ export interface Authenticate extends Repo {
 }
 
 export interface LoginResult extends Repo {
-    token: string;
+    // token: string;
     repoName: string;
-    validUntil: string;
-    envFileName: string;
+    // validUntil: string;
+    // envFileName: string;
+    repoPath: string;
 }
 
 export interface User extends LoginResult {

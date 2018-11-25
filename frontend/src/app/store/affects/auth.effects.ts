@@ -50,13 +50,15 @@ export class AuthEffects {
     login$ = this.actions$.pipe(
         ofType<Login>(AuthActionTypes.Login),
         map(action => action.payload),
-        exhaustMap((authInfo: Authenticate) =>
-            this.fileManagementService.accessRepo(authInfo.repositoryUrl, authInfo.branchName, authInfo.username, authInfo.password)
-                .pipe(
-                    map(loginResult => new LoginSuccess(_.omit({ ...loginResult, ...authInfo }, 'password'))),
-                    catchError(error => of(new LoginFailure(error)))
-                )
-        )
+        exhaustMap(async (authInfo: Authenticate) => {
+          try {
+            const loginResult = await this.fileManagementService.accessRepo(
+              authInfo.repositoryUrl, authInfo.branchName, authInfo.username, authInfo.password);
+            return new LoginSuccess(_.omit({ ...loginResult, ...authInfo }, 'password'));
+          } catch (error) {
+            return new LoginFailure(error);
+          }
+        })
     );
 
     // login success effect
@@ -77,7 +79,7 @@ export class AuthEffects {
     // logout request effect
     @Effect()
     logout$ = this.actions$.pipe(
-        ofType(AuthActionTypes.Logout),
-        map(() => new LogoutSuccess())
-    );
+      ofType(AuthActionTypes.Logout),
+      map(() => new LogoutSuccess())
+  );
 }

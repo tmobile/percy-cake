@@ -5,6 +5,7 @@ import { Store, select } from '@ngrx/store';
 import { Observable, combineLatest, Subject, BehaviorSubject, Subscription } from 'rxjs';
 import { take, map, withLatestFrom } from 'rxjs/operators';
 
+import { percyConfig } from 'config';
 import { ConfigFile } from 'models/config-file';
 import * as appStore from 'store';
 import { SelectApp, CollapseApps, ToggleApp, TableSort } from 'store/actions/dashboard.actions';
@@ -56,9 +57,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
    * handle component initialization
    */
   ngOnInit() {
-    this.store.pipe(select(appStore.getCurrentUser)).pipe(take(1)).subscribe(user => {
-      this.envFileName = user.envFileName;
-    });
+    this.envFileName = percyConfig.environmentsFile;
 
     const folders$ = new Subject<any[]>();
 
@@ -138,7 +137,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   addNewFile() {
     this.store.pipe(select(appStore.getAppState)).pipe(take(1)).subscribe(appState => {
 
-      const envFileName = appState.auth.currentUser.envFileName;
+      const envFileName = this.envFileName;
 
       const dialogRef = this.dialog.open(SelectAppDialogComponent, {
         data: {

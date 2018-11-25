@@ -11,4 +11,6 @@ test-repos
 .DS_Store
 .vscode
 
+cors-proxy.pid
+
 public/
