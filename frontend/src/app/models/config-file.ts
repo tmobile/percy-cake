@@ -6,9 +6,9 @@ export interface Configuration {
 export interface ConfigFile {
   fileName: string;
   applicationName: string;
-  timestamp?: number;
+  draftBaseSHA?: string;
   size?: number;
-  modified?: boolean;
+  modified?: boolean; // Means this is a modified file compared to repo, able to commit
   draftConfig?: Configuration;
   originalConfig?: Configuration;
 }

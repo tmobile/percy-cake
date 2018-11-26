@@ -31,9 +31,5 @@ module.exports = {
   node: {
     process: false,
     Buffer: false,
-    // global: true,
-    // constants: true,
-    // os: true,
-    // stream: true,
   }
 };

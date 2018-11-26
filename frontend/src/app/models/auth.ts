@@ -1,3 +1,4 @@
+
 export interface Repo {
   repositoryUrl: string;
   branchName: string;
@@ -5,17 +6,12 @@ export interface Repo {
 
 export interface Authenticate extends Repo {
   username: string;
-  password: string;
+  password?: string;
 }
 
-export interface LoginResult extends Repo {
-    // token: string;
-    repoName: string;
-    // validUntil: string;
-    // envFileName: string;
-    repoPath: string;
-}
-
-export interface User extends LoginResult {
-    username: string;
+export interface User extends Authenticate {
+  repoName: string;
+  repoFolder: string;
+  token: string;
+  validUntil: number;
 }

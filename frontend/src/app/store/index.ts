@@ -74,9 +74,11 @@ export const getDashboardCommittingFile = createSelector(dashboardState, fromDas
 // editor selectors
 export const editorState = createFeatureSelector<AppState, fromEditor.State>('editor');
 
+export const getConfigFile = createSelector(editorState, fromEditor.getConfigFile);
 export const getConfiguration = createSelector(editorState, fromEditor.getConfiguration);
 export const getEnvironments = createSelector(editorState, fromEditor.getEnvironments);
 export const getIsCommitting = createSelector(editorState, fromEditor.isCommitting);
+export const getIsSaving = createSelector(editorState, fromEditor.isSaving);
 export const getMode = createSelector(editorState, fromEditor.getMode);
 export const getFilePath = createSelector(editorState, fromEditor.getFilePath);
 export const getShowAsCode = createSelector(editorState, fromEditor.getShowAsCode);

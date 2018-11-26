@@ -1,6 +1,6 @@
 import * as _ from 'lodash';
 
-import { Configuration } from 'models/config-file';
+import { Configuration, ConfigFile } from 'models/config-file';
 import { TreeNode } from 'models/tree-node';
 import { ConfigProperty } from 'models/config-property';
 
@@ -9,14 +9,14 @@ import { EditorActionTypes, EditorActionsUnion } from 'store/actions/editor.acti
 
 export interface State {
     isCommitting: boolean;
+    isSaving: boolean;
     environments: Array<string>;
     appName: string;
     fileName: string;
     inEditMode: boolean;
     inEnvMode: boolean;
+    configFile: ConfigFile;
     configuration: Configuration; // In-edit config
-    draftConfiguration: Configuration; // Saved draft config
-    originalConfiguration: Configuration; // Original config from server
     showAsCode: boolean;
     previewCode: string;
     showAsCompiledYAMLEnvironment: string;
@@ -28,14 +28,14 @@ export interface State {
 
 export const initialState: State = {
     isCommitting: false,
+    isSaving: false,
     appName: null,
     fileName: null,
     environments: [],
     inEditMode: false,
     inEnvMode: false,
+    configFile: null,
     configuration: null,
-    draftConfiguration: null,
-    originalConfiguration: null,
     showAsCode: false,
     previewCode: null,
     showAsCompiledYAMLEnvironment: null,
@@ -71,25 +71,25 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
         }
 
         case BackendActionTypes.GetFileContentSuccess: {
-          const originalConfiguration = action.payload.originalConfig;
-          const draftConfiguration = action.payload.draftConfig || originalConfiguration;
-          const configuration = draftConfiguration;
+          const {file} = action.payload;
+          const configuration = file.draftConfig || file.originalConfig;
           return {
               ...state,
+              configFile: {...file},
               configuration,
-              draftConfiguration,
-              originalConfiguration,
-              isPageDirty: false
+              isPageDirty: !state.inEditMode
           };
         }
 
         case EditorActionTypes.ConfigurationChange: {
             const configuration = {...action.payload};
+            const file = state.configFile;
 
             return {
                 ...state,
+                configFile: {...file, modified: !_.isEqual(file.originalConfig, configuration)},
                 configuration,
-                isPageDirty: !_.isEqual(state.draftConfiguration, configuration)
+                isPageDirty: !state.inEditMode || !_.isEqual(file.draftConfig || file.originalConfig, configuration)
             };
         }
 
@@ -112,11 +112,25 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
           };
         }
 
-        case EditorActionTypes.SaveFile: {
+        case BackendActionTypes.SaveDraft: {
           return {
               ...state,
-              draftConfiguration: state.configuration,
+              isSaving: true,
+          };
+        }
+
+        case BackendActionTypes.SaveDraftSuccess: {
+          return {
+              ...state,
+              configFile: {...action.payload},
               isPageDirty: false,
+          };
+        }
+
+        case BackendActionTypes.SaveDraftFailure: {
+          return {
+              ...state,
+              isSaving: false,
           };
         }
 
@@ -137,8 +151,12 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
 
             return {
                 ...state,
-                draftConfiguration: state.configuration,
-                originalConfiguration: state.configuration,
+                configFile: {
+                  ...state.configFile,
+                  draftConfig: state.configuration,
+                  originalConfig: state.configuration,
+                  modified: false,
+                },
                 isCommitting: false,
                 isPageDirty: false,
             };
@@ -209,8 +227,10 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
     }
 }
 
+export const getConfigFile = (state: State) => state.configFile;
 export const getConfiguration = (state: State) => state.configuration;
 export const isCommitting = (state: State) => state.isCommitting;
+export const isSaving = (state: State) => state.isSaving;
 export const getEnvironments = (state: State) => state.environments;
 export const getMode = (state: State) => state.inEditMode;
 export const getFilePath = (state: State) => state.fileName;

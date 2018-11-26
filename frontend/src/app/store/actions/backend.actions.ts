@@ -18,6 +18,8 @@ export enum BackendActionTypes {
   DeleteFileFailure = '[Backend] Delete File Failure',
   DeleteFileSuccess = '[Backend] Delete File Success',
   SaveDraft = '[Backend] Save Draft',
+  SaveDraftSuccess = '[Backend] Save Draft Success',
+  SaveDraftFailure = '[Backend] Save Draft Failure',
   CommitChanges = '[Backend] Commit Changes',
   CommitChangesSuccess = '[Backend] Commit Changes Success',
   CommitChangesFailure = '[Backend] Commit Changes Failure',
@@ -41,7 +43,7 @@ export class LoadFilesSuccess implements Action {
 export class LoadFilesFailure implements Action {
   readonly type = BackendActionTypes.LoadFilesFailure;
 
-  constructor(public payload: HttpErrorResponse) { }
+  constructor(public payload: Error) { }
 }
 
 export class GetFileContent implements Action {
@@ -51,12 +53,12 @@ export class GetFileContent implements Action {
 
 export class GetFileContentSuccess implements Action {
     readonly type = BackendActionTypes.GetFileContentSuccess;
-    constructor(public payload: ConfigFile) { }
+    constructor(public payload: {file: ConfigFile, newlyCreated?: boolean}) { }
 }
 
 export class GetFileContentFailure implements Action {
     readonly type = BackendActionTypes.GetFileContentFailure;
-    constructor(public payload: HttpErrorResponse) { }
+    constructor(public payload: Error) { }
 }
 
 export class DeleteFile implements Action {
@@ -73,13 +75,25 @@ export class DeleteFileSuccess implements Action {
 export class DeleteFileFailure implements Action {
   readonly type = BackendActionTypes.DeleteFileFailure;
 
-  constructor(public payload: HttpErrorResponse) { }
+  constructor(public payload: Error) { }
 }
 
 export class SaveDraft implements Action {
   readonly type = BackendActionTypes.SaveDraft;
 
   constructor(public payload: {file: ConfigFile, redirect: boolean}) { }
+}
+
+export class SaveDraftSuccess implements Action {
+  readonly type = BackendActionTypes.SaveDraftSuccess;
+
+  constructor(public payload: ConfigFile) { }
+}
+
+export class SaveDraftFailure implements Action {
+  readonly type = BackendActionTypes.SaveDraftFailure;
+
+  constructor(public payload: Error) { }
 }
 
 export class CommitChanges implements Action {
@@ -97,7 +111,7 @@ export class CommitChangesSuccess implements Action {
 export class CommitChangesFailure implements Action {
   readonly type = BackendActionTypes.CommitChangesFailure;
 
-  constructor(public payload: {error: HttpErrorResponse, files: ConfigFile[], commitMessage: string, fromEditor?: boolean}) { }
+  constructor(public payload: {error: Error, files: ConfigFile[], commitMessage: string, fromEditor?: boolean}) { }
 }
 
 export class ResolveConficts implements Action {
@@ -119,6 +133,8 @@ export type BackendActionsUnion =
   | DeleteFileSuccess
   | DeleteFileFailure
   | SaveDraft
+  | SaveDraftSuccess
+  | SaveDraftFailure
   | CommitChanges
   | CommitChangesSuccess
   | CommitChangesFailure

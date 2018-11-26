@@ -52,9 +52,8 @@ export class AuthEffects {
         map(action => action.payload),
         exhaustMap(async (authInfo: Authenticate) => {
           try {
-            const loginResult = await this.fileManagementService.accessRepo(
-              authInfo.repositoryUrl, authInfo.branchName, authInfo.username, authInfo.password);
-            return new LoginSuccess(_.omit({ ...loginResult, ...authInfo }, 'password'));
+            const user = await this.fileManagementService.accessRepo(authInfo);
+            return new LoginSuccess(_.omit(user, 'password'));
           } catch (error) {
             return new LoginFailure(error);
           }

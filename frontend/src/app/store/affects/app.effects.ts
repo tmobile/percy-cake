@@ -4,6 +4,7 @@ import { MatDialog } from '@angular/material';
 import { of } from 'rxjs';
 import { map, tap, exhaustMap } from 'rxjs/operators';
 import { Actions, Effect, ofType } from '@ngrx/effects';
+import * as boom from 'boom';
 
 import { Logout } from 'store/actions/auth.actions';
 import { Alert, CommonActionTypes, AlertClosed, APIError, Navigate } from 'store/actions/common.actions';
@@ -53,14 +54,18 @@ export class AppEffects {
     apiError$ = this.actions$.pipe(
         ofType<APIError>(CommonActionTypes.APIError),
         map(action => action.payload),
-        exhaustMap(response => {
-            const message = `[${response.status}]: ${response.error.message}`;
+        exhaustMap(payload => {
+            console.error(payload);
+
+            const error = boom.boomify(payload);
+            const message = error.message;
+
             this.maintenanceService.logError(message).subscribe(() => { }, error => {
                 console.error('An error occurred while saving the log error', error);
             });
             return of(new Alert({
-              message: response.error.message,
-              alertType: response.status === 401 || response.status === 403 ? 'logout' : 'error'
+              message: message,
+              alertType: error.output.statusCode === 401 || error.output.statusCode === 403 ? 'logout' : 'error'
             }));
         }),
     );

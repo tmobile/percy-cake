@@ -1,20 +1,40 @@
 import * as BrowserFS from 'browserfs';
 import * as Git from 'isomorphic-git';
+import * as legacy from 'graceful-fs/legacy-streams';
+import * as FSExtra from 'fs-extra/index';
 
-import * as fs from 'mz/fs';
+import { percyConfig } from 'config';
 
-import { percyConfig } from '../config';
+// BrowserFS miss ReadStream/WriteStream, patch them
+const fs = BrowserFS.BFSRequire('fs');
+const streams = legacy(fs);
+fs['ReadStream'] = streams.ReadStream;
+fs['WriteStream'] = streams.WriteStream;
 
-const initializer = new Promise<typeof Git>((resolve, reject) => {
+// Patch fs with fs-extra
+const fsExtra = require('fs-extra');
+
+// For readFile/writeFile/appendFile, fs-extra has problem with BrowserFS
+// when passing null options
+// (Here we don't care callback because we'll use always promise)
+const fs$readFile = fsExtra.readFile;
+fsExtra.readFile = function (path, options) {
+  return fs$readFile(path, options || {});
+};
+
+const fs$writeFile = fsExtra.writeFile;
+fsExtra.writeFile = function (path, data, options) {
+  return fs$writeFile(path, data, options || {});
+};
+
+const fs$appendFile = fsExtra.appendFile;
+fsExtra.appendFile = function (path, data, options) {
+  return fs$appendFile(path, data, options || {});
+};
+
+const initializer = new Promise<[typeof Git, typeof FSExtra]>((resolve, reject) => {
 
   BrowserFS.configure(
-    // {
-    //   fs: 'AsyncMirror',
-    //   options: {
-    //     sync: { fs: 'InMemory' },
-    //     async: { fs: 'IndexedDB', options: { storeName: percyConfig.storeName } }
-    //   }
-    // },
     {
       fs: 'IndexedDB', options: { storeName: percyConfig.storeName }
     },
@@ -24,59 +44,25 @@ const initializer = new Promise<typeof Git>((resolve, reject) => {
         return reject(err);
       };
 
-      Git.plugins.set('fs', BrowserFS.BFSRequire('fs'));
+      Git.plugins.set('fs', fs);
 
-      if (!await fs.exists(percyConfig.reposFolder)) {
-        await fs.mkdir(percyConfig.reposFolder);
+      if (!await fsExtra.exists(percyConfig.reposFolder)) {
+        await fsExtra.ensureDir(percyConfig.reposFolder);
       }
-      if (!await fs.exists(percyConfig.metaFolder)) {
-        await fs.mkdir(percyConfig.metaFolder);
+      if (!await fsExtra.exists(percyConfig.draftFolder)) {
+        await fsExtra.ensureDir(percyConfig.draftFolder);
+      }
+      if (!await fsExtra.exists(percyConfig.metaFolder)) {
+        await fsExtra.ensureDir(percyConfig.metaFolder);
       }
 
       console.info('Browser Git initialized');
-      resolve(Git);
+      resolve([Git, fsExtra]);
     }
   );
 });
 
 export async function getGitFS() {
-  const git = await initializer;
-  return { fs, git };
+  const [git, fs] = await initializer;
+  return { git, fs };
 }
-
-// @Injectable ({ providedIn: 'root' })
-// export class GitService {
-
-//   /**
-//    * initializes the service
-//    */
-//   constructor() {
-//   }
-
-//   async log(dir, depth) {
-//     const git = await initializer;
-//     return git.log({dir, depth});
-//   }
-
-//   async undoLast(dir, branch, commit) {
-//     const git = await initializer;
-//     const commits = await git.log({dir, depth: 2});
-//     if (commits.length < 2) {
-//       return;
-//     }
-//     await fs.writeFile(`${dir}/.git/refs/heads/${branch}`, commits.pop().oid);
-//     await fs.unlink(`${dir}/.git/index`);
-//     await git.checkout({ dir, ref: branch });
-//   }
-// }
-
-// let currentCommit = await git.resolveRef({ dir: repoPath, ref: branchName })
-// console.log(currentCommit)
-// let object = await git.readObject({
-//   dir: repoPath,
-//   oid: currentCommit,
-//   format: 'deflated',
-//   filepath: 'README.md',
-// })
-// console.log(object.oid)
-// console.info(`Pulled repo: ${repoPath}`);

@@ -34,7 +34,7 @@ export class ConflictDialogComponent implements OnInit {
 
   ngOnInit() {
     this.data.conflictFiles.forEach(file => {
-      file.repoCode = this.utilService.convertJsonToYaml(file.config);
+      file.repoCode = this.utilService.convertJsonToYaml(file.originalConfig);
 
       const draftFile: any = _.find(this.data.draftFiles, _.pick(file, ['fileName', 'applicationName']));
       file.draftConfig = draftFile.draftConfig;
@@ -66,10 +66,9 @@ export class ConflictDialogComponent implements OnInit {
       const result: ConfigFile = {
         fileName: file.fileName,
         applicationName: file.applicationName,
-        timestamp: file.timestamp,
         size: file.size,
-        draftConfig: file.resolveStrategy === 'draft' ? file.draftConfig : file.config,
-        originalConfig: file.config,
+        draftConfig: file.resolveStrategy === 'draft' ? file.draftConfig : file.originalConfig,
+        originalConfig: file.originalConfig,
       };
 
       result.modified = !_.isEqual(result.draftConfig, result.originalConfig);
@@ -95,7 +94,7 @@ export class ConflictDialogComponent implements OnInit {
 
     if (toRecommit.length) {
       this.store.dispatch(new CommitChanges({
-        files: toRecommit.map(f => _.omit(f, 'timestamp')), // Recommit without timestamp to bypass optimistic check
+        files: toRecommit.map(f => _.omit(f, 'draftBaseSHA')), // Recommit without timestamp to bypass optimistic check
         message: this.data.commitMessage,
         fromEditor: this.data.fromEditor
       }));

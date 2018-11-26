@@ -10,7 +10,6 @@ export enum EditorActionTypes {
     PageLoadFailure = '[Editor] Page Load Failure',
     ViewCompiledYAMLSuccess = '[Editor] View Compiled YAML Success',
     ChangeFileName = '[Editor] Change File Name',
-    SaveFile = '[Editor] Save File',
     OpenAddEditProperty = '[Editor] Open Add Edit Property',
     CancelAddEditProperty = '[Editor] Cancel Add Edit Property',
     SaveAddEditProperty = '[Editor] Save Add Edit Property',
@@ -51,11 +50,6 @@ export class ChangeFileName implements Action {
   constructor(public payload: string) { }
 }
 
-export class SaveFile implements Action {
-    readonly type = EditorActionTypes.SaveFile;
-    constructor(public payload: {redirectToDashboard: boolean}) { }
-}
-
 export class OpenAddEditProperty implements Action {
     readonly type = EditorActionTypes.OpenAddEditProperty;
     constructor(public payload: { options: any }) { }
@@ -86,7 +80,6 @@ export type EditorActionsUnion =
     | PageLoadFailure
     | ViewCompiledYAMLSuccess
     | ChangeFileName
-    | SaveFile
     | OpenAddEditProperty
     | CancelAddEditProperty
     | SaveAddEditProperty

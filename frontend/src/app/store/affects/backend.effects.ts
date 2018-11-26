@@ -3,7 +3,8 @@ import { MatDialog } from '@angular/material';
 import { Store, select } from '@ngrx/store';
 import { Actions, Effect, ofType } from '@ngrx/effects';
 import { of } from 'rxjs';
-import { catchError, map, withLatestFrom, switchMap } from 'rxjs/operators';
+import { map, withLatestFrom, switchMap } from 'rxjs/operators';
+import * as boom from 'boom';
 import * as _ from 'lodash';
 
 import * as appStore from 'store';
@@ -13,7 +14,7 @@ import {
     SaveDraft, CommitChanges, CommitChangesSuccess, CommitChangesFailure,
     LoadFiles, LoadFilesSuccess, LoadFilesFailure,
     DeleteFile, DeleteFileFailure, DeleteFileSuccess,
-    GetFileContent, GetFileContentSuccess, GetFileContentFailure
+    GetFileContent, GetFileContentSuccess, GetFileContentFailure, SaveDraftSuccess, SaveDraftFailure
 } from 'store/actions/backend.actions';
 import { FileManagementService } from 'services/file-management.service';
 import { ConflictDialogComponent } from 'components/conflict-dialog/conflict-dialog.component';
@@ -35,7 +36,7 @@ export class BackendEffects {
         withLatestFrom(this.store.pipe(select(appStore.getCurrentUser))),
         switchMap(async ([action, user]) => {
           try {
-            const result = await this.fileManagementService.getFiles(user.repoPath, user.branchName);
+            const result = await this.fileManagementService.getFiles(user);
             return new LoadFilesSuccess(result);
           } catch (error) {
             return new LoadFilesFailure(error);
@@ -58,8 +59,8 @@ export class BackendEffects {
         switchMap(async ([action, user]) => {
           const file = action.payload;
           try {
-            const result = await this.fileManagementService.getFileContent(user.repoPath, file.applicationName, file.fileName);
-            return new GetFileContentSuccess({...file, originalConfig: result }); // set the original config from server
+            const result = await this.fileManagementService.getFileContent(user, file);
+            return new GetFileContentSuccess({file: {...file, ...result}});
           } catch (error) {
             return new GetFileContentFailure(error);
           }
@@ -77,12 +78,29 @@ export class BackendEffects {
     @Effect()
     saveDraft$ = this.actions$.pipe(
         ofType<SaveDraft>(BackendActionTypes.SaveDraft),
-        switchMap((action) => {
-          if (action.payload.redirect) {
-            return of(new Navigate(['/dashboard']));
+        withLatestFrom(this.store.pipe(select(appStore.getCurrentUser))),
+        switchMap(async ([action, user]) => {
+          const file = action.payload.file;
+          try {
+            const saved = await this.fileManagementService.saveDraft(user, file);
+            const result = [];
+            result.push(new SaveDraftSuccess(saved))
+            if (action.payload.redirect) {
+              result.push(new Navigate(['/dashboard']));
+            }
+            return result;
+          } catch (error) {
+            return [new SaveDraftFailure(error)];
           }
-          return of();
-        })
+        }),
+        switchMap(res => res),
+    );
+
+    // save draft failure effect
+    @Effect()
+    saveDraftFailure$ = this.actions$.pipe(
+        ofType<SaveDraftFailure>(BackendActionTypes.SaveDraftFailure),
+        map((action) => new APIError(action.payload))
     );
 
     // commit changes effect
@@ -90,36 +108,29 @@ export class BackendEffects {
     commitChanges$ = this.actions$.pipe(
       ofType<CommitChanges>(BackendActionTypes.CommitChanges),
       withLatestFrom(this.store.pipe(select(appStore.getCurrentUser))),
-      switchMap(([action, user]) => {
+      switchMap(async ([action, user]) => {
 
         const files = action.payload.files;
         const commitMessage = action.payload.message;
         const fromEditor = action.payload.fromEditor;
-        return this.fileManagementService.commitFiles(user.repoName, user.branchName, files, commitMessage)
-          .pipe(
-              map((result) => {
-                files.forEach(file => {
-                  _.assign(file, _.find(result, _.pick(file, ['fileName', 'applicationName'])));
-                });
-                return new CommitChangesSuccess({files, fromEditor});
-              }),
-              catchError(error => of(new CommitChangesFailure({error, files, commitMessage, fromEditor})))
-          );
-      })
-    );
 
-    // commit change success effect
-    @Effect()
-    commitChangesSuccess$ = this.actions$.pipe(
-        ofType<CommitChangesSuccess>(BackendActionTypes.CommitChangesSuccess),
-        switchMap((action) => {
+        try {
+          const committed = await this.fileManagementService.commitFiles(user, files, commitMessage);
+          files.forEach(file => {
+            _.assign(file, _.find(committed, _.pick(file, ['fileName', 'applicationName'])));
+          });
           const results = [];
+          results.push(new CommitChangesSuccess({files, fromEditor}));
           results.push(new LoadFiles()); // reload files
-          if (action.payload.fromEditor) {
+          if (fromEditor) {
             results.push(new Navigate(['/dashboard']));
           }
           return results;
-        })
+        } catch(error) {
+          return [new CommitChangesFailure({error, files, commitMessage, fromEditor})];
+        }
+      }),
+      switchMap(res => res)
     );
 
     // commit files failure effect
@@ -127,18 +138,19 @@ export class BackendEffects {
     commitChangesFailure$ = this.actions$.pipe(
         ofType<CommitChangesFailure>(BackendActionTypes.CommitChangesFailure),
         switchMap((action) => {
-          if (action.payload.error.status === 409) {
+          const error = boom.boomify(action.payload.error);
+          if (error.output.statusCode === 409) {
             this.dialog.open(ConflictDialogComponent, {
                 data: {
                     fromEditor: action.payload.fromEditor,
                     draftFiles : action.payload.files,
-                    conflictFiles: action.payload.error.error.conflictFiles,
+                    conflictFiles: error.data,
                     commitMessage: action.payload.commitMessage
                 }
             });
             return of();
           } else {
-            return of(new APIError(action.payload.error));
+            return of(new APIError(error));
           }
         })
     );
@@ -148,36 +160,27 @@ export class BackendEffects {
     deleteFile$ = this.actions$.pipe(
         ofType<DeleteFile>(BackendActionTypes.DeleteFile),
         withLatestFrom(this.store.pipe(select(appStore.getCurrentUser))),
-        switchMap(([action, user]) => {
+        switchMap(async ([action, user]) => {
             const file = action.payload;
-            if (!file.timestamp) {
-              // This a new draft file
-              return of(new DeleteFileSuccess(file));
-            }
-            return this.fileManagementService.deleteFile(user.repoName, user.branchName, file.applicationName, file.fileName)
-                .pipe(
-                    map(() => new DeleteFileSuccess(file)),
-                    catchError(error => of(new DeleteFileFailure(error)))
-                );
-            }
-        )
-    );
+            try {
+              const gitPulled = await this.fileManagementService.deleteFile(user, file);
 
-    // delete file success effect
-    @Effect()
-    deleteFileSuccess$ = this.actions$.pipe(
-        ofType<DeleteFileSuccess>(BackendActionTypes.DeleteFileSuccess),
-        switchMap((action) => {
-          const results = [];
-          if (action.payload.timestamp) {
-            // reload files
-            results.push(new LoadFiles());
-          }
-          results.push(new Alert({
-            message: `${action.payload.applicationName} / ${action.payload.fileName} deleted successfully.`,
-            alertType: 'delete'}));
-          return results;
-        })
+              const result = [];
+              result.push(new DeleteFileSuccess(file)),
+              result.push(new Alert({
+                message: `${file.applicationName} / ${file.fileName} deleted successfully.`,
+                alertType: 'delete'
+              }));
+
+              if (gitPulled) {
+                result.push(new LoadFiles());
+              }
+              return result;
+            } catch (error) {
+              return [new DeleteFileFailure(error)];
+            }
+          }),
+        switchMap(res => res)
     );
 
     // delete file failure effect

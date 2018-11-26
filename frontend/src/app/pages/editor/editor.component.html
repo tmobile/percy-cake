@@ -115,7 +115,7 @@
       Cancel
     </button>
 
-    <button type="button" mat-raised-button color="primary" [disabled]="disableSaveDraft|async" class="btn-save"
+    <button type="button" mat-raised-button color="primary" [disabled]="(isSaving | async) || (disableSaveDraft|async)" class="btn-save"
       (click)="saveConfig()">
       Save As Draft
     </button>
@@ -125,7 +125,7 @@
       Commit
     </button>
   </div>
-  <div *ngIf="isCommitting|async">
+  <div *ngIf="(isSaving | async) || (isCommitting|async)">
     <app-loader></app-loader>
   </div>
 </div>

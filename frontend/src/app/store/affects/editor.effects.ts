@@ -1,22 +1,19 @@
 import { Injectable } from '@angular/core';
 import { Actions, Effect, ofType } from '@ngrx/effects';
 import { of } from 'rxjs';
-import { map, exhaustMap, catchError, withLatestFrom, switchMap } from 'rxjs/operators';
+import { map, exhaustMap, withLatestFrom, switchMap } from 'rxjs/operators';
 import { Store, select } from '@ngrx/store';
-import * as _ from 'lodash';
 
 import * as appStore from 'store';
-import { SaveDraft, GetFileContent, GetFileContentSuccess } from 'store/actions/backend.actions';
+import { GetFileContentSuccess, GetFileContent } from 'store/actions/backend.actions';
 import { APIError } from 'store/actions/common.actions';
 import {
     EditorActionTypes,
     PageLoad,
     PageLoadSuccess,
     PageLoadFailure,
-    SaveFile,
     NodeSelectedSuccess,
     NodeSelected,
-    ConfigurationChange,
 } from 'store/actions/editor.actions';
 import { GetConfigFile } from 'store/reducers/backend.reducers';
 import { ConfigFile } from 'models/config-file';
@@ -40,7 +37,7 @@ export class EditorEffects {
         withLatestFrom(this.store.pipe(select(appStore.getCurrentUser))),
         switchMap(async ([action, user]) => {
           try {
-            const environments = await this.fileManagementService.getEnvironments(user.repoPath, action.payload.appName);
+            const environments = await this.fileManagementService.getEnvironments(user, action.payload.appName);
             return new PageLoadSuccess({ environments });
           } catch (error) {
             return new PageLoadFailure(error);
@@ -58,51 +55,25 @@ export class EditorEffects {
           const applicationName = state.editor.appName;
 
           if (!state.editor.inEditMode) {
+            const file: ConfigFile = { fileName, applicationName, modified: true };
             // Add new file, set an initial config
             if (state.editor.inEnvMode) {
-              return of(new ConfigurationChange({
-                default: { $type: 'array', $value: [] }
-              }));
+              file.draftConfig = {default: { $type: 'array', $value: [] }};
+              return of(new GetFileContentSuccess({file, newlyCreated: true}));
             }
-            return of(new ConfigurationChange({
+            file.draftConfig = {
               default: { $type: 'object' },
               environments: { $type: 'object' }
-            }));
+            };
+            return of(new GetFileContentSuccess({file, newlyCreated: true}));
           }
 
           const file = GetConfigFile(state.backend, state.editor.fileName, state.editor.appName);
 
-          if (file && (file.originalConfig || !file.timestamp)) { // No timestamp means uncommitted (but draft saved) new file
-            return of(new GetFileContentSuccess(file));
+          if (file && (file.originalConfig || file.draftConfig)) { // Newly added (but uncommitted) file has only draft config
+            return of(new GetFileContentSuccess({file}));
           }
           return of(new GetFileContent(file ? file : {fileName, applicationName}));
-        })
-    );
-
-    // save file effect
-    @Effect()
-    saveFile$ = this.actions$.pipe(
-        ofType<SaveFile>(EditorActionTypes.SaveFile),
-        withLatestFrom(this.store.pipe(select(appStore.editorState))),
-        switchMap(([action, editorState]) => {
-            const draftConfig = editorState.configuration;
-            if (editorState.inEditMode) {
-              const file: ConfigFile = {
-                fileName: editorState.fileName,
-                applicationName: editorState.appName,
-                draftConfig,
-                modified: !_.isEqual(editorState.originalConfiguration, draftConfig),
-              };
-              return of(new SaveDraft({file, redirect: action.payload.redirectToDashboard}));
-            } else {
-              const file: ConfigFile = {
-                fileName: editorState.fileName,
-                applicationName: editorState.appName,
-                draftConfig,
-                modified: true,
-              };
-              return of(new SaveDraft({file, redirect: action.payload.redirectToDashboard}));
-            }
         })
     );
 

@@ -4,11 +4,17 @@ import * as jsYaml from 'js-yaml';
 import * as yamlJS from 'yaml-js';
 import * as aesjs from 'aes-js';
 import * as pbkdf2 from 'pbkdf2';
+import * as path from 'path';
+import * as ms from 'ms';
+import * as jwt from 'jsonwebtoken';
+import * as boom from 'boom';
+import * as FSExtra from 'fs-extra/index';
 
 import { TreeNode } from 'models/tree-node';
 import { Configuration } from 'models/config-file';
 import { ConfigProperty } from 'models/config-property';
 import { PROPERTY_VALUE_TYPES, percyConfig } from 'config';
+import { Authenticate, User } from 'models/auth';
 
 const aesKey = pbkdf2.pbkdf2Sync(percyConfig.encryptKey, percyConfig.encryptSalt, 1, 32);
 
@@ -769,28 +775,23 @@ export class UtilService {
    */
   convertGitError(err) {
   
-    if (_.includes(err.message, 'remote: Invalid username or password')) {
-      return new Error('Invalid username or password');
+    if (err && err.data && err.data.statusCode === 401) {
+      return boom.unauthorized('Invalid username or password');
     }
   
-    if (_.includes(err.message, 'remote: Unauthorized') || _.includes(err.message, 'remote: Forbidden')) {
-      return new Error('Git authorization forbidden');
+    if (err && err.data && err.data.statusCode === 403) {
+      return boom.forbidden('Git authorization forbidden');
     }
   
-    if (_.includes(err.message, 'remote: Repository') && _.includes(err.message, 'not found')) {
-      return new Error('Repository not found');
+    if (err && err.data && err.data.statusCode === 404) {
+      return boom.notFound('Repository not found');
     }
   
-    if (_.includes(err.message, 'Could not find remote branch')) {
-      return new Error('Branch not found');
-    }
-  
-    return err;
-  }
+    const resultErr = boom.boomify(err);
+    resultErr.data = err.data;
+    resultErr['code'] = err.code;
 
-  // Construct folder name by combining username, repoName and branchName
-  private getRepoFolder(metadata) {
-    return encodeURIComponent(`${metadata.username}!${metadata.repoName}!${metadata.branchName}`);
+    return resultErr;
   }
 
   /**
@@ -802,22 +803,86 @@ export class UtilService {
     const split = url.pathname.split('/');
     return split.filter((e) => e).join('/');
   }
-  
+
   /**
-   * Get repo folder path.
-   * @param metadata The metadata contains username, repo name and branch name
-   * @returns the path to repo folder
+   * Get repo folder name.
+   * @param user The user contains username, repo name and branch name
+   * @returns the repo folder name
    */
-  getRepoPath(metadata) {
-    return `${percyConfig.reposFolder}/${this.getRepoFolder(metadata)}`;
+  getRepoFolder(auth: Authenticate) {
+    const repoName = this.getRepoName(new URL(auth.repositoryUrl));
+
+    // Construct folder name by combining username, repoName and branchName
+    const repoFolder =  encodeURIComponent(`${auth.username}!${repoName}!${auth.branchName}`);
+    return {repoName, repoFolder};
   }
   
   /**
    * Get metadata file path.
-   * @param metadata The metadata contains username, repo name and branch name
+   * @param repoFolder The repo folder name
    * @returns the path to metadata file
    */
-  getMetadataPath(metadata) {
-    return `${percyConfig.metaFolder}/${this.getRepoFolder(metadata)}.meta`;
+  getMetadataPath(repoFolder: string) {
+    return path.resolve(percyConfig.metaFolder, `${repoFolder}.meta`);
+  }
+
+  authenticate(auth: Authenticate): User {
+    const {repoName, repoFolder} = this.getRepoFolder(auth);
+
+    // Create token payload
+    const tokenPayload: any = {
+      username: auth.username,
+      iat: Math.floor(Date.now() / 1000),
+    };
+    tokenPayload.exp = tokenPayload.iat + Math.floor(ms(percyConfig.jwtExpiresIn) / 1000);
+
+    // Sign token and set to repo metadata
+    const token = jwt.sign(tokenPayload, percyConfig.jwtSecret);
+    const validUntil = new Date(tokenPayload.exp * 1000).getTime();
+
+    const user: User = {
+      ...auth,
+      password: this.encrypt(auth.password),
+      repoName,
+      repoFolder,
+      token,
+      validUntil,
+    };
+
+    return user;
+  }
+
+  async checkRepoAccess(user: User, fs: typeof FSExtra): Promise<User> {
+    if (!user || !user.token) {
+      throw boom.unauthorized('Miss access token');
+    }
+
+    try {
+      jwt.verify(user.token, percyConfig.jwtSecret);
+    } catch (jwtErr) {
+      throw boom.unauthorized(jwtErr.name === 'TokenExpiredError' ? 'Expired access token' : 'Invalid access token');
+    }
+
+    const repoMetadataFile = this.getMetadataPath(user.repoFolder);
+    if (!await fs.exists(repoMetadataFile)) {
+      throw boom.unauthorized('Repo metadata not found');
+    }
+
+    let repoMetadata: any = await fs.readFile(repoMetadataFile);
+    try {
+      repoMetadata = JSON.parse(repoMetadata.toString());
+    } catch (err) {
+      // Not a valid json format, repo metadata file corruption, remove it
+      console.warn(`${repoMetadataFile} file corruption, will be removed:\n${repoMetadata}`);
+      await fs.remove(repoMetadataFile);
+      throw boom.unauthorized('Repo metadata file corruption');
+    }
+
+    // Verify with repo metadata
+    if (!_.isEqual(_.omit(user, 'password'), _.omit(repoMetadata, 'password'))) {
+      throw boom.forbidden('Repo metadata mismatch, you are not allowed to access the repo');
+    }
+
+    return {...user, password: this.decrypt(repoMetadata.password)};
   }
 }

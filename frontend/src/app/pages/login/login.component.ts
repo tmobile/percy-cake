@@ -8,6 +8,7 @@ import { Store, select } from '@ngrx/store';
 import { Observable, of, BehaviorSubject } from 'rxjs';
 import { map, startWith, debounceTime, distinctUntilChanged, switchMap, withLatestFrom, tap } from 'rxjs/operators';
 
+import * as boom from 'boom';
 import * as _ from 'lodash';
 
 import * as appStore from 'store';
@@ -91,19 +92,20 @@ export class LoginComponent implements OnInit {
         return;
       }
 
+      const err = boom.boomify(le);
+
       // Show the error in form field
-      if (le.error.statusCode === 401) {
+      if (err.output.statusCode === 401) {
         return this.password.setErrors({invalid: true});
-      } else if (le.error.statusCode === 403) {
+      } else if (err.output.statusCode === 403) {
         return this.repositoryURL.setErrors({forbidden: true});
-      } else if (le.error.message === 'Repository not found') {
+      } else if (err.message === 'Repository not found') {
         return this.repositoryURL.setErrors({notFound: true});
-      } else if (le.error.message === 'Branch not found') {
+      } else if (err['code'] === 'ResolveRefError' && _.get(err, 'data.ref') === this.branchName.value) {
         return this.branchName.setErrors({notFound: true});
       }
 
       this.loginError = 'Login failed';
-      console.error('Login failed', le.error);
     })).subscribe();
   }
 

@@ -1,5 +1,4 @@
 import { Action } from '@ngrx/store';
-import { HttpErrorResponse } from '@angular/common/http';
 
 export enum CommonActionTypes {
     Alert = '[App] Alert',
@@ -24,7 +23,7 @@ export class AlertClosed implements Action {
 export class APIError implements Action {
     readonly type = CommonActionTypes.APIError;
 
-    constructor(public payload: HttpErrorResponse) { }
+    constructor(public payload: any) { }
 }
 
 export class Navigate implements Action {

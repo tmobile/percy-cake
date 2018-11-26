@@ -1,5 +1,4 @@
-import { Component, OnInit, HostListener, ViewChild, Inject, ElementRef } from '@angular/core';
-import { DOCUMENT } from '@angular/common';
+import { Component, OnInit, HostListener, ViewChild, ElementRef } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatDialog, MatInput } from '@angular/material';
@@ -10,18 +9,14 @@ import * as _ from 'lodash';
 
 import * as appStore from 'store';
 import { Alert } from 'store/actions/common.actions';
-import { CommitChanges } from 'store/actions/backend.actions';
+import { CommitChanges, SaveDraft } from 'store/actions/backend.actions';
 import {
-  PageLoad, OpenAddEditProperty,
-  CancelAddEditProperty, SaveAddEditProperty, ConfigurationChange,
-  NodeSelected,
-  SaveFile,
-  ChangeFileName,
-  ViewCompiledYAMLSuccess,
+  PageLoad, ConfigurationChange, ChangeFileName, 
+  OpenAddEditProperty, CancelAddEditProperty, SaveAddEditProperty,
+  NodeSelected, ViewCompiledYAMLSuccess,
 } from 'store/actions/editor.actions';
-import { GetConfigFile } from 'store/reducers/backend.reducers';
 import { TreeNode } from 'models/tree-node';
-import { Configuration, ConfigFile } from 'models/config-file';
+import { Configuration } from 'models/config-file';
 import { NestedConfigViewComponent } from 'components/nested-config-view/nested-config-view.component';
 import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
 import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.component';
@@ -54,23 +49,16 @@ export class EditorComponent implements OnInit {
   currentAddEditProperty = this.store.pipe(select(appStore.getCurrentAddEditProperty));
   selectedConfigProperty = this.store.pipe(select(appStore.getSelectedConfigProperty));
   isCommitting = this.store.pipe(select(appStore.getIsCommitting));
+  isSaving = this.store.pipe(select(appStore.getIsSaving));
   isEditMode = false;
   isEnvMode = false;
 
   disableSaveDraft = this.isPageDirty$.pipe(map(() => {
-    if (!this.isEditMode) {
-      return false;
-    }
     return !this.isPageDirty;
   }));
 
-  disableCommit = this.store.pipe(select(appStore.editorState)).pipe(map(editorState => {
-    const config = editorState.configuration;
-
-    if (_.isEqual(config, editorState.originalConfiguration)) {
-      return true;
-    }
-    return false;
+  disableCommit = this.store.pipe(select(appStore.getConfigFile)).pipe(map(configFile => {
+    return !configFile || !configFile.modified;
   }));
 
   @ViewChild('fileNameInput') fileNameInput: MatInput;
@@ -91,7 +79,6 @@ export class EditorComponent implements OnInit {
     private store: Store<appStore.AppState>,
     private dialog: MatDialog,
     private utilService: UtilService,
-    @Inject(DOCUMENT) private document: Document
   ) { }
 
   ngOnInit() {
@@ -156,12 +143,12 @@ export class EditorComponent implements OnInit {
   }
 
   private checkFileName() {
-    return this.store.pipe(select(appStore.getAppState)).pipe(take(1), map((appState) => {
+    return this.store.pipe(select(appStore.editorState)).pipe(take(1), map((editorState) => {
       if (!this.isEditMode && this.filename.invalid) {
         this.fileNameInput.focus();
-        return {appState, valid: false};
+        return {editorState, valid: false};
       }
-      return {appState, valid: true};
+      return {editorState, valid: true};
     }));
   }
 
@@ -173,7 +160,14 @@ export class EditorComponent implements OnInit {
       if (!result.valid) {
         return;
       }
-      this.store.dispatch(new SaveFile({redirectToDashboard: true}));
+      const editorState = result.editorState;
+
+      const file = {...editorState.configFile};
+      file.fileName = editorState.fileName;
+      file.applicationName = editorState.appName;
+      file.draftConfig = editorState.configuration;
+
+      this.store.dispatch(new SaveDraft({file, redirect: true}));
     });
   }
 
@@ -186,25 +180,12 @@ export class EditorComponent implements OnInit {
         return;
       }
 
-      const appState = result.appState;
-      const fileName = appState.editor.fileName;
-      const applicationName = appState.editor.appName;
-      const draftConfig = appState.editor.configuration;
+      const editorState = result.editorState;
 
-      if (_.isEqual(draftConfig, appState.editor.originalConfiguration)) {
-        return this.store.dispatch(new Alert({ message: 'No changes made', alertType: 'info' }));
-      }
-
-      const file: ConfigFile = {
-        fileName,
-        applicationName,
-        draftConfig,
-      };
-
-      const configFile = GetConfigFile(appState.backend, fileName, applicationName);
-      if (configFile) {
-        file.timestamp = configFile.timestamp;
-      }
+      const file = {...editorState.configFile};
+      file.fileName = editorState.fileName;
+      file.applicationName = editorState.appName;
+      file.draftConfig = editorState.configuration;
 
       const dialogRef = this.dialog.open(CommitDialogComponent);
 

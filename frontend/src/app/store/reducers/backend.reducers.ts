@@ -46,11 +46,8 @@ export function reducer(state = initialState, action: BackendActionsUnion): Stat
               files = ConfigFileAdapter.removeOne(id, files);
             } else {
               const freshFile = freshFiles[id];
-              const existingFile = state.files.entities[id];
-              if (freshFile.timestamp !== existingFile.timestamp) {
-                freshFile.originalConfig = null; // Timestamp changes, Nullify the original config (so it will reload)
-                files = ConfigFileAdapter.upsertOne(freshFile, files);
-              }
+              freshFile.originalConfig = freshFile.draftConfig = null; // Nullify the config (so it will reload)
+              files = ConfigFileAdapter.upsertOne(freshFile, files);
               delete freshFiles[id];
             }
           });
@@ -65,16 +62,19 @@ export function reducer(state = initialState, action: BackendActionsUnion): Stat
         }
 
         case BackendActionTypes.GetFileContentSuccess: {
+          if (action.payload.newlyCreated) {
+            return state;
+          }
           return {
             ...state,
-            files: ConfigFileAdapter.upsertOne(action.payload, state.files)
+            files: ConfigFileAdapter.upsertOne(action.payload.file, state.files)
           };
         }
 
-        case BackendActionTypes.SaveDraft: {
+        case BackendActionTypes.SaveDraftSuccess: {
           return {
               ...state,
-              files: ConfigFileAdapter.upsertOne(action.payload.file, state.files)
+              files: ConfigFileAdapter.upsertOne(action.payload, state.files)
           };
         }
 

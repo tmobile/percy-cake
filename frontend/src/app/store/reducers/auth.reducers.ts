@@ -1,12 +1,10 @@
-import { HttpErrorResponse } from '@angular/common/http';
-
 import { AuthActionsUnion, AuthActionTypes } from 'store/actions/auth.actions';
 import { User, Repo } from 'models/auth';
 
 export interface State {
     loggedIn: boolean;
     currentUser: User;
-    loginError: HttpErrorResponse;
+    loginError: Error;
     formProcessing: boolean;
     redirectUrl: string;
     defaultRepo: Repo;
@@ -74,7 +72,7 @@ export function reducer(state = initialState, action: AuthActionsUnion): State {
     }
 }
 
-export const getLoggedIn = (state: State) => state.loggedIn;
+export const getLoggedIn = (state: State) => state.loggedIn && state.currentUser && state.currentUser.validUntil > Date.now();
 
 export const getDefaultRepo = (state: State) => state.defaultRepo;
 export const getLoggedInUser = (state: State) => state.currentUser;
