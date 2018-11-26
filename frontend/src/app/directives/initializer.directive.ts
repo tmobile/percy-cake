@@ -2,8 +2,8 @@ import { Directive, OnInit } from '@angular/core';
 import { Store, select } from '@ngrx/store';
 import { take } from 'rxjs/operators';
 
-import * as appStore from '../store';
-import { LoadFiles, Initialized } from '../store/actions/backend.actions';
+import * as appStore from 'store';
+import { LoadFiles, Initialized } from 'store/actions/backend.actions';
 
 @Directive({
   selector: '[appInitializer]'

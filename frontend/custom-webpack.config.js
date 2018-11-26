@@ -26,6 +26,24 @@ module.exports = {
       process: 'processGlobal',
       Buffer: 'bufferGlobal'
     }),
+    new webpack.EnvironmentPlugin({
+      CORS_PROXY: '/isogit-proxy',
+      DEFAULT_BRANCH_NAME: 'admin',
+      DEFAULT_REPOSITORY_URL: '',
+      LOCKED_BRANCHES: '["master","trunk"]',
+      STORE_NAME: 'PercyGitRepo',
+      REPOS_FOLDER: '/percy-repo',
+      DRAFT_FOLDER: '/percy-draft',
+      META_FOLDER: '/percy-meta',
+      LOGGED_IN_USERS_METAFILE: 'logged-in-users.json',
+      YAML_APPS_FOLDER: 'apps',
+      ENVIRONMENTS_FILE: 'environments.yaml',
+      LOGIN_SESSION_TIMEOUT: '30m',
+      ENCRYPT_KEY: '&Ddf23&*Dksd',
+      ENCRYPT_SALT: '23E80(9Dls6$s',
+      VARIABLE_SUBSTITUTE_PREFIX: '_{',
+      VARIABLE_SUBSTITUTE_SUFFIX: '}_'
+    })
   ],
   // DISABLE Webpack's built-in process and Buffer polyfills!
   node: {

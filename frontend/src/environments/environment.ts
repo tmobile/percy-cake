@@ -4,28 +4,25 @@
 
 export const environment = {
   production: false,
-  api: {
-    baseUrl: 'http://localhost:3000/api/1.0',
-    corsProxy: 'http://localhost:9999'
-  }
 };
 
 export const percyConfig = {
+  corsProxy: 'http://localhost:9999',
+  defaultBranchName: 'admin',
+  defaultRepositoryUrl: 'https://bitbucket.org/leviastan/sample-yaml-config',
+  lockedBranches: ['master', 'trunk'],
   storeName: 'PercyGitRepo-Dev',
   reposFolder: '/percy-repo-dev',
   draftFolder: '/percy-draft-dev',
   metaFolder: '/percy-meta-dev',
+  loggedInUsersMetaFile: 'logged-in-users.json',
   yamlAppsFolder: 'apps',
   environmentsFile: 'environments.yaml',
-  jwtSecret: '&**TD@FN4_Djd23',
-  jwtExpiresIn: '12h',
+  loginSessionTimeout: '30m',
   encryptKey: '&Ddf23&*Dksd',
   encryptSalt: '23E80(9Dls6$s',
-  loggedInUsersMetaFile: 'logged-in-users.json',
-  variableSubstitute: {
-    prefix: '_{',
-    suffix: '}_'
-  }
+  variableSubstitutePrefix: '_{',
+  variableSubstituteSuffix: '_}_',
 }
 
 /*

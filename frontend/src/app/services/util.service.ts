@@ -6,15 +6,14 @@ import * as aesjs from 'aes-js';
 import * as pbkdf2 from 'pbkdf2';
 import * as path from 'path';
 import * as ms from 'ms';
-import * as jwt from 'jsonwebtoken';
 import * as boom from 'boom';
-import * as FSExtra from 'fs-extra/index';
 
 import { TreeNode } from 'models/tree-node';
 import { Configuration } from 'models/config-file';
 import { ConfigProperty } from 'models/config-property';
 import { PROPERTY_VALUE_TYPES, percyConfig } from 'config';
 import { Authenticate, User } from 'models/auth';
+import { FSExtra } from './git-fs.service';
 
 const aesKey = pbkdf2.pbkdf2Sync(percyConfig.encryptKey, percyConfig.encryptSalt, 1, 32);
 
@@ -587,7 +586,7 @@ export class UtilService {
 
   private createRegExp() {
     const regexPattern =
-      `${this.escapeRegExp(percyConfig.variableSubstitute.prefix)}(.+?)${this.escapeRegExp(percyConfig.variableSubstitute.suffix)}`;
+      `${this.escapeRegExp(percyConfig.variableSubstitutePrefix)}(.+?)${this.escapeRegExp(percyConfig.variableSubstituteSuffix)}`;
     return new RegExp(regexPattern, 'g');
   }
 
@@ -826,19 +825,18 @@ export class UtilService {
     return path.resolve(percyConfig.metaFolder, `${repoFolder}.meta`);
   }
 
-  authenticate(auth: Authenticate): User {
+  authenticate(auth: Authenticate) {
     const {repoName, repoFolder} = this.getRepoFolder(auth);
 
     // Create token payload
     const tokenPayload: any = {
       username: auth.username,
-      iat: Math.floor(Date.now() / 1000),
+      iat: Date.now()
     };
-    tokenPayload.exp = tokenPayload.iat + Math.floor(ms(percyConfig.jwtExpiresIn) / 1000);
 
     // Sign token and set to repo metadata
-    const token = jwt.sign(tokenPayload, percyConfig.jwtSecret);
-    const validUntil = new Date(tokenPayload.exp * 1000).getTime();
+    const token = this.encrypt(JSON.stringify(tokenPayload));
+    const validUntil = tokenPayload.iat + ms(percyConfig.loginSessionTimeout);
 
     const user: User = {
       ...auth,
@@ -846,21 +844,20 @@ export class UtilService {
       repoName,
       repoFolder,
       token,
-      validUntil,
     };
 
-    return user;
+    return {user, validUntil};
   }
 
-  async checkRepoAccess(user: User, fs: typeof FSExtra): Promise<User> {
+  async checkRepoAccess(user: User, fs: FSExtra): Promise<User> {
     if (!user || !user.token) {
       throw boom.unauthorized('Miss access token');
     }
 
     try {
-      jwt.verify(user.token, percyConfig.jwtSecret);
-    } catch (jwtErr) {
-      throw boom.unauthorized(jwtErr.name === 'TokenExpiredError' ? 'Expired access token' : 'Invalid access token');
+      JSON.parse(this.decrypt(user.token));
+    } catch (err) {
+      throw boom.unauthorized('Invalid access token');
     }
 
     const repoMetadataFile = this.getMetadataPath(user.repoFolder);
@@ -878,10 +875,18 @@ export class UtilService {
       throw boom.unauthorized('Repo metadata file corruption');
     }
 
+    if (repoMetadata.validUntil < Date.now()) {
+      throw boom.unauthorized('Session expired, please re-login');
+    }
+
     // Verify with repo metadata
-    if (!_.isEqual(_.omit(user, 'password'), _.omit(repoMetadata, 'password'))) {
+    if (!_.isEqual(_.omit(user, 'password', 'validUntil'), _.omit(repoMetadata, 'password', 'validUntil'))) {
       throw boom.forbidden('Repo metadata mismatch, you are not allowed to access the repo');
     }
+
+    // Update session valid time
+    repoMetadata.validUntil = Date.now() + ms(percyConfig.loginSessionTimeout);
+    await fs.outputJson(repoMetadataFile, repoMetadata);
 
     return {...user, password: this.decrypt(repoMetadata.password)};
   }

@@ -10,7 +10,7 @@
 
 ## Build
 
-Build app frontend and backend:
+Build app frontend (which will build in production mode), the static assets are built under `frontend/dist`:
 
 ```bash
 ./docker/build.sh
@@ -18,26 +18,27 @@ Build app frontend and backend:
 
 
 
-# Configuration
+In this build step supports configuration via environment variables, you can refer to `frontend/src/environments/environment.prod.ts`:
 
-You can overwrite default configuration in `docker/docker-compose.yml` 
-
-| Environment         | Description                                                  |
-| ------------------- | ------------------------------------------------------------ |
-| PORT                | The server port. Default to 3000                             |
-| API_VERSION         | The api version, used to construct rest api path             |
-| LOG_LEVEL           | The log level                                                |
-| REPOS_FOLDER        | The folder to clone repos into                               |
-| META_FOLDER         | The folder contains metadata file                            |
-| YAML_APPS_FOLDER    | The folder name which contains apps' yaml config             |
-| ENVIRONMENTS_FILE   | The environment file name (JUST file name)                   |
-| HEALTHCHECK_FILE    | The path to health check file                                |
-| JWT_SECRET          | The JWT secret                                               |
-| JWT_EXPIRES_IN      | The JWT token expires in, like "1m", "2.5 hrs", "2 days". Default to 12 hours. |
-| ENCRYPT_KEY         | The key used to encrypt password                             |
-| ENCRYPT_SALT        | The salt used to encrypt password                            |
-| MAX_PAYLOAD_SIZE    | The max size of JSON request payload. Default to 1M.         |
-| EXTERNAL_CONFIG_URL | If exists, app will load external configuration from that URL, otherwise the locally stored `backend/config/ext-config.json` will be used |
+| Environment                | Description                                                  |
+| -------------------------- | ------------------------------------------------------------ |
+| CORS_PROXY                 | The cors proxy for isomorphic-git                            |
+| DEFAULT_BRANCH_NAME        | Default branch name shown in login page                      |
+| DEFAULT_REPOSITORY_URL     | Default repository url shown in login page                   |
+| LOCKED_BRANCHES            | Locked branches                                              |
+| STORE_NAME                 | The browser indexeddb store name                             |
+| REPOS_FOLDER               | The browserfs folder to clone repos into                     |
+| DRAFT_FOLDER               | The browserfs folder to store draft files                    |
+| META_FOLDER                | The browserfs folder contains metadata file                  |
+| LOGGED_IN_USERS_METAFILE   | The file name which contains logged in user names            |
+| YAML_APPS_FOLDER           | The folder name which contains apps' yaml config             |
+| ENVIRONMENTS_FILE          | The environment file name (JUST file name)                   |
+| HEALTHCHECK_FILE           | The path to health check file                                |
+| LOGIN_SESSION_TIMEOUT      | The login session timeout, like "1m", "2.5 hrs", "2 days". Default to 30m. |
+| ENCRYPT_KEY                | The key used to encrypt security information like password   |
+| ENCRYPT_SALT               | The salt used to encrypt security information like password  |
+| VARIABLE_SUBSTITUTE_PREFIX | The Yaml variable substitute prefix                          |
+| VARIABLE_SUBSTITUTE_SUFFIX | The Yaml variable substitute suffix                          |
 
 
 
@@ -46,6 +47,18 @@ You can overwrite default configuration in `docker/docker-compose.yml`
 Run
 
 ```bash
-docker-compose -f ./docker/docker-compose.yml up
+docker-compose -f ./docker/docker-compose.yml up --build
 ```
 
+
+
+In this step support 2 configuration, you can refer to `docker/docker-compose.yml` :
+
+| Environment | Description                                                  |
+| ----------- | ------------------------------------------------------------ |
+| NODE_ENV    | Typically 'production' for production build                  |
+| NGINX_PORT  | The nginx server port. The nginx will serve both the static assets in `frontend/dist` and the isomorphic-git proxy. |
+
+
+
+Assume `NGINX_PORT` is configured as 8080, then you can visit http://localhost:8080

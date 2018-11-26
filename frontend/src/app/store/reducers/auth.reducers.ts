@@ -1,5 +1,5 @@
-import { AuthActionsUnion, AuthActionTypes } from 'store/actions/auth.actions';
-import { User, Repo } from 'models/auth';
+import { AuthActionsUnion, AuthActionTypes } from '../actions/auth.actions';
+import { User } from 'models/auth';
 
 export interface State {
     loggedIn: boolean;
@@ -7,7 +7,6 @@ export interface State {
     loginError: Error;
     formProcessing: boolean;
     redirectUrl: string;
-    defaultRepo: Repo;
 }
 
 export const initialState: State = {
@@ -16,18 +15,10 @@ export const initialState: State = {
     loginError: null,
     formProcessing: false,
     redirectUrl: null,
-    defaultRepo: null
 };
 
 export function reducer(state = initialState, action: AuthActionsUnion): State {
     switch (action.type) {
-
-        case AuthActionTypes.GetDefaultRepoSuccess: {
-            return {
-                ...state,
-                defaultRepo: action.payload
-            };
-        }
 
         case AuthActionTypes.Login: {
             return {
@@ -72,9 +63,8 @@ export function reducer(state = initialState, action: AuthActionsUnion): State {
     }
 }
 
-export const getLoggedIn = (state: State) => state.loggedIn && state.currentUser && state.currentUser.validUntil > Date.now();
+export const getLoggedIn = (state: State) => state.loggedIn && state.currentUser;
 
-export const getDefaultRepo = (state: State) => state.defaultRepo;
 export const getLoggedInUser = (state: State) => state.currentUser;
 export const getError = (state: State) => state.loginError;
 export const getFormProcessing = (state: State) => state.formProcessing;

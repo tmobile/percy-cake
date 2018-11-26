@@ -4,8 +4,8 @@ import { Configuration, ConfigFile } from 'models/config-file';
 import { TreeNode } from 'models/tree-node';
 import { ConfigProperty } from 'models/config-property';
 
-import { BackendActionsUnion, BackendActionTypes } from 'store/actions/backend.actions';
-import { EditorActionTypes, EditorActionsUnion } from 'store/actions/editor.actions';
+import { BackendActionsUnion, BackendActionTypes } from '../actions/backend.actions';
+import { EditorActionTypes, EditorActionsUnion } from '../actions/editor.actions';
 
 export interface State {
     isCommitting: boolean;

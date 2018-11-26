@@ -1,5 +1,5 @@
 import { Action } from '@ngrx/store';
-import { Authenticate, User, Repo } from '../../models/auth';
+import { Authenticate, User } from 'models/auth';
 
 export enum AuthActionTypes {
   Login = '[Auth] Login',
@@ -8,9 +8,9 @@ export enum AuthActionTypes {
   LoginRedirect = '[Auth] Login Redirect',
   Logout = '[Auth] Logout',
   LogoutSuccess = '[Auth] Logout Success',
-  GetDefaultRepo = '[Auth] Get Default Repo',
-  GetDefaultRepoSuccess = '[Auth] Get Default Repo Success',
-  GetDefaultRepoFailure = '[Auth] Get Default Repo Failure',
+  GetExternalConfiguration = '[Auth] Get External Configuration',
+  GetExternalConfigurationSuccess = '[Auth] Get External Configuration Success',
+  GetExternalConfigurationFailure = '[Auth] Get External Configuration Failure',
 }
 
 export class Login implements Action {
@@ -44,29 +44,10 @@ export class LogoutSuccess implements Action {
   readonly type = AuthActionTypes.LogoutSuccess;
 }
 
-export class GetDefaultRepo implements Action {
-  readonly type = AuthActionTypes.GetDefaultRepo;
-}
-
-export class GetDefaultRepoSuccess implements Action {
-  readonly type = AuthActionTypes.GetDefaultRepoSuccess;
-
-  constructor(public payload: Repo) { }
-}
-
-export class GetDefaultRepoFailure implements Action {
-  readonly type = AuthActionTypes.GetDefaultRepoFailure;
-
-  constructor(public payload: any) { }
-}
-
 export type AuthActionsUnion =
   | Login
   | LoginSuccess
   | LoginFailure
   | LoginRedirect
   | Logout
-  | LogoutSuccess
-  | GetDefaultRepo
-  | GetDefaultRepoSuccess
-  | GetDefaultRepoFailure;
+  | LogoutSuccess;

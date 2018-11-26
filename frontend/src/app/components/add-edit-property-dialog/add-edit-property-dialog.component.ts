@@ -2,10 +2,10 @@ import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from
 import { FormControl, Validators } from '@angular/forms';
 import * as _ from 'lodash';
 
-import { PROPERTY_VALUE_TYPES } from '../../config/index';
-import { ConfigProperty } from '../../models/config-property';
-import { UtilService } from '../../services/util.service';
-import { TreeNode } from '../../models/tree-node';
+import { PROPERTY_VALUE_TYPES } from 'config';
+import { ConfigProperty } from 'models/config-property';
+import { UtilService } from 'services/util.service';
+import { TreeNode } from 'models/tree-node';
 
 /*
   add or edit new property in the environment configuration

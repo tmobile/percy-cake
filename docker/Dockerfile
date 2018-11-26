@@ -1,10 +1,14 @@
 FROM node:10
 
-RUN git config --global user.email "admin@percy.com"
-RUN git config --global user.name "Admin"
+RUN apt-get update \
+  && apt-get -y install nginx gettext-base \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /percy-app/backend
+RUN npm i -g @isomorphic-git/cors-proxy
 
-EXPOSE $PORT
+Add docker-entrypoint.sh /docker-entrypoint.sh
 
-CMD ["npm", "start"]
+ADD nginx.conf /etc/nginx/nginx.conf.template
+
+ENTRYPOINT ["/docker-entrypoint.sh"]

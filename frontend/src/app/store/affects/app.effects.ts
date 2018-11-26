@@ -6,9 +6,8 @@ import { map, tap, exhaustMap } from 'rxjs/operators';
 import { Actions, Effect, ofType } from '@ngrx/effects';
 import * as boom from 'boom';
 
-import { Logout } from 'store/actions/auth.actions';
-import { Alert, CommonActionTypes, AlertClosed, APIError, Navigate } from 'store/actions/common.actions';
-import { MaintenanceService } from 'services/maintenance.service';
+import { Logout } from '../actions/auth.actions';
+import { Alert, CommonActionTypes, AlertClosed, APIError, Navigate } from '../actions/common.actions';
 import { AlertDialogComponent } from 'components/alert-dialog/alert-dialog.component';
 
 // defines the common effects
@@ -19,7 +18,6 @@ export class AppEffects {
         private actions$: Actions,
         private router: Router,
         private dialog: MatDialog,
-        private maintenanceService: MaintenanceService
     ) { }
 
     /**
@@ -59,10 +57,6 @@ export class AppEffects {
 
             const error = boom.boomify(payload);
             const message = error.message;
-
-            this.maintenanceService.logError(message).subscribe(() => { }, error => {
-                console.error('An error occurred while saving the log error', error);
-            });
             return of(new Alert({
               message: message,
               alertType: error.output.statusCode === 401 || error.output.statusCode === 403 ? 'logout' : 'error'

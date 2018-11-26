@@ -1,5 +1,5 @@
 import { ConfigProperty } from './config-property';
-import { PROPERTY_VALUE_TYPES } from '../config';
+import { PROPERTY_VALUE_TYPES } from 'config';
 
 /**
  * Json node data with nested structure. Each node has a key and a value or a list of children

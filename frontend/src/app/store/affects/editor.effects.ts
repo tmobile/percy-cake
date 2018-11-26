@@ -4,9 +4,9 @@ import { of } from 'rxjs';
 import { map, exhaustMap, withLatestFrom, switchMap } from 'rxjs/operators';
 import { Store, select } from '@ngrx/store';
 
-import * as appStore from 'store';
-import { GetFileContentSuccess, GetFileContent } from 'store/actions/backend.actions';
-import { APIError } from 'store/actions/common.actions';
+import * as appStore from '..';
+import { GetFileContentSuccess, GetFileContent } from '../actions/backend.actions';
+import { APIError } from '../actions/common.actions';
 import {
     EditorActionTypes,
     PageLoad,
@@ -14,8 +14,8 @@ import {
     PageLoadFailure,
     NodeSelectedSuccess,
     NodeSelected,
-} from 'store/actions/editor.actions';
-import { GetConfigFile } from 'store/reducers/backend.reducers';
+} from '../actions/editor.actions';
+import { GetConfigFile } from '../reducers/backend.reducers';
 import { ConfigFile } from 'models/config-file';
 import { UtilService } from 'services/util.service';
 import { FileManagementService } from 'services/file-management.service';

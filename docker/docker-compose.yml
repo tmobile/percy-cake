@@ -6,12 +6,8 @@ services:
       context: .
     environment:
         NODE_ENV: production
-        PORT: 3000
-        EXTERNAL_CONFIG_URL: null #define custom external config URL if needed
-        HEALTHCHECK_FILE: '/percy-app/backend/healthcheck.json' #define healthcheck json file path
-        REPOS_FOLDER: '/percy-repos' # repos folder
-        META_FOLDER: '/percy-meta' # metadata folder
+        NGINX_PORT: 8080
     ports:
-      - 3000:3000
+      - 8080:8080
     volumes:
       - ../:/percy-app

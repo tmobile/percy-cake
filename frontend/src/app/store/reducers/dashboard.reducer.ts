@@ -1,5 +1,5 @@
-import { DashboardActionsUnion, DashboardActionTypes } from 'store/actions/dashboard.actions';
-import { BackendActionsUnion , BackendActionTypes } from 'store/actions/backend.actions';
+import { DashboardActionsUnion, DashboardActionTypes } from '../actions/dashboard.actions';
+import { BackendActionsUnion , BackendActionTypes } from '../actions/backend.actions';
 
 import * as _ from 'lodash';
 

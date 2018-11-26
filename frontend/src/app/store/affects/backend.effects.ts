@@ -7,15 +7,15 @@ import { map, withLatestFrom, switchMap } from 'rxjs/operators';
 import * as boom from 'boom';
 import * as _ from 'lodash';
 
-import * as appStore from 'store';
-import { Alert, APIError, Navigate } from 'store/actions/common.actions';
+import * as appStore from '..';
+import { Alert, APIError, Navigate } from '../actions/common.actions';
 import {
     BackendActionTypes,
     SaveDraft, CommitChanges, CommitChangesSuccess, CommitChangesFailure,
     LoadFiles, LoadFilesSuccess, LoadFilesFailure,
     DeleteFile, DeleteFileFailure, DeleteFileSuccess,
     GetFileContent, GetFileContentSuccess, GetFileContentFailure, SaveDraftSuccess, SaveDraftFailure
-} from 'store/actions/backend.actions';
+} from '../actions/backend.actions';
 import { FileManagementService } from 'services/file-management.service';
 import { ConflictDialogComponent } from 'components/conflict-dialog/conflict-dialog.component';
 

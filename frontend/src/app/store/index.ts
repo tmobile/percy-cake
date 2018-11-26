@@ -49,7 +49,6 @@ export const metaReducers: MetaReducer<AppState>[] = [localStorageSyncReducer, c
 // dashboard related selectors
 export const authState = createFeatureSelector<AppState, fromAuth.State>('auth');
 
-export const getDefaultRepo = createSelector(authState, fromAuth.getDefaultRepo);
 export const getLoggedIn = createSelector(authState, fromAuth.getLoggedIn);
 export const getFormProcessing = createSelector(authState, fromAuth.getFormProcessing);
 export const getCurrentUser = createSelector(authState, fromAuth.getLoggedInUser);

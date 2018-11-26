@@ -1,7 +1,7 @@
 import { EntityState, EntityAdapter, createEntityAdapter } from '@ngrx/entity';
 
 import { ConfigFile } from 'models/config-file';
-import { BackendActionsUnion, BackendActionTypes } from 'store/actions/backend.actions';
+import { BackendActionsUnion, BackendActionTypes } from '../actions/backend.actions';
 
 import * as _ from 'lodash';
 

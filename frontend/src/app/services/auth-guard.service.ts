@@ -2,8 +2,8 @@ import { Injectable } from '@angular/core';
 import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 
 import { Store, select } from '@ngrx/store';
-import * as fromStore from '../store';
-import * as AuthActions from '../store/actions/auth.actions';
+import * as fromStore from 'store';
+import * as AuthActions from 'store/actions/auth.actions';
 import { Observable } from 'rxjs';
 import { map, take } from 'rxjs/operators';
 

@@ -3,10 +3,10 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { Store } from '@ngrx/store';
 import * as _ from 'lodash';
 
-import * as appStore from '../../store';
-import { UtilService } from '../../services/util.service';
-import { ResolveConficts, GetFileContentSuccess, CommitChanges, LoadFiles } from '../../store/actions/backend.actions';
-import { ConfigFile } from '../../models/config-file';
+import * as appStore from 'store';
+import { UtilService } from 'services/util.service';
+import { ResolveConficts, GetFileContentSuccess, CommitChanges, LoadFiles } from 'store/actions/backend.actions';
+import { ConfigFile } from 'models/config-file';
 
 /**
  * The conflict dialog component

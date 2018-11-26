@@ -1,8 +1,8 @@
 import { Component, Inject } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
-import * as appStore from '../../store';
+import * as appStore from 'store';
 import { Store } from '@ngrx/store';
-import { AlertClosed } from '../../store/actions/common.actions';
+import { AlertClosed } from 'store/actions/common.actions';
 
 /**
  * The alert dialog component

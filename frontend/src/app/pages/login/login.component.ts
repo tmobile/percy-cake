@@ -5,12 +5,13 @@ import { FormControl, Validators } from '@angular/forms';
 import { MatAutocompleteTrigger } from '@angular/material';
 
 import { Store, select } from '@ngrx/store';
-import { Observable, of, BehaviorSubject } from 'rxjs';
-import { map, startWith, debounceTime, distinctUntilChanged, switchMap, withLatestFrom, tap } from 'rxjs/operators';
+import { BehaviorSubject } from 'rxjs';
+import { startWith, debounceTime, distinctUntilChanged, switchMap, withLatestFrom, tap } from 'rxjs/operators';
 
 import * as boom from 'boom';
 import * as _ from 'lodash';
 
+import { percyConfig } from 'config';
 import * as appStore from 'store';
 import * as AuthActions from 'store/actions/auth.actions';
 import { MaintenanceService } from 'services/maintenance.service';
@@ -36,6 +37,8 @@ export class LoginComponent implements OnInit {
 
   usernameTypeAhead: string[] = [];
   filteredUsernames = new BehaviorSubject<string[]>([]);
+
+  lockedBranches: string[]
 
   // use to trigger the change in the input from browser auto fill
   @ViewChild('autoTrigger') private autoTrigger: MatAutocompleteTrigger;
@@ -76,14 +79,9 @@ export class LoginComponent implements OnInit {
         switchMap(value => this._filter(value))
       ).subscribe(this.filteredUsernames);
 
-    this.store.pipe(select(appStore.getDefaultRepo)).pipe(
-      tap((repo) => {
-        if (repo) {
-          this.repositoryURL.setValue(repo.repositoryUrl);
-          this.branchName.setValue(repo.branchName);
-        }
-    })).subscribe();
-    this.store.dispatch(new AuthActions.GetDefaultRepo());
+    this.repositoryURL.setValue(percyConfig.defaultRepositoryUrl);
+    this.branchName.setValue(percyConfig.defaultBranchName);
+    this.lockedBranches = percyConfig.lockedBranches;
 
     this.store.pipe(select(appStore.getLoginError)).pipe(tap((le) => {
       this.loginError = null;
@@ -114,6 +112,10 @@ export class LoginComponent implements OnInit {
    */
   login() {
     if (this.username.valid && this.password.valid && this.repositoryURL.valid && this.branchName.valid) {
+      if (this.lockedBranches && this.lockedBranches.indexOf(this.branchName.value) > -1) {
+        this.branchName.setErrors({locked: true});
+        return;
+      }
       this.store.dispatch(new AuthActions.Login({
         repositoryUrl: this.repositoryURL.value,
         branchName: this.branchName.value,

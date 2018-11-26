@@ -38,6 +38,7 @@
           <input type="text" matInput placeholder="Branch Name" [formControl]="branchName" (keyup)="inputChange()" />
           <mat-error *ngIf="branchName.hasError('required')">*Required</mat-error>
           <mat-error *ngIf="branchName.hasError('notFound')">Branch not found</mat-error>
+          <mat-error *ngIf="branchName.hasError('locked')">Branch is locked</mat-error>
         </mat-form-field>
 
         <!-- login error message -->

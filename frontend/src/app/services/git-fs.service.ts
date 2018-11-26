@@ -1,7 +1,7 @@
 import * as BrowserFS from 'browserfs';
 import * as Git from 'isomorphic-git';
 import * as legacy from 'graceful-fs/legacy-streams';
-import * as FSExtra from 'fs-extra/index';
+import * as FsExtra from 'fs-extra/index';
 
 import { percyConfig } from 'config';
 
@@ -32,7 +32,10 @@ fsExtra.appendFile = function (path, data, options) {
   return fs$appendFile(path, data, options || {});
 };
 
-const initializer = new Promise<[typeof Git, typeof FSExtra]>((resolve, reject) => {
+export type GIT = typeof Git;
+export type FSExtra = typeof FsExtra;
+
+const initializer = new Promise<[GIT, FSExtra]>((resolve, reject) => {
 
   BrowserFS.configure(
     {

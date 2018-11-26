@@ -13,5 +13,4 @@ export interface User extends Authenticate {
   repoName: string;
   repoFolder: string;
   token: string;
-  validUntil: number;
 }

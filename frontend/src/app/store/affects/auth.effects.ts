@@ -1,22 +1,18 @@
 import { Injectable } from '@angular/core';
 import { Store, select } from '@ngrx/store';
 import { Actions, Effect, ofType } from '@ngrx/effects';
-import { of } from 'rxjs';
-import { catchError, exhaustMap, map, withLatestFrom } from 'rxjs/operators';
+import { exhaustMap, map, withLatestFrom } from 'rxjs/operators';
 import * as _ from 'lodash';
 
-import * as appStore from 'store';
+import * as appStore from '..';
 import {
     AuthActionTypes,
     Login,
     LoginFailure,
     LoginSuccess,
     LogoutSuccess,
-    GetDefaultRepo,
-    GetDefaultRepoSuccess,
-    GetDefaultRepoFailure,
-} from 'store/actions/auth.actions';
-import { Navigate } from 'store/actions/common.actions';
+} from '../actions/auth.actions';
+import { Navigate } from '../actions/common.actions';
 import { Authenticate } from 'models/auth';
 import { MaintenanceService } from 'services/maintenance.service';
 import { FileManagementService } from 'services/file-management.service';
@@ -31,19 +27,6 @@ export class AuthEffects {
         private store: Store<appStore.AppState>
 
     ) { }
-
-    // login request effect
-    @Effect()
-    getDefaultRepo$ = this.actions$.pipe(
-        ofType<GetDefaultRepo>(AuthActionTypes.GetDefaultRepo),
-        exhaustMap(() =>
-          this.maintenanceService.getDefaultRepo()
-            .pipe(
-              map(defaultRepo => new GetDefaultRepoSuccess(defaultRepo)),
-              catchError(error => of(new GetDefaultRepoFailure(error)))
-            )
-        )
-    );
 
     // login request effect
     @Effect()

@@ -2,12 +2,11 @@ import { Injectable } from '@angular/core';
 import * as path from 'path';
 import * as yamlJS from 'yaml-js';
 import * as boom from 'boom';
-import * as FSExtra from 'fs-extra/index';
 import * as _ from 'lodash';
 
-import { environment, percyConfig } from 'config';
+import { percyConfig } from 'config';
 import { ConfigFile } from 'models/config-file';
-import { getGitFS } from './git.service';
+import { getGitFS, GIT, FSExtra } from './git-fs.service';
 import { UtilService } from './util.service';
 import { User, Authenticate } from 'models/auth';
 import { MaintenanceService } from './maintenance.service';
@@ -31,7 +30,7 @@ export class FileManagementService {
      */
     async accessRepo(auth: Authenticate) {
         const { fs, git } = await getGitFS();
-        const user = this.utilService.authenticate(auth);
+        const {user, validUntil} = this.utilService.authenticate(auth);
 
         const repoDir = path.resolve(percyConfig.reposFolder, user.repoFolder);
         const repoMetadataFile = this.utilService.getMetadataPath(user.repoFolder);
@@ -70,7 +69,7 @@ export class FileManagementService {
                         password: auth.password,
                         ref: auth.branchName,
                         dir: repoDir,
-                        corsProxy: environment.api.corsProxy,
+                        corsProxy: percyConfig.corsProxy,
                         depth: 1,
                         singleBranch: true
                     });
@@ -83,13 +82,7 @@ export class FileManagementService {
                 }
             } else {
                 // Pull
-                await git.pull({
-                    username: auth.username,
-                    password: auth.password,
-                    dir: repoDir,
-                    ref: auth.branchName,
-                    singleBranch: true
-                });
+                await this.pull(fs, git, {...user, password: auth.password}, repoDir);
             }
         } catch (error) {
             console.error(error);
@@ -102,9 +95,43 @@ export class FileManagementService {
         await this.maintenanceService.addUserName(user.username);
 
         // Save user to repo metadata locally
-        await fs.writeFile(repoMetadataFile, JSON.stringify(user));
+        await fs.outputJson(repoMetadataFile, {...user, validUntil});
 
         return user;
+    }
+
+    /**
+     * Pull repo.
+     * @param fs the fs
+     * @param git the git
+     * @param user the logged in user
+     * @param repoDir the repo dir
+     */
+    private async pull(fs: FSExtra, git: GIT, user: User, repoDir: string) {
+      // Reset to upstream, and remember that last commit
+      const lastCommit = await this.resetToUpstream(fs, git, repoDir, user.branchName);
+
+      // pull
+      await git.pull({
+          username: user.username,
+          password: user.password,
+          dir: repoDir,
+          ref: user.branchName,
+          singleBranch: true
+      });
+
+      const status = await git.statusMatrix({ dir: repoDir, ref: lastCommit, pattern: `${percyConfig.yamlAppsFolder}/**` });
+
+      // The files deleted by the pull
+      const deletedFiles = status.filter(row => row[2] === 0).map(row => row[0])
+
+      // Really remove orphan draft ?
+      await Promise.all(deletedFiles.map(async (file) => {
+        const filepath = path.resolve(percyConfig.draftFolder, user.repoFolder, file);
+        if (await fs.exists(filepath)) {
+          await fs.remove(filepath);
+        }
+      }));
     }
 
     /**
@@ -171,10 +198,10 @@ export class FileManagementService {
      * @param repoFolder the repo folder name
      * @param forDraft the flag indicates whether for finding draft files
      */
-    private async findFiles(fs: typeof FSExtra, repoFolder: string, forDraft: boolean) {
+    private async findFiles(fs: FSExtra, repoFolder: string, forDraft: boolean) {
 
-        const files = [];
-        const applications = [];
+        const files: ConfigFile[] = [];
+        const applications: string[] = [];
         const repoPath = path.resolve(forDraft ? percyConfig.draftFolder : percyConfig.reposFolder, repoFolder);
         const appsPath = path.resolve(repoPath, percyConfig.yamlAppsFolder);
         const apps = await fs.readdir(appsPath);
@@ -293,7 +320,7 @@ export class FileManagementService {
      * @param repoDir the repo dir
      * @param file the file to get its SHA
      */
-    private async getFileSHA(git, user: User, repoDir: string, file: ConfigFile) {
+    private async getFileSHA(git: GIT, user: User, repoDir: string, file: ConfigFile) {
 
         const remoteCommit = await git.resolveRef({
             dir: repoDir,
@@ -325,13 +352,8 @@ export class FileManagementService {
 
         let gitPulled = false;
         if (await fs.exists(repoFilePath)) {
-            await git.pull({
-                username: user.username,
-                password: user.password,
-                dir: repoDir,
-                ref: user.branchName,
-                singleBranch: true
-            });
+  
+            await this.pull(fs, git, user, repoDir);
             gitPulled = true;
 
             try {
@@ -342,7 +364,7 @@ export class FileManagementService {
                     filepath: path.join(percyConfig.yamlAppsFolder, file.applicationName, file.fileName)
                 });
     
-                await git.commit({
+                const commitSHA = await git.commit({
                     dir: repoDir,
                     message: 'Percy delete',
                     author: {
@@ -356,8 +378,11 @@ export class FileManagementService {
                     ref: user.branchName,
                     username: user.username,
                     password: user.password,
-                    corsProxy: environment.api.corsProxy,
+                    corsProxy: percyConfig.corsProxy,
                 });
+
+                // Wired bug, isogit sometimes don't update the remote commit SHA
+                await fs.writeFile(path.resolve(repoDir, '.git', 'refs', 'remotes', 'origin', user.branchName), commitSHA);
             } catch (err) {
                 await this.resetToUpstream(fs, git, repoDir, user.branchName);
                 throw err;
@@ -373,7 +398,14 @@ export class FileManagementService {
         return gitPulled;
     }
 
-    private async resetToUpstream(fs, git, dir, branch) {
+    /**
+     * Reset to upstream.
+     * @param fs the fs
+     * @param git the git
+     * @param dir the repo dir
+     * @param branch the branch to reset
+     */
+    private async resetToUpstream(fs: FSExtra, git: GIT, dir: string, branch: string) {
         const remoteCommit = await git.resolveRef({
             dir,
             ref: path.join('remotes', 'origin', branch)
@@ -381,6 +413,7 @@ export class FileManagementService {
         await fs.writeFile(path.resolve(dir, '.git', 'refs', 'heads', branch), remoteCommit);
         await fs.unlink(path.resolve(dir, '.git', 'index'));
         await git.checkout({ dir, ref: branch });
+        return remoteCommit;
     }
 
     /**
@@ -396,13 +429,7 @@ export class FileManagementService {
 
         const repoDir = path.resolve(percyConfig.reposFolder, user.repoFolder);
 
-        await git.pull({
-            username: user.username,
-            password: user.password,
-            dir: repoDir,
-            ref: user.branchName,
-            singleBranch: true
-        });
+        await this.pull(fs, git, user, repoDir);
 
         // Do optimistic check
         await Promise.all(configFiles.map(async(file) => {
@@ -464,7 +491,7 @@ export class FileManagementService {
                 });
             }));
         
-            await git.commit({
+            const commitSHA = await git.commit({
                 dir: repoDir,
                 message,
                 author: {
@@ -479,17 +506,22 @@ export class FileManagementService {
                 ref: user.branchName,
                 username: user.username,
                 password: user.password,
-                corsProxy: environment.api.corsProxy,
+                corsProxy: percyConfig.corsProxy,
             });
+
+            // Wired bug, isogit sometimes don't update the remote commit SHA
+            await fs.writeFile(path.resolve(repoDir, '.git', 'refs', 'remotes', 'origin', user.branchName), commitSHA);
+
         } catch (err) {
             await this.resetToUpstream(fs, git, repoDir, user.branchName);
             throw err;
         }
 
         await Promise.all(configFiles.map(async(file) => {
-            const draftFilePath = path.resolve(percyConfig.draftFolder, user.repoFolder, percyConfig.yamlAppsFolder, file.applicationName, file.fileName);
+            const draftFilePath = path.resolve(percyConfig.draftFolder, user.repoFolder, percyConfig.yamlAppsFolder,
+                file.applicationName, file.fileName);
             if (await fs.exists(draftFilePath)) {
-                await fs.remove(draftFilePath);
+                await fs.unlink(draftFilePath);
             }
         }));
 

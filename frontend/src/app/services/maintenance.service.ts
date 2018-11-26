@@ -1,12 +1,9 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
 import * as path from 'path';
 import * as _ from 'lodash';
 
-import { HttpHelperService } from './http-helper.service';
-
 import { percyConfig } from 'config';
-import { getGitFS } from './git.service';
+import { getGitFS } from './git-fs.service';
 
 /**
  * This service provides the methods around the maintenance API endpoints
@@ -21,9 +18,8 @@ export class MaintenanceService {
 
     /**
      * initializes the service
-     * @param httpHelperService the http helper service
      */
-    constructor(private httpHelperService: HttpHelperService) { }
+    constructor() { }
 
     /**
      * gets the user type ahead based on prefix
@@ -48,20 +44,5 @@ export class MaintenanceService {
       const { fs } = await getGitFS();
       const loggedInUsersMetaFile = path.resolve(percyConfig.metaFolder, percyConfig.loggedInUsersMetaFile);
       await fs.outputJson(loggedInUsersMetaFile, this.userNamesCache);
-    }
-
-    /**
-     * logs the message to the api
-     * @param message the message
-     */
-    logError(message: string): Observable<any> {
-        return this.httpHelperService.post('/log', { message });
-    }
-
-    /**
-     * gets default repo url and branch
-     */
-    getDefaultRepo(): Observable<any> {
-        return this.httpHelperService.get('/defaultRepo');
     }
 }

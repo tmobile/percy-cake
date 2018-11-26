@@ -1,8 +1,8 @@
 import { Action } from '@ngrx/store';
 
-import { TreeNode } from '../../models/tree-node';
-import { ConfigProperty } from '../../models/config-property';
-import { Configuration } from '../../models/config-file';
+import { TreeNode } from 'models/tree-node';
+import { ConfigProperty } from 'models/config-property';
+import { Configuration } from 'models/config-file';
 
 export enum EditorActionTypes {
     PageLoad = '[Editor] Page Load',

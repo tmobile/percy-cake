@@ -1,25 +1,22 @@
 export const environment = {
   production: true,
-  api: {
-    baseUrl: '/api/1.0',
-    corsProxy: 'http://localhost:9999'
-  }
 };
 
 export const percyConfig = {
-  storeName: 'PercyGitRepo',
-  reposFolder: '/percy-repo',
-  draftFolder: '/percy-draft',
-  metaFolder: '/percy-meta',
-  yamlAppsFolder: 'apps',
-  environmentsFile: 'environments.yaml',
-  jwtSecret: '&**TD@FN4_Djd23',
-  jwtExpiresIn: '12h',
-  encryptKey: '&Ddf23&*Dksd',
-  encryptSalt: '23E80(9Dls6$s',
-  loggedInUsersMetaFile: 'logged-in-users.json',
-  variableSubstitute: {
-    prefix: '_{',
-    suffix: '}_'
-  }
+  corsProxy: process.env.CORS_PROXY || '/isogit-proxy',
+  defaultBranchName: process.env.DEFAULT_BRANCH_NAME || 'admin',
+  defaultRepositoryUrl: process.env.DEFAULT_REPOSITORY_URL || '',
+  lockedBranches: JSON.parse(process.env.LOCKED_BRANCHES) || ['master', 'trunk'],
+  storeName: process.env.STORE_NAME || 'PercyGitRepo',
+  reposFolder: process.env.REPOS_FOLDER || '/percy-repo',
+  draftFolder: process.env.DRAFT_FOLDER || '/percy-draft',
+  metaFolder: process.env.META_FOLDER || '/percy-meta',
+  loggedInUsersMetaFile: process.env.LOGGED_IN_USERS_METAFILE || 'logged-in-users.json',
+  yamlAppsFolder: process.env.YAML_APPS_FOLDER || 'apps',
+  environmentsFile: process.env.ENVIRONMENTS_FILE || 'environments.yaml',
+  loginSessionTimeout: process.env.LOGIN_SESSION_TIMEOUT || '30m',
+  encryptKey: process.env.ENCRYPT_KEY || '&Ddf23&*Dksd',
+  encryptSalt: process.env.ENCRYPT_SALT || '23E80(9Dls6$s',
+  variableSubstitutePrefix: process.env.VARIABLE_SUBSTITUTE_PREFIX || '_{',
+  variableSubstituteSuffix: process.env.VARIABLE_SUBSTITUTE_SUFFIX || '_}_',
 }

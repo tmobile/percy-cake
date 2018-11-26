@@ -1,6 +1,6 @@
 import { Action } from '@ngrx/store';
 
-import { ConfigFile } from '../../models/config-file';
+import { ConfigFile } from 'models/config-file';
 import { HttpErrorResponse } from '@angular/common/http';
 
 export enum BackendActionTypes {
