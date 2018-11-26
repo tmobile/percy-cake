@@ -18,7 +18,7 @@ Build app frontend (which will build in production mode), the static assets are 
 
 
 
-In this build step supports configuration via environment variables, you can refer to `frontend/src/environments/environment.prod.ts`:
+In this build step supports configuration via environment variables, you can refer to [frontend/src/environments/environment.prod.ts](frontend/src/environments/environment.prod.ts):
 
 | Environment                | Description                                                  |
 | -------------------------- | ------------------------------------------------------------ |
@@ -52,7 +52,7 @@ docker-compose -f ./docker/docker-compose.yml up --build
 
 
 
-In this step support 2 configuration, you can refer to `docker/docker-compose.yml` :
+In this step support 2 configuration, you can refer to [docker/docker-compose.yml](docker/docker-compose.yml)  :
 
 | Environment | Description                                                  |
 | ----------- | ------------------------------------------------------------ |
