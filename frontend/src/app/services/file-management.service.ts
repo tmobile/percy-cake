@@ -10,6 +10,7 @@ import { ConfigFile } from 'models/config-file';
 import { getGitFS } from './git.service';
 import { UtilService } from './util.service';
 import { User, Authenticate } from 'models/auth';
+import { MaintenanceService } from './maintenance.service';
 
 /**
  * This service provides the methods around the file management API endpoints
@@ -20,8 +21,9 @@ export class FileManagementService {
     /**
      * initializes the service
      * @param utilService the util service
+     * @param maintenanceService the maintenance service
      */
-    constructor(private utilService: UtilService) { }
+    constructor(private utilService: UtilService, private maintenanceService: MaintenanceService) { }
 
     /**
      * access the repository and receives the security token to be used in subsequent requests
@@ -96,6 +98,8 @@ export class FileManagementService {
 
         const draftFolder = path.resolve(percyConfig.draftFolder, user.repoFolder, percyConfig.yamlAppsFolder);
         await fs.ensureDir(draftFolder);
+
+        await this.maintenanceService.addUserName(user.username);
 
         // Save user to repo metadata locally
         await fs.writeFile(repoMetadataFile, JSON.stringify(user));
@@ -372,7 +376,7 @@ export class FileManagementService {
     private async resetToUpstream(fs, git, dir, branch) {
         const remoteCommit = await git.resolveRef({
             dir,
-            ref: `remotes/origin/${branch}`
+            ref: path.join('remotes', 'origin', branch)
         });
         await fs.writeFile(path.resolve(dir, '.git', 'refs', 'heads', branch), remoteCommit);
         await fs.unlink(path.resolve(dir, '.git', 'index'));

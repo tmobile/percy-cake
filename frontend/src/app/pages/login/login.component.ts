@@ -148,17 +148,15 @@ export class LoginComponent implements OnInit {
    * filters the usernames with given prefix
    * @param value the prefix
    */
-  private _filter(value: string): Observable<string[]> {
+  private async _filter(value: string) {
     const filterValue = _.trim(value).toLowerCase();
     // only call API if first character else filter from cache value
     if (filterValue.length === 1) {
-      return this.maintenanceService.getUserTypeAhead(filterValue).pipe(
-        map((typeAhead: string[]) => {
-          this.usernameTypeAhead = typeAhead;
-          return this.usernameTypeAhead.filter(option => _.startsWith(option.toLowerCase(), filterValue));
-        }));
+      const typeAhead = await this.maintenanceService.getUserTypeAhead(filterValue);
+      this.usernameTypeAhead = typeAhead;
+      return this.usernameTypeAhead.filter(option => _.startsWith(option.toLowerCase(), filterValue));
     } else {
-      return of(this.usernameTypeAhead.filter(option => _.startsWith(option.toLowerCase(), filterValue)));
+      return this.usernameTypeAhead.filter(option => _.startsWith(option.toLowerCase(), filterValue));
     }
   }
 }
