@@ -8,10 +8,8 @@ import * as _ from 'lodash';
 import { environment, percyConfig } from 'config';
 import { ConfigFile } from 'models/config-file';
 import { getGitFS } from './git.service';
-import { HttpHelperService } from './http-helper.service';
 import { UtilService } from './util.service';
 import { User, Authenticate } from 'models/auth';
-import { async } from '../../../node_modules/@angular/core/testing';
 
 /**
  * This service provides the methods around the file management API endpoints
@@ -21,27 +19,9 @@ export class FileManagementService {
 
     /**
      * initializes the service
-     * @param httpHelperService the http helper service
+     * @param utilService the util service
      */
-    constructor(private httpHelperService: HttpHelperService,
-        private utilService: UtilService) { }
-
-    /**
-     * Create repo url with username and password.
-     * @param metadata Metadata contains repo url, username and password.
-     * @returns Repo url
-     * @private
-     */
-    // private createRepoURL = (metadata) => {
-    //   const url = new URL(metadata.repoURL);
-    //   url.username = metadata.username;
-    //   url.password = this.utilService.decrypt(metadata.password);
-    //   return url;
-    // };
-
-    // async cleanRepo(repoPath: string) {
-    //   await rimrafAsync(repoPath);
-    // }
+    constructor(private utilService: UtilService) { }
 
     /**
      * access the repository and receives the security token to be used in subsequent requests
