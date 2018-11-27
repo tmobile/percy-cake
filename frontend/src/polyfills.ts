@@ -79,3 +79,9 @@ import 'zone.js/dist/zone';  // Included with Angular CLI.
  * APPLICATION IMPORTS
  */
 import 'hammerjs';
+
+if (!Error.captureStackTrace) {
+  Error.captureStackTrace = (error: Error) => {
+    error.stack = Error().stack
+  }
+}
