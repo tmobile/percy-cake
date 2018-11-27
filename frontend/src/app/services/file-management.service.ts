@@ -130,21 +130,42 @@ export class FileManagementService {
      * @param repoDir the repo dir
      */
     private async pull(git: GIT, fs: FSExtra, auth: Authenticate, repoDir: string, repoMetadata) {
-      // pull
       try {
-        await Promise.race([git.pull({
-            username: auth.username,
-            password: auth.password,
-            dir: repoDir,
-            ref: auth.branchName,
-            singleBranch: true
-        }), new Promise((resolve, reject) => {
-          setTimeout(() => {
-            const err = new Error('Pull takes too long, will switch to clone again');
-            err.name = 'PullTimeoutError';
-            reject(err);
-          }, 30 * 1000); // timeout 30 seconds
-        })]);
+        await Promise.race([
+          (async() => {
+            let currentCommit = await this.getRemoteCommit(git, repoDir, auth.branchName);
+            const fetchResult = await git.fetch({
+                username: auth.username,
+                password: auth.password,
+                dir: repoDir,
+                ref: auth.branchName,
+                singleBranch: true,
+                url: auth.repositoryUrl,
+                remote: 'origin',
+                corsProxy: percyConfig.corsProxy
+            });
+            const fetchHead = fetchResult['fetchHead'];
+            if (currentCommit === fetchHead) {
+              // Nothing changes
+              return;
+            }
+            await git.merge({
+              dir: repoDir,
+              ours: auth.branchName,
+              theirs: fetchHead,
+            });
+            await git.checkout({
+              dir: repoDir,
+              ref: auth.branchName,
+            })
+          })(),
+          new Promise((resolve, reject) => {
+            setTimeout(() => {
+              const err = new Error('Pull takes too long, will switch to clone again');
+              err.name = 'PullTimeoutError';
+              reject(err);
+            }, 30 * 1000); // timeout 30 seconds
+          })]);
       } catch (err) {
         console.error(err);
         if (err.name !== 'PullTimeoutError') {
@@ -394,7 +415,6 @@ export class FileManagementService {
     private async resetToUpstream(fs: FSExtra, git: GIT, dir: string, branch: string) {
         const remoteCommit = await this.getRemoteCommit(git, dir, branch);
         await fs.writeFile(path.resolve(dir, '.git', 'refs', 'heads', branch), remoteCommit);
-        await fs.remove(path.resolve(dir, '.git', 'index'));
         await git.checkout({ dir, ref: branch });
         return remoteCommit;
     }
