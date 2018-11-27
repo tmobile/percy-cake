@@ -23,7 +23,6 @@ export enum BackendActionTypes {
   CommitChanges = '[Backend] Commit Changes',
   CommitChangesSuccess = '[Backend] Commit Changes Success',
   CommitChangesFailure = '[Backend] Commit Changes Failure',
-  ResolveConficts = '[Backend] Resolve Conflicts',
 }
 
 export class Initialized implements Action {
@@ -99,7 +98,7 @@ export class SaveDraftFailure implements Action {
 export class CommitChanges implements Action {
   readonly type = BackendActionTypes.CommitChanges;
 
-  constructor(public payload: {files: ConfigFile[], message: string, fromEditor?: boolean}) { }
+  constructor(public payload: {files: ConfigFile[], message: string, fromEditor?: boolean, resolveConflicts?: boolean}) { }
 }
 
 export class CommitChangesSuccess implements Action {
@@ -112,12 +111,6 @@ export class CommitChangesFailure implements Action {
   readonly type = BackendActionTypes.CommitChangesFailure;
 
   constructor(public payload: {error: Error, files: ConfigFile[], commitMessage: string, fromEditor?: boolean}) { }
-}
-
-export class ResolveConficts implements Action {
-  readonly type = BackendActionTypes.ResolveConficts;
-
-  constructor(public payload: ConfigFile[]) { }
 }
 
 
@@ -138,5 +131,4 @@ export type BackendActionsUnion =
   | CommitChanges
   | CommitChangesSuccess
   | CommitChangesFailure
-  | ResolveConficts
   ;

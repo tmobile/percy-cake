@@ -836,7 +836,7 @@ export class UtilService {
 
     // Sign token and set to repo metadata
     const token = this.encrypt(JSON.stringify(tokenPayload));
-    const validUntil = tokenPayload.iat + ms(percyConfig.loginSessionTimeout);
+    const sessionTimeout = tokenPayload.iat + ms(percyConfig.loginSessionTimeout);
 
     const user: User = {
       ...auth,
@@ -846,10 +846,10 @@ export class UtilService {
       token,
     };
 
-    return {user, validUntil};
+    return {user, sessionTimeout};
   }
 
-  async checkRepoAccess(user: User, fs: FSExtra): Promise<User> {
+  async checkRepoAccess(user: User, fs: FSExtra): Promise<{user: User, repoMetadata: any}> {
     if (!user || !user.token) {
       throw boom.unauthorized('Miss access token');
     }
@@ -875,19 +875,20 @@ export class UtilService {
       throw boom.unauthorized('Repo metadata file corruption');
     }
 
-    if (repoMetadata.validUntil < Date.now()) {
+    if (repoMetadata.sessionTimeout < Date.now()) {
       throw boom.unauthorized('Session expired, please re-login');
     }
 
     // Verify with repo metadata
-    if (!_.isEqual(_.omit(user, 'password', 'validUntil'), _.omit(repoMetadata, 'password', 'validUntil'))) {
+    if (!_.isEqual(_.omit(user, 'password'),
+      _.omit(repoMetadata, 'password', 'sessionTimeout', 'commitBaseSHA', 'version'))) {
       throw boom.forbidden('Repo metadata mismatch, you are not allowed to access the repo');
     }
 
     // Update session valid time
-    repoMetadata.validUntil = Date.now() + ms(percyConfig.loginSessionTimeout);
+    repoMetadata.sessionTimeout = Date.now() + ms(percyConfig.loginSessionTimeout);
     await fs.outputJson(repoMetadataFile, repoMetadata);
 
-    return {...user, password: this.decrypt(repoMetadata.password)};
+    return {user: {...user, password: this.decrypt(repoMetadata.password)}, repoMetadata};
   }
 }

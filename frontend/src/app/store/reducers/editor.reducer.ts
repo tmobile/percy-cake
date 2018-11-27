@@ -149,14 +149,11 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
               return state;
             }
 
+            const file = action.payload.files[0];
             return {
                 ...state,
-                configFile: {
-                  ...state.configFile,
-                  draftConfig: state.configuration,
-                  originalConfig: state.configuration,
-                  modified: false,
-                },
+                configFile: {...file},
+                configuration: file.originalConfig,
                 isCommitting: false,
                 isPageDirty: false,
             };

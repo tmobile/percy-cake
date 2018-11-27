@@ -115,9 +115,16 @@ export class BackendEffects {
         const fromEditor = action.payload.fromEditor;
 
         try {
-          const committed = await this.fileManagementService.commitFiles(user, files, commitMessage);
+          let committed;
+          if (action.payload.resolveConflicts) {
+              committed = await this.fileManagementService.resovelConflicts(user, files, commitMessage);
+          } else {
+              committed = await this.fileManagementService.commitFiles(user, files, commitMessage);
+          }
           files.forEach(file => {
             _.assign(file, _.find(committed, _.pick(file, ['fileName', 'applicationName'])));
+            file.modified = false;
+            file.originalConfig = file.draftConfig;
           });
           const results = [];
           results.push(new CommitChangesSuccess({files, fromEditor}));

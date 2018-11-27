@@ -5,7 +5,7 @@ import * as _ from 'lodash';
 
 import * as appStore from 'store';
 import { UtilService } from 'services/util.service';
-import { ResolveConficts, GetFileContentSuccess, CommitChanges, LoadFiles } from 'store/actions/backend.actions';
+import { GetFileContentSuccess, CommitChanges } from 'store/actions/backend.actions';
 import { ConfigFile } from 'models/config-file';
 
 /**
@@ -59,9 +59,7 @@ export class ConflictDialogComponent implements OnInit {
    */
   confirmAction() {
 
-    const toRecommit = [];
-
-    // Resovel conflict files
+    // Convert conflict files
     const files = this.data.conflictFiles.map(file => {
       const result: ConfigFile = {
         fileName: file.fileName,
@@ -71,36 +69,23 @@ export class ConflictDialogComponent implements OnInit {
         originalConfig: file.originalConfig,
       };
 
-      result.modified = !_.isEqual(result.draftConfig, result.originalConfig);
-
-      if (result.modified) {
-        toRecommit.push(result);
-      }
       return result;
     });
 
     // Add back the unconlict draft file(s)
     this.data.draftFiles.forEach(draftFile => {
       if (!_.find(this.data.conflictFiles, _.pick(draftFile, ['applicationName', 'fileName']))) {
-        toRecommit.push(draftFile);
+        files.push(draftFile);
       }
     });
 
-    this.store.dispatch(new ResolveConficts(files));
+    this.store.dispatch(new CommitChanges({
+      files,
+      message: this.data.commitMessage,
+      fromEditor: this.data.fromEditor,
+      resolveConflicts: true,
+    }));
 
-    if (this.data.fromEditor && this.data.conflictFiles[0].resolveStrategy === 'repo') {
-      this.store.dispatch(new GetFileContentSuccess(files[0]));
-    }
-
-    if (toRecommit.length) {
-      this.store.dispatch(new CommitChanges({
-        files: toRecommit.map(f => _.omit(f, 'draftBaseSHA')), // Recommit without timestamp to bypass optimistic check
-        message: this.data.commitMessage,
-        fromEditor: this.data.fromEditor
-      }));
-    } else {
-      this.store.dispatch(new LoadFiles()); // reload files
-    }
     this.dialogRef.close(true);
   }
 }

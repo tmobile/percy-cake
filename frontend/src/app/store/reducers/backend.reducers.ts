@@ -79,20 +79,9 @@ export function reducer(state = initialState, action: BackendActionsUnion): Stat
         }
 
         case BackendActionTypes.CommitChangesSuccess: {
-          action.payload.files.forEach((f) => {
-            f.modified = false;
-            f.originalConfig = f.draftConfig;
-          });
           return {
               ...state,
               files: ConfigFileAdapter.upsertMany(action.payload.files, state.files)
-          };
-        }
-
-        case BackendActionTypes.ResolveConficts: {
-          return {
-              ...state,
-              files: ConfigFileAdapter.upsertMany(action.payload, state.files)
           };
         }
 

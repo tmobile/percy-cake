@@ -11,6 +11,29 @@ import { UtilService } from './util.service';
 import { User, Authenticate } from 'models/auth';
 import { MaintenanceService } from './maintenance.service';
 
+class PathFinder {
+
+  public readonly repoDir: string;
+  public readonly repoAppDir: string;
+  public readonly repoFilePath: string;
+  public readonly fullFilePath: string;
+
+  public readonly draftDir: string;
+  public readonly draftAppDir: string;
+  public readonly draftFullFilePath: string;
+
+  constructor(private user:User, private file: ConfigFile) {
+    this.repoDir = path.resolve(percyConfig.reposFolder, this.user.repoFolder);
+    this.repoAppDir = path.resolve(this.repoDir, percyConfig.yamlAppsFolder, this.file.applicationName);
+    this.repoFilePath = path.join(percyConfig.yamlAppsFolder, this.file.applicationName, this.file.fileName);
+    this.fullFilePath = path.resolve(this.repoAppDir, this.file.fileName);
+
+    this.draftDir = path.resolve(percyConfig.draftFolder, this.user.repoFolder);
+    this.draftAppDir = path.resolve(this.draftDir, percyConfig.yamlAppsFolder, this.file.applicationName);
+    this.draftFullFilePath = path.resolve(this.draftAppDir, this.file.fileName);
+  }
+}
+
 /**
  * This service provides the methods around the file management API endpoints
  */
@@ -30,21 +53,20 @@ export class FileManagementService {
      */
     async accessRepo(auth: Authenticate) {
         const { fs, git } = await getGitFS();
-        const {user, validUntil} = this.utilService.authenticate(auth);
+        const {user, sessionTimeout} = this.utilService.authenticate(auth);
 
         const repoDir = path.resolve(percyConfig.reposFolder, user.repoFolder);
         const repoMetadataFile = this.utilService.getMetadataPath(user.repoFolder);
 
-        let needClone = true;
+        let existingRepoMetadata;
         if (await fs.exists(repoDir)) {
             // Check repo metadata file
-            let repoMetadataFileOk = false;
-
             if (await fs.exists(repoMetadataFile)) {
-                const metadata = await fs.readFile(repoMetadataFile);
                 try {
-                    JSON.parse(metadata.toString());
-                    repoMetadataFileOk = true;
+                    existingRepoMetadata = await fs.readJson(repoMetadataFile);
+                    if (existingRepoMetadata.version !== percyConfig.repoMetadataVersion) {
+                      existingRepoMetadata = null;
+                    }
                 } catch (err) {
                     console.warn(`${repoDir} exists but medata is broken, will clone again`);
                 }
@@ -52,15 +74,13 @@ export class FileManagementService {
                 console.info(`${repoDir} exists but metadata missing, will clone again`);
             }
 
-            if (!repoMetadataFileOk) {
+            if (!existingRepoMetadata) {
                 await fs.remove(repoDir);
-            } else {
-                needClone = false;
             }
         }
 
         try {
-            if (needClone) {
+            if (!existingRepoMetadata) {
                 // Shallow clone repo with --depth as 1
                 try {
                     await git.clone({
@@ -82,7 +102,7 @@ export class FileManagementService {
                 }
             } else {
                 // Pull
-                await this.pull(fs, git, {...user, password: auth.password}, repoDir);
+                await this.pull(git, fs, auth, repoDir, existingRepoMetadata);
             }
         } catch (error) {
             console.error(error);
@@ -94,9 +114,11 @@ export class FileManagementService {
 
         await this.maintenanceService.addUserName(user.username);
 
-        // Save user to repo metadata locally
-        await fs.outputJson(repoMetadataFile, {...user, validUntil});
+        // In case of pull, remember the existing commit base SHAs
+        const commitBaseSHA = existingRepoMetadata ? existingRepoMetadata.commitBaseSHA || {} : {};
 
+        // Save user to repo metadata locally
+        await fs.outputJson(repoMetadataFile, {...user, commitBaseSHA, version: percyConfig.repoMetadataVersion, sessionTimeout});
         return user;
     }
 
@@ -107,31 +129,42 @@ export class FileManagementService {
      * @param user the logged in user
      * @param repoDir the repo dir
      */
-    private async pull(fs: FSExtra, git: GIT, user: User, repoDir: string) {
-      // Reset to upstream, and remember that last commit
-      const lastCommit = await this.resetToUpstream(fs, git, repoDir, user.branchName);
-
+    private async pull(git: GIT, fs: FSExtra, auth: Authenticate, repoDir: string, repoMetadata) {
       // pull
-      await git.pull({
-          username: user.username,
-          password: user.password,
-          dir: repoDir,
-          ref: user.branchName,
-          singleBranch: true
-      });
-
-      const status = await git.statusMatrix({ dir: repoDir, ref: lastCommit, pattern: `${percyConfig.yamlAppsFolder}/**` });
-
-      // The files deleted by the pull
-      const deletedFiles = status.filter(row => row[2] === 0).map(row => row[0])
-
-      // Really remove orphan draft ?
-      await Promise.all(deletedFiles.map(async (file) => {
-        const filepath = path.resolve(percyConfig.draftFolder, user.repoFolder, file);
-        if (await fs.exists(filepath)) {
-          await fs.remove(filepath);
+      try {
+        await Promise.race([git.pull({
+            username: auth.username,
+            password: auth.password,
+            dir: repoDir,
+            ref: auth.branchName,
+            singleBranch: true
+        }), new Promise((resolve, reject) => {
+          setTimeout(() => {
+            const err = new Error('Pull takes too long, will switch to clone again');
+            err.name = 'PullTimeoutError';
+            reject(err);
+          }, 30 * 1000); // timeout 30 seconds
+        })]);
+      } catch (err) {
+        console.error(err);
+        if (err.name !== 'PullTimeoutError') {
+          throw err;
         }
-      }));
+
+        await fs.remove(repoDir);
+        await git.clone({
+            url: auth.repositoryUrl,
+            username: auth.username,
+            password: auth.password,
+            ref: auth.branchName,
+            dir: repoDir,
+            corsProxy: percyConfig.corsProxy,
+            depth: 1,
+            singleBranch: true
+        });
+        const commitBaseSHA = _.mapValues(repoMetadata.commitBaseSHA, () => '');
+        await this.saveCommitBaseSHA(fs, repoMetadata, commitBaseSHA);
+      }
     }
 
     /**
@@ -244,158 +277,110 @@ export class FileManagementService {
      */
     async getFileContent(user: User, file: ConfigFile) {
         const { fs, git } = await getGitFS();
-        await this.utilService.checkRepoAccess(user, fs);
+        const { repoMetadata } = await this.utilService.checkRepoAccess(user, fs);
 
         const appName = file.applicationName;
         const fileName = file.fileName;
-        const repoDir = path.resolve(percyConfig.reposFolder, user.repoFolder);
+
+        const pathFinder = new PathFinder(user, file);
 
         let originalConfig;
-        const repoFilePath = path.resolve(repoDir, percyConfig.yamlAppsFolder, appName, fileName);
-        if (await fs.exists(repoFilePath)) {
-            originalConfig = this.utilService.convertYamlToJson((await fs.readFile(repoFilePath)).toString());
+        if (await fs.exists(pathFinder.fullFilePath)) {
+            // For new file, there is no originalConfig
+            originalConfig = this.utilService.convertYamlToJson((await fs.readFile(pathFinder.fullFilePath)).toString());
         }
 
         let draftFile;
-        const draftFilePath = path.resolve(percyConfig.draftFolder, user.repoFolder, percyConfig.yamlAppsFolder, appName, fileName);
-        if (await fs.exists(draftFilePath)) {
-            draftFile = JSON.parse((await fs.readFile(draftFilePath)).toString());
+        if (await fs.exists(pathFinder.draftFullFilePath)) {
+            draftFile = JSON.parse((await fs.readFile(pathFinder.draftFullFilePath)).toString());
         }
 
         if (!originalConfig && !draftFile) {
             throw new Error(`File '${appName}/${fileName}' does not exist`);
         }
 
-        let modified = false;
-        if (draftFile) {
-            modified = !_.isEqual(originalConfig, draftFile.draftConfig);
-            if (!modified) {
-                // This rarely happen (may be after pull triggered by another commit/delete)
-                console.warn(`Draft file '${appName}/${fileName}' found to have same content as repo, will be deleted`)
-                await fs.remove(draftFilePath);
-            }
-        } else {
-            file.draftBaseSHA = await this.getFileSHA(git, user, repoDir, file);
+        file.modified = draftFile ? !_.isEqual(originalConfig, draftFile.draftConfig) : false;
+
+        if (draftFile && !file.modified) {
+            await fs.remove(pathFinder.draftFullFilePath);
         }
 
-        return { ...file, ...(draftFile || {}), originalConfig, modified };
+        if (!draftFile || !file.modified) {
+            // Align commit base SHA to remote commit
+            const remoteCommit = await this.getRemoteCommit(git, pathFinder.repoDir, user.branchName);
+            await this.saveCommitBaseSHA(fs, repoMetadata, { [pathFinder.repoFilePath]: remoteCommit });
+        }
+
+        return { ...file, ...(draftFile || {}), originalConfig };
+    }
+
+    /**
+     * Get remote commit.
+     */
+    private async getRemoteCommit(git: GIT, repoDir: string, branch: string) {
+      return await git.resolveRef({
+        dir: repoDir,
+        ref: path.join('remotes', 'origin', branch)
+      });
+    }
+
+    /**
+     * Save commit base SHA.
+     */
+    private async saveCommitBaseSHA(fs: FSExtra, repoMetadata, baseSHAs: {[filepath: string]: string}) {
+        const commitBaseSHA = _.cloneDeep(repoMetadata.commitBaseSHA);
+        _.each(baseSHAs, (baseSHA, filepath) => {
+          if (!baseSHA) {
+            delete commitBaseSHA[filepath];
+          } else {
+            commitBaseSHA[filepath] = baseSHA;
+          }
+        });
+
+        if (!_.isEqual(commitBaseSHA, repoMetadata.commitBaseSHA)) {
+          // Only save when there is change
+          repoMetadata.commitBaseSHA = commitBaseSHA;
+          const metadataFile = this.utilService.getMetadataPath(repoMetadata.repoFolder);
+          await fs.outputJson(metadataFile, repoMetadata);
+        }
     }
 
     /**
      * Save draft file.
-     * @param user the logged in user
+     *
+     * Note this method is also reponsible to clean draft data in case file is not modified.
+     *
+     * @param auth the logged in user
      * @param file the draft file to save
      */
-    async saveDraft(user: User, file: ConfigFile) {
-        const { fs } = await getGitFS();
-        await this.utilService.checkRepoAccess(user, fs);
+    async saveDraft(auth: User, file: ConfigFile) {
+        const { fs, git } = await getGitFS();
+        const { repoMetadata } = await this.utilService.checkRepoAccess(auth, fs);
 
-        const repoDir = path.resolve(percyConfig.reposFolder, user.repoFolder);
-        const repoFilePath = path.resolve(repoDir, percyConfig.yamlAppsFolder, file.applicationName, file.fileName);
-
-        const draftDir = path.resolve(percyConfig.draftFolder, user.repoFolder, percyConfig.yamlAppsFolder, file.applicationName);
-        const draftFilePath = path.resolve(draftDir, file.fileName);
+        const pathFinder = new PathFinder(auth, file);
 
         if (!file.modified) {
-            const repoFileExists = await fs.exists(repoFilePath);
-            const draftFileExists = await fs.exists(draftFilePath);
+            // Not modified, don't need draft file
+            const repoFileExists = await fs.exists(pathFinder.fullFilePath);
+            const draftFileExists = await fs.exists(pathFinder.draftFullFilePath);
             if (repoFileExists && draftFileExists) {
-                // Not modified, don't need draft
-                await fs.remove(draftFilePath);
+                console.info(`Draft file '${file.applicationName}/${file.fileName}' found to have same content as repo, will be deleted`)
+                await fs.remove(pathFinder.draftFullFilePath);
             }
         } else {
             // Save draft
-            await fs.ensureDir(draftDir);
-            // Only save the draft config and timestamp
-            await fs.writeFile(draftFilePath, JSON.stringify(_.pick(file, ['draftConfig', 'draftBaseSHA'])));
+            await fs.ensureDir(pathFinder.draftAppDir);
+            // Only save the draft config
+            await fs.outputJson(pathFinder.draftFullFilePath, {draftConfig: file.draftConfig});
+        }
+
+        if (!file.modified || !repoMetadata.commitBaseSHA[pathFinder.repoFilePath]) {
+            // Align commit base SHA to remote commit
+            const remoteCommit = await this.getRemoteCommit(git, pathFinder.repoDir, auth.branchName);
+            await this.saveCommitBaseSHA(fs, repoMetadata, { [pathFinder.repoFilePath]: remoteCommit });
         }
 
         return file;
-    }
-
-    /**
-     * Get file SHA.
-     * @param git the git
-     * @param user the logged in user
-     * @param repoDir the repo dir
-     * @param file the file to get its SHA
-     */
-    private async getFileSHA(git: GIT, user: User, repoDir: string, file: ConfigFile) {
-
-        const remoteCommit = await git.resolveRef({
-            dir: repoDir,
-            ref: `remotes/origin/${user.branchName}`
-        });
-        const filepath = path.join(percyConfig.yamlAppsFolder, file.applicationName, file.fileName);
-        const object = await git.readObject({
-            dir: repoDir,
-            oid: remoteCommit,
-            format: 'deflated',
-            filepath,
-        })
-        return object.oid;
-    }
-
-    /**
-     * deletes the file within the given location from the repository
-     * @param user the logged in user
-     * @param file the file to delete
-     */
-    async deleteFile(user: User, file: ConfigFile) {
-        const { fs, git } = await getGitFS();
-
-        user = await this.utilService.checkRepoAccess(user, fs);
-
-        const repoDir = path.resolve(percyConfig.reposFolder, user.repoFolder);
-
-        const repoFilePath = path.resolve(repoDir, percyConfig.yamlAppsFolder, file.applicationName, file.fileName);
-
-        let gitPulled = false;
-        if (await fs.exists(repoFilePath)) {
-  
-            await this.pull(fs, git, user, repoDir);
-            gitPulled = true;
-
-            try {
-                await fs.remove(repoFilePath);
-    
-                await git.remove({
-                    dir: repoDir,
-                    filepath: path.join(percyConfig.yamlAppsFolder, file.applicationName, file.fileName)
-                });
-    
-                const commitSHA = await git.commit({
-                    dir: repoDir,
-                    message: 'Percy delete',
-                    author: {
-                        name: user.username,
-                        email: user.username
-                    }
-                });
-
-                await git.push({
-                    dir: repoDir,
-                    ref: user.branchName,
-                    username: user.username,
-                    password: user.password,
-                    corsProxy: percyConfig.corsProxy,
-                });
-
-                // Wired bug, isogit sometimes don't update the remote commit SHA
-                await fs.writeFile(path.resolve(repoDir, '.git', 'refs', 'remotes', 'origin', user.branchName), commitSHA);
-            } catch (err) {
-                await this.resetToUpstream(fs, git, repoDir, user.branchName);
-                throw err;
-            }
-        }
-
-        const draftFilePath = path.resolve(percyConfig.draftFolder, user.repoFolder, percyConfig.yamlAppsFolder,
-            file.applicationName, file.fileName);
-        if (await fs.exists(draftFilePath)) {
-            await fs.remove(draftFilePath);
-        }
-
-        return gitPulled;
     }
 
     /**
@@ -406,63 +391,164 @@ export class FileManagementService {
      * @param branch the branch to reset
      */
     private async resetToUpstream(fs: FSExtra, git: GIT, dir: string, branch: string) {
-        const remoteCommit = await git.resolveRef({
-            dir,
-            ref: path.join('remotes', 'origin', branch)
-        });
+        const remoteCommit = await this.getRemoteCommit(git, dir, branch);
         await fs.writeFile(path.resolve(dir, '.git', 'refs', 'heads', branch), remoteCommit);
-        await fs.unlink(path.resolve(dir, '.git', 'index'));
+        await fs.remove(path.resolve(dir, '.git', 'index'));
         await git.checkout({ dir, ref: branch });
         return remoteCommit;
     }
 
     /**
-     * Commits the files
-     * @param user the logged in user
+     * deletes the file within the given location from the repository
+     * @param auth the logged in user
+     * @param file the file to delete
+     */
+    async deleteFile(auth: User, file: ConfigFile) {
+        const { fs, git } = await getGitFS();
+
+        const {user, repoMetadata} = await this.utilService.checkRepoAccess(auth, fs);
+        const pathFinder = new PathFinder(user, file);
+
+        let gitPulled = false;
+        if (await fs.exists(pathFinder.fullFilePath)) {
+  
+            await this.pull(git, fs, user, pathFinder.repoDir, repoMetadata);
+            gitPulled = true;
+
+            if (await fs.exists(pathFinder.fullFilePath)) {
+  
+              try {
+                  await fs.remove(pathFinder.fullFilePath);
+      
+                  await git.remove({
+                      dir: pathFinder.repoDir,
+                      filepath: pathFinder.repoFilePath
+                  });
+      
+                  const commitSHA = await git.commit({
+                      dir: pathFinder.repoDir,
+                      message: 'Percy delete',
+                      author: {
+                          name: user.username,
+                          email: user.username
+                      }
+                  });
+  
+                  await git.push({
+                      dir: pathFinder.repoDir,
+                      ref: user.branchName,
+                      username: user.username,
+                      password: user.password,
+                      corsProxy: percyConfig.corsProxy,
+                  });
+
+                  // Weird bug, isogit sometimes don't update the remote commit SHA
+                  await fs.writeFile(path.resolve(pathFinder.repoDir, '.git', 'refs', 'remotes', 'origin', user.branchName), commitSHA);
+              } catch (err) {
+                  await this.resetToUpstream(fs, git, pathFinder.repoDir, user.branchName);
+                  throw err;
+              }
+            }
+        }
+
+        // Also delete draft file if any
+        if (await fs.exists(pathFinder.draftFullFilePath)) {
+            await fs.remove(pathFinder.draftFullFilePath);
+        }
+        // Also delete commit base SHA if any
+        await this.saveCommitBaseSHA(fs, repoMetadata, {[pathFinder.repoFilePath]: ''});
+
+        return gitPulled;
+    }
+
+    /**
+     * Resolve conflicts
+     * @param auth the logged in user
      * @param configFiles the config files to commit
      * @param message the commit message
      */
-    async commitFiles(user: User, configFiles: ConfigFile[], message: string) {
+    async resovelConflicts(auth: User, configFiles: ConfigFile[], message: string) {
+      const modified: ConfigFile[] = [];
+      const unchanged: ConfigFile[] = [];
+
+      await Promise.all(configFiles.map(async(file) => {
+        file.modified = !_.isEqual(file.draftConfig, file.originalConfig);
+
+        if (file.modified) {
+          modified.push(file);
+        } else {
+          await this.saveDraft(auth, file); // This will clean draft data
+          unchanged.push(file);
+        }
+      }));
+
+      if (modified.length) {
+        const committed = await this.commitFiles(auth, modified, message, true);
+        return _.concat(committed, unchanged);
+      }
+
+      return unchanged;
+    }
+
+    private async getStatusChanges(git: GIT, pathFinder: PathFinder, commit: string) {
+
+      const status = await git.statusMatrix({ dir: pathFinder.repoDir, ref: commit, pattern: pathFinder.repoFilePath });
+
+      const result: {[filePath: string]: string} = {};
+
+      // See https://isomorphic-git.org/docs/en/statusMatrix
+      _.each(status, row => {
+        if (row[1] === 0) {
+          result[row[0]] = 'added';
+        } else if (row[2] === 0) {
+          result[row[0]] = 'deleted';
+        } else if (row[2] === 2) {
+          result[row[0]] = 'modified';
+        }
+      });
+      return result;
+    }
+
+    /**
+     * Commits the files
+     * @param auth the logged in user
+     * @param configFiles the config files to commit
+     * @param message the commit message
+     * @param forcePush the flag indicates whether to force push
+     */
+    async commitFiles(auth: User, configFiles: ConfigFile[], message: string, forcePush: boolean = false) {
         const { fs, git } = await getGitFS();
 
-        user = await this.utilService.checkRepoAccess(user, fs);
+        const {user, repoMetadata} = await this.utilService.checkRepoAccess(auth, fs);
 
         const repoDir = path.resolve(percyConfig.reposFolder, user.repoFolder);
 
-        await this.pull(fs, git, user, repoDir);
+        // remeber last commit before pull
+        const lastCommit = await this.getRemoteCommit(git, repoDir, user.branchName);
+        await this.pull(git, fs, user, repoDir, repoMetadata);
 
         // Do optimistic check
-        await Promise.all(configFiles.map(async(file) => {
-            if (!file.draftBaseSHA) {
-                // Load draft timestamp if not present
-                const draftFilePath = path.resolve(percyConfig.draftFolder, user.repoFolder,
-                    percyConfig.yamlAppsFolder, file.applicationName, file.fileName);
-                if (await fs.exists(draftFilePath)) {
-                    const draft = JSON.parse((await fs.readFile(draftFilePath)).toString());
-                    file.draftBaseSHA = draft.draftBaseSHA;
-                }
-            }
-        }));
-
         const conflictFiles: ConfigFile[] = [];
-        await Promise.all(configFiles.map(async(file) => {
-            const applicationName = file.applicationName;
-            const fileName = file.fileName;
-            const fullFilePath = path.resolve(repoDir, percyConfig.yamlAppsFolder, applicationName, fileName);
+        if (!forcePush) {
+          await Promise.all(configFiles.map(async(file) => {
+              const applicationName = file.applicationName;
+              const fileName = file.fileName;
 
-            if (file.draftBaseSHA && await fs.exists(fullFilePath)) {
-                // New SHA after pull
-                const newSHA = await this.getFileSHA(git, user, repoDir, file);
-                if (file.draftBaseSHA !== newSHA) {
-                    conflictFiles.push({
-                        fileName,
-                        applicationName,
-                        draftBaseSHA: newSHA,
-                        originalConfig: this.utilService.convertYamlToJson((await fs.readFile(fullFilePath)).toString()),
-                    });
-                }
-            }
-        }));
+              const pathFinder = new PathFinder(user, file);
+
+              const commitBase = repoMetadata.commitBaseSHA[pathFinder.repoFilePath];
+              const statusChange = await this.getStatusChanges(git, pathFinder, commitBase || lastCommit);
+
+              if (statusChange[pathFinder.repoFilePath] === 'modified'
+                  || statusChange[pathFinder.repoFilePath] === 'added') { // Should conflict if found to be deleted?
+                conflictFiles.push({
+                    fileName,
+                    applicationName,
+                    originalConfig: this.utilService.convertYamlToJson((await fs.readFile(pathFinder.fullFilePath)).toString()),
+                });
+              }
+          }));
+        }
 
         if (conflictFiles.length) {
             const names = conflictFiles.map((file) => `• ${file.applicationName}/${file.fileName}`).join('\n');
@@ -471,6 +557,7 @@ export class FileManagementService {
             throw error;
         }
 
+        let commitSHA;
         try {
             // Commit
             await Promise.all(configFiles.map(async(file) => {
@@ -491,7 +578,7 @@ export class FileManagementService {
                 });
             }));
         
-            const commitSHA = await git.commit({
+            commitSHA = await git.commit({
                 dir: repoDir,
                 message,
                 author: {
@@ -507,23 +594,28 @@ export class FileManagementService {
                 username: user.username,
                 password: user.password,
                 corsProxy: percyConfig.corsProxy,
+                force: forcePush
             });
 
-            // Wired bug, isogit sometimes don't update the remote commit SHA
+            // Weird bug, isogit sometimes don't update the remote commit SHA
             await fs.writeFile(path.resolve(repoDir, '.git', 'refs', 'remotes', 'origin', user.branchName), commitSHA);
-
         } catch (err) {
             await this.resetToUpstream(fs, git, repoDir, user.branchName);
             throw err;
         }
 
+        // Delete draft files
+        const alignCommitSHAs = {};
         await Promise.all(configFiles.map(async(file) => {
-            const draftFilePath = path.resolve(percyConfig.draftFolder, user.repoFolder, percyConfig.yamlAppsFolder,
-                file.applicationName, file.fileName);
-            if (await fs.exists(draftFilePath)) {
-                await fs.unlink(draftFilePath);
+            const pathFinder = new PathFinder(user, file);
+            if (await fs.exists(pathFinder.draftFullFilePath)) {
+                await fs.remove(pathFinder.draftFullFilePath);
             }
+            alignCommitSHAs[pathFinder.repoFilePath] = commitSHA;
         }));
+
+        // Align commit base SHAs
+        await this.saveCommitBaseSHA(fs, repoMetadata, alignCommitSHAs);
 
         return configFiles;
     }
