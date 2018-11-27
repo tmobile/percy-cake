@@ -276,11 +276,8 @@ export class FileManagementService {
      * @param file the file to get its draft and original content
      */
     async getFileContent(user: User, file: ConfigFile) {
-        const { fs, git } = await getGitFS();
+        const { fs } = await getGitFS();
         const { repoMetadata } = await this.utilService.checkRepoAccess(user, fs);
-
-        const appName = file.applicationName;
-        const fileName = file.fileName;
 
         const pathFinder = new PathFinder(user, file);
 
@@ -292,23 +289,20 @@ export class FileManagementService {
 
         let draftFile;
         if (await fs.exists(pathFinder.draftFullFilePath)) {
-            draftFile = JSON.parse((await fs.readFile(pathFinder.draftFullFilePath)).toString());
+            draftFile = await fs.readJson(pathFinder.draftFullFilePath);
         }
 
         if (!originalConfig && !draftFile) {
-            throw new Error(`File '${appName}/${fileName}' does not exist`);
+            throw new Error(`File '${file.applicationName}/${file.fileName}' does not exist`);
         }
 
         file.modified = draftFile ? !_.isEqual(originalConfig, draftFile.draftConfig) : false;
 
         if (draftFile && !file.modified) {
+            // Remove draft file
             await fs.remove(pathFinder.draftFullFilePath);
-        }
-
-        if (!draftFile || !file.modified) {
-            // Align commit base SHA to remote commit
-            const remoteCommit = await this.getRemoteCommit(git, pathFinder.repoDir, user.branchName);
-            await this.saveCommitBaseSHA(fs, repoMetadata, { [pathFinder.repoFilePath]: remoteCommit });
+            // Clear commit base SHA
+            await this.saveCommitBaseSHA(fs, repoMetadata, { [pathFinder.repoFilePath]: '' });
         }
 
         return { ...file, ...(draftFile || {}), originalConfig };
@@ -328,18 +322,23 @@ export class FileManagementService {
      * Save commit base SHA.
      */
     private async saveCommitBaseSHA(fs: FSExtra, repoMetadata, baseSHAs: {[filepath: string]: string}) {
-        const commitBaseSHA = _.cloneDeep(repoMetadata.commitBaseSHA);
+        let anyChange = false;
         _.each(baseSHAs, (baseSHA, filepath) => {
           if (!baseSHA) {
-            delete commitBaseSHA[filepath];
+            if (repoMetadata.commitBaseSHA[filepath]) {
+              delete repoMetadata.commitBaseSHA[filepath];
+              anyChange = true;
+            }
           } else {
-            commitBaseSHA[filepath] = baseSHA;
+            if (repoMetadata.commitBaseSHA[filepath] !== baseSHA) {
+              repoMetadata.commitBaseSHA[filepath] = baseSHA;
+              anyChange = true;
+            }
           }
         });
 
-        if (!_.isEqual(commitBaseSHA, repoMetadata.commitBaseSHA)) {
+        if (anyChange) {
           // Only save when there is change
-          repoMetadata.commitBaseSHA = commitBaseSHA;
           const metadataFile = this.utilService.getMetadataPath(repoMetadata.repoFolder);
           await fs.outputJson(metadataFile, repoMetadata);
         }
@@ -367,17 +366,19 @@ export class FileManagementService {
                 console.info(`Draft file '${file.applicationName}/${file.fileName}' found to have same content as repo, will be deleted`)
                 await fs.remove(pathFinder.draftFullFilePath);
             }
+            // Clear commit base SHA
+            await this.saveCommitBaseSHA(fs, repoMetadata, { [pathFinder.repoFilePath]: '' });
         } else {
             // Save draft
             await fs.ensureDir(pathFinder.draftAppDir);
             // Only save the draft config
             await fs.outputJson(pathFinder.draftFullFilePath, {draftConfig: file.draftConfig});
-        }
 
-        if (!file.modified || !repoMetadata.commitBaseSHA[pathFinder.repoFilePath]) {
-            // Align commit base SHA to remote commit
-            const remoteCommit = await this.getRemoteCommit(git, pathFinder.repoDir, auth.branchName);
-            await this.saveCommitBaseSHA(fs, repoMetadata, { [pathFinder.repoFilePath]: remoteCommit });
+            if (!repoMetadata.commitBaseSHA[pathFinder.repoFilePath]) {
+                // Align commit base SHA to remote commit
+                const remoteCommit = await this.getRemoteCommit(git, pathFinder.repoDir, auth.branchName);
+                await this.saveCommitBaseSHA(fs, repoMetadata, { [pathFinder.repoFilePath]: remoteCommit });
+            }
         }
 
         return file;
@@ -529,28 +530,32 @@ export class FileManagementService {
 
         // Do optimistic check
         const conflictFiles: ConfigFile[] = [];
-        if (!forcePush) {
-          await Promise.all(configFiles.map(async(file) => {
-              const applicationName = file.applicationName;
-              const fileName = file.fileName;
+        let commitBaseSHA = _.cloneDeep(repoMetadata.commitBaseSHA);
+        await Promise.all(configFiles.map(async(file) => {
 
-              const pathFinder = new PathFinder(user, file);
+            const pathFinder = new PathFinder(user, file);
 
-              const commitBase = repoMetadata.commitBaseSHA[pathFinder.repoFilePath];
-              const statusChange = await this.getStatusChanges(git, pathFinder, commitBase || lastCommit);
+            if (!file.draftConfig) {
+              file.draftConfig = (await fs.readJson(pathFinder.draftFullFilePath)).draftConfig; 
+            }
 
+            if (!forcePush) {
+              commitBaseSHA[pathFinder.repoFilePath] = commitBaseSHA[pathFinder.repoFilePath] || lastCommit;
+              const statusChange = await this.getStatusChanges(git, pathFinder, commitBaseSHA[pathFinder.repoFilePath]);
+  
               if (statusChange[pathFinder.repoFilePath] === 'modified'
                   || statusChange[pathFinder.repoFilePath] === 'added') { // Should conflict if found to be deleted?
                 conflictFiles.push({
-                    fileName,
-                    applicationName,
+                    ...file,
                     originalConfig: this.utilService.convertYamlToJson((await fs.readFile(pathFinder.fullFilePath)).toString()),
                 });
               }
-          }));
-        }
+            }
+        }));
 
         if (conflictFiles.length) {
+            await this.saveCommitBaseSHA(fs, repoMetadata, commitBaseSHA);
+
             const names = conflictFiles.map((file) => `• ${file.applicationName}/${file.fileName}`).join('\n');
             const error = boom.conflict<ConfigFile[]>(`The following file(s) are already changed in the repository:\n${names}`);
             error.data = conflictFiles;
@@ -605,17 +610,19 @@ export class FileManagementService {
         }
 
         // Delete draft files
-        const alignCommitSHAs = {};
+        commitBaseSHA = {};
         await Promise.all(configFiles.map(async(file) => {
             const pathFinder = new PathFinder(user, file);
             if (await fs.exists(pathFinder.draftFullFilePath)) {
                 await fs.remove(pathFinder.draftFullFilePath);
             }
-            alignCommitSHAs[pathFinder.repoFilePath] = commitSHA;
+            file.modified = false;
+            file.originalConfig = file.draftConfig;
+            commitBaseSHA[pathFinder.repoFilePath] = '';
         }));
 
-        // Align commit base SHAs
-        await this.saveCommitBaseSHA(fs, repoMetadata, alignCommitSHAs);
+        // Clear commit base SHAs
+        await this.saveCommitBaseSHA(fs, repoMetadata, commitBaseSHA);
 
         return configFiles;
     }

@@ -110,22 +110,16 @@ export class BackendEffects {
       withLatestFrom(this.store.pipe(select(appStore.getCurrentUser))),
       switchMap(async ([action, user]) => {
 
-        const files = action.payload.files;
+        let files = action.payload.files;
         const commitMessage = action.payload.message;
         const fromEditor = action.payload.fromEditor;
 
         try {
-          let committed;
           if (action.payload.resolveConflicts) {
-              committed = await this.fileManagementService.resovelConflicts(user, files, commitMessage);
+            files = await this.fileManagementService.resovelConflicts(user, files, commitMessage);
           } else {
-              committed = await this.fileManagementService.commitFiles(user, files, commitMessage);
+            files = await this.fileManagementService.commitFiles(user, files, commitMessage);
           }
-          files.forEach(file => {
-            _.assign(file, _.find(committed, _.pick(file, ['fileName', 'applicationName'])));
-            file.modified = false;
-            file.originalConfig = file.draftConfig;
-          });
           const results = [];
           results.push(new CommitChangesSuccess({files, fromEditor}));
           results.push(new LoadFiles()); // reload files
