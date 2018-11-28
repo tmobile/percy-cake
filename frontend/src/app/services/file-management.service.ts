@@ -469,7 +469,7 @@ export class FileManagementService {
 
         if (!file.modified) {
             // Not modified, don't need draft file
-            const repoFileExists = await fs.exists(pathFinder.fullFilePath);
+            const repoFileExists = await this.isRepoFileExists(git, pathFinder);
             const draftFileExists = await fs.exists(pathFinder.draftFullFilePath);
             if (repoFileExists && draftFileExists) {
                 console.info(`Draft file '${file.applicationName}/${file.fileName}' found to have same content as repo, will be deleted`)
