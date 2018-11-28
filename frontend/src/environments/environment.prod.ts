@@ -19,5 +19,5 @@ export const percyConfig = {
   encryptKey: process.env.ENCRYPT_KEY || '&Ddf23&*Dksd',
   encryptSalt: process.env.ENCRYPT_SALT || '23E80(9Dls6$s',
   variableSubstitutePrefix: process.env.VARIABLE_SUBSTITUTE_PREFIX || '_{',
-  variableSubstituteSuffix: process.env.VARIABLE_SUBSTITUTE_SUFFIX || '_}_',
+  variableSubstituteSuffix: process.env.VARIABLE_SUBSTITUTE_SUFFIX || '}_',
 }

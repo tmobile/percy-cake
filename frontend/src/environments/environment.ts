@@ -23,7 +23,7 @@ export const percyConfig = {
   encryptKey: '&Ddf23&*Dksd',
   encryptSalt: '23E80(9Dls6$s',
   variableSubstitutePrefix: '_{',
-  variableSubstituteSuffix: '_}_',
+  variableSubstituteSuffix: '}_',
 }
 
 /*
