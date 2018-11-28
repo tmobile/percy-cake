@@ -546,7 +546,6 @@ export class FileManagementService {
                   await this.resetIndexes(fs, git, pathFinder.repoDir, commitSHA, user.branchName);
               } catch (err) {
                   await this.resetIndexes(fs, git, pathFinder.repoDir, lastCommit, user.branchName);
-                  // await this.resetToUpstream(fs, git, pathFinder.repoDir, user.branchName);
                   throw err;
               }
             }
@@ -706,7 +705,6 @@ export class FileManagementService {
             await this.resetIndexes(fs, git, repoDir, commitSHA, user.branchName);
         } catch (err) {
             await this.resetIndexes(fs, git, repoDir, lastCommit, user.branchName);
-            // await this.resetToUpstream(fs, git, repoDir, user.branchName);
             throw err;
         }
 
