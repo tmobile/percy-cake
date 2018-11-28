@@ -10,4 +10,5 @@ export interface ConfigFile {
   modified?: boolean; // Means this is a modified file compared to repo, able to commit
   draftConfig?: Configuration;
   originalConfig?: Configuration;
+  oid?: string; // File SHA oid
 }

@@ -10,6 +10,7 @@ import { getGitFS, GIT, FSExtra } from './git-fs.service';
 import { UtilService } from './util.service';
 import { User, Authenticate } from 'models/auth';
 import { MaintenanceService } from './maintenance.service';
+import { TreeDescription, CommitDescription } from '../../../node_modules/isomorphic-git';
 
 class PathFinder {
 
@@ -22,7 +23,7 @@ class PathFinder {
   public readonly draftAppDir: string;
   public readonly draftFullFilePath: string;
 
-  constructor(private user:User, private file: ConfigFile) {
+  constructor(public user:User, public file: ConfigFile) {
     this.repoDir = path.resolve(percyConfig.reposFolder, this.user.repoFolder);
     this.repoAppDir = path.resolve(this.repoDir, percyConfig.yamlAppsFolder, this.file.applicationName);
     this.repoFilePath = path.join(percyConfig.yamlAppsFolder, this.file.applicationName, this.file.fileName);
@@ -83,18 +84,7 @@ export class FileManagementService {
             if (!existingRepoMetadata) {
                 // Shallow clone repo with --depth as 1
                 try {
-                    await git.clone({
-                        url: auth.repositoryUrl,
-                        username: auth.username,
-                        password: auth.password,
-                        ref: auth.branchName,
-                        dir: repoDir,
-                        corsProxy: percyConfig.corsProxy,
-                        depth: 1,
-                        singleBranch: true
-                    });
-
-                    console.info(`Cloned repo: ${repoDir}`);
+                  await this.clone(fs, git, auth, repoDir);
                 } catch (err) {
                     // If error while clone remove the repo dir
                     await fs.remove(repoDir);
@@ -123,17 +113,53 @@ export class FileManagementService {
     }
 
     /**
-     * Pull repo.
-     * @param fs the fs
-     * @param git the git
-     * @param user the logged in user
-     * @param repoDir the repo dir
+     * Clone repo. We do a noCheckout action, for performance reason (less files, less I/O).
+     * The repo will only contain the '.git' folder, nothing else.
+     * The file content will directly be read from pack files in '.git', by using git.readObject.
      */
-    private async pull(git: GIT, fs: FSExtra, auth: Authenticate, repoDir: string, repoMetadata) {
+    private async clone(fs: FSExtra, git: GIT, auth: Authenticate, repoDir: string) {
+
+        const branch = auth.branchName;
+        await git.clone({
+            url: auth.repositoryUrl,
+            username: auth.username,
+            password: auth.password,
+            ref: branch,
+            dir: repoDir,
+            corsProxy: percyConfig.corsProxy,
+            depth: 1,
+            singleBranch: true,
+            noCheckout: true // No checkout
+        });
+
+        // Set the HEAD ref
+        await fs.writeFile(path.resolve(repoDir, '.git', 'HEAD'), `ref: refs/heads/${branch}`);
+
+        // Config branch
+        await git.config({dir: repoDir, path: `branch.${branch}.merge`, value: `refs/heads/${branch}`});
+        await git.config({dir: repoDir, path: `branch.${branch}.remote`, value: 'origin'});
+
+        // Reset Index to be same with HEAD, so they will not commit. We say this is a 'clean' index.
+        // Specific files are added to index only when needed (when delete or commit changes)
+        const oid = await this.getRemoteCommit(git, repoDir, branch);
+        await this.resetIndexes(fs, git, repoDir, oid, branch);
+
+        console.info(`Cloned repo: ${repoDir}`);
+
+        return oid;
+    }
+
+    /**
+     * Pull repo.
+     *
+     * Similar as clone, we never checkout, just fetch from remote repo, and call resetIndexes to keep things clean.
+     */
+    private async pull(git: GIT, fs: FSExtra, auth: Authenticate, repoDir: string, repoMetadata): Promise<string> {
       try {
-        await Promise.race([
+        const result = await Promise.race([
           (async() => {
-            let currentCommit = await this.getRemoteCommit(git, repoDir, auth.branchName);
+            const lastCommit = await this.getRemoteCommit(git, repoDir, auth.branchName);
+
             const fetchResult = await git.fetch({
                 username: auth.username,
                 password: auth.password,
@@ -144,70 +170,130 @@ export class FileManagementService {
                 remote: 'origin',
                 corsProxy: percyConfig.corsProxy
             });
+
             const fetchHead = fetchResult['fetchHead'];
-            if (currentCommit === fetchHead) {
-              // Nothing changes
-              return;
+            if (lastCommit !== fetchHead) {
+              // Only need reset Index if commit actaully changes
+              await this.resetIndexes(fs, git, repoDir, fetchHead, auth.branchName);
             }
-            await git.merge({
-              dir: repoDir,
-              ours: auth.branchName,
-              theirs: fetchHead,
-            });
-            await git.checkout({
-              dir: repoDir,
-              ref: auth.branchName,
-            })
+
+            return fetchHead;
           })(),
           new Promise((resolve, reject) => {
             setTimeout(() => {
               const err = new Error('Pull takes too long, will switch to clone again');
               err.name = 'PullTimeoutError';
               reject(err);
-            }, 30 * 1000); // timeout 30 seconds
+            }, 60 * 1000); // timeout 60 seconds
           })]);
+          return result.toString();
       } catch (err) {
         console.error(err);
         if (err.name !== 'PullTimeoutError') {
           throw err;
         }
 
+        // Just in case pull timeout, fallback to clone
         await fs.remove(repoDir);
-        await git.clone({
-            url: auth.repositoryUrl,
-            username: auth.username,
-            password: auth.password,
-            ref: auth.branchName,
-            dir: repoDir,
-            corsProxy: percyConfig.corsProxy,
-            depth: 1,
-            singleBranch: true
-        });
+        const newCommit = await this.clone(fs, git, auth, repoDir);
         const commitBaseSHA = _.mapValues(repoMetadata.commitBaseSHA, () => '');
         await this.saveCommitBaseSHA(fs, repoMetadata, commitBaseSHA);
+        return newCommit;
       }
+    }
+
+    /**
+     * Set HEAD to given commit oid, and ensure Index status identical to HEAD status.
+     */
+    private async resetIndexes(fs: FSExtra, git: GIT, dir: string, oid: string, branch: string) {
+        // Save commit oid to HEAD
+        await fs.writeFile(path.resolve(dir, '.git', 'refs', 'heads', branch), oid);
+
+        // Remove any workdir files
+        const workfiles = await fs.readdir(dir);
+        for (let file of workfiles) {
+          if (file !== '.git') {
+            await fs.remove(path.resolve(dir, file));
+          }
+        }
+
+        // Ensure Index status identical to HEAD status
+        const matrix = await git.statusMatrix({ dir, pattern: '**' });
+        for (let row of matrix) {
+          if (row[3] !== 1) {
+            // Index status not identical to head status, reset index
+            // See https://isomorphic-git.org/docs/en/statusMatrix
+            await git.resetIndex({ fs: git.plugins.get('fs'), dir, filepath: row[0] });
+          }
+        }
     }
 
     /**
      * get the app environments
      * @param user the logged in user
-     * @param appName the app name
+     * @param applicationName the app name
      */
-    async getEnvironments(user: User, appName: string) {
-        const { fs } = await getGitFS();
+    async getEnvironments(user: User, applicationName: string) {
+        const { fs, git } = await getGitFS();
         await this.utilService.checkRepoAccess(user, fs);
 
-        const repoDir = path.resolve(percyConfig.reposFolder, user.repoFolder);
-        const fullFilePath = path.resolve(repoDir, percyConfig.yamlAppsFolder, appName, percyConfig.environmentsFile);
+        const pathFinder = new PathFinder(user, {applicationName, fileName: percyConfig.environmentsFile});
 
-        if (!await fs.exists(fullFilePath)) {
-            console.warn(`App environments file '${fullFilePath}' does not exist`);
+        const oid = await this.getRemoteCommit(git, pathFinder.repoDir, user.branchName);
+
+        try {
+          const {object} = await git.readObject({dir: pathFinder.repoDir, oid, filepath: pathFinder.repoFilePath, encoding: 'utf8'});
+
+          const loaded = yamlJS.load(object);
+          return loaded.default;
+        } catch (err) {
+          if (err.name === 'TreeOrBlobNotFoundError') {
+            console.warn(`App environments file '${pathFinder.fullFilePath}' does not exist`);
             return [];
+          }
+          throw err;
         }
-
-        const loaded = yamlJS.load((await fs.readFile(fullFilePath)).toString());
-        return loaded.default;
     }
+
+    /**
+     * Read from git object directly to find yaml files in repo.
+     * This method will not read file content, it just traverse the object tree.
+     */
+    private async findRepoYamlFiles(git, user: User, result: ConfigFile[] = [], depth: number = 0, oid?: string, app?: string) {
+      const dir = path.resolve(percyConfig.reposFolder, user.repoFolder);
+      if (depth === 0) {
+        const remoteOid = await this.getRemoteCommit(git, dir, user.branchName);
+        const { object: commit } = await git.readObject({dir, oid: remoteOid});
+        oid = (commit as CommitDescription).tree;
+      }
+
+      let { object: tree } = await git.readObject({ dir, oid });
+
+      for (let entry of (tree as TreeDescription).entries) {
+        if (depth === 0) {
+          if (entry.path === percyConfig.yamlAppsFolder && entry.type === 'tree') {
+            await this.findRepoYamlFiles(git, user, result, 1, entry.oid);
+          }
+        } else if (depth === 1) {
+          if (entry.type === 'tree') {
+            await this.findRepoYamlFiles(git, user, result, 2, entry.oid, entry.path);
+          }
+        } else if (depth === 2) {
+          if (entry.type === 'blob') {
+            const ext = path.extname(entry.path).toLowerCase();
+            if (ext === '.yaml' || ext === '.yml') {
+              const file: ConfigFile = {
+                  applicationName: app,
+                  fileName: entry.path,
+                  oid: entry.oid,
+              };
+              result.push(file);
+            }
+          }
+        }
+      }
+      return result;
+    };
 
     /**
      * get files for a particular repository.
@@ -217,46 +303,45 @@ export class FileManagementService {
      * @param user the logged in user
      */
     async getFiles(user: User) {
-        const { fs } = await getGitFS();
+        const { fs, git } = await getGitFS();
         await this.utilService.checkRepoAccess(user, fs);
 
-        const [repo, draft] = await Promise.all([
-            this.findFiles(fs, user.repoFolder, false),
-            this.findFiles(fs, user.repoFolder, true)
+        const [draft, repoFiles] = await Promise.all([
+          this.findDraftFiles(fs, user.repoFolder),
+          this.findRepoYamlFiles(git, user),
         ]);
 
-        _.forEach(draft.applications, app => {
-            if (repo.applications.indexOf(app) === -1) {
-                repo.applications.push(app);
+        _.forEach(repoFiles, file => {
+            if (draft.applications.indexOf(file.applicationName) === -1) {
+              draft.applications.push(file.applicationName);
             }
         });
 
-        _.forEach(draft.files, draftFile => {
-            const file = _.find(repo.files, f => f.applicationName === draftFile.applicationName && f.fileName === draftFile.fileName);
-            if (!file) {
-                repo.files.push(draftFile);
+        _.forEach(repoFiles, repoFile => {
+            const draftFile = _.find(draft.files, f => f.applicationName === repoFile.applicationName && f.fileName === repoFile.fileName);
+            if (!draftFile) {
+                draft.files.push(repoFile);
             } else {
-                _.assign(file, draftFile);
+              _.assign(draftFile, repoFile);
             }
         });
 
-        return repo;
+        return draft;
     }
 
     /**
-     * Find files.
+     * Find draft files.
      *
      * Note: this method never loads file content for performance reason
      *
      * @param fs the FS
      * @param repoFolder the repo folder name
-     * @param forDraft the flag indicates whether for finding draft files
      */
-    private async findFiles(fs: FSExtra, repoFolder: string, forDraft: boolean) {
+    private async findDraftFiles(fs: FSExtra, repoFolder: string) {
 
         const files: ConfigFile[] = [];
         const applications: string[] = [];
-        const repoPath = path.resolve(forDraft ? percyConfig.draftFolder : percyConfig.reposFolder, repoFolder);
+        const repoPath = path.resolve(percyConfig.draftFolder, repoFolder);
         const appsPath = path.resolve(repoPath, percyConfig.yamlAppsFolder);
         const apps = await fs.readdir(appsPath);
 
@@ -277,18 +362,15 @@ export class FileManagementService {
                     const file: ConfigFile = {
                         applicationName,
                         fileName,
-                        size: stat.size
+                        size: stat.size,
+                        modified: true // For draft files, we simply assume they're modified
                     };
-                    if (forDraft) {
-                        // For those draft files, we simply assume they're modified
-                        file.modified = true;
-                    }
                     files.push(file);
                 }
             }));
         }));
 
-        return { files: _.sortBy(files, 'fileName', 'applicationName'), applications };
+        return { files, applications };
     }
 
     /**
@@ -297,15 +379,21 @@ export class FileManagementService {
      * @param file the file to get its draft and original content
      */
     async getFileContent(user: User, file: ConfigFile) {
-        const { fs } = await getGitFS();
+        const { git, fs } = await getGitFS();
         const { repoMetadata } = await this.utilService.checkRepoAccess(user, fs);
 
         const pathFinder = new PathFinder(user, file);
 
+        const oid = await this.getRemoteCommit(git, pathFinder.repoDir, user.branchName);
         let originalConfig;
-        if (await fs.exists(pathFinder.fullFilePath)) {
-            // For new file, there is no originalConfig
-            originalConfig = this.utilService.convertYamlToJson((await fs.readFile(pathFinder.fullFilePath)).toString());
+
+        try {
+          const { object } = await git.readObject({dir: pathFinder.repoDir, oid, filepath: pathFinder.repoFilePath, encoding: 'utf8'});
+          originalConfig = this.utilService.convertYamlToJson(object);
+        } catch (err) {
+          if (err.name !== 'TreeOrBlobNotFoundError') {
+            throw err;
+          }
         }
 
         let draftFile;
@@ -340,7 +428,7 @@ export class FileManagementService {
     }
 
     /**
-     * Save commit base SHA.
+     * Save commit base SHA (which is file's oid).
      */
     private async saveCommitBaseSHA(fs: FSExtra, repoMetadata, baseSHAs: {[filepath: string]: string}) {
         let anyChange = false;
@@ -396,9 +484,8 @@ export class FileManagementService {
             await fs.outputJson(pathFinder.draftFullFilePath, {draftConfig: file.draftConfig});
 
             if (!repoMetadata.commitBaseSHA[pathFinder.repoFilePath]) {
-                // Align commit base SHA to remote commit
-                const remoteCommit = await this.getRemoteCommit(git, pathFinder.repoDir, auth.branchName);
-                await this.saveCommitBaseSHA(fs, repoMetadata, { [pathFinder.repoFilePath]: remoteCommit });
+                // Save commit base SHA
+                await this.saveCommitBaseSHA(fs, repoMetadata, { [pathFinder.repoFilePath]: file.oid });
             }
         }
 
@@ -406,17 +493,11 @@ export class FileManagementService {
     }
 
     /**
-     * Reset to upstream.
-     * @param fs the fs
-     * @param git the git
-     * @param dir the repo dir
-     * @param branch the branch to reset
+     * Check if file exists in repo.
      */
-    private async resetToUpstream(fs: FSExtra, git: GIT, dir: string, branch: string) {
-        const remoteCommit = await this.getRemoteCommit(git, dir, branch);
-        await fs.writeFile(path.resolve(dir, '.git', 'refs', 'heads', branch), remoteCommit);
-        await git.checkout({ dir, ref: branch });
-        return remoteCommit;
+    private async isRepoFileExists(git: GIT, pathFinder: PathFinder) {
+        const status = await git.status({ dir: pathFinder.repoDir, filepath: pathFinder.repoFilePath });
+        return status !== 'absent';
     }
 
     /**
@@ -431,15 +512,19 @@ export class FileManagementService {
         const pathFinder = new PathFinder(user, file);
 
         let gitPulled = false;
-        if (await fs.exists(pathFinder.fullFilePath)) {
+        if (await this.isRepoFileExists(git, pathFinder)) {
   
-            await this.pull(git, fs, user, pathFinder.repoDir, repoMetadata);
+            const lastCommit = await this.pull(git, fs, user, pathFinder.repoDir, repoMetadata);
             gitPulled = true;
 
-            if (await fs.exists(pathFinder.fullFilePath)) {
+            // Check whether exists again after pull
+            if (await this.isRepoFileExists(git, pathFinder)) {
   
               try {
-                  await fs.remove(pathFinder.fullFilePath);
+                  if (await fs.exists(pathFinder.fullFilePath)) {
+                    // Just in case file exist in workdir
+                    await fs.remove(pathFinder.fullFilePath);
+                  }
       
                   await git.remove({
                       dir: pathFinder.repoDir,
@@ -465,8 +550,10 @@ export class FileManagementService {
 
                   // Weird bug, isogit sometimes don't update the remote commit SHA
                   await fs.writeFile(path.resolve(pathFinder.repoDir, '.git', 'refs', 'remotes', 'origin', user.branchName), commitSHA);
+                  await this.resetIndexes(fs, git, pathFinder.repoDir, commitSHA, user.branchName);
               } catch (err) {
-                  await this.resetToUpstream(fs, git, pathFinder.repoDir, user.branchName);
+                  await this.resetIndexes(fs, git, pathFinder.repoDir, lastCommit, user.branchName);
+                  // await this.resetToUpstream(fs, git, pathFinder.repoDir, user.branchName);
                   throw err;
               }
             }
@@ -511,25 +598,6 @@ export class FileManagementService {
       return unchanged;
     }
 
-    private async getStatusChanges(git: GIT, pathFinder: PathFinder, commit: string) {
-
-      const status = await git.statusMatrix({ dir: pathFinder.repoDir, ref: commit, pattern: pathFinder.repoFilePath });
-
-      const result: {[filePath: string]: string} = {};
-
-      // See https://isomorphic-git.org/docs/en/statusMatrix
-      _.each(status, row => {
-        if (row[1] === 0) {
-          result[row[0]] = 'added';
-        } else if (row[2] === 0) {
-          result[row[0]] = 'deleted';
-        } else if (row[2] === 2) {
-          result[row[0]] = 'modified';
-        }
-      });
-      return result;
-    }
-
     /**
      * Commits the files
      * @param auth the logged in user
@@ -544,9 +612,18 @@ export class FileManagementService {
 
         const repoDir = path.resolve(percyConfig.reposFolder, user.repoFolder);
 
-        // remeber last commit before pull
-        const lastCommit = await this.getRemoteCommit(git, repoDir, user.branchName);
-        await this.pull(git, fs, user, repoDir, repoMetadata);
+        const lastRepoFiles: ConfigFile[] = [];
+        const newRepoFiles: ConfigFile[] = [];
+
+        if (!forcePush) {
+          await this.findRepoYamlFiles(git, user, lastRepoFiles);
+        }
+
+        const lastCommit = await this.pull(git, fs, user, repoDir, repoMetadata);
+
+        if (!forcePush) {
+          await this.findRepoYamlFiles(git, user, newRepoFiles);
+        }
 
         // Do optimistic check
         const conflictFiles: ConfigFile[] = [];
@@ -560,14 +637,23 @@ export class FileManagementService {
             }
 
             if (!forcePush) {
-              commitBaseSHA[pathFinder.repoFilePath] = commitBaseSHA[pathFinder.repoFilePath] || lastCommit;
-              const statusChange = await this.getStatusChanges(git, pathFinder, commitBaseSHA[pathFinder.repoFilePath]);
-  
-              if (statusChange[pathFinder.repoFilePath] === 'modified'
-                  || statusChange[pathFinder.repoFilePath] === 'added') { // Should conflict if found to be deleted?
+              let oldOid = commitBaseSHA[pathFinder.repoFilePath];
+              if (!oldOid) {
+                const found = _.find(lastRepoFiles, f => f.applicationName === file.applicationName && f.fileName === file.fileName);
+                if (found) {
+                  commitBaseSHA[pathFinder.repoFilePath] = oldOid = found.oid;
+                }
+              }
+
+              const newFound = _.find(newRepoFiles, f => f.applicationName === file.applicationName && f.fileName === file.fileName);
+              const newOid = newFound ? newFound.oid : null;
+
+              if ((!oldOid && newOid) || (oldOid && newOid && oldOid !== newOid)) { // Should conflict if found to be deleted?
+                const { object } = await git.readObject({dir: pathFinder.repoDir, oid: lastCommit, filepath: pathFinder.repoFilePath, encoding: 'utf8'});
+                const originalConfig = this.utilService.convertYamlToJson(object);
                 conflictFiles.push({
                     ...file,
-                    originalConfig: this.utilService.convertYamlToJson((await fs.readFile(pathFinder.fullFilePath)).toString()),
+                    originalConfig,
                 });
               }
             }
@@ -624,8 +710,10 @@ export class FileManagementService {
 
             // Weird bug, isogit sometimes don't update the remote commit SHA
             await fs.writeFile(path.resolve(repoDir, '.git', 'refs', 'remotes', 'origin', user.branchName), commitSHA);
+            await this.resetIndexes(fs, git, repoDir, commitSHA, user.branchName);
         } catch (err) {
-            await this.resetToUpstream(fs, git, repoDir, user.branchName);
+            await this.resetIndexes(fs, git, repoDir, lastCommit, user.branchName);
+            // await this.resetToUpstream(fs, git, repoDir, user.branchName);
             throw err;
         }
 

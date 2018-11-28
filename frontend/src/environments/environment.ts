@@ -15,7 +15,7 @@ export const percyConfig = {
   reposFolder: '/percy-repo-dev',
   draftFolder: '/percy-draft-dev',
   metaFolder: '/percy-meta-dev',
-  repoMetadataVersion: '1.0',
+  repoMetadataVersion: '2.0',
   loggedInUsersMetaFile: 'logged-in-users.json',
   yamlAppsFolder: 'apps',
   environmentsFile: 'environments.yaml',
