@@ -32,20 +32,61 @@ fsExtra.appendFile = function (path, data, options) {
   return fs$appendFile(path, data, options || {});
 };
 
+// BrowserFS synchronous file system (like InMemory) has issue
+// to bypass zone.js promise handling
+const patchSynchronousMethod = (synFileSystem, func) => {
+  const existFunc = synFileSystem[func];
+
+  synFileSystem[func] = (...args) => {
+    const callback = args[args.length - 1];
+
+    args[args.length - 1] = (error, result) => {
+      // Use setImmediate to join the zone.js promise
+      if (error) {
+        setImmediate(() => callback(error));
+      } else {
+        setImmediate(() => callback(null, result));
+      }
+    };
+
+    existFunc.apply(synFileSystem, args);
+  }
+}
+
 export type GIT = typeof Git;
 export type FSExtra = typeof FsExtra;
 
 const initializer = new Promise<[GIT, FSExtra]>((resolve, reject) => {
-
+  
   BrowserFS.configure(
+    // For InMemory only repo folder, page refersh will be slow (since it needs fetch from remote),
+    // other than that, it's good
+    // {
+    //   fs: 'MountableFileSystem', options: {
+    //     [percyConfig.reposFolder]: { fs: 'InMemory' },
+    //     [percyConfig.metaFolder]: { fs: 'IndexedDB', options: {storeName: percyConfig.storeName} },
+    //     [percyConfig.draftFolder]: { fs: 'IndexedDB', options: {storeName: percyConfig.storeName} }
+    //   }
+    // },
+
     {
-      fs: 'IndexedDB', options: { storeName: percyConfig.storeName }
+      fs: "AsyncMirror",
+      options: {
+        sync: { fs: "InMemory" },
+        async: { fs: "IndexedDB", options: {storeName: percyConfig.storeName} }
+      },
     },
     async function (err) {
       if (err) {
         console.error(err);
         return reject(err);
       };
+
+      const rootFS = fs.getRootFS();
+      const synMethods = ['rename', 'stat', 'exists', 'open', 'unlink', 'rmdir', 'mkdir', 'readdir'];
+      synMethods.forEach(m => {
+        patchSynchronousMethod(rootFS, m);
+      });
 
       Git.plugins.set('fs', fs);
 

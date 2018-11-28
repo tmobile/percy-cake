@@ -13,7 +13,6 @@ import { Configuration } from 'models/config-file';
 import { ConfigProperty } from 'models/config-property';
 import { PROPERTY_VALUE_TYPES, percyConfig } from 'config';
 import { Authenticate, User } from 'models/auth';
-import { FSExtra } from './git-fs.service';
 
 const aesKey = pbkdf2.pbkdf2Sync(percyConfig.encryptKey, percyConfig.encryptSalt, 1, 32);
 
@@ -847,48 +846,5 @@ export class UtilService {
     };
 
     return {user, sessionTimeout};
-  }
-
-  async checkRepoAccess(user: User, fs: FSExtra): Promise<{user: User, repoMetadata: any}> {
-    if (!user || !user.token) {
-      throw boom.unauthorized('Miss access token');
-    }
-
-    try {
-      JSON.parse(this.decrypt(user.token));
-    } catch (err) {
-      throw boom.unauthorized('Invalid access token');
-    }
-
-    const repoMetadataFile = this.getMetadataPath(user.repoFolder);
-    if (!await fs.exists(repoMetadataFile)) {
-      throw boom.unauthorized('Repo metadata not found');
-    }
-
-    let repoMetadata: any = await fs.readFile(repoMetadataFile);
-    try {
-      repoMetadata = JSON.parse(repoMetadata.toString());
-    } catch (err) {
-      // Not a valid json format, repo metadata file corruption, remove it
-      console.warn(`${repoMetadataFile} file corruption, will be removed:\n${repoMetadata}`);
-      await fs.remove(repoMetadataFile);
-      throw boom.unauthorized('Repo metadata file corruption');
-    }
-
-    if (repoMetadata.sessionTimeout < Date.now()) {
-      throw boom.unauthorized('Session expired, please re-login');
-    }
-
-    // Verify with repo metadata
-    if (!_.isEqual(_.omit(user, 'password'),
-      _.omit(repoMetadata, 'password', 'sessionTimeout', 'commitBaseSHA', 'version'))) {
-      throw boom.forbidden('Repo metadata mismatch, you are not allowed to access the repo');
-    }
-
-    // Update session valid time
-    repoMetadata.sessionTimeout = Date.now() + ms(percyConfig.loginSessionTimeout);
-    await fs.outputJson(repoMetadataFile, repoMetadata);
-
-    return {user: {...user, password: this.decrypt(repoMetadata.password)}, repoMetadata};
   }
 }

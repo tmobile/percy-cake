@@ -2,15 +2,19 @@ import { Injectable } from '@angular/core';
 import * as path from 'path';
 import * as yamlJS from 'yaml-js';
 import * as boom from 'boom';
+import * as ms from 'ms';
+import * as AsyncLock from 'async-lock';
+import { TreeDescription, CommitDescription } from 'isomorphic-git';
 import * as _ from 'lodash';
 
 import { percyConfig } from 'config';
+import { User, Authenticate } from 'models/auth';
 import { ConfigFile } from 'models/config-file';
 import { getGitFS, GIT, FSExtra } from './git-fs.service';
 import { UtilService } from './util.service';
-import { User, Authenticate } from 'models/auth';
 import { MaintenanceService } from './maintenance.service';
-import { TreeDescription, CommitDescription } from '../../../node_modules/isomorphic-git';
+
+const lock = new AsyncLock();
 
 class PathFinder {
 
@@ -161,12 +165,13 @@ export class FileManagementService {
             const lastCommit = await this.getRemoteCommit(git, repoDir, auth.branchName);
 
             const fetchResult = await git.fetch({
+                url: auth.repositoryUrl,
                 username: auth.username,
                 password: auth.password,
                 dir: repoDir,
                 ref: auth.branchName,
+                depth: 1,
                 singleBranch: true,
-                url: auth.repositoryUrl,
                 remote: 'origin',
                 corsProxy: percyConfig.corsProxy
             });
@@ -184,7 +189,7 @@ export class FileManagementService {
               const err = new Error('Pull takes too long, will switch to clone again');
               err.name = 'PullTimeoutError';
               reject(err);
-            }, 60 * 1000); // timeout 60 seconds
+            }, 30 * 1000); // timeout 30 seconds
           })]);
           return result.toString();
       } catch (err) {
@@ -195,10 +200,7 @@ export class FileManagementService {
 
         // Just in case pull timeout, fallback to clone
         await fs.remove(repoDir);
-        const newCommit = await this.clone(fs, git, auth, repoDir);
-        const commitBaseSHA = _.mapValues(repoMetadata.commitBaseSHA, () => '');
-        await this.saveCommitBaseSHA(fs, repoMetadata, commitBaseSHA);
-        return newCommit;
+        return await this.clone(fs, git, auth, repoDir);
       }
     }
 
@@ -228,14 +230,69 @@ export class FileManagementService {
         }
     }
 
+    private async checkRepoAccess(user: User) {
+        const { fs, git } = await getGitFS();
+
+        if (!user || !user.token) {
+          throw boom.unauthorized('Miss access token');
+        }
+
+        try {
+          JSON.parse(this.utilService.decrypt(user.token));
+        } catch (err) {
+          throw boom.unauthorized('Invalid access token');
+        }
+
+        const repoMetadataFile = this.utilService.getMetadataPath(user.repoFolder);
+        if (!await fs.exists(repoMetadataFile)) {
+          throw boom.unauthorized('Repo metadata not found');
+        }
+
+        let repoMetadata: any = await fs.readFile(repoMetadataFile);
+        try {
+          repoMetadata = JSON.parse(repoMetadata.toString());
+        } catch (err) {
+          // Not a valid json format, repo metadata file corruption, remove it
+          console.warn(`${repoMetadataFile} file corruption, will be removed:\n${repoMetadata}`);
+          await fs.remove(repoMetadataFile);
+          throw boom.unauthorized('Repo metadata file corruption');
+        }
+
+        if (repoMetadata.sessionTimeout < Date.now()) {
+          throw boom.unauthorized('Session expired, please re-login');
+        }
+
+        // Verify with repo metadata
+        if (!_.isEqual(_.omit(user, 'password'),
+          _.omit(repoMetadata, 'password', 'sessionTimeout', 'commitBaseSHA', 'version'))) {
+          throw boom.forbidden('Repo metadata mismatch, you are not allowed to access the repo');
+        }
+
+        const repoDir = path.resolve(percyConfig.reposFolder, user.repoFolder);
+        const password = this.utilService.decrypt(repoMetadata.password);
+        user = {...user, password};
+
+        await lock.acquire(repoDir, async() => {
+          if (!(await fs.exists(repoDir))) {
+            await this.clone(fs, git, user, repoDir);
+          }
+        });
+
+        // Update session valid time
+        repoMetadata.sessionTimeout = Date.now() + ms(percyConfig.loginSessionTimeout);
+        await fs.outputJson(repoMetadataFile, repoMetadata);
+
+
+        return {fs, git, user, repoMetadata};
+    }
+
     /**
      * get the app environments
      * @param user the logged in user
      * @param applicationName the app name
      */
     async getEnvironments(user: User, applicationName: string) {
-        const { fs, git } = await getGitFS();
-        await this.utilService.checkRepoAccess(user, fs);
+        const { git } = await this.checkRepoAccess(user);
 
         const pathFinder = new PathFinder(user, {applicationName, fileName: percyConfig.environmentsFile});
 
@@ -300,8 +357,7 @@ export class FileManagementService {
      * @param user the logged in user
      */
     async getFiles(user: User) {
-        const { fs, git } = await getGitFS();
-        await this.utilService.checkRepoAccess(user, fs);
+        const { fs, git } = await this.checkRepoAccess(user);
 
         const [draft, repoFiles] = await Promise.all([
           this.findDraftFiles(fs, user.repoFolder),
@@ -376,8 +432,7 @@ export class FileManagementService {
      * @param file the file to get its draft and original content
      */
     async getFileContent(user: User, file: ConfigFile) {
-        const { git, fs } = await getGitFS();
-        const { repoMetadata } = await this.utilService.checkRepoAccess(user, fs);
+      const { fs, git, repoMetadata } = await this.checkRepoAccess(user);
 
         const pathFinder = new PathFinder(user, file);
 
@@ -451,14 +506,13 @@ export class FileManagementService {
      *
      * Note this method is also reponsible to clean draft data in case file is not modified.
      *
-     * @param auth the logged in user
+     * @param user the logged in user
      * @param file the draft file to save
      */
-    async saveDraft(auth: User, file: ConfigFile) {
-        const { fs, git } = await getGitFS();
-        const { repoMetadata } = await this.utilService.checkRepoAccess(auth, fs);
+    async saveDraft(user: User, file: ConfigFile) {
+      const { fs, git, repoMetadata } = await this.checkRepoAccess(user);
 
-        const pathFinder = new PathFinder(auth, file);
+        const pathFinder = new PathFinder(user, file);
 
         if (!file.modified) {
             // Not modified, don't need draft file
@@ -499,9 +553,7 @@ export class FileManagementService {
      * @param file the file to delete
      */
     async deleteFile(auth: User, file: ConfigFile) {
-        const { fs, git } = await getGitFS();
-
-        const {user, repoMetadata} = await this.utilService.checkRepoAccess(auth, fs);
+        const { fs, git, user, repoMetadata } = await this.checkRepoAccess(auth);
         const pathFinder = new PathFinder(user, file);
 
         let gitPulled = false;
@@ -598,9 +650,7 @@ export class FileManagementService {
      * @param forcePush the flag indicates whether to force push
      */
     async commitFiles(auth: User, configFiles: ConfigFile[], message: string, forcePush: boolean = false) {
-        const { fs, git } = await getGitFS();
-
-        const {user, repoMetadata} = await this.utilService.checkRepoAccess(auth, fs);
+        const { fs, git, user, repoMetadata } = await this.checkRepoAccess(auth);
 
         const repoDir = path.resolve(percyConfig.reposFolder, user.repoFolder);
 
