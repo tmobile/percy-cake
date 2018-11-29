@@ -41,6 +41,10 @@
                 overflow-wrap: break-word;
                 background-color: white;
                 padding: 20px;
+
+                &.compile-yaml {
+                  padding: 0px 10px;
+                }
                 .section-heading {
                     margin-bottom: 10px;
                 }

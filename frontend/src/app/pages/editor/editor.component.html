@@ -29,7 +29,7 @@
       <div #detailPanel>
         <!-- if node is selected to view detail -->
         <div class="preview" *ngIf="(selectedNode | async)">
-          <h3 class="section-heading" *ngIf="(selectedNode | async)">{{(selectedNode | async).getBreadCrumb()}}</h3>
+          <h3 class="section-heading" *ngIf="(selectedNode | async)">{{(selectedNode | async).id}}</h3>
           <!-- shows the node as YAML for non-leaf node -->
           <pre *ngIf="(showAsCode | async)"><code highlight [code]="previewCode | async"></code></pre>
           <!-- shows the leaf node as readonly label -->
@@ -97,8 +97,8 @@
           </div>
         </div>
         <!-- shows the compiled YAML -->
-        <div class="preview" *ngIf="(showAsCompiledYAMLEnvironment | async)">
-          <h3 class="section-heading">Compiled YAML for "{{showAsCompiledYAMLEnvironment | async}}" environment</h3>
+        <h3 class="section-heading" *ngIf="(showAsCompiledYAMLEnvironment | async)">Compiled YAML for "{{showAsCompiledYAMLEnvironment | async}}" environment</h3>
+        <div class="preview compile-yaml" *ngIf="(showAsCompiledYAMLEnvironment | async)">
           <pre><code highlight [code]="(previewCode|async)"></code></pre>
         </div>
         <!-- shows the add/edit panel -->

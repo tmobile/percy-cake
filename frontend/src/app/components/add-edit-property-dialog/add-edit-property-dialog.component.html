@@ -1,5 +1,5 @@
 <div class="property-form-wrapper" [ngSwitch]="(data.isDefaultNode || data.keyOptions.length || keyDisabled()) ? 'form' : 'error'">
-  <h2 mat-dialog-title>{{ data.editMode ? 'Edit Property' : 'Add Property' }}</h2>
+  <h2 mat-dialog-title>{{ data.editMode ? 'Edit Property' : (data.isDefaultNode ? 'Add Property':'Override Property') }}</h2>
 
   <h4>{{getBreadCrumb()}}</h4>
 

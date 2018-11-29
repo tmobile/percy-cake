@@ -10,7 +10,10 @@
       background-color: $white;
       padding: 5px;
       overflow: auto;
-  
+
+      .mat-tree {
+          min-width: 400px;
+      }
       .sub-tree {
           padding-left: 40px;
       }
@@ -48,6 +51,20 @@
             align-items: center;
             flex: 1;
             cursor: pointer;
+
+            .mat-tooltip-panel {
+              display: none;
+              .mat-tooltip {
+                color: #fff;
+                border-radius: 4px;
+                margin: 14px;
+                max-width: 250px;
+                padding-left: 8px;
+                padding-right: 8px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+              }
+            }
           }
           .context-menu-trigger {
             position: absolute;
@@ -67,7 +84,7 @@
               max-width:200px;
           }
           .value {
-              min-width: 150px;
+              word-break: break-all;
               padding-right: 20px;
               flex-shrink: 1;
               line-height: 1.2;

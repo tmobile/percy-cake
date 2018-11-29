@@ -148,9 +148,9 @@ export class AddEditPropertyDialogComponent implements OnChanges {
 
   getBreadCrumb() {
     if (this.data.editMode) {
-      return `${this.data.node.getBreadCrumb('')}${this.key.value}`;
+      return `${this.data.node.parent ? this.data.node.parent.id + '.' : ''}${this.key.value}`;
     }
-    return `${this.data.node.getBreadCrumb()} / ${this.key.value ? this.key.value : ''}`;
+    return `${this.data.node.id}${this.key.value ? '.' + this.key.value : ''}`;
   }
 
   /*
