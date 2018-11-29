@@ -1,19 +1,16 @@
-import { ConfigProperty } from './config-property';
+import * as _ from 'lodash';
+
 import { PROPERTY_VALUE_TYPES } from 'config';
 
 /**
  * Json node data with nested structure. Each node has a key and a value or a list of children
  */
 export class TreeNode {
-    id: string;
     children: TreeNode[];
     parent: TreeNode;
-    key: string;
-    value: any;
-    level: number;
     jsonValue: any;
-    valueType: string;
-    comment: string[];
+
+    constructor(public key: string, public value?: any, public valueType?: string, public comment?: string[]) {}
 
     static isLeafType(type) {
       return type === PROPERTY_VALUE_TYPES.STRING
@@ -45,26 +42,41 @@ export class TreeNode {
       }
     }
 
-    toConfigProperty(): ConfigProperty {
-        const property = new ConfigProperty();
-        property.key = this.key;
-        property.value = this.value;
-        property.valueType = this.valueType;
-        property.comment = this.comment && this.comment.length ? this.comment.join('\n') : undefined;
-        property.level = this.level;
-        property.isDefaultNode = this.isDefaultNode();
-
-        return property;
+    getCommentStr() {
+      return this.comment && this.comment.length ? this.comment.join('\n') : undefined;
     }
 
-    getBreadCrumb(key: string = this.key) {
-      let breadCrumb = key;
+    getLevel() {
+      let level = 0;
       let parentNode = this.parent;
       while (parentNode) {
-          breadCrumb = parentNode.key + ' / ' + breadCrumb;
+          level++;
           parentNode = parentNode.parent;
       }
-      return breadCrumb;
+      return level;
+    }
+
+    getPaths() {
+      const paths = [this.key];
+      let parentNode = this.parent;
+      while (parentNode) {
+          paths.unshift(parentNode.key);
+          parentNode = parentNode.parent;
+      }
+      return paths;
+    }
+
+    getPathsString() {
+      return this.getPaths().join('.');
+    }
+
+    findChild(paths: string[]) {
+      return _.reduce(paths, (node, path) => {
+        if (!node) {
+          return null;
+        }
+        return _.find(node.children, (child) => child.key === path);
+      }, this);
     }
 
     isDefaultNode() {

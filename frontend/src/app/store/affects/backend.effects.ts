@@ -5,7 +5,6 @@ import { Actions, Effect, ofType } from '@ngrx/effects';
 import { of } from 'rxjs';
 import { map, withLatestFrom, switchMap } from 'rxjs/operators';
 import * as boom from 'boom';
-import * as _ from 'lodash';
 
 import * as appStore from '..';
 import { Alert, APIError, Navigate } from '../actions/common.actions';

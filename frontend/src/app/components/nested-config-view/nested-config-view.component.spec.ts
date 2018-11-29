@@ -4,6 +4,7 @@ import { Setup, assertDialogOpened } from 'test/test-helper';
 import { NestedConfigViewComponent } from './nested-config-view.component';
 import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
 import { PROPERTY_VALUE_TYPES } from 'config';
+import { ConfigProperty } from 'models/config-property';
 
 describe('NestedConfigViewComponent', () => {
   const config = {
@@ -119,10 +120,8 @@ describe('NestedConfigViewComponent', () => {
     const node = ctx().component.envDataSource.data[0];
     ctx().component.openAddPropertyDialog(node);
 
-    const result = {
+    const result: ConfigProperty = {
       editMode: false,
-      level: node.level,
-      isDefaultNode: false,
       keyOptions: [
         {
           key: 'dev',
@@ -130,7 +129,7 @@ describe('NestedConfigViewComponent', () => {
         },
       ],
       node,
-      defaultNode: ctx().component.defaultDataSource.data[0]
+      defaultTree: ctx().component.defaultDataSource.data[0]
     };
     expect(ctx().observables.addEditProperty.value).toEqual(result);
   });
@@ -143,10 +142,8 @@ describe('NestedConfigViewComponent', () => {
     const node = ctx().component.envDataSource.data[0].children[0];
     ctx().component.openAddPropertyDialog(node);
 
-    const result = {
+    const result: ConfigProperty = {
       editMode: false,
-      level: node.level,
-      isDefaultNode: false,
       keyOptions: [
         {
           key: 'inherits',
@@ -154,7 +151,7 @@ describe('NestedConfigViewComponent', () => {
         }
       ],
       node,
-      defaultNode: ctx().component.defaultDataSource.data[0]
+      defaultTree: ctx().component.defaultDataSource.data[0]
     };
     expect(ctx().observables.addEditProperty.value).toEqual(result);
   });
@@ -167,10 +164,8 @@ describe('NestedConfigViewComponent', () => {
     const node = ctx().component.envDataSource.data[0].children[0].children[0];
     ctx().component.openAddPropertyDialog(node);
 
-    const result = {
+    const result: ConfigProperty = {
       editMode: false,
-      level: node.level,
-      isDefaultNode: false,
       keyOptions: [
         {
           key: 'host',
@@ -178,7 +173,7 @@ describe('NestedConfigViewComponent', () => {
         },
       ],
       node,
-      defaultNode: ctx().component.defaultDataSource.data[0]
+      defaultTree: ctx().component.defaultDataSource.data[0]
     };
     expect(ctx().observables.addEditProperty.value).toEqual(result);
   });
@@ -191,10 +186,8 @@ describe('NestedConfigViewComponent', () => {
     const node = ctx().component.envDataSource.data[0].children[0].children[0].children[0];
     ctx().component.openAddPropertyDialog(node);
 
-    const result = {
+    const result: ConfigProperty = {
       editMode: false,
-      level: node.level,
-      isDefaultNode: false,
       keyOptions: [
         {
           key: 'getDetails',
@@ -202,7 +195,7 @@ describe('NestedConfigViewComponent', () => {
         },
       ],
       node,
-      defaultNode: ctx().component.defaultDataSource.data[0]
+      defaultTree: ctx().component.defaultDataSource.data[0]
     };
     expect(ctx().observables.addEditProperty.value).toEqual(result);
   });
@@ -215,10 +208,8 @@ describe('NestedConfigViewComponent', () => {
     const node = ctx().component.envDataSource.data[0].children[0].children[0].children[1];
     ctx().component.openAddPropertyDialog(node);
 
-    const result = {
+    const result: ConfigProperty = {
       editMode: false,
-      level: node.level,
-      isDefaultNode: false,
       keyOptions: [
         {
           key: '[1]',
@@ -226,7 +217,7 @@ describe('NestedConfigViewComponent', () => {
         },
       ],
       node,
-      defaultNode: ctx().component.defaultDataSource.data[0]
+      defaultTree: ctx().component.defaultDataSource.data[0]
     };
     expect(ctx().observables.addEditProperty.value).toEqual(result);
   });
@@ -239,13 +230,11 @@ describe('NestedConfigViewComponent', () => {
     const node = ctx().component.defaultDataSource.data[0].children[0];
     ctx().component.openAddPropertyDialog(node);
 
-    const result = {
+    const result: ConfigProperty = {
       editMode: false,
-      level: node.level,
-      isDefaultNode: true,
       keyOptions: [],
       node,
-      defaultNode: ctx().component.defaultDataSource.data[0]
+      defaultTree: ctx().component.defaultDataSource.data[0]
     };
     expect(ctx().observables.addEditProperty.value).toEqual(result);
   });
@@ -258,14 +247,11 @@ describe('NestedConfigViewComponent', () => {
     const node = ctx().component.defaultDataSource.data[0].children[0];
     ctx().component.openEditPropertyDialog(node);
 
-    const result = {
+    const result: ConfigProperty = {
       editMode: true,
-      level: node.level,
-      isDefaultNode: true,
       keyOptions: [],
       node,
-      defaultNode: ctx().component.defaultDataSource.data[0],
-      configProperty: node.toConfigProperty(),
+      defaultTree: ctx().component.defaultDataSource.data[0],
     };
     expect(ctx().observables.addEditProperty.value).toEqual(result);
   });
@@ -278,10 +264,8 @@ describe('NestedConfigViewComponent', () => {
     const node = ctx().component.envDataSource.data[0].children[0];
     ctx().component.openEditPropertyDialog(node);
 
-    const result = {
+    const result: ConfigProperty = {
       editMode: true,
-      level: node.level,
-      isDefaultNode: false,
       keyOptions: [
         {
           key: 'qat',
@@ -289,8 +273,7 @@ describe('NestedConfigViewComponent', () => {
         }
       ],
       node,
-      defaultNode: ctx().component.defaultDataSource.data[0],
-      configProperty: node.toConfigProperty(),
+      defaultTree: ctx().component.defaultDataSource.data[0],
     };
     expect(ctx().observables.addEditProperty.value).toEqual(result);
   });
@@ -306,8 +289,7 @@ describe('NestedConfigViewComponent', () => {
     const newNode = _.cloneDeep(node.children[0]);
     ctx().component.saveAddEditProperty(newNode);
 
-    const currentAddEditProperty = ctx().component.currentAddEditProperty;
-    expect(currentAddEditProperty.children[currentAddEditProperty.children.length - 1]).toEqual(newNode);
+    expect(node.children[node.children.length - 1]).toEqual(newNode);
   });
 
   it('should save added propery in environments tree', () => {
@@ -321,8 +303,7 @@ describe('NestedConfigViewComponent', () => {
     const newNode = _.cloneDeep(node.children[0]);
     ctx().component.saveAddEditProperty(newNode);
 
-    const currentAddEditProperty = ctx().component.currentAddEditProperty;
-    expect(currentAddEditProperty.children[currentAddEditProperty.children.length - 1]).toEqual(newNode);
+    expect(node.children[node.children.length - 1]).toEqual(newNode);
   });
 
   it('should save edited default propery', () => {
@@ -340,10 +321,10 @@ describe('NestedConfigViewComponent', () => {
     newNode.comment = ['new comment'];
     ctx().component.saveAddEditProperty(newNode);
 
-    expect(ctx().component.currentAddEditProperty.key).toEqual(newNode.key);
-    expect(ctx().component.currentAddEditProperty.value).toEqual(newNode.value);
-    expect(ctx().component.currentAddEditProperty.valueType).toEqual(newNode.valueType);
-    expect(ctx().component.currentAddEditProperty.comment).toEqual(newNode.comment);
+    expect(node.key).toEqual(newNode.key);
+    expect(node.value).toEqual(newNode.value);
+    expect(node.valueType).toEqual(newNode.valueType);
+    expect(node.comment).toEqual(newNode.comment);
   });
 
   it('should save edited array propery', () => {
@@ -361,11 +342,11 @@ describe('NestedConfigViewComponent', () => {
     newNode.comment = ['new comment'];
     ctx().component.saveAddEditProperty(newNode);
 
-    expect(ctx().component.currentAddEditProperty.key).toEqual(newNode.key);
-    expect(ctx().component.currentAddEditProperty.value).toEqual(newNode.value);
-    expect(ctx().component.currentAddEditProperty.valueType).toEqual(newNode.valueType);
-    expect(ctx().component.currentAddEditProperty.comment).toEqual(newNode.comment);
-    expect(ctx().component.currentAddEditProperty.children).toEqual(newNode.children);
+    expect(node.key).toEqual(newNode.key);
+    expect(node.value).toEqual(newNode.value);
+    expect(node.valueType).toEqual(newNode.valueType);
+    expect(node.comment).toEqual(newNode.comment);
+    expect(node.children).toEqual(newNode.children);
   });
 
   it('should save edited environment', () => {
@@ -380,10 +361,10 @@ describe('NestedConfigViewComponent', () => {
     newNode.comment = ['new comment'];
     ctx().component.saveAddEditProperty(newNode);
 
-    expect(ctx().component.currentAddEditProperty.key).toEqual(newNode.key);
-    expect(ctx().component.currentAddEditProperty.value).toEqual(newNode.value);
-    expect(ctx().component.currentAddEditProperty.valueType).toEqual(newNode.valueType);
-    expect(ctx().component.currentAddEditProperty.comment).toEqual(newNode.comment);
+    expect(node.key).toEqual(newNode.key);
+    expect(node.value).toEqual(newNode.value);
+    expect(node.valueType).toEqual(newNode.valueType);
+    expect(node.comment).toEqual(newNode.comment);
   });
 
   it('should emit configuration change', () => {
@@ -442,7 +423,6 @@ describe('NestedConfigViewComponent', () => {
 
     expect(found.children.length).toEqual(1);
     expect(found.children[0].key).toEqual('[0]');
-    expect(found.children[0].id).toEqual(found.id + '.[0]');
   });
 
   it('should emit various actions', () => {

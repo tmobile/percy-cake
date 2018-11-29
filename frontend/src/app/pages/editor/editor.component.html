@@ -29,16 +29,16 @@
       <div #detailPanel>
         <!-- if node is selected to view detail -->
         <div class="preview" *ngIf="(selectedNode | async)">
-          <h3 class="section-heading" *ngIf="(selectedNode | async)">{{(selectedNode | async).id}}</h3>
+          <h3 class="section-heading" *ngIf="(selectedNode | async)">{{(selectedNode | async).getPathsString()}}</h3>
           <!-- shows the node as YAML for non-leaf node -->
           <pre *ngIf="(showAsCode | async)"><code highlight [code]="previewCode | async"></code></pre>
           <!-- shows the leaf node as readonly label -->
-          <div *ngIf="!(showAsCode | async) && (selectedConfigProperty | async)" class="property">
+          <div *ngIf="!(showAsCode | async) && (selectedNode | async)" class="property">
             <div class="mat-form-field mat-form-field-appearance-legacy mat-form-field-disabled mat-form-field-can-float mat-form-field-should-float">
               <div class="mat-form-field-wrapper">
                 <div class="mat-form-field-flex">
                   <div class="mat-form-field-infix">
-                    <mat-label>{{(selectedConfigProperty|async).key}}</mat-label>
+                    <mat-label>{{(selectedNode|async).key}}</mat-label>
                     <span class="mat-form-field-label-wrapper">
                       <label class="mat-form-field-label">Name</label>
                     </span>
@@ -53,7 +53,7 @@
               <div class="mat-form-field-wrapper">
                 <div class="mat-form-field-flex">
                   <div class="mat-form-field-infix">
-                    <mat-label>{{(selectedConfigProperty|async).valueType}}</mat-label>
+                    <mat-label>{{(selectedNode|async).valueType}}</mat-label>
                     <span class="mat-form-field-label-wrapper">
                       <label class="mat-form-field-label">Value Type</label>
                     </span>
@@ -68,7 +68,7 @@
               <div class="mat-form-field-wrapper">
                 <div class="mat-form-field-flex">
                   <div class="mat-form-field-infix">
-                    <mat-label>{{(selectedConfigProperty|async).value}}</mat-label>
+                    <mat-label>{{(selectedNode|async).value}}</mat-label>
                     <span class="mat-form-field-label-wrapper">
                       <label class="mat-form-field-label">Value</label>
                     </span>
@@ -83,7 +83,7 @@
               <div class="mat-form-field-wrapper">
                 <div class="mat-form-field-flex">
                   <div class="mat-form-field-infix">
-                    <mat-label class="comment"><pre>{{(selectedConfigProperty|async).comment}}</pre></mat-label>
+                    <mat-label class="comment"><pre>{{(selectedNode|async).getCommentStr()}}</pre></mat-label>
                     <span class="mat-form-field-label-wrapper">
                       <label class="mat-form-field-label"> Comment</label>
                     </span>
@@ -102,9 +102,9 @@
           <pre><code highlight [code]="(previewCode|async)"></code></pre>
         </div>
         <!-- shows the add/edit panel -->
-        <div class="add-edit-property-mode" *ngIf="(currentAddEditProperty | async)">
+        <div class="add-edit-property-mode" *ngIf="(currentConfigProperty | async)">
           <app-add-edit-property-dialog (saveProperty)="onSaveAddEditProperty($event)" (cancel)="onCancelAddEditProperty($event)"
-            [data]="(currentAddEditProperty | async).options"></app-add-edit-property-dialog>
+            [data]="currentConfigProperty | async"></app-add-edit-property-dialog>
         </div>
       </div>
     </div>

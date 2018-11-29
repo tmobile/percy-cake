@@ -7,13 +7,16 @@ import { Setup, TestUser, assertDialogOpened } from 'test/test-helper';
 import * as appStore from 'store';
 import { LoginSuccess } from 'store/actions/auth.actions';
 import { ConfigurationChange } from 'store/actions/editor.actions';
-import { API_BASE_URL } from 'services/http-helper.service';
 
 import { AlertDialogComponent } from 'components/alert-dialog/alert-dialog.component';
 import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.component';
 import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
 
 import { EditorComponent } from './editor.component';
+
+import { percyConfig } from 'config';
+
+const API_BASE_URL = '';
 
 describe('EditorComponent', () => {
 
@@ -30,7 +33,7 @@ describe('EditorComponent', () => {
     },
     {
       applicationName: 'app1',
-      fileName: TestUser.envFileName,
+      fileName: percyConfig.environmentsFile,
       timestamp: Date.now(),
       size: 100,
     },
@@ -42,7 +45,7 @@ describe('EditorComponent', () => {
     },
     {
       applicationName: 'app2',
-      fileName: TestUser.envFileName,
+      fileName: percyConfig.environmentsFile,
       timestamp: Date.now(),
       size: 100,
     },

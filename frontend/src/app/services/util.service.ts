@@ -10,7 +10,6 @@ import * as boom from 'boom';
 
 import { TreeNode } from 'models/tree-node';
 import { Configuration } from 'models/config-file';
-import { ConfigProperty } from 'models/config-property';
 import { PROPERTY_VALUE_TYPES, percyConfig } from 'config';
 import { Authenticate, User } from 'models/auth';
 
@@ -443,48 +442,16 @@ export class UtilService {
   }
 
   /**
-   * converts the editing property detail to tree node
-   * @param property the config property
-   */
-  convertToTreeNode(property: ConfigProperty): TreeNode {
-    const node = new TreeNode();
-    node.key = property.key;
-    node.valueType = property.valueType;
-
-    if (node.isLeaf()) {
-      if (property.valueType === PROPERTY_VALUE_TYPES.BOOLEAN) {
-        property.value = property.value === 'true' || property.value === true;
-      } else if (property.valueType === PROPERTY_VALUE_TYPES.NUMBER) {
-        property.value = _.toNumber(property.value);
-      } else if (property.valueType === PROPERTY_VALUE_TYPES.STRING) {
-        property.value = property.value;
-      }
-      node.value = property.value;
-    } else {
-      node.children = [];
-    }
-
-    if (property.comment) {
-      node.comment = property.comment.split('\n');
-    }
-
-    return node;
-  }
-
-  /**
    * Build the config structure tree. The `obj` is the Json object, or a sub-tree of a Json object.
    * The return value is `TreeNode`.
    */
-  buildConfigTree(obj: object, level: number, key: string, parentNode?: TreeNode): TreeNode {
-    const node = new TreeNode();
-    node.key = key;
-    node.id = parentNode ? `${parentNode.id}.${key}` : key;
+  buildConfigTree(obj: object, key: string, parentNode?: TreeNode): TreeNode {
+    const node = new TreeNode(key);
     node.value = obj['$value'];
     obj['$type'] = obj['$type'] || (node.value ? typeof node.value : 'object');
     node.valueType = obj['$type'];
     node.comment = obj['$comment'];
     node.parent = parentNode;
-    node.level = level;
     node.jsonValue = obj;
 
     if (!node.isLeaf()) {
@@ -495,7 +462,7 @@ export class UtilService {
 
         node.value = _.isArray(node.value) ? node.value : [];
         node.value.forEach((element, idx) => {
-          const item = this.buildConfigTree(element, level + 1, `[${idx}]`, node);
+          const item = this.buildConfigTree(element, `[${idx}]`, node);
           if (!item.isLeaf()) {
             console.warn(`Only support array of same simple type, but got: ${item}`);
             return;
@@ -528,7 +495,7 @@ export class UtilService {
           if (nestKey === '$comment' || nestKey === '$value' || nestKey === '$type') {
             return;
           }
-          node.children.push(this.buildConfigTree(obj[nestKey], level + 1, nestKey, node));
+          node.children.push(this.buildConfigTree(obj[nestKey], nestKey, node));
         });
       }
 

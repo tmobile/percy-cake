@@ -84,8 +84,7 @@ export const getShowAsCode = createSelector(editorState, fromEditor.getShowAsCod
 export const getPreviewCode = createSelector(editorState, fromEditor.getPreviewCode);
 export const getShowAsCompiledYAMLEnvironment = createSelector(editorState, fromEditor.getShowAsCompiledYAMLEnvironment);
 export const getSelectedNode = createSelector(editorState, fromEditor.getSelectedNode);
-export const getCurrentAddEditProperty = createSelector(editorState, fromEditor.getCurrentAddEditProperty);
-export const getSelectedConfigProperty = createSelector(editorState, fromEditor.getSelectedConfigProperty);
+export const getCurrentConfigProperty = createSelector(editorState, fromEditor.getCurrentConfigProperty);
 export const getIsPageDirty = createSelector(editorState, fromEditor.getIsPageDirty);
 
 

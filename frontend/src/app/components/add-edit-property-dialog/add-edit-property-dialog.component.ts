@@ -1,11 +1,11 @@
-import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import * as _ from 'lodash';
 
 import { PROPERTY_VALUE_TYPES } from 'config';
-import { ConfigProperty } from 'models/config-property';
 import { UtilService } from 'services/util.service';
 import { TreeNode } from 'models/tree-node';
+import { ConfigProperty } from 'models/config-property';
 
 /*
   add or edit new property in the environment configuration
@@ -18,7 +18,7 @@ import { TreeNode } from 'models/tree-node';
   styleUrls: ['./add-edit-property-dialog.component.scss']
 })
 export class AddEditPropertyDialogComponent implements OnChanges {
-  @Input() data: any;
+  @Input() data: ConfigProperty;
   @Output() saveProperty = new EventEmitter<TreeNode>();
   @Output() cancel = new EventEmitter<any>();
   formDirty = false;
@@ -55,20 +55,20 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     this.duplicateDefault = false;
     this.inheritsOptions = null;
 
-    const { editMode, node, configProperty } = this.data;
+    const { editMode, node } = this.data;
 
     if (editMode) {
 
-      this.key.setValue(configProperty.key);
-      this.valueType.setValue(configProperty.valueType);
+      this.key.setValue(node.key);
+      this.valueType.setValue(node.valueType);
 
-      if (configProperty.valueType === PROPERTY_VALUE_TYPES.NUMBER) {
-        this.value.setValue(_.isNumber(configProperty.value) ? configProperty.value : '');
+      if (node.valueType === PROPERTY_VALUE_TYPES.NUMBER) {
+        this.value.setValue(_.isNumber(node.value) ? node.value : '');
       } else {
-        this.value.setValue(_.toString(configProperty.value));
+        this.value.setValue(_.toString(node.value));
       }
 
-      this.comment.setValue(_.toString(configProperty.comment));
+      this.comment.setValue(_.toString(node.getCommentStr()));
     } else {
       if (node.isArray()) {
         this.key.setValue(`[${node.children.length}]`);
@@ -86,11 +86,11 @@ export class AddEditPropertyDialogComponent implements OnChanges {
   }
 
   keyDisabled() {
-    return this.isEditRootNode() || this.isEditArrayItem() || (this.data.editMode && !this.data.isDefaultNode);
+    return this.isEditRootNode() || this.isEditArrayItem() || (this.data.editMode && !this.data.node.isDefaultNode());
   }
 
   valueTypeDisabled() {
-    return this.isEditRootNode() || this.isEditArrayItem() || !this.data.isDefaultNode;
+    return this.isEditRootNode() || this.isEditArrayItem() || !this.data.node.isDefaultNode();
   }
 
   isEditArrayItem() {
@@ -104,8 +104,8 @@ export class AddEditPropertyDialogComponent implements OnChanges {
   }
 
   showInherits() {
-    const result = !this.data.isDefaultNode && this.key.value === 'inherits'
-      && ((!this.data.editMode && this.data.node.level === 1) || (this.data.editMode && this.data.node.level === 2));
+    const result = !this.data.node.isDefaultNode() && this.key.value === 'inherits'
+      && ((!this.data.editMode && this.data.node.getLevel() === 1) || (this.data.editMode && this.data.node.getLevel() === 2));
 
     if (result) {
       if (!this.inheritsOptions) {
@@ -120,10 +120,10 @@ export class AddEditPropertyDialogComponent implements OnChanges {
   private getInheritsOptions() {
     let envsNode;
     let thisEnvKey;
-    if (this.data.node.level === 1) {
+    if (this.data.node.getLevel() === 1) {
       envsNode = this.data.node.parent;
       thisEnvKey = this.data.node.key;
-    } else if (this.data.node.level === 2) {
+    } else if (this.data.node.getLevel() === 2) {
       envsNode = this.data.node.parent.parent;
       thisEnvKey = this.data.node.parent.key;
     } else {
@@ -147,10 +147,11 @@ export class AddEditPropertyDialogComponent implements OnChanges {
   }
 
   getBreadCrumb() {
+    const node: TreeNode = this.data.node;
     if (this.data.editMode) {
-      return `${this.data.node.parent ? this.data.node.parent.id + '.' : ''}${this.key.value}`;
+      return `${node.parent ? node.parent.getPathsString() + '.' : ''}${this.key.value}`;
     }
-    return `${this.data.node.id}${this.key.value ? '.' + this.key.value : ''}`;
+    return `${node.getPathsString()}${this.key.value ? '.' + this.key.value : ''}`;
   }
 
   /*
@@ -184,38 +185,49 @@ export class AddEditPropertyDialogComponent implements OnChanges {
       (!TreeNode.isLeafType(this.valueType.value) || this.value.disabled ? true : this.value.valid)
     ) {
       if (!this.duplicateDefault) {
-        const property = new ConfigProperty();
-        property.key = this.key.value;
-        property.valueType = this.valueType.value;
-        property.comment = this.comment.value;
-        property.value = this.value.value;
+        const node = new TreeNode(this.key.value);
+        node.valueType = this.valueType.value;
+    
+        if (node.isLeaf()) {
+          if (node.valueType === PROPERTY_VALUE_TYPES.BOOLEAN) {
+            node.value = this.value.value === 'true' || this.value.value === true;
+          } else if (node.valueType === PROPERTY_VALUE_TYPES.NUMBER) {
+            node.value = _.toNumber(this.value.value);
+          } else if (node.valueType === PROPERTY_VALUE_TYPES.STRING) {
+            node.value = this.value.value;
+          }
+        } else {
+          node.children = [];
+        }
+    
+        if (this.comment.value) {
+          node.comment = this.comment.value.split('\n');
+        }
 
-        // omit empty values and send the response and close the dialog
-        this.saveProperty.emit(this.utilService.convertToTreeNode(property));
+        this.saveProperty.emit(node);
       } else {
         // Build key hierarchy
         const keyHierarchy = [];
         let node = this.data.node;
-        while (node && node.level > 1) {
+        while (node && node.getLevel() > 1) {
           keyHierarchy.unshift(node.key);
           node = node.parent;
         }
 
         const keyValue = this.key.value;
-        if (!this.data.editMode && this.data.node.level >= 1) {
+        if (!this.data.editMode && this.data.node.getLevel() >= 1) {
           keyHierarchy.push(keyValue);
         }
 
         // Find the respective defalut node
-        let defaultNode = this.data.defaultNode;
+        let defaultTree = this.data.defaultTree;
         for (let i = 0; i < keyHierarchy.length; i++) {
-          defaultNode = _.find(defaultNode.children, { key: keyHierarchy[i] });
+          defaultTree = _.find(defaultTree.children, child => child.key === keyHierarchy[i]);
         }
 
         // Clone default node by rebuilding it
         const result = this.utilService.buildConfigTree(
-          defaultNode.jsonValue,
-          this.data.editMode ? this.data.node.level : this.data.node.level + 1,
+          defaultTree.jsonValue,
           keyValue,
           this.data.editMode ? this.data.node.parent : this.data.node);
 

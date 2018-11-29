@@ -1,13 +1,13 @@
-<div class="split-tree-view" appSplit [splitAreas]="['#default-tree-view','#env-tree-view']" [splitDirection]="'vertical'" [gutterHeight]="20" [splitSizes]="isEnvMode? [100,0]:[50,50]" [splitMinSizes]="isEnvMode?[50,0]:[50,50]">
+<div class="split-tree-view" appSplit [splitAreas]="['#default-tree-view','#env-tree-view']" [splitDirection]="'vertical'" [gutterHeight]="20" [splitSizes]="[50,50]" [splitMinSizes]="[50,50]">
   <!-- default config tree view -->
   <div id="default-tree-view">
-    <mat-card class="nested-config-view" >
+    <mat-card class="nested-config-view">
       <ng-container *ngTemplateOutlet="treeView; context: {dataSource: defaultDataSource, treeControl: defaultTreeControl}"></ng-container>
     </mat-card>
   </div>
   <!-- environments config tree view -->
   <div id="env-tree-view">
-    <mat-card class="nested-config-view" *ngIf="!isEnvMode">
+    <mat-card class="nested-config-view">
       <ng-container *ngTemplateOutlet="treeView; context: {dataSource: envDataSource, treeControl: envTreeControl}"></ng-container>
     </mat-card>
   </div>
@@ -36,13 +36,13 @@
     <div class="mat-tree-node">
         <div *ngIf="node.isLeaf()" class="btn-tree-toggle"></div>
 
-        <div *ngIf="!node.isLeaf() && node.level === 0" (click)="toggle(treeControl, node, true)" class="{{treeControl.isExpanded(node)?'btn-tree-toggle toggle-all-up':'btn-tree-toggle toggle-all-down'}}" >&raquo;</div>
+        <div *ngIf="!node.isLeaf() && node.getLevel() === 0" (click)="toggle(treeControl, node, true)" class="{{treeControl.isExpanded(node)?'btn-tree-toggle toggle-all-up':'btn-tree-toggle toggle-all-down'}}" >&raquo;</div>
 
         <div *ngIf="!node.isLeaf()" class="{{treeControl.isExpanded(node)?'btn-tree-toggle toggle-up':'btn-tree-toggle toggle-down'}}" (click)="toggle(treeControl, node)">{{treeControl.isExpanded(node) ? '-' : '+' }}</div>
 
         <span class="context-menu-trigger" #menuTrigger [matMenuTriggerFor]="menu"></span>
 
-        <div class="underline" (contextmenu)="openMenu($event, menuTrigger)" appFollowCursor [follower]="tooltip"
+        <div class="underline" (contextmenu)="openMenu($event, menuTrigger)"
             (click)="showDetail(node)" (dblclick)="treeControl.isExpanded(node) ? treeControl.collapse(node): treeControl.expand(node)">
             <div #tooltip [hidden]="!node.comment || !node.comment.length" class="cdk-overlay-pane mat-tooltip-panel"><pre class="mat-tooltip">{{node.comment ? node.comment.join('\n'):''}}</pre></div>
             <div appFollowCursor [follower]="tooltip" class="key" >{{node.key}} :</div>
@@ -52,15 +52,15 @@
 
         <mat-menu #menu="matMenu">
           <button *ngIf="!node.isLeaf()" mat-button class="btn-action-menu" color="primary" (click)="openAddPropertyDialog(node)">
-            {{node.isDefaultNode() || node.level> 0? (node.isDefaultNode()? 'Add Property':'Override Property'): 'Add Environment'}}
+            {{node.isDefaultNode() || node.getLevel() > 0? (node.isDefaultNode()? 'Add Property':'Override Property'): 'Add Environment'}}
           </button>
           <button mat-button class="btn-action-menu" color="primary" (click)="openEditPropertyDialog(node)">
             Edit
           </button>
-          <button *ngIf="!node.isDefaultNode() && node.level === 1" (click)="viewCompiledYAML(node.key)" mat-button class="btn-action-menu" color="primary">
+          <button *ngIf="!node.isDefaultNode() && node.getLevel() === 1" (click)="viewCompiledYAML(node.key)" mat-button class="btn-action-menu" color="primary">
             View Compiled YAML
           </button>
-          <button *ngIf="node.level>0" mat-button class="btn-action-menu" color="warn" (click)="deleteProperty(node)">
+          <button *ngIf="node.getLevel()>0" mat-button class="btn-action-menu" color="warn" (click)="deleteProperty(node)">
             Delete
           </button>
         </mat-menu>

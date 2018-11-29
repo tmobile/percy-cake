@@ -13,10 +13,11 @@ import { CommitChanges, SaveDraft } from 'store/actions/backend.actions';
 import {
   PageLoad, ConfigurationChange, ChangeFileName, 
   OpenAddEditProperty, CancelAddEditProperty, SaveAddEditProperty,
-  NodeSelected, ViewCompiledYAMLSuccess,
+  ViewCompiledYAMLSuccess, NodeSelectedSuccess,
 } from 'store/actions/editor.actions';
 import { TreeNode } from 'models/tree-node';
 import { Configuration } from 'models/config-file';
+import { ConfigProperty } from 'models/config-property';
 import { NestedConfigViewComponent } from 'components/nested-config-view/nested-config-view.component';
 import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
 import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.component';
@@ -46,8 +47,7 @@ export class EditorComponent implements OnInit {
   showAsCode = this.store.pipe(select(appStore.getShowAsCode));
   showAsCompiledYAMLEnvironment = this.store.pipe(select(appStore.getShowAsCompiledYAMLEnvironment));
   previewCode = this.store.pipe(select(appStore.getPreviewCode));
-  currentAddEditProperty = this.store.pipe(select(appStore.getCurrentAddEditProperty));
-  selectedConfigProperty = this.store.pipe(select(appStore.getSelectedConfigProperty));
+  currentConfigProperty = this.store.pipe(select(appStore.getCurrentConfigProperty));
   isCommitting = this.store.pipe(select(appStore.getIsCommitting));
   isSaving = this.store.pipe(select(appStore.getIsSaving));
   isEditMode = false;
@@ -203,12 +203,17 @@ export class EditorComponent implements OnInit {
 
   // handles the node selected request to show the detail
   onNodeSelected(node: TreeNode) {
-    this.store.dispatch(new NodeSelected({ node }));
+    if (!node.isLeaf()) {
+        const compiledYAML = this.utilService.convertJsonToYaml({[node.key]: node.jsonValue});
+        this.store.dispatch(new NodeSelectedSuccess({ node, compiledYAML }));
+    } else {
+        this.store.dispatch(new NodeSelectedSuccess({ node, compiledYAML: null }));
+    }
   }
 
   // handles the open add/edit property request
-  onAddEditProperty(options) {
-    this.store.dispatch(new OpenAddEditProperty({ options }));
+  onAddEditProperty(property: ConfigProperty) {
+    this.store.dispatch(new OpenAddEditProperty({ property }));
   }
 
   // handles the cancel add/edit property request

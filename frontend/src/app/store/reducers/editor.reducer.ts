@@ -21,8 +21,7 @@ export interface State {
     previewCode: string;
     showAsCompiledYAMLEnvironment: string;
     selectedNode: TreeNode;
-    currentAddEditProperty: any;
-    selectedConfigProperty: ConfigProperty;
+    currentConfigProperty: ConfigProperty;
     isPageDirty: boolean;
 }
 
@@ -40,8 +39,7 @@ export const initialState: State = {
     previewCode: null,
     showAsCompiledYAMLEnvironment: null,
     selectedNode: null,
-    currentAddEditProperty: null,
-    selectedConfigProperty: null,
+    currentConfigProperty: null,
     isPageDirty: false,
 };
 
@@ -50,8 +48,7 @@ const cancelRightPanel = {
     previewCode: null,
     showAsCompiledYAMLEnvironment: null,
     selectedNode: null,
-    selectedConfigProperty: null,
-    currentAddEditProperty: null,
+    currentConfigProperty: null,
 };
 
 export function reducer(state = initialState, action: EditorActionsUnion | BackendActionsUnion): State {
@@ -98,8 +95,7 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
                 ...state,
                 showAsCode: false,
                 selectedNode: null,
-                selectedConfigProperty: null,
-                currentAddEditProperty: null,
+                currentConfigProperty: null,
                 showAsCompiledYAMLEnvironment: action.payload.environment,
                 previewCode: action.payload.compiledYAML,
             };
@@ -177,10 +173,7 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
                 previewCode: null,
                 showAsCompiledYAMLEnvironment: null,
                 selectedNode: null,
-                selectedConfigProperty: null,
-                currentAddEditProperty: {
-                    options: action.payload.options,
-                },
+                currentConfigProperty: action.payload.property,
             };
         }
 
@@ -198,24 +191,16 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
                 ...cancelRightPanel
             };
         }
-        case EditorActionTypes.NodeSelected: {
-            return {
-                ...state,
-                previewCode: null,
-                showAsCompiledYAMLEnvironment: null,
-                selectedConfigProperty: null,
-                currentAddEditProperty: null,
-                selectedNode: action.payload.node,
-                showAsCode: !action.payload.node.isLeaf(),
-            };
-        }
 
         case EditorActionTypes.NodeSelectedSuccess: {
-            return {
-                ...state,
-                previewCode: action.payload.compiledYAML,
-                selectedConfigProperty: action.payload.configProperty
-            };
+          return {
+              ...state,
+              showAsCompiledYAMLEnvironment: null,
+              currentConfigProperty: null,
+              selectedNode: action.payload.node,
+              showAsCode: !action.payload.node.isLeaf(),
+              previewCode: action.payload.compiledYAML,
+          };
         }
 
         default: {
@@ -235,6 +220,5 @@ export const getShowAsCode = (state: State) => state.showAsCode;
 export const getPreviewCode = (state: State) => state.previewCode;
 export const getShowAsCompiledYAMLEnvironment = (state: State) => state.showAsCompiledYAMLEnvironment;
 export const getSelectedNode = (state: State) => state.selectedNode;
-export const getCurrentAddEditProperty = (state: State) => state.currentAddEditProperty;
-export const getSelectedConfigProperty = (state: State) => state.selectedConfigProperty;
+export const getCurrentConfigProperty = (state: State) => state.currentConfigProperty;
 export const getIsPageDirty = (state: State) => state.isPageDirty;

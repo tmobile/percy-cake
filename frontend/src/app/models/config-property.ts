@@ -1,11 +1,11 @@
+import { TreeNode } from "./tree-node";
+
 /**
- * Class that describes the config property for add/edit
+ * Interface that describes the config property for add/edit
  */
-export class ConfigProperty {
-    key: string;
-    value: any;
-    valueType: string;
-    comment?: string;
-    level: number;
-    isDefaultNode: boolean; // represents if property is default or not, false means it is environments root node
+export interface ConfigProperty {
+  editMode: boolean;
+  keyOptions: {key:string, type:string}[];
+  node: TreeNode; // When in edit mode, this is node being edited; when in add mode, this is the parent node to be added to
+  defaultTree: TreeNode; // The 'default' root tree
 }

@@ -1,8 +1,8 @@
 import { Action } from '@ngrx/store';
 
 import { TreeNode } from 'models/tree-node';
-import { ConfigProperty } from 'models/config-property';
 import { Configuration } from 'models/config-file';
+import { ConfigProperty } from 'models/config-property';
 
 export enum EditorActionTypes {
     PageLoad = '[Editor] Page Load',
@@ -13,7 +13,6 @@ export enum EditorActionTypes {
     OpenAddEditProperty = '[Editor] Open Add Edit Property',
     CancelAddEditProperty = '[Editor] Cancel Add Edit Property',
     SaveAddEditProperty = '[Editor] Save Add Edit Property',
-    NodeSelected = '[Editor] Node Selected',
     NodeSelectedSuccess = '[Editor] Node Selected Success',
     ConfigurationChange = '[Editor] Configuration Change',
 }
@@ -52,7 +51,7 @@ export class ChangeFileName implements Action {
 
 export class OpenAddEditProperty implements Action {
     readonly type = EditorActionTypes.OpenAddEditProperty;
-    constructor(public payload: { options: any }) { }
+    constructor(public payload: { property: ConfigProperty }) { }
 }
 
 export class CancelAddEditProperty implements Action {
@@ -64,14 +63,9 @@ export class SaveAddEditProperty implements Action {
     constructor(public payload: { node: TreeNode }) { }
 }
 
-export class NodeSelected implements Action {
-    readonly type = EditorActionTypes.NodeSelected;
-    constructor(public payload: { node: TreeNode }) { }
-}
-
 export class NodeSelectedSuccess implements Action {
     readonly type = EditorActionTypes.NodeSelectedSuccess;
-    constructor(public payload: { compiledYAML: string, configProperty: ConfigProperty }) { }
+    constructor(public payload: { node: TreeNode , compiledYAML: string }) { }
 }
 
 export type EditorActionsUnion =
@@ -83,7 +77,6 @@ export type EditorActionsUnion =
     | OpenAddEditProperty
     | CancelAddEditProperty
     | SaveAddEditProperty
-    | NodeSelected
     | NodeSelectedSuccess
     | ConfigurationChange
     ;
