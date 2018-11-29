@@ -42,16 +42,17 @@
 
         <span class="context-menu-trigger" #menuTrigger [matMenuTriggerFor]="menu"></span>
 
-        <div class="underline" (contextmenu)="openMenu($event, menuTrigger)"
+        <div class="underline" (contextmenu)="openMenu($event, menuTrigger)" appFollowCursor [follower]="tooltip"
             (click)="showDetail(node)" (dblclick)="treeControl.isExpanded(node) ? treeControl.collapse(node): treeControl.expand(node)">
-            <div class="key" >{{node.key}} :</div>
-            <div *ngIf="node.isLeaf()" class="value">{{node.value}}</div>
+            <div #tooltip [hidden]="!node.comment || !node.comment.length" class="cdk-overlay-pane mat-tooltip-panel"><pre class="mat-tooltip">{{node.comment ? node.comment.join('\n'):''}}</pre></div>
+            <div appFollowCursor [follower]="tooltip" class="key" >{{node.key}} :</div>
+            <div appFollowCursor [follower]="tooltip" *ngIf="node.isLeaf()" class="value">{{node.value}}</div>
             <button mat-icon-button #menuButton class="btn-action" (click)="$event.stopPropagation()" (contextmenu)="buttonOpenMenu($event, menuButton)" [matMenuTriggerFor]="menu">...</button>
         </div>
 
         <mat-menu #menu="matMenu">
           <button *ngIf="!node.isLeaf()" mat-button class="btn-action-menu" color="primary" (click)="openAddPropertyDialog(node)">
-            {{node.isDefaultNode() || node.level> 0? 'Add Property': 'Add Environment'}}
+            {{node.isDefaultNode() || node.level> 0? (node.isDefaultNode()? 'Add Property':'Override Property'): 'Add Environment'}}
           </button>
           <button mat-button class="btn-action-menu" color="primary" (click)="openEditPropertyDialog(node)">
             Edit

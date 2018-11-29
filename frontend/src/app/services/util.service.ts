@@ -462,6 +462,7 @@ export class UtilService {
 
   compileYAML(env: string, config: Configuration) {
     const mergeStack = [];
+    const inheritedEnvs = [env];
 
     let envNode = config.environments[env] || {};
     while (envNode) {
@@ -471,9 +472,10 @@ export class UtilService {
       mergeStack.unshift({[env]: deepCopy});
       if (inherits) {
         const inheritEnv = inherits.$value;
-        if (inheritEnv === env) {
+        if (inheritedEnvs.indexOf(inheritEnv) > -1) {
           throw new Error('Cylic env inherits detected!');
         }
+        inheritedEnvs.push(inheritEnv);
         envNode = config.environments[inheritEnv];
       } else {
         break;

@@ -397,16 +397,17 @@ describe('AddEditPropertyDialogComponent', () => {
       isDefaultNode: true
     };
     data.node.key = 'level1';
+    data.node.id = 'root.level1';
     data.node.parent = new TreeNode();
     data.node.parent.key = 'root';
 
     ctx().component.data = data;
     ctx().component.ngOnChanges();
 
-    expect(ctx().component.getBreadCrumb()).toEqual('root / level1 / ');
+    expect(ctx().component.getBreadCrumb()).toEqual('root.level1');
 
     ctx().component.key.setValue('newkey');
-    expect(ctx().component.getBreadCrumb()).toEqual('root / level1 / newkey');
+    expect(ctx().component.getBreadCrumb()).toEqual('root.level1.newkey');
   });
 
   it('get breadcrumb in edit mode', () => {
@@ -423,14 +424,15 @@ describe('AddEditPropertyDialogComponent', () => {
     };
     data.node.parent = new TreeNode();
     data.node.parent.key = 'root';
+    data.node.parent.id = 'root';
 
     ctx().component.data = data;
     ctx().component.ngOnChanges();
 
-    expect(ctx().component.getBreadCrumb()).toEqual('root / level1');
+    expect(ctx().component.getBreadCrumb()).toEqual('root.level1');
 
     ctx().component.key.setValue('newkey');
-    expect(ctx().component.getBreadCrumb()).toEqual('root / newkey');
+    expect(ctx().component.getBreadCrumb()).toEqual('root.newkey');
   });
 
   it('add property, should submit changes', () => {
