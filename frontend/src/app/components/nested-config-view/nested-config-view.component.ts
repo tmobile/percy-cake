@@ -1,17 +1,17 @@
 import { Component, Input, Output, EventEmitter, OnChanges } from '@angular/core';
 import { NestedTreeControl } from '@angular/cdk/tree';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
+import { MatDialog } from '@angular/material';
+import { Store } from '@ngrx/store';
+import * as appStore from 'store';
 import * as _ from 'lodash';
 
 import { PROPERTY_VALUE_TYPES } from 'config';
-import { TreeNode } from 'models/tree-node';
-import { MatDialog } from '@angular/material';
-import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
-import { Store } from '@ngrx/store';
-import * as appStore from 'store';
 import { UtilService } from 'services/util.service';
 import { Configuration } from 'models/config-file';
-import { Alert } from 'store/actions/common.actions';
+import { TreeNode } from 'models/tree-node';
+
+import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
 
 /**
  *  Tree with nested nodes

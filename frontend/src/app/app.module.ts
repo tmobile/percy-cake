@@ -48,6 +48,7 @@ import { LocationStrategy, HashLocationStrategy } from '@angular/common';
 
 // directives
 import { SplitDirective } from 'directives/splitter.directive';
+import { FollowCursorDirective } from 'directives/follow-cursor.directive';
 import { InitializerDirective } from 'directives/initializer.directive';
 
 
@@ -68,6 +69,7 @@ import { InitializerDirective } from 'directives/initializer.directive';
     AlertDialogComponent,
     ConflictDialogComponent,
     SplitDirective,
+    FollowCursorDirective,
     InitializerDirective
   ],
   imports: [
