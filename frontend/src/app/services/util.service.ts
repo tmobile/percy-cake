@@ -436,6 +436,7 @@ export class UtilService {
       jsYaml.safeLoad(result, { strict: true });
     } catch (err) {
       console.error('Error while parsing configuration to yaml', err);
+      throw err;
     }
 
     return result;
@@ -492,7 +493,7 @@ export class UtilService {
         }
       } else {
         Object.keys(obj).forEach((nestKey) => {
-          if (nestKey === '$comment' || nestKey === '$value' || nestKey === '$type') {
+          if (this.isReservedKey(nestKey)) {
             return;
           }
           node.children.push(this.buildConfigTree(obj[nestKey], nestKey, node));
@@ -544,6 +545,10 @@ export class UtilService {
    */
   updateJsonValue(node: TreeNode) {
     this.doUpdateJsonValue(node.getTopParent());
+  }
+
+  isReservedKey(key: string) {
+    return key === '$type' || key === '$value' || key === '$comment';
   }
 
   private escapeRegExp(text) {

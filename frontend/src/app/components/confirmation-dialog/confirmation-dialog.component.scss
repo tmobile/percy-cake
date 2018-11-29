@@ -3,6 +3,9 @@
 .confirmation-dialog {
   width: 300px;
 
+  pre {
+    white-space: pre-wrap;
+  }
   .buttons-row {
     padding-top: 30px;
     display: flex;

@@ -59,8 +59,8 @@ describe('EditorComponent', () => {
   it('should init EditorComponent with edit file mode', () => {
     ctx().activatedRouteStub.snapshot = {
       data: {
-        inEditMode: true,
-        inEnvMode: false
+        editMode: true,
+        envFileMode: false
       },
       paramMap: convertToParamMap({
         appName: 'app1',
@@ -75,8 +75,8 @@ describe('EditorComponent', () => {
   it('should init EditorComponent with new file mode', () => {
     ctx().activatedRouteStub.snapshot = {
       data: {
-        inEditMode: false,
-        inEnvMode: false
+        editMode: false,
+        envFileMode: false
       },
       paramMap: convertToParamMap({
         appName: 'app1',
@@ -110,8 +110,8 @@ describe('EditorComponent', () => {
   it('should change file name', () => {
     ctx().activatedRouteStub.snapshot = {
       data: {
-        inEditMode: false,
-        inEnvMode: false
+        editMode: false,
+        envFileMode: false
       },
       paramMap: convertToParamMap({
         appName: 'app1',
@@ -130,8 +130,8 @@ describe('EditorComponent', () => {
   it('should not change to existing file name', () => {
     ctx().activatedRouteStub.snapshot = {
       data: {
-        inEditMode: false,
-        inEnvMode: false
+        editMode: false,
+        envFileMode: false
       },
       paramMap: convertToParamMap({
         appName: 'app1',
@@ -150,8 +150,8 @@ describe('EditorComponent', () => {
   it('should save draft when editing file', () => {
     ctx().activatedRouteStub.snapshot = {
       data: {
-        inEditMode: true,
-        inEnvMode: false
+        editMode: true,
+        envFileMode: false
       },
       paramMap: convertToParamMap({
         appName: 'app1',
@@ -177,8 +177,8 @@ describe('EditorComponent', () => {
   it('should save draft when adding new file', () => {
     ctx().activatedRouteStub.snapshot = {
       data: {
-        inEditMode: false,
-        inEnvMode: false
+        editMode: false,
+        envFileMode: false
       },
       paramMap: convertToParamMap({
         appName: 'app1',
@@ -199,8 +199,8 @@ describe('EditorComponent', () => {
   it('should commit new file', () => {
     ctx().activatedRouteStub.snapshot = {
       data: {
-        inEditMode: false,
-        inEnvMode: false
+        editMode: false,
+        envFileMode: false
       },
       paramMap: convertToParamMap({
         appName: 'app1',

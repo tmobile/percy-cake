@@ -1,11 +1,16 @@
 import { Component, Input, Output, EventEmitter, OnChanges } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
+import { Store } from '@ngrx/store';
 import * as _ from 'lodash';
 
 import { PROPERTY_VALUE_TYPES } from 'config';
+import * as appStore from 'store';
 import { UtilService } from 'services/util.service';
 import { TreeNode } from 'models/tree-node';
 import { ConfigProperty } from 'models/config-property';
+import { Alert } from 'store/actions/common.actions';
+import { MatDialog } from '../../../../node_modules/@angular/material';
+import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
 
 /*
   add or edit new property in the environment configuration
@@ -32,7 +37,9 @@ export class AddEditPropertyDialogComponent implements OnChanges {
 
   duplicateDefault: false;
 
-  constructor(private utilService: UtilService) {
+  constructor(private utilService: UtilService,
+    private store: Store<appStore.AppState>,
+    private dialog: MatDialog) {
 
     this.key = new FormControl('', [Validators.required]);
     this.valueType = new FormControl('', [Validators.required]);
@@ -76,6 +83,10 @@ export class AddEditPropertyDialogComponent implements OnChanges {
       }
     }
 
+    if (this.isDefineEnv()) {
+      this.valueType.setValue('object');
+    }
+
     if (this.keyDisabled()) {
       this.key.disable();
     }
@@ -86,11 +97,18 @@ export class AddEditPropertyDialogComponent implements OnChanges {
   }
 
   keyDisabled() {
-    return this.isEditRootNode() || this.isEditArrayItem() || (this.data.editMode && !this.data.node.isDefaultNode());
+    return this.isEditRootNode() || this.isEditArrayItem() || (this.data.editMode && !this.data.node.isDefaultNode() && !this.isDefineEnv());
   }
 
   valueTypeDisabled() {
     return this.isEditRootNode() || this.isEditArrayItem() || !this.data.node.isDefaultNode();
+  }
+
+  isDefineEnv() {
+    if (!this.data.envFileMode || this.data.node.isDefaultNode()) {
+      return false;
+    }
+    return (this.data.editMode && this.data.node.getLevel() === 1) || (!this.data.editMode && this.data.node.getLevel() === 0);
   }
 
   isEditArrayItem() {
@@ -179,60 +197,118 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     this.formDirty = true;
 
     // check form validity
-    if (
+    const formValid =
       (this.key.disabled ? true : this.key.valid) &&
       (this.valueType.disabled ? true : this.valueType.valid) &&
-      (!TreeNode.isLeafType(this.valueType.value) || this.value.disabled ? true : this.value.valid)
-    ) {
-      if (!this.duplicateDefault) {
-        const node = new TreeNode(this.key.value);
-        node.valueType = this.valueType.value;
-    
-        if (node.isLeaf()) {
-          if (node.valueType === PROPERTY_VALUE_TYPES.BOOLEAN) {
-            node.value = this.value.value === 'true' || this.value.value === true;
-          } else if (node.valueType === PROPERTY_VALUE_TYPES.NUMBER) {
-            node.value = _.toNumber(this.value.value);
-          } else if (node.valueType === PROPERTY_VALUE_TYPES.STRING) {
-            node.value = this.value.value;
+      (!TreeNode.isLeafType(this.valueType.value) || this.value.disabled ? true : this.value.valid);
+
+    if (!formValid) {
+      return;
+    }
+
+    if (this.utilService.isReservedKey(this.key.value)) {
+      this.store.dispatch(new Alert({
+        message: `Property key '${this.key.value}' is reserved`,
+        alertType: 'error'
+      }));
+      return;
+    }
+
+    // Validate key is unique
+    if (this.data.node.isDefaultNode() || this.isDefineEnv()) {
+      const existingKeys = [];
+      if (!this.data.editMode) {
+        const parent = this.data.node;
+        _.each(parent.children, (child) => {
+          existingKeys.push(child.key);
+        });
+      } else if (this.key.value !== this.data.node.key) {
+        const parent = this.data.node.parent;
+        _.each(parent.children, (child) => {
+          if (child !== this.data.node) {
+            existingKeys.push(child.key);
           }
-        } else {
-          node.children = [];
-        }
-    
-        if (this.comment.value) {
-          node.comment = this.comment.value.split('\n');
-        }
-
-        this.saveProperty.emit(node);
-      } else {
-        // Build key hierarchy
-        const keyHierarchy = [];
-        let node = this.data.node;
-        while (node && node.getLevel() > 1) {
-          keyHierarchy.unshift(node.key);
-          node = node.parent;
-        }
-
-        const keyValue = this.key.value;
-        if (!this.data.editMode && this.data.node.getLevel() >= 1) {
-          keyHierarchy.push(keyValue);
-        }
-
-        // Find the respective defalut node
-        let defaultTree = this.data.defaultTree;
-        for (let i = 0; i < keyHierarchy.length; i++) {
-          defaultTree = _.find(defaultTree.children, child => child.key === keyHierarchy[i]);
-        }
-
-        // Clone default node by rebuilding it
-        const result = this.utilService.buildConfigTree(
-          defaultTree.jsonValue,
-          keyValue,
-          this.data.editMode ? this.data.node.parent : this.data.node);
-
-        this.saveProperty.emit(result);
+        });
       }
+      if (existingKeys.indexOf(this.key.value) > -1) {
+        this.store.dispatch(new Alert({
+          message: `Property key '${this.key.value}' already exists`,
+          alertType: 'error'
+        }));
+        return;
+      }
+    }
+
+    if (this.data.editMode && this.valueType.value !== this.data.node.valueType) {
+
+      const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+        data: {
+          confirmationText: 'Corresponding env properties will be removed. Change property type?'
+        }
+      });
+  
+      dialogRef.afterClosed().subscribe(response => {
+        if (response) {
+          this.doSubmit();
+        }
+      });
+
+      return;
+    }
+
+    this.doSubmit();
+  }
+
+  private doSubmit() {
+
+    if (!this.duplicateDefault) {
+      const node = new TreeNode(this.key.value);
+      node.valueType = this.valueType.value;
+  
+      if (node.isLeaf()) {
+        if (node.valueType === PROPERTY_VALUE_TYPES.BOOLEAN) {
+          node.value = this.value.value === 'true' || this.value.value === true;
+        } else if (node.valueType === PROPERTY_VALUE_TYPES.NUMBER) {
+          node.value = _.toNumber(this.value.value);
+        } else if (node.valueType === PROPERTY_VALUE_TYPES.STRING) {
+          node.value = this.value.value;
+        }
+      } else {
+        node.children = [];
+      }
+  
+      if (this.comment.value) {
+        node.comment = this.comment.value.split('\n');
+      }
+
+      this.saveProperty.emit(node);
+    } else {
+      // Build key hierarchy
+      const keyHierarchy = [];
+      let node = this.data.node;
+      while (node && node.getLevel() > 1) {
+        keyHierarchy.unshift(node.key);
+        node = node.parent;
+      }
+
+      const keyValue = this.key.value;
+      if (!this.data.editMode && this.data.node.getLevel() >= 1) {
+        keyHierarchy.push(keyValue);
+      }
+
+      // Find the respective defalut node
+      let defaultTree = this.data.defaultTree;
+      for (let i = 0; i < keyHierarchy.length; i++) {
+        defaultTree = _.find(defaultTree.children, child => child.key === keyHierarchy[i]);
+      }
+
+      // Clone default node by rebuilding it
+      const result = this.utilService.buildConfigTree(
+        defaultTree.jsonValue,
+        keyValue,
+        this.data.editMode ? this.data.node.parent : this.data.node);
+
+      this.saveProperty.emit(result);
     }
   }
 

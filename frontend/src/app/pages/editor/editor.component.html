@@ -2,7 +2,7 @@
 <div appInitializer class="editor-page">
   <div class="breadcrumbs-wrapper">
     <a routerLink="/" color="primary">Dashboard</a>
-    <span>{{isEditMode ? 'Edit': 'Add'}} File</span>
+    <span>{{editMode ? 'Edit': 'Add'}} File</span>
   </div>
   <!-- filename input -->
   <mat-form-field class="filename" [floatLabel]="'always'">
@@ -19,7 +19,7 @@
     <div class="col-default-env" id="editor-tree-view">
         <!-- property tree -->
         <app-nested-config-view *ngIf="configuration" #nestedConfig [configuration]="configuration | async" [environments]="environments| async"
-          [isEnvMode]="isEnvMode" (configurationChange)="onConfigChange($event)"
+          [envFileMode]="envFileMode" (configurationChange)="onConfigChange($event)"
           (selectedNode)="onNodeSelected($event)" (cancelAddEditPropertyChange)="onCancelAddEditProperty()"
           (viewCompiledYAMLEvent)="showCompiledYAML($event)" (addEditProperty)="onAddEditProperty($event)"></app-nested-config-view>
     </div>
@@ -115,12 +115,12 @@
       Cancel
     </button>
 
-    <button type="button" mat-raised-button color="primary" [disabled]="(isSaving | async) || (disableSaveDraft|async)" class="btn-save"
+    <button type="button" mat-raised-button color="primary" [disabled]="(isSaving | async) || !this.isPageDirty" class="btn-save"
       (click)="saveConfig()">
       Save As Draft
     </button>
 
-    <button type="button" mat-raised-button color="primary" [disabled]="(isCommitting | async) || (disableCommit|async)" class="btn-save"
+    <button type="button" mat-raised-button color="primary" [disabled]="(isCommitting | async) || !(configFile | async)?.modified" class="btn-save"
       (click)="commitFile()">
       Commit
     </button>

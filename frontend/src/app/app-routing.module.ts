@@ -37,8 +37,8 @@ const routes: Routes = [
             component: EditorComponent,
             canDeactivate: [CanDeactivateGuard],
             data: {
-              inEnvMode: true,
-              inEditMode: false
+              envFileMode: true,
+              editMode: false
             }
           },
           {
@@ -46,8 +46,8 @@ const routes: Routes = [
             component: EditorComponent,
             canDeactivate: [CanDeactivateGuard],
             data: {
-              inEnvMode: true,
-              inEditMode: true
+              envFileMode: true,
+              editMode: true
             }
           },
           {
@@ -55,7 +55,7 @@ const routes: Routes = [
             component: EditorComponent,
             canDeactivate: [CanDeactivateGuard],
             data: {
-              inEditMode: false
+              editMode: false
             }
           },
           {
@@ -63,7 +63,7 @@ const routes: Routes = [
             component: EditorComponent,
             canDeactivate: [CanDeactivateGuard],
             data: {
-              inEditMode: true
+              editMode: true
             }
           }
         ]

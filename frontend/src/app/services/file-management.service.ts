@@ -298,11 +298,10 @@ export class FileManagementService {
 
         const oid = await this.getRemoteCommit(git, pathFinder.repoDir, user.branchName);
 
-
         if (await this.isRepoFileExists(git, pathFinder)) {
           const {object} = await git.readObject({dir: pathFinder.repoDir, oid, filepath: pathFinder.repoFilePath, encoding: 'utf8'});
-          const loaded = yamlJS.load(object);
-          return loaded.default;
+          const loaded = this.utilService.convertYamlToJson(object);
+          return _.filter(_.keys(loaded.environments), key => !this.utilService.isReservedKey(key));
         }
 
         console.warn(`App environments file '${pathFinder.fullFilePath}' does not exist`);

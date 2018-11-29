@@ -39,7 +39,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   foldersSubscription: Subscription;
 
   displayedColumns: string[] = ['applicationName', 'fileName', 'actions'];
-  envFileName: string;
+  envFileName = percyConfig.environmentsFile;
 
   /**
    * initializes the component
@@ -57,8 +57,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
    * handle component initialization
    */
   ngOnInit() {
-    this.envFileName = percyConfig.environmentsFile;
-
     const folders$ = new Subject<any[]>();
 
     folders$.subscribe(this.folders);

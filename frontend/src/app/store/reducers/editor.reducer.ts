@@ -11,12 +11,10 @@ export interface State {
     isCommitting: boolean;
     isSaving: boolean;
     environments: Array<string>;
-    appName: string;
-    fileName: string;
-    inEditMode: boolean;
-    inEnvMode: boolean;
+    editMode: boolean;
+    applicationName: string;
     configFile: ConfigFile;
-    configuration: Configuration; // In-edit config
+    configuration: Configuration; // In-edit config, not saved as draft
     showAsCode: boolean;
     previewCode: string;
     showAsCompiledYAMLEnvironment: string;
@@ -28,11 +26,9 @@ export interface State {
 export const initialState: State = {
     isCommitting: false,
     isSaving: false,
-    appName: null,
-    fileName: null,
+    applicationName: null,
     environments: [],
-    inEditMode: false,
-    inEnvMode: false,
+    editMode: false,
     configFile: null,
     configuration: null,
     showAsCode: false,
@@ -53,12 +49,12 @@ const cancelRightPanel = {
 
 export function reducer(state = initialState, action: EditorActionsUnion | BackendActionsUnion): State {
     switch (action.type) {
-        case EditorActionTypes.PageLoad: {
-            return {
-                ...initialState,
-                ...action.payload
-            };
-        }
+      case EditorActionTypes.PageLoad: {
+          return {
+              ...initialState,
+              ...action.payload
+          };
+      }
 
         case EditorActionTypes.PageLoadSuccess: {
             return {
@@ -74,7 +70,7 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
               ...state,
               configFile: {...file},
               configuration,
-              isPageDirty: !state.inEditMode
+              isPageDirty: !state.editMode
           };
         }
 
@@ -86,7 +82,7 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
                 ...state,
                 configFile: {...file, modified: !_.isEqual(file.originalConfig, configuration)},
                 configuration,
-                isPageDirty: !state.inEditMode || !_.isEqual(file.draftConfig || file.originalConfig, configuration)
+                isPageDirty: !state.editMode || !_.isEqual(file.draftConfig || file.originalConfig, configuration)
             };
         }
 
@@ -99,13 +95,6 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
                 showAsCompiledYAMLEnvironment: action.payload.environment,
                 previewCode: action.payload.compiledYAML,
             };
-        }
-
-        case EditorActionTypes.ChangeFileName: {
-          return {
-              ...state,
-              fileName: action.payload,
-          };
         }
 
         case BackendActionTypes.SaveDraft: {
@@ -214,8 +203,6 @@ export const getConfiguration = (state: State) => state.configuration;
 export const isCommitting = (state: State) => state.isCommitting;
 export const isSaving = (state: State) => state.isSaving;
 export const getEnvironments = (state: State) => state.environments;
-export const getMode = (state: State) => state.inEditMode;
-export const getFilePath = (state: State) => state.fileName;
 export const getShowAsCode = (state: State) => state.showAsCode;
 export const getPreviewCode = (state: State) => state.previewCode;
 export const getShowAsCompiledYAMLEnvironment = (state: State) => state.showAsCompiledYAMLEnvironment;

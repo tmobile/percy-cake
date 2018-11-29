@@ -378,7 +378,7 @@ describe('NestedConfigViewComponent', () => {
       environments: ctx().component.envDataSource.data[0].jsonValue
     });
 
-    ctx().component.isEnvMode = true;
+    ctx().component.envFileMode = true;
     ctx().component.refreshTree();
     expect(ctx().observables.configurationChange.value).toEqual({
       default: ctx().component.defaultDataSource.data[0].jsonValue,

@@ -2,26 +2,26 @@ import { Component, OnInit, HostListener, ViewChild, ElementRef } from '@angular
 import { FormControl, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatDialog, MatInput } from '@angular/material';
-import { Observable } from 'rxjs';
 import { map, take, tap } from 'rxjs/operators';
 import { Store, select } from '@ngrx/store';
 import * as _ from 'lodash';
 
 import * as appStore from 'store';
 import { Alert } from 'store/actions/common.actions';
-import { CommitChanges, SaveDraft } from 'store/actions/backend.actions';
+import { CommitChanges, SaveDraft, GetFileContentSuccess, GetFileContent } from 'store/actions/backend.actions';
 import {
-  PageLoad, ConfigurationChange, ChangeFileName, 
+  PageLoad, ConfigurationChange, 
   OpenAddEditProperty, CancelAddEditProperty, SaveAddEditProperty,
   ViewCompiledYAMLSuccess, NodeSelectedSuccess,
 } from 'store/actions/editor.actions';
+import { GetConfigFile } from 'store/reducers/backend.reducers';
 import { TreeNode } from 'models/tree-node';
-import { Configuration } from 'models/config-file';
 import { ConfigProperty } from 'models/config-property';
 import { NestedConfigViewComponent } from 'components/nested-config-view/nested-config-view.component';
 import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
 import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.component';
 import { UtilService } from 'services/util.service';
+import { ConfigFile } from 'models/config-file';
 
 /*
   Configurations editor page
@@ -33,16 +33,12 @@ import { UtilService } from 'services/util.service';
   styleUrls: ['./editor.component.scss']
 })
 export class EditorComponent implements OnInit {
-  isPageDirty$ = this.store.pipe(select(appStore.getIsPageDirty));
-  isPageDirty = false;
   appName = '';
   filename = new FormControl('', [Validators.required]);
 
-  environments: Observable<string[]> = this.store.pipe(select(appStore.getEnvironments));
-
-  // only if its in edit mode
-  filePath: Observable<string> = this.store.pipe(select(appStore.getFilePath));
-  configuration: Observable<Configuration> = this.store.pipe(select(appStore.getConfiguration));
+  environments = this.store.pipe(select(appStore.getEnvironments));
+  configFile = this.store.pipe(select(appStore.getConfigFile));
+  configuration = this.store.pipe(select(appStore.getConfiguration));
   selectedNode = this.store.pipe(select(appStore.getSelectedNode));
   showAsCode = this.store.pipe(select(appStore.getShowAsCode));
   showAsCompiledYAMLEnvironment = this.store.pipe(select(appStore.getShowAsCompiledYAMLEnvironment));
@@ -50,16 +46,11 @@ export class EditorComponent implements OnInit {
   currentConfigProperty = this.store.pipe(select(appStore.getCurrentConfigProperty));
   isCommitting = this.store.pipe(select(appStore.getIsCommitting));
   isSaving = this.store.pipe(select(appStore.getIsSaving));
-  isEditMode = false;
-  isEnvMode = false;
+  isPageDirty$ = this.store.pipe(select(appStore.getIsPageDirty));
 
-  disableSaveDraft = this.isPageDirty$.pipe(map(() => {
-    return !this.isPageDirty;
-  }));
-
-  disableCommit = this.store.pipe(select(appStore.getConfigFile)).pipe(map(configFile => {
-    return !configFile || !configFile.modified;
-  }));
+  editMode = false;
+  envFileMode = false;
+  isPageDirty = false;
 
   @ViewChild('fileNameInput') fileNameInput: MatInput;
 
@@ -84,11 +75,12 @@ export class EditorComponent implements OnInit {
   ngOnInit() {
     // get file content if its in edit mode
     const routeSnapshot = this.route.snapshot;
-    this.isEditMode = routeSnapshot.data.inEditMode;
-    this.isEnvMode = routeSnapshot.data.inEnvMode;
-    this.appName = routeSnapshot.paramMap.get('appName');
-    const fileName = this.isEditMode || this.isEnvMode ? routeSnapshot.paramMap.get('fileName') : null;
-    this.store.dispatch(new PageLoad({ inEditMode: this.isEditMode, inEnvMode: this.isEnvMode, appName: this.appName, fileName }));
+    this.editMode = routeSnapshot.data.editMode;
+    this.envFileMode = routeSnapshot.data.envFileMode;
+    this.isPageDirty = !this.editMode;
+
+    const applicationName = this.appName = routeSnapshot.paramMap.get('appName');
+    const fileName = this.editMode || this.envFileMode ? routeSnapshot.paramMap.get('fileName') : null;
     if (fileName) {
       this.filename.setValue(fileName);
       this.filename.disable();
@@ -96,13 +88,41 @@ export class EditorComponent implements OnInit {
       this.filename.setValue('');
       this.fileNameInput.focus();
     }
+
+    this.store.dispatch(new PageLoad({ applicationName, editMode: this.editMode }));
+
     this.isPageDirty$.subscribe(res => {
       this.isPageDirty = res;
     });
+
+    if (!this.editMode) {
+      // Add new file, set an initial config
+      const file: ConfigFile = {
+        fileName,
+        applicationName,
+        draftConfig: {
+          default: { $type: 'object' },
+          environments: { $type: 'object' }
+        },
+        modified: true
+      };
+      this.store.dispatch(new GetFileContentSuccess({file, newlyCreated: true}));
+    } else {
+      this.store.select(appStore.backendState).pipe(take(1)).subscribe((backend) => {
+
+        const file = GetConfigFile(backend, fileName, applicationName);
+
+        if (file && (file.originalConfig || file.draftConfig)) { // Newly added (but uncommitted) file has only draft config
+          this.store.dispatch(new GetFileContentSuccess({file}));
+        } else {
+          this.store.dispatch(new GetFileContent(file ? file : {fileName, applicationName}));
+        }
+      });
+    }
   }
 
   fileNameChange() {
-    if (!this.isEditMode) {
+    if (!this.editMode) {
       this.store.pipe(select(appStore.backendState)).pipe(take(1), tap((backendState) => {
         if (!this.filename.value) {
           return;
@@ -116,8 +136,6 @@ export class EditorComponent implements OnInit {
 
       })).subscribe();
     }
-
-    this.store.dispatch(new ChangeFileName(this.getFileName()));
   }
 
   private getFileName() {
@@ -142,12 +160,24 @@ export class EditorComponent implements OnInit {
     this.store.dispatch(new ConfigurationChange(configuration));
   }
 
-  private checkFileName() {
+  private validate() {
     return this.store.pipe(select(appStore.editorState)).pipe(take(1), map((editorState) => {
-      if (!this.isEditMode && this.filename.invalid) {
+      if (!this.editMode && this.filename.invalid) {
         this.fileNameInput.focus();
         return {editorState, valid: false};
       }
+      try {
+        this.utilService.convertJsonToYaml(editorState.configuration);
+        _.forEach(editorState.configuration.environments, (envNode, envName) => {
+          if (!this.utilService.isReservedKey(envName)) {
+            this.utilService.compileYAML(envName, editorState.configuration);
+          }
+        });
+      } catch (err) {
+        this.store.dispatch(new Alert({message: `YAML validation failed:\n${err.message}`, alertType: 'error'}));
+        return {editorState, valid: false};
+      }
+
       return {editorState, valid: true};
     }));
   }
@@ -156,15 +186,15 @@ export class EditorComponent implements OnInit {
    * save the config if it has been changed
    */
   saveConfig() {
-    this.checkFileName().subscribe(result => {
+    this.validate().subscribe(result => {
       if (!result.valid) {
         return;
       }
       const editorState = result.editorState;
 
       const file = {...editorState.configFile};
-      file.fileName = editorState.fileName;
-      file.applicationName = editorState.appName;
+      file.fileName = this.getFileName();
+      file.applicationName = this.appName;
       file.draftConfig = editorState.configuration;
 
       this.store.dispatch(new SaveDraft({file, redirect: true}));
@@ -175,7 +205,7 @@ export class EditorComponent implements OnInit {
    * Commit file.
    */
   commitFile() {
-    this.checkFileName().subscribe(result => {
+    this.validate().subscribe(result => {
       if (!result.valid) {
         return;
       }
@@ -183,8 +213,8 @@ export class EditorComponent implements OnInit {
       const editorState = result.editorState;
 
       const file = {...editorState.configFile};
-      file.fileName = editorState.fileName;
-      file.applicationName = editorState.appName;
+      file.fileName = this.getFileName();
+      file.applicationName = this.appName;
       file.draftConfig = editorState.configuration;
 
       const dialogRef = this.dialog.open(CommitDialogComponent);
