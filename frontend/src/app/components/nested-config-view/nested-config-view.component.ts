@@ -272,6 +272,9 @@ export class NestedConfigViewComponent implements OnChanges {
       } else {
         currentNode.children = node.children && node.children.length ?
           node.children : currentNode.children || [];
+        _.each(currentNode.children, child => {
+          child.parent = currentNode;
+        });
       }
 
     } else {
