@@ -328,7 +328,6 @@ export class FileManagementService {
           }
         } else if (depth === 1) {
           if (entry.type === 'tree') {
-            console.log(entry.path)
             if (!result[entry.path]) {
               result[entry.path] = [];
             }
