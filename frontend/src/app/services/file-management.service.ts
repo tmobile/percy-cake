@@ -311,7 +311,7 @@ export class FileManagementService {
      * Read from git object directly to find yaml files in repo.
      * This method will not read file content, it just traverse the object tree.
      */
-    private async findRepoYamlFiles(git, user: User, result: ConfigFile[] = [], depth: number = 0, oid?: string, app?: string) {
+    private async findRepoYamlFiles(git, user: User, result: {[key :string]: ConfigFile[]} = {}, depth: number = 0, oid?: string, app?: string) {
       const dir = path.resolve(percyConfig.reposFolder, user.repoFolder);
       if (depth === 0) {
         const remoteOid = await this.getRemoteCommit(git, dir, user.branchName);
@@ -328,6 +328,10 @@ export class FileManagementService {
           }
         } else if (depth === 1) {
           if (entry.type === 'tree') {
+            console.log(entry.path)
+            if (!result[entry.path]) {
+              result[entry.path] = [];
+            }
             await this.findRepoYamlFiles(git, user, result, 2, entry.oid, entry.path);
           }
         } else if (depth === 2) {
@@ -339,7 +343,7 @@ export class FileManagementService {
                   fileName: entry.path,
                   oid: entry.oid,
               };
-              result.push(file);
+              result[app].push(file);
             }
           }
         }
@@ -362,20 +366,20 @@ export class FileManagementService {
           this.findRepoYamlFiles(git, user),
         ]);
 
-        _.forEach(repoFiles, file => {
-            if (draft.applications.indexOf(file.applicationName) === -1) {
-              draft.applications.push(file.applicationName);
+        _.forEach(_.keys(repoFiles), app => {
+            if (draft.applications.indexOf(app) === -1) {
+              draft.applications.push(app);
             }
+            _.forEach(repoFiles[app], repoFile => {
+                const draftFile = _.find(draft.files, f => f.applicationName === repoFile.applicationName && f.fileName === repoFile.fileName);
+                if (!draftFile) {
+                    draft.files.push(repoFile);
+                } else {
+                  _.assign(draftFile, repoFile);
+                }
+            });
         });
 
-        _.forEach(repoFiles, repoFile => {
-            const draftFile = _.find(draft.files, f => f.applicationName === repoFile.applicationName && f.fileName === repoFile.fileName);
-            if (!draftFile) {
-                draft.files.push(repoFile);
-            } else {
-              _.assign(draftFile, repoFile);
-            }
-        });
 
         return draft;
     }
@@ -654,17 +658,19 @@ export class FileManagementService {
 
         const repoDir = path.resolve(percyConfig.reposFolder, user.repoFolder);
 
-        const lastRepoFiles: ConfigFile[] = [];
-        const newRepoFiles: ConfigFile[] = [];
+        let lastRepoFiles: ConfigFile[];
+        let newRepoFiles: ConfigFile[];
 
         if (!forcePush) {
-          await this.findRepoYamlFiles(git, user, lastRepoFiles);
+          const lastMap = await this.findRepoYamlFiles(git, user);
+          lastRepoFiles = _.reduce(lastMap, (r, v) => r.concat(v), []);
         }
 
         const lastCommit = await this.pull(git, fs, user, repoDir, repoMetadata);
 
         if (!forcePush) {
-          await this.findRepoYamlFiles(git, user, newRepoFiles);
+          const newMap = await this.findRepoYamlFiles(git, user);
+          newRepoFiles = _.reduce(newMap, (r, v) => r.concat(v), []);
         }
 
         // Do optimistic check
