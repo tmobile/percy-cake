@@ -26,7 +26,7 @@ export class EditorEffects {
     @Effect()
     pageLoad$ = this.actions$.pipe(
         ofType<PageLoad>(EditorActionTypes.PageLoad),
-        withLatestFrom(this.store.pipe(select(appStore.getCurrentUser))),
+        withLatestFrom(this.store.pipe(select(appStore.getPrincipal))),
         switchMap(async ([action, user]) => {
           const applicationName = action.payload.applicationName;
           try {

@@ -2,8 +2,10 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 import { AuthGuardService } from 'services/auth-guard.service';
+import { InitGuardService } from 'services/init-guard.service';
 
 import { LayoutComponent } from 'components/layout/layout.component';
+import { InitComponent } from 'components/init/init.component';
 import { LoginComponent } from 'pages/login/login.component';
 import { DashboardComponent } from 'pages/dashboard/dashboard.component';
 import { EditorComponent } from 'pages/editor/editor.component';
@@ -26,11 +28,17 @@ const routes: Routes = [
         pathMatch: 'full',
       },
       {
+        path: 'init',
+        component: InitComponent
+      },
+      {
         path: 'dashboard',
-        component: DashboardComponent
+        component: DashboardComponent,
+        canActivate: [InitGuardService],
       },
       {
         path: 'files',
+        canActivate: [InitGuardService],
         children: [
           {
             path: 'newenv/:appName/:fileName',

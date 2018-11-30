@@ -1,8 +1,10 @@
 import { Action } from '@ngrx/store';
 
 import { ConfigFile } from 'models/config-file';
+import { Principal } from 'models/auth';
 
 export enum BackendActionTypes {
+  Initialize = '[Backend] Initialize',
   Initialized = '[Backend] Initialized',
   ListApplications = '[Backend] List Applications',
   ListApplicationsSuccess = '[Backend] List Applications Success',
@@ -24,8 +26,15 @@ export enum BackendActionTypes {
   CommitChangesFailure = '[Backend] Commit Changes Failure',
 }
 
+export class Initialize implements Action {
+  readonly type = BackendActionTypes.Initialize;
+  constructor(public payload: { redirectUrl: string }) { }
+}
+
 export class Initialized implements Action {
   readonly type = BackendActionTypes.Initialized;
+
+  constructor(public payload: {principal: Principal}) { }
 }
 
 export class LoadFiles implements Action {
@@ -114,6 +123,7 @@ export class CommitChangesFailure implements Action {
 
 
 export type BackendActionsUnion =
+  | Initialize
   | Initialized
   | LoadFiles
   | LoadFilesSuccess

@@ -1,5 +1,6 @@
 import { EntityState, EntityAdapter, createEntityAdapter } from '@ngrx/entity';
 
+import { Principal } from 'models/auth';
 import { ConfigFile } from 'models/config-file';
 import { BackendActionsUnion, BackendActionTypes } from '../actions/backend.actions';
 
@@ -10,7 +11,8 @@ export interface ConfigFiles extends EntityState<ConfigFile> {}
 export interface State {
     applications: string[];
     files: ConfigFiles;
-    initialized: boolean;
+    principal: Principal;
+    redirectUrl: string;
 }
 
 const ConfigFileAdapter: EntityAdapter<ConfigFile> = createEntityAdapter<ConfigFile>({
@@ -24,16 +26,23 @@ export const GetConfigFile = (state: State, fileName: string, applicationName: s
 export const initialState: State = {
     applications: null,
     files: ConfigFileAdapter.getInitialState(),
-    initialized: false,
+    principal: null,
+    redirectUrl: null,
 };
 
 export function reducer(state = initialState, action: BackendActionsUnion): State {
     switch (action.type) {
 
+        case BackendActionTypes.Initialize: {
+            return {
+                ...initialState,
+                redirectUrl: action.payload.redirectUrl
+            };
+        }
         case BackendActionTypes.Initialized: {
             return {
                 ...state,
-                initialized: true
+                ...action.payload
             };
         }
 
@@ -98,6 +107,7 @@ export function reducer(state = initialState, action: BackendActionsUnion): Stat
     }
 }
 
+export const getPrincipal = (state: State) => state.principal;
 export const getApplications = (state: State) => state.applications;
 export const getAllFiles = (state: State) => {
   const files = ConfigFileAdapter.getSelectors().selectAll(state.files);

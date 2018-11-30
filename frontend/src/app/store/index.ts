@@ -58,6 +58,7 @@ export const getRepositoryName = createSelector(authState, fromAuth.getRepositor
 
 // backend related selectors
 export const backendState = createFeatureSelector<AppState, fromBackend.State>('backend');
+export const getPrincipal = createSelector(backendState, fromBackend.getPrincipal);
 export const getApplications = createSelector(backendState, fromBackend.getApplications);
 export const getAllFiles = createSelector(backendState, fromBackend.getAllFiles);
 

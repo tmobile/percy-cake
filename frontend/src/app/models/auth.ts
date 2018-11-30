@@ -14,3 +14,8 @@ export interface User extends Authenticate {
   repoFolder: string;
   token: string;
 }
+
+export interface Principal {
+  user: User;
+  repoMetadata: any;
+}

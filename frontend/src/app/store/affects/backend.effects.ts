@@ -9,7 +9,7 @@ import * as boom from 'boom';
 import * as appStore from '..';
 import { Alert, APIError, Navigate } from '../actions/common.actions';
 import {
-    BackendActionTypes,
+    BackendActionTypes, Initialize, Initialized,
     SaveDraft, CommitChanges, CommitChangesSuccess, CommitChangesFailure,
     LoadFiles, LoadFilesSuccess, LoadFilesFailure,
     DeleteFile, DeleteFileFailure, DeleteFileSuccess,
@@ -28,11 +28,26 @@ export class BackendEffects {
         private store: Store<appStore.AppState>
     ) { }
 
+    // initialize redirect effect
+    @Effect()
+    initialize$ = this.actions$.pipe(
+        ofType<Initialize>(BackendActionTypes.Initialize),
+        map(() => new Navigate(['/init']))
+    );
+
+    // login success effect
+    @Effect()
+    initialized$ = this.actions$.pipe(
+        ofType<Initialized>(BackendActionTypes.Initialized),
+        withLatestFrom(this.store.pipe(select(appStore.backendState))),
+        map(([action, backendState]) => new Navigate([backendState.redirectUrl || '/dashboard']))
+    );
+
     // load files effect
     @Effect()
     loadFiles$ = this.actions$.pipe(
-        ofType<LoadFiles>(BackendActionTypes.LoadFiles, BackendActionTypes.DeleteFileFailure),
-        withLatestFrom(this.store.pipe(select(appStore.getCurrentUser))),
+        ofType<LoadFiles>(BackendActionTypes.LoadFiles, BackendActionTypes.Initialized, BackendActionTypes.DeleteFileFailure),
+        withLatestFrom(this.store.pipe(select(appStore.getPrincipal))),
         switchMap(async ([action, user]) => {
           try {
             const result = await this.fileManagementService.getFiles(user);
@@ -54,7 +69,7 @@ export class BackendEffects {
     @Effect()
     getFileContent$ = this.actions$.pipe(
         ofType<GetFileContent>(BackendActionTypes.GetFileContent),
-        withLatestFrom(this.store.pipe(select(appStore.getCurrentUser))),
+        withLatestFrom(this.store.pipe(select(appStore.getPrincipal))),
         switchMap(async ([action, user]) => {
           const file = action.payload;
           try {
@@ -77,7 +92,7 @@ export class BackendEffects {
     @Effect()
     saveDraft$ = this.actions$.pipe(
         ofType<SaveDraft>(BackendActionTypes.SaveDraft),
-        withLatestFrom(this.store.pipe(select(appStore.getCurrentUser))),
+        withLatestFrom(this.store.pipe(select(appStore.getPrincipal))),
         switchMap(async ([action, user]) => {
           const file = action.payload.file;
           try {
@@ -106,7 +121,7 @@ export class BackendEffects {
     @Effect()
     commitChanges$ = this.actions$.pipe(
       ofType<CommitChanges>(BackendActionTypes.CommitChanges),
-      withLatestFrom(this.store.pipe(select(appStore.getCurrentUser))),
+      withLatestFrom(this.store.pipe(select(appStore.getPrincipal))),
       switchMap(async ([action, user]) => {
 
         let files = action.payload.files;
@@ -159,7 +174,7 @@ export class BackendEffects {
     @Effect()
     deleteFile$ = this.actions$.pipe(
         ofType<DeleteFile>(BackendActionTypes.DeleteFile),
-        withLatestFrom(this.store.pipe(select(appStore.getCurrentUser))),
+        withLatestFrom(this.store.pipe(select(appStore.getPrincipal))),
         switchMap(async ([action, user]) => {
             const file = action.payload;
             try {

@@ -1,21 +1,16 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
 import * as path from 'path';
 import * as boom from 'boom';
-import * as ms from 'ms';
-import * as AsyncLock from 'async-lock';
 import { TreeDescription, CommitDescription } from 'isomorphic-git';
 import * as _ from 'lodash';
 
 import { percyConfig } from 'config';
-import { User, Authenticate } from 'models/auth';
+import { User, Authenticate, Principal } from 'models/auth';
 import { ConfigFile, Configuration } from 'models/config-file';
 import { getGitFS, GIT, FSExtra } from './git-fs.service';
 import { UtilService } from './util.service';
 import { MaintenanceService } from './maintenance.service';
 
-const lock = new AsyncLock();
 
 class PathFinder {
 
@@ -40,8 +35,6 @@ class PathFinder {
   }
 }
 
-const sessionsMetaFile = path.resolve(percyConfig.metaFolder, 'user-session.json');
-
 /**
  * This service provides the methods around the file management API endpoints
  */
@@ -49,31 +42,12 @@ const sessionsMetaFile = path.resolve(percyConfig.metaFolder, 'user-session.json
 export class FileManagementService {
 
     /**
-     * the user session cache variable
-     */
-    private userSessionsCache: {[username: string]: number};
-
-    private userSessions$ = new BehaviorSubject(null);
-
-    /**
      * initializes the service
      * @param utilService the util service
      * @param maintenanceService the maintenance service
      */
     constructor(private utilService: UtilService,
-      private maintenanceService: MaintenanceService) {
-        this.userSessions$.pipe(debounceTime(500)).subscribe(async () => {
-          if (!this.userSessionsCache) {
-            return;
-          }
-          try {
-            const { fs } = await getGitFS();
-            await fs.outputJson(sessionsMetaFile, this.userSessionsCache);
-          } catch(err) {
-            console.warn(err);
-          }
-        });
-    }
+      private maintenanceService: MaintenanceService) {}
 
     /**
      * access the repository and receives the security token to be used in subsequent requests
@@ -158,7 +132,7 @@ export class FileManagementService {
      * The repo will only contain the '.git' folder, nothing else.
      * The file content will directly be read from pack files in '.git', by using git.readObject.
      */
-    private async clone(fs: FSExtra, git: GIT, auth: Authenticate, repoDir: string) {
+    async clone(fs: FSExtra, git: GIT, auth: Authenticate, repoDir: string) {
 
         const branch = auth.branchName;
         await git.clone({
@@ -267,84 +241,14 @@ export class FileManagementService {
         }
     }
 
-    async checkSessionTimeout(fs: FSExtra, username: string) {
-      if (!this.userSessionsCache) {
-        try {
-          if (await fs.exists(sessionsMetaFile)) {
-            this.userSessionsCache = await fs.readJson(sessionsMetaFile);
-          }
-        } catch (err) {
-          console.warn(err);
-        }
-      }
-
-      this.userSessionsCache = this.userSessionsCache || {};
-      if (this.userSessionsCache[username] && this.userSessionsCache[username] < Date.now()) {
-        delete this.userSessionsCache[username];
-        this.userSessions$.next(this.userSessionsCache);
-        throw boom.unauthorized('Session expired, please re-login');
-      };
-
-      this.userSessionsCache[username] = Date.now() + ms(percyConfig.loginSessionTimeout);
-      this.userSessions$.next(this.userSessionsCache);
-    }
-
-    private async checkRepoAccess(user: User) {
-        const { fs, git } = await getGitFS();
-
-        if (!user || !user.token) {
-          throw boom.unauthorized('Miss access token');
-        }
-
-        try {
-          JSON.parse(this.utilService.decrypt(user.token));
-        } catch (err) {
-          throw boom.unauthorized('Invalid access token');
-        }
-
-        const repoMetadataFile = this.utilService.getMetadataPath(user.repoFolder);
-        if (!await fs.exists(repoMetadataFile)) {
-          throw boom.unauthorized('Repo metadata not found');
-        }
-
-        let repoMetadata: any = await fs.readFile(repoMetadataFile);
-        try {
-          repoMetadata = JSON.parse(repoMetadata.toString());
-        } catch (err) {
-          // Not a valid json format, repo metadata file corruption, remove it
-          console.warn(`${repoMetadataFile} file corruption, will be removed:\n${repoMetadata}`);
-          await fs.remove(repoMetadataFile);
-          throw boom.unauthorized('Repo metadata file corruption');
-        }
-
-        // Verify with repo metadata
-        if (!_.isEqual(_.omit(user, 'password'),
-          _.omit(repoMetadata, 'password', 'sessionTimeout', 'commitBaseSHA', 'version'))) {
-          throw boom.forbidden('Repo metadata mismatch, you are not allowed to access the repo');
-        }
-
-        await this.checkSessionTimeout(fs, user.username);
-
-        const repoDir = path.resolve(percyConfig.reposFolder, user.repoFolder);
-        const password = this.utilService.decrypt(repoMetadata.password);
-        user = {...user, password};
-
-        await lock.acquire(repoDir, async() => {
-          if (!(await fs.exists(repoDir))) {
-            await this.clone(fs, git, user, repoDir);
-          }
-        });
-
-        return {fs, git, user, repoMetadata};
-    }
-
     /**
      * get the app environments
      * @param user the logged in user
      * @param applicationName the app name
      */
-    async getEnvironments(user: User, applicationName: string) {
-        const { git } = await this.checkRepoAccess(user);
+    async getEnvironments(principal: Principal, applicationName: string) {
+        const { git } = await getGitFS();
+        const { user } = await this.maintenanceService.checkSessionTimeout(principal);
 
         const pathFinder = new PathFinder(user, {applicationName, fileName: percyConfig.environmentsFile});
 
@@ -410,8 +314,9 @@ export class FileManagementService {
      *
      * @param user the logged in user
      */
-    async getFiles(user: User) {
-        const { fs, git } = await this.checkRepoAccess(user);
+    async getFiles(principal: Principal) {
+        const { fs, git } = await getGitFS();
+        const { user } = await this.maintenanceService.checkSessionTimeout(principal);
 
         const [draft, repoFiles] = await Promise.all([
           this.findDraftFiles(fs, user.repoFolder),
@@ -485,8 +390,9 @@ export class FileManagementService {
      * @param user the logged in user
      * @param file the file to get its draft and original content
      */
-    async getFileContent(user: User, file: ConfigFile): Promise<ConfigFile> {
-      const { fs, git, repoMetadata } = await this.checkRepoAccess(user);
+    async getFileContent(principal: Principal, file: ConfigFile): Promise<ConfigFile> {
+        const { fs, git } = await getGitFS();
+        const { user, repoMetadata } = await this.maintenanceService.checkSessionTimeout(principal);
 
         const pathFinder = new PathFinder(user, file);
 
@@ -564,8 +470,9 @@ export class FileManagementService {
      * @param user the logged in user
      * @param file the draft file to save
      */
-    async saveDraft(user: User, file: ConfigFile) {
-      const { fs, git, repoMetadata } = await this.checkRepoAccess(user);
+    async saveDraft(principal: Principal, file: ConfigFile) {
+        const { fs, git } = await getGitFS();
+        const { user, repoMetadata } = await this.maintenanceService.checkSessionTimeout(principal);
 
         const pathFinder = new PathFinder(user, file);
 
@@ -608,8 +515,9 @@ export class FileManagementService {
      * @param auth the logged in user
      * @param file the file to delete
      */
-    async deleteFile(auth: User, file: ConfigFile) {
-        const { fs, git, user, repoMetadata } = await this.checkRepoAccess(auth);
+    async deleteFile(principal: Principal, file: ConfigFile) {
+        const { fs, git } = await getGitFS();
+        const { user, repoMetadata } = await this.maintenanceService.checkSessionTimeout(principal);
         const pathFinder = new PathFinder(user, file);
 
         let gitPulled = false;
@@ -675,7 +583,7 @@ export class FileManagementService {
      * @param configFiles the config files to commit
      * @param message the commit message
      */
-    async resovelConflicts(auth: User, configFiles: ConfigFile[], message: string) {
+    async resovelConflicts(principal: Principal, configFiles: ConfigFile[], message: string) {
       const modified: ConfigFile[] = [];
       const unchanged: ConfigFile[] = [];
 
@@ -685,13 +593,13 @@ export class FileManagementService {
         if (file.modified) {
           modified.push(file);
         } else {
-          await this.saveDraft(auth, file); // This will clean draft data
+          await this.saveDraft(principal, file); // This will clean draft data
           unchanged.push(file);
         }
       }));
 
       if (modified.length) {
-        const committed = await this.commitFiles(auth, modified, message, true);
+        const committed = await this.commitFiles(principal, modified, message, true);
         return _.concat(committed, unchanged);
       }
 
@@ -705,8 +613,9 @@ export class FileManagementService {
      * @param message the commit message
      * @param forcePush the flag indicates whether to force push
      */
-    async commitFiles(auth: User, configFiles: ConfigFile[], message: string, forcePush: boolean = false) {
-        const { fs, git, user, repoMetadata } = await this.checkRepoAccess(auth);
+    async commitFiles(principal: Principal, configFiles: ConfigFile[], message: string, forcePush: boolean = false) {
+        const { fs, git } = await getGitFS();
+        const { user, repoMetadata } = await this.maintenanceService.checkSessionTimeout(principal);
 
         const repoDir = path.resolve(percyConfig.reposFolder, user.repoFolder);
 

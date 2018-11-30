@@ -14,7 +14,6 @@ import {
 } from '../actions/auth.actions';
 import { Navigate } from '../actions/common.actions';
 import { Authenticate } from 'models/auth';
-import { MaintenanceService } from 'services/maintenance.service';
 import { FileManagementService } from 'services/file-management.service';
 
 // defines the authentication effects
@@ -22,10 +21,8 @@ import { FileManagementService } from 'services/file-management.service';
 export class AuthEffects {
     constructor(
         private actions$: Actions,
-        private maintenanceService: MaintenanceService,
         private fileManagementService: FileManagementService,
         private store: Store<appStore.AppState>
-
     ) { }
 
     // login request effect

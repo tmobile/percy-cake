@@ -11,6 +11,7 @@ import { AppRoutingModule } from 'app-routing.module';
 
 // services
 import { UtilService } from 'services/util.service';
+import { InitGuardService } from 'services/init-guard.service';
 import { AuthGuardService } from 'services/auth-guard.service';
 import { FileManagementService } from 'services/file-management.service';
 
@@ -23,6 +24,7 @@ import { DashboardComponent } from 'pages/dashboard/dashboard.component';
 import { EditorComponent } from 'pages/editor/editor.component';
 
 // components
+import { InitComponent } from 'components/init/init.component';
 import { LayoutComponent } from 'components/layout/layout.component';
 import { MainHeaderComponent } from 'components/main-header/main-header.component';
 import { LoaderComponent } from 'components/loader/loader.component';
@@ -49,13 +51,13 @@ import { LocationStrategy, HashLocationStrategy } from '@angular/common';
 // directives
 import { SplitDirective } from 'directives/splitter.directive';
 import { FollowCursorDirective } from 'directives/follow-cursor.directive';
-import { InitializerDirective } from 'directives/initializer.directive';
 
 
 @NgModule({
   declarations: [
     AppComponent,
     LoginComponent,
+    InitComponent,
     DashboardComponent,
     LayoutComponent,
     MainHeaderComponent,
@@ -70,7 +72,6 @@ import { InitializerDirective } from 'directives/initializer.directive';
     ConflictDialogComponent,
     SplitDirective,
     FollowCursorDirective,
-    InitializerDirective
   ],
   imports: [
     BrowserModule,
@@ -93,6 +94,7 @@ import { InitializerDirective } from 'directives/initializer.directive';
   providers: [
     UtilService,
     AuthGuardService,
+    InitGuardService,
     FileManagementService,
     CanDeactivateGuard,
     {provide: LocationStrategy, useClass: HashLocationStrategy}
