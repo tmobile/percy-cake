@@ -68,6 +68,9 @@
                     .property-buttons-row {
                         margin-bottom: 10px;
                         margin-top: -10px;
+                        button {
+                          text-transform: uppercase;
+                        }
                     }
                 }
             }
