@@ -447,11 +447,8 @@ export class UtilService {
    * The return value is `TreeNode`.
    */
   buildConfigTree(obj: object, key: string, parentNode?: TreeNode): TreeNode {
-    const node = new TreeNode(key);
-    node.value = obj['$value'];
-    obj['$type'] = obj['$type'] || (node.value ? typeof node.value : 'object');
-    node.valueType = obj['$type'];
-    node.comment = obj['$comment'];
+    obj['$type'] = obj['$type'] || (obj['$value'] ? typeof obj['$value'] : 'object');
+    const node = new TreeNode(key, obj['$type'], obj['$value'], obj['$comment']);
     node.parent = parentNode;
     node.jsonValue = obj;
 

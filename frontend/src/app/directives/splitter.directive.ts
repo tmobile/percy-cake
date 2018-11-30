@@ -12,7 +12,11 @@ export class SplitDirective implements AfterViewInit {
   private _gutterHeight: number | null = null;
   private _gutterWidth: number | null = null;
   private _direction = 'horizontal';
+  private _flexLayout = false;
 
+  @Input() set splitFlexLayout(v: boolean) {
+    this._flexLayout = v;
+  }
   @Input() set splitAreas(v: string[]) {
     this._areas = v;
   }
@@ -39,6 +43,7 @@ export class SplitDirective implements AfterViewInit {
     if (this._minSizes) {
       options.minSize = this._minSizes;
     }
+
     if (this._gutterHeight || this._gutterWidth) {
       const gutterStyles: any = {};
       if (this._gutterHeight) {
@@ -55,6 +60,15 @@ export class SplitDirective implements AfterViewInit {
       }
       options.gutterStyle = () => gutterStyles;
     }
+
+    if (this._flexLayout) {
+      options.elementStyle = function(dimension, size, gutterSize) {
+        return {
+            'flex-basis': 'calc(' + size + '% - ' + gutterSize + 'px)',
+        }
+      }
+    }
+
     Split(this._areas, options);
   }
 }

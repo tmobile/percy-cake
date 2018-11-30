@@ -243,7 +243,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
 
       const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
         data: {
-          confirmationText: 'Corresponding env properties will be removed. Change property type?'
+          confirmationText: 'You have changed the property type, and the corresponding property will be removed from all environments. Do you still want to make the change?'
         }
       });
   
@@ -262,8 +262,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
   private doSubmit() {
 
     if (!this.duplicateDefault) {
-      const node = new TreeNode(this.key.value);
-      node.valueType = this.valueType.value;
+      const node = new TreeNode(this.key.value, this.valueType.value);
   
       if (node.isLeaf()) {
         if (node.valueType === PROPERTY_VALUE_TYPES.BOOLEAN) {

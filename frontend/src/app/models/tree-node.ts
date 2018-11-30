@@ -10,12 +10,20 @@ export class TreeNode {
     parent: TreeNode;
     jsonValue: any;
 
-    constructor(public key: string, public value?: any, public valueType?: string, public comment?: string[]) {}
+    constructor(public key: string, public valueType: string =PROPERTY_VALUE_TYPES.OBJECT, public value?: any, public comment?: string[]) {}
 
     static isLeafType(type) {
       return type === PROPERTY_VALUE_TYPES.STRING
         || type === PROPERTY_VALUE_TYPES.BOOLEAN
         || type === PROPERTY_VALUE_TYPES.NUMBER;
+    }
+
+    addChild(child: TreeNode) {
+      if (!this.children) {
+        this.children = [];
+      }
+      this.children.push(child);
+      child.parent = this;
     }
 
     isLeaf() {

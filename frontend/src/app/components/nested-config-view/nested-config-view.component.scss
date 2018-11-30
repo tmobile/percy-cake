@@ -1,12 +1,19 @@
 // nested config tree
 @import "variables";
 .split-tree-view {
-  position: absolute;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   height: 100%;
 
+  .tree-view {
+    overflow-y: auto;
+    position: relative;
+  }
     .nested-config-view {
       height: 100%;
+      width: 100%;
+      position: absolute;
       background-color: $white;
       padding: 5px;
       overflow: auto;

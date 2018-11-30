@@ -4,18 +4,17 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    padding: 10px 100px;
+    padding: 10px 50px;
     .btn-small {
         line-height: 28px;
         font-size: 13px;
     }
     .filename {
-        width: 40%;
         label {
           color: grey;
         }
         input {
-          width: 300px;
+          width: auto;
         }
     }
     .col-container {
@@ -28,23 +27,26 @@
         .col-default-env {
             width: 60%;
             margin-right: 20px;
-            position: relative;
-
+            display: flex;
+            flex-direction: column;
             .section-heading {
                 margin-bottom: 20px;
+            }
+            app-nested-config-view {
+              flex: 1;
             }
         }
         .col-other-envs {
             width: 40%;
             padding-left: 20px;
+            h3 {
+              margin-top: 20px;
+            }
             .preview {
                 overflow-wrap: break-word;
                 background-color: white;
-                padding: 20px;
-
-                &.compile-yaml {
-                  padding: 0px 10px;
-                }
+                padding: 0px 10px;
+                margin-top: 20px;
                 .section-heading {
                     margin-bottom: 10px;
                 }
@@ -58,9 +60,14 @@
                 .property {
                     display: flex;
                     margin-top: 20px;
+                    padding-top: 10px;
                     flex-direction: column;
                     .mat-form-field {
                         margin-bottom: 15px;
+                    }
+                    .property-buttons-row {
+                        margin-bottom: 10px;
+                        margin-top: -10px;
                     }
                 }
             }
@@ -69,6 +76,7 @@
     .buttons-row {
         display: flex;
         padding-top: 20px;
+        margin-left: auto;
         >* {
             margin-right: 10px;
         }

@@ -56,8 +56,6 @@ export class EditorComponent implements OnInit {
 
   @ViewChild('nestedConfig') nestedConfig: NestedConfigViewComponent;
 
-  @ViewChild('detailPanel') detailPanel: ElementRef;
-
   @HostListener('window:beforeunload', ['$event'])
   onLeavePage($event: any) {
     if (this.isPageDirty) {
@@ -256,6 +254,12 @@ export class EditorComponent implements OnInit {
     if (this.nestedConfig.saveAddEditProperty(node)) {
       this.store.dispatch(new SaveAddEditProperty({ node }));
     }
+  }
+
+  openEditPropertyDialog() {
+    this.selectedNode.pipe(take(1)).subscribe(node => {
+      this.nestedConfig.openEditPropertyDialog(node);
+    })
   }
 
   // handles the compiled YAML view request

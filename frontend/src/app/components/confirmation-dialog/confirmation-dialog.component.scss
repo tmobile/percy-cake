@@ -1,8 +1,9 @@
 @import "variables";
 
 .confirmation-dialog {
-  width: 300px;
-
+  width: auto;
+  min-width: 300px;
+  max-width: 500px;
   pre {
     white-space: pre-wrap;
   }

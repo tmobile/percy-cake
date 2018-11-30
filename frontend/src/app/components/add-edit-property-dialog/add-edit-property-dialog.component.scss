@@ -1,15 +1,16 @@
 // add or edit property parameters
 @import "variables";
+
+h2 {
+    padding: 0px;
+}
 .property-form-wrapper {
     background-color: $white;
-    h2,
-    h4 {
-        padding: 15px 0 15px 20px;
-    }
     .property-form {
         display: flex;
         flex-direction: column;
-        padding: 20px;
+        padding: 10px;
+        margin-top: 10px;
         .form-field {
             margin-bottom: 15px;
         }

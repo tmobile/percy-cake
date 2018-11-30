@@ -17,7 +17,7 @@ describe('AddEditPropertyDialogComponent', () => {
   it('edit root object node', () => {
     const data = {
       editMode: true,
-      node: new TreeNode('default', null, PROPERTY_VALUE_TYPES.OBJECT, ['some comment']),
+      node: new TreeNode('default', PROPERTY_VALUE_TYPES.OBJECT, null, ['some comment']),
       keyOptions: [],
       defaultTree: null,
     };
@@ -35,7 +35,7 @@ describe('AddEditPropertyDialogComponent', () => {
   it('edit non-root boolean propery in default tree', () => {
     const data = {
       editMode: true,
-      node: new TreeNode('keyname', true, PROPERTY_VALUE_TYPES.BOOLEAN, ['some comment']),
+      node: new TreeNode('keyname', PROPERTY_VALUE_TYPES.BOOLEAN, true, ['some comment']),
       keyOptions: [],
       defaultTree: null,
     };
@@ -55,7 +55,7 @@ describe('AddEditPropertyDialogComponent', () => {
   it('edit non-root boolean propery in environments tree', () => {
     const data = {
       editMode: true,
-      node: new TreeNode('keyname', true, PROPERTY_VALUE_TYPES.BOOLEAN, ['some comment']),
+      node: new TreeNode('keyname', PROPERTY_VALUE_TYPES.BOOLEAN, true, ['some comment']),
       keyOptions: [],
       defaultTree: null,
     };
@@ -75,7 +75,7 @@ describe('AddEditPropertyDialogComponent', () => {
   it('edit non-root number propery in default tree', () => {
     const data = {
       editMode: true,
-      node: new TreeNode('keyname', 0, PROPERTY_VALUE_TYPES.NUMBER, ['some comment']),
+      node: new TreeNode('keyname', PROPERTY_VALUE_TYPES.NUMBER, 0, ['some comment']),
       keyOptions: [],
       defaultTree: null,
     };
@@ -95,7 +95,7 @@ describe('AddEditPropertyDialogComponent', () => {
   it('edit non-root number propery in environments tree', () => {
     const data = {
       editMode: true,
-      node: new TreeNode('keyname', 0, PROPERTY_VALUE_TYPES.NUMBER, ['some comment']),
+      node: new TreeNode('keyname', PROPERTY_VALUE_TYPES.NUMBER, 0, ['some comment']),
       keyOptions: [],
       defaultTree: null,
     };
@@ -115,12 +115,11 @@ describe('AddEditPropertyDialogComponent', () => {
   it('edit non-root string array item propery in default tree', () => {
     const data = {
       editMode: true,
-      node: new TreeNode('keyname', 'Lopuse', PROPERTY_VALUE_TYPES.STRING, ['some comment']),
+      node: new TreeNode('keyname', PROPERTY_VALUE_TYPES.STRING, 'Lopuse', ['some comment']),
       keyOptions: [],
       defaultTree: null,
     };
-    data.node.parent = new TreeNode('default');
-    data.node.parent.valueType = PROPERTY_VALUE_TYPES.STRING_ARRAY;
+    data.node.parent = new TreeNode('default', PROPERTY_VALUE_TYPES.STRING_ARRAY);
     ctx().component.data = data;
     ctx().component.ngOnChanges();
 
@@ -136,13 +135,12 @@ describe('AddEditPropertyDialogComponent', () => {
   it('add non-root string array item propery in environments tree', () => {
     const data = {
       editMode: false,
-      node: new TreeNode('keyname'),
+      node: new TreeNode('keyname', PROPERTY_VALUE_TYPES.STRING_ARRAY),
       keyOptions: [],
       defaultTree: null,
     };
     data.node.parent = new TreeNode('environments');
     data.node.children = [];
-    data.node.valueType = PROPERTY_VALUE_TYPES.STRING_ARRAY;
     ctx().component.data = data;
     ctx().component.ngOnChanges();
 
@@ -163,7 +161,6 @@ describe('AddEditPropertyDialogComponent', () => {
       defaultTree: null,
     };
     data.node.parent = new TreeNode('default');
-    data.node.valueType = PROPERTY_VALUE_TYPES.OBJECT;
     ctx().component.data = data;
     ctx().component.ngOnChanges();
 
@@ -185,7 +182,6 @@ describe('AddEditPropertyDialogComponent', () => {
       defaultTree: null,
     };
     data.node.parent = new TreeNode('environments');
-    data.node.valueType = PROPERTY_VALUE_TYPES.OBJECT;
     ctx().component.data = data;
     ctx().component.ngOnChanges();
 
@@ -208,8 +204,6 @@ describe('AddEditPropertyDialogComponent', () => {
     data.node.parent = new TreeNode('environments');
     data.node.parent.children = [data.node];
     data.node.parent.children.push(new TreeNode('dev'));
-
-    data.node.valueType = PROPERTY_VALUE_TYPES.OBJECT;
 
     ctx().component.data = data;
     ctx().component.ngOnChanges();
@@ -238,10 +232,8 @@ describe('AddEditPropertyDialogComponent', () => {
     data.node.parent = new TreeNode('environments');
     data.node.parent.children = [data.node];
     data.node.parent.children.push(new TreeNode('dev'));
-    data.node.parent.children[1].children = [new TreeNode('inherits')];
+    data.node.parent.children[1].children = [new TreeNode('inherits', PROPERTY_VALUE_TYPES.STRING)];
     data.node.parent.children[1].children[0].value = 'prod';
-
-    data.node.valueType = PROPERTY_VALUE_TYPES.OBJECT;
 
     ctx().component.data = data;
     ctx().component.ngOnChanges();
@@ -271,12 +263,10 @@ describe('AddEditPropertyDialogComponent', () => {
     data.node.parent.children = [data.node];
     data.node.parent.children.push(new TreeNode('dev'));
     data.node.parent.children.push(new TreeNode('qa'));
-    data.node.parent.children[1].children = [new TreeNode('inherits')];
+    data.node.parent.children[1].children = [new TreeNode('inherits', PROPERTY_VALUE_TYPES.STRING)];
     data.node.parent.children[1].children[0].value = 'qa';
-    data.node.parent.children[2].children = [new TreeNode('inherits')];
+    data.node.parent.children[2].children = [new TreeNode('inherits', PROPERTY_VALUE_TYPES.STRING)];
     data.node.parent.children[2].children[0].value = 'prod';
-
-    data.node.valueType = PROPERTY_VALUE_TYPES.OBJECT;
 
     ctx().component.data = data;
     ctx().component.ngOnChanges();
@@ -298,7 +288,7 @@ describe('AddEditPropertyDialogComponent', () => {
   it('edit inherits propery in environments tree', () => {
     const data = {
       editMode: true,
-      node: new TreeNode('inherits', 'prod', PROPERTY_VALUE_TYPES.STRING, ['some comment']),
+      node: new TreeNode('inherits', PROPERTY_VALUE_TYPES.STRING, 'prod', ['some comment']),
       keyOptions: [],
       defaultTree: null,
     };
@@ -350,7 +340,7 @@ describe('AddEditPropertyDialogComponent', () => {
   it('get breadcrumb in edit mode', () => {
     const data = {
       editMode: true,
-      node: new TreeNode('level1', 'Lopuse', PROPERTY_VALUE_TYPES.STRING, ['some comment']),
+      node: new TreeNode('level1', PROPERTY_VALUE_TYPES.STRING, 'Lopuse', ['some comment']),
       keyOptions: [],
       defaultTree: null,
     };
@@ -373,7 +363,6 @@ describe('AddEditPropertyDialogComponent', () => {
       defaultTree: null,
     };
     data.node.parent = new TreeNode('environments');
-    data.node.valueType = PROPERTY_VALUE_TYPES.OBJECT;
     ctx().component.data = data;
     ctx().component.ngOnChanges();
 
