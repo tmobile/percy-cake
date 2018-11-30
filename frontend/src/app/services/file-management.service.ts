@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import * as path from 'path';
-import * as yamlJS from 'yaml-js';
 import * as boom from 'boom';
 import * as ms from 'ms';
 import * as AsyncLock from 'async-lock';
@@ -9,7 +8,7 @@ import * as _ from 'lodash';
 
 import { percyConfig } from 'config';
 import { User, Authenticate } from 'models/auth';
-import { ConfigFile } from 'models/config-file';
+import { ConfigFile, Configuration } from 'models/config-file';
 import { getGitFS, GIT, FSExtra } from './git-fs.service';
 import { UtilService } from './util.service';
 import { MaintenanceService } from './maintenance.service';
@@ -300,8 +299,8 @@ export class FileManagementService {
 
         if (await this.isRepoFileExists(git, pathFinder)) {
           const {object} = await git.readObject({dir: pathFinder.repoDir, oid, filepath: pathFinder.repoFilePath, encoding: 'utf8'});
-          const loaded = this.utilService.convertYamlToJson(object);
-          return _.filter(_.keys(loaded.environments), key => !this.utilService.isReservedKey(key));
+          const loaded = this.utilService.convertYamlToTree(object.toString());
+          return _.map(_.get(loaded.findChild(['environments']), 'children', []), child => child.key);
         }
 
         console.warn(`App environments file '${pathFinder.fullFilePath}' does not exist`);
@@ -430,38 +429,39 @@ export class FileManagementService {
      * @param user the logged in user
      * @param file the file to get its draft and original content
      */
-    async getFileContent(user: User, file: ConfigFile) {
+    async getFileContent(user: User, file: ConfigFile): Promise<ConfigFile> {
       const { fs, git, repoMetadata } = await this.checkRepoAccess(user);
 
         const pathFinder = new PathFinder(user, file);
 
         const oid = await this.getRemoteCommit(git, pathFinder.repoDir, user.branchName);
-        let originalConfig;
+        let originalConfig: Configuration;
 
         if (await this.isRepoFileExists(git, pathFinder)) {
           const { object } = await git.readObject({dir: pathFinder.repoDir, oid, filepath: pathFinder.repoFilePath, encoding: 'utf8'});
-          originalConfig = this.utilService.convertYamlToJson(object);
+          originalConfig = new Configuration(this.utilService.convertYamlToTree(object.toString()));
         }
 
-        let draftFile;
+        let draftConfig: Configuration;
         if (await fs.exists(pathFinder.draftFullFilePath)) {
-            draftFile = await fs.readJson(pathFinder.draftFullFilePath);
+          const content = await fs.readFile(pathFinder.draftFullFilePath);
+          draftConfig = new Configuration(this.utilService.convertYamlToTree(content.toString()));
         }
 
-        if (!originalConfig && !draftFile) {
+        if (!originalConfig && !draftConfig) {
             throw new Error(`File '${file.applicationName}/${file.fileName}' does not exist`);
         }
 
-        file.modified = draftFile ? !_.isEqual(originalConfig, draftFile.draftConfig) : false;
+        file.modified = draftConfig ? !_.isEqual(originalConfig, draftConfig) : false;
 
-        if (draftFile && !file.modified) {
+        if (draftConfig && !file.modified) {
             // Remove draft file
             await fs.remove(pathFinder.draftFullFilePath);
             // Clear commit base SHA
             await this.saveCommitBaseSHA(fs, repoMetadata, { [pathFinder.repoFilePath]: '' });
         }
 
-        return { ...file, ...(draftFile || {}), originalConfig };
+        return { ...file, draftConfig, originalConfig };
     }
 
     /**
@@ -526,8 +526,9 @@ export class FileManagementService {
         } else {
             // Save draft
             await fs.ensureDir(pathFinder.draftAppDir);
+
             // Only save the draft config
-            await fs.outputJson(pathFinder.draftFullFilePath, {draftConfig: file.draftConfig});
+            await fs.writeFile(pathFinder.draftFullFilePath, this.utilService.convertTreeToYaml(file.draftConfig));
 
             if (!repoMetadata.commitBaseSHA[pathFinder.repoFilePath]) {
                 // Save commit base SHA
@@ -674,7 +675,8 @@ export class FileManagementService {
             const pathFinder = new PathFinder(user, file);
 
             if (!file.draftConfig) {
-              file.draftConfig = (await fs.readJson(pathFinder.draftFullFilePath)).draftConfig; 
+              const content = await fs.readFile(pathFinder.draftFullFilePath);
+              file.draftConfig = new Configuration(this.utilService.convertYamlToTree(content.toString()));
             }
 
             if (!forcePush) {
@@ -691,7 +693,7 @@ export class FileManagementService {
 
               if ((!oldOid && newOid) || (oldOid && newOid && oldOid !== newOid)) { // Should conflict if found to be deleted?
                 const { object } = await git.readObject({dir: pathFinder.repoDir, oid: lastCommit, filepath: pathFinder.repoFilePath, encoding: 'utf8'});
-                const originalConfig = this.utilService.convertYamlToJson(object);
+                const originalConfig = new Configuration(this.utilService.convertYamlToTree(object.toString()));
                 conflictFiles.push({
                     ...file,
                     originalConfig,
@@ -719,7 +721,7 @@ export class FileManagementService {
                 await fs.ensureDir(folderPath);
         
                 // Convert json to yaml
-                await fs.writeFile(fullFilePath, this.utilService.convertJsonToYaml(file.draftConfig));
+                await fs.writeFile(fullFilePath, this.utilService.convertTreeToYaml(file.draftConfig));
         
                 file.size = (await fs.stat(fullFilePath)).size;
 

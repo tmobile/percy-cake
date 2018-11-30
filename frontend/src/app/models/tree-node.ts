@@ -6,11 +6,14 @@ import { PROPERTY_VALUE_TYPES } from 'config';
  * Json node data with nested structure. Each node has a key and a value or a list of children
  */
 export class TreeNode {
-    children: TreeNode[];
-    parent: TreeNode;
-    jsonValue: any;
+    children: TreeNode[] = undefined;
+    parent: TreeNode = undefined;
 
-    constructor(public key: string, public valueType: string =PROPERTY_VALUE_TYPES.OBJECT, public value?: any, public comment?: string[]) {}
+    constructor(public key: string, public valueType: string =PROPERTY_VALUE_TYPES.OBJECT, public value?: any, public comment?: string[]) {
+      if (!this.isLeaf()) {
+        this.children = [];
+      }
+    }
 
     static isLeafType(type) {
       return type === PROPERTY_VALUE_TYPES.STRING
@@ -72,6 +75,10 @@ export class TreeNode {
           parentNode = parentNode.parent;
       }
       return paths;
+    }
+
+    getPathsWithoutRoot() {
+      return this.getPaths().slice(1);
     }
 
     getPathsString() {

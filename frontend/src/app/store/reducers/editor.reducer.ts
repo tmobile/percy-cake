@@ -65,7 +65,7 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
 
         case BackendActionTypes.GetFileContentSuccess: {
           const {file} = action.payload;
-          const configuration = file.draftConfig || file.originalConfig;
+          const configuration = _.cloneDeep(file.draftConfig || file.originalConfig);
           return {
               ...state,
               configFile: {...file},
@@ -75,7 +75,7 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
         }
 
         case EditorActionTypes.ConfigurationChange: {
-            const configuration = {...action.payload};
+            const configuration = action.payload;
             const file = state.configFile;
 
             return {

@@ -150,134 +150,115 @@ export class UtilService {
   
     return comments.length === 0 ? undefined : comments;
   }
-  
+
   /**
-   * Set comment to $comment property.
-   * @param obj The object to set comment.
-   * @param comment The comment
-   * @returns object with comment set
-   * @private
-   */
-  private setComment(obj, comment: string[]) {
-    if (_.isArray(comment)) {
-      if (_.isObject(obj) && !_.isArray(obj)) {
-        obj.$comment = comment;
-      } else {
-        obj = {
-          $comment: comment,
-          $value: obj,
-        };
-      }
-    }
-  
-    return obj;
-  }
-  
-  /**
-   * Set data type to $type property.
-   * @param obj The object to set type.
-   * @param type The type
-   * @returns object with type set
-   * @private
-   */
-  private setDataType(obj, type: string) {
-    if (_.isString(type)) {
-      if (_.isObject(obj) && !_.isArray(obj)) {
-        obj.$type = type;
-      } else {
-        obj = {
-          $type: type,
-          $value: obj,
-        };
-      }
-    }
-    if (type === 'object') {
-      delete obj.$value;
-    }
-    return obj;
-  }
-  
-  /**
-   * Walk yaml tree, parse comments, construct json object.
-   * @param yamlNode The yaml tree node
+   * Walk yaml tree, parse comments, construct TreeNode object.
+   * @param keyNode The yaml key node
+   * @param valueNode The yaml value node
    * @param lines The split lines of yaml file
-   * @returns Json object constructed from yaml tree
+   * @param simpleArray The flag indicates whether only supports simple array
+   * @returns TreeNode object constructed from yaml tree
    * @private
    */
-  private walkYamlTree(yamlNode, lines: string[]) {
-    if (yamlNode.id === 'mapping') {
+  private walkYamlNode(keyNode, valueNode, lines: string[], simpleArray: boolean) {
+    if (valueNode.id === 'mapping') {
       // Mapping node, represents an object
-      const result = {};
-  
-      _.each(yamlNode.value, ([keyNode, valueNode]) => {
-  
+      const result = new TreeNode(keyNode ? keyNode.value : '', this.extractYamlDataType(valueNode.tag));
+
+      _.each(valueNode.value, ([subKeyNode, subValueNode]) => {
         // Recursively walk the value node
-        const nestResult = this.walkYamlTree(valueNode, lines);
-  
-        let comment;
-        let type;
-        if (valueNode.id !== 'scalar') {
-          // This will parse inline comment and after multiple lines comments like:
-          // key:  # some inline comment...
-          //   # multiple line 1
-          //   # multiple line 2
-          comment = this.parseYamlCommentLines(keyNode.end_mark, lines);
-          type = this.extractYamlDataType(valueNode.tag);
-        }
-        result[keyNode.value] = this.setDataType(this.setComment(nestResult, comment), type);
+        result.addChild(this.walkYamlNode(subKeyNode, subValueNode, lines, simpleArray));
       });
   
+      // This will parse inline comment and after multiple lines comments like:
+      // key:  # some inline comment...
+      //   # multiple line 1
+      //   # multiple line 2
+      if (keyNode && keyNode.end_mark) {
+        result.comment = this.parseYamlCommentLines(keyNode.end_mark, lines);
+      }
+
       return result;
-    } else if (yamlNode.id === 'sequence') {
+    } else if (valueNode.id === 'sequence') {
       // Sequence node, represents an array
-      let result = [];
+      const result = new TreeNode(keyNode ? keyNode.value : '', this.extractYamlDataType(valueNode.tag));
   
-      _.each(yamlNode.value, (node, idx) => {
-        const type = this.extractYamlDataType(node.tag);
-        result[idx] = this.setDataType(this.walkYamlTree(node, lines), type);
+      if (valueNode.value.length) {
+        result.comment = this.parseYamlCommentLines(valueNode.start_mark, lines);
+      }
+
+      const children = [];
+      _.each(valueNode.value, (subValueNode, idx) => {
+        children.push(this.walkYamlNode({value: `[${idx}]`}, subValueNode, lines, simpleArray));
       });
-  
-      if (yamlNode.value.length) {
-        const comment = this.parseYamlCommentLines(yamlNode.start_mark, lines);
-        result = this.setComment(result, comment);
+
+      if (!simpleArray) {
+        children.forEach((item) => {
+          result.addChild(item);
+        });
+      } else {
+        let itemType;
+        children.forEach((item) => {
+          if (!item.isLeaf()) {
+            console.warn(`Only support array of same simple type, but got: ${item}`);
+            return;
+          }
+          if (!itemType) {
+            itemType = item.valueType;
+          } else if (itemType !== item.valueType) {
+            console.warn(`Only support array of same simple type, ${itemType} detected, but got: ${item}`);
+            return;
+          }
+          result.addChild(item);
+        });
+
+        itemType = itemType || PROPERTY_VALUE_TYPES.STRING;
+        switch (itemType) {
+          case PROPERTY_VALUE_TYPES.STRING:
+            result.valueType = PROPERTY_VALUE_TYPES.STRING_ARRAY;
+            break;
+          case PROPERTY_VALUE_TYPES.BOOLEAN:
+            result.valueType = PROPERTY_VALUE_TYPES.BOOLEAN_ARRAY;
+            break;
+          case PROPERTY_VALUE_TYPES.NUMBER:
+            result.valueType = PROPERTY_VALUE_TYPES.NUMBER_ARRAY;
+            break;
+          default:
+            break;
+        }
       }
   
       return result;
     } else {
       // Scalar node, represents a string/number..
-  
+      const result = new TreeNode(keyNode ? keyNode.value : '', this.extractYamlDataType(valueNode.tag));
+
       // This will parse inline comment like:
       // key: value  # some inline comment...
-      // const line = lines[yamlNode.end_mark.line];
-      // extractYamlComment(line.substring(yamlNode.end_mark.column));
-      const comment = this.parseYamlCommentLines(yamlNode.end_mark, lines);
-  
+      result.comment = this.parseYamlCommentLines(valueNode.end_mark, lines);
+
       // Parse number if possible
-      let value = yamlNode.value;
-      const type = this.extractYamlDataType(yamlNode.tag);
-      if (type === 'number') {
-        value = _.toNumber(value);
+      if (result.valueType === 'number') {
+        result.value = _.toNumber(valueNode.value);
+      } else if (result.valueType === 'boolean') {
+        result.value = JSON.parse(valueNode.value);
+      } else {
+        result.value = valueNode.value;
       }
   
-      if (type === 'boolean') {
-        value = JSON.parse(value);
-      }
-  
-      return this.setDataType(this.setComment(value, comment), type);
+      return result;
     }
   }
   
   /**
-   * Convert yaml to json object.
+   * Convert yaml to TreeNode object.
    * @param yaml The yaml string
-   * @returns json object
+   * @param simpleArray The flag indicates whether only supports simple array
+   * @returns TreeNode object
    */
-  convertYamlToJson(yaml) {
+  convertYamlToTree(yaml: string, simpleArray: boolean = true) {
     const yamlNode = yamlJS.compose(yaml);
     const lines = yaml.split(/\r?\n/);
-  
-    // Walk yaml tree
-    const result = !yamlNode ? null : this.walkYamlTree(yamlNode, lines);
   
     // Parse root comments
     let rootComments;
@@ -291,8 +272,11 @@ export class UtilService {
         }
       }
     }
-  
-    return this.setComment(result, rootComments);
+
+    // Walk yaml tree
+    const result = !yamlNode ? null : this.walkYamlNode(null, yamlNode, lines, simpleArray);
+    result.comment = rootComments;
+    return result;
   }
 
   /**
@@ -315,63 +299,42 @@ export class UtilService {
   }
 
   /**
-   * Walk json tree, convert to yaml format.
-   * @param jsonNode The json tree node
+   * Walk TreeNode, convert to yaml format.
+   * @param treeNode The TreeNode
    * @param indent The indent spaces
    * @returns Yaml format string
    */
-  private walkJsonTree(jsonNode, indent: string = '') {
+  private walkTreeNode(treeNode: TreeNode, indent: string = '') {
 
     let result = '';
-    const isArray = _.isArray(jsonNode);
 
-    _.each(jsonNode, (value, key) => {
-      if (key === '$comment') {
-        return;
-      }
+    _.each(treeNode.children, (child) => {
 
-      if (key === '$type') {
-        return;
-      }
-
-      if (key === '$value') {
-        result = this.walkJsonTree(value, indent);
-        return;
-      }
-
-      if (isArray) {
+      if (treeNode.isArray()) {
         result += indent + '-';
       } else {
-        result += indent + key + ':';
-      }
-
-      if (value === null || value === undefined) {
-        result += '\n';
-        return;
+        result += indent + child.key + ':';
       }
 
       // Extract comment
-      const comment = value.$comment;
-      const hasComment = _.isArray(comment) && comment.length > 0;
+      const comment = child.comment;
+      const hasComment = child.comment && child.comment.length > 0;
 
-      let type = value.$type;
-      // Extract value
-      if (_.has(value, '$value')) {
-        value = value.$value;
-      }
-
-      if (type === 'number' && _.isInteger(value)) {
-        type = 'int';
+      let type = child.valueType;
+      if (child.isArray()) {
+        result += ' !!seq';
       } else {
-        type = this.typeMapReverse[type];
-      }
-      if (type) {
-        if (!isArray || type !== 'map') {
+        if (type === PROPERTY_VALUE_TYPES.NUMBER && _.isInteger(child.value)) {
+          type = 'int';
+        } else {
+          type = this.typeMapReverse[type];
+        }
+        if (!treeNode.isArray() || type !== 'map') {
           result += ' !!' + type;
         }
       }
 
-      if (_.isObject(value)) {
+      if (!child.isLeaf()) {
         // Append inline comment and multiple lines comments
         if (hasComment) {
           result += this.renderYamlComment(comment[0]);
@@ -380,10 +343,12 @@ export class UtilService {
             result += '\n' + indent + this.renderYamlComment(comment[i]);
           }
         }
-        // Recursively walk the value node
-        const nestResult = this.walkJsonTree(value, indent + '  ');
-        result += isArray && !_.isArray(value) ? ' ' + _.trimStart(nestResult) : '\n' + nestResult;
+        // Recursively walk the children nodes
+        const nestResult = this.walkTreeNode(child, indent + '  ');
+        result += treeNode.isArray() && !child.isArray() ? ' ' + _.trimStart(nestResult) : '\n' + nestResult;
       } else {
+        let value = child.value;
+
         // Append simple value and inline comment
         if (type === 'str') {
           value = value.replace(/\\/g, '\\\\');
@@ -407,20 +372,20 @@ export class UtilService {
   }
 
   /**
-  * Convert json object to yaml format.
-  * @param json The json object
+  * Convert TreeNode object to yaml format.
+  * @param tree The TreeNode object
   * @returns Yaml format string
   */
-  convertJsonToYaml(json) {
-    if (_.isEmpty(json)) {
-      return _.isArray(json) ? '[]' : '{}';
+  convertTreeToYaml(tree: TreeNode) {
+    if (_.isEmpty(tree)) {
+      return _.isArray(tree) ? '[]' : '{}';
     }
 
     let result = '';
 
-    if (json.$comment) {
+    if (tree.comment) {
       // Add root comments
-      _.each(json.$comment, (comment) => {
+      _.each(tree.comment, (comment) => {
         if (/^(\s)*(#.*)/.test(comment) || _.isEmpty(comment)) {
           result += comment + '\n';
         } else {
@@ -429,7 +394,7 @@ export class UtilService {
       });
     }
 
-    result += this.walkJsonTree(json);
+    result += this.walkTreeNode(tree);
 
     try {
       // Validate against safe schema
@@ -440,112 +405,6 @@ export class UtilService {
     }
 
     return result;
-  }
-
-  /**
-   * Build the config structure tree. The `obj` is the Json object, or a sub-tree of a Json object.
-   * The return value is `TreeNode`.
-   */
-  buildConfigTree(obj: object, key: string, parentNode?: TreeNode): TreeNode {
-    obj['$type'] = obj['$type'] || (obj['$value'] ? typeof obj['$value'] : 'object');
-    const node = new TreeNode(key, obj['$type'], obj['$value'], obj['$comment']);
-    node.parent = parentNode;
-    node.jsonValue = obj;
-
-    if (!node.isLeaf()) {
-      node.children = [];
-
-      if (node.isArray()) {
-        let itemType;
-
-        node.value = _.isArray(node.value) ? node.value : [];
-        node.value.forEach((element, idx) => {
-          const item = this.buildConfigTree(element, `[${idx}]`, node);
-          if (!item.isLeaf()) {
-            console.warn(`Only support array of same simple type, but got: ${item}`);
-            return;
-          }
-          if (!itemType) {
-            itemType = item.valueType;
-          } else if (itemType !== item.valueType) {
-            console.warn(`Only support array of same simple type, ${itemType} detected, but got: ${item}`);
-            return;
-          }
-          node.children.push(item);
-        });
-
-        itemType = itemType || PROPERTY_VALUE_TYPES.STRING;
-        switch (itemType) {
-          case PROPERTY_VALUE_TYPES.STRING:
-            node.valueType = PROPERTY_VALUE_TYPES.STRING_ARRAY;
-            break;
-          case PROPERTY_VALUE_TYPES.BOOLEAN:
-            node.valueType = PROPERTY_VALUE_TYPES.BOOLEAN_ARRAY;
-            break;
-          case PROPERTY_VALUE_TYPES.NUMBER:
-            node.valueType = PROPERTY_VALUE_TYPES.NUMBER_ARRAY;
-            break;
-          default:
-            break;
-        }
-      } else {
-        Object.keys(obj).forEach((nestKey) => {
-          if (this.isReservedKey(nestKey)) {
-            return;
-          }
-          node.children.push(this.buildConfigTree(obj[nestKey], nestKey, node));
-        });
-      }
-
-      node.value = undefined;
-    }
-
-    return node;
-  }
-
-  /*
-   * Do update TreeNode's json value
-   */
-  private doUpdateJsonValue(node: TreeNode) {
-    const json = {};
-    if (node.comment) {
-      json['$comment'] = node.comment;
-    }
-    json['$type'] = node.valueType;
-    if (node.isArray()) {
-      json['$type'] = 'array';
-    }
-    if (node.children) {
-      if (node.isArray()) {
-        const arr = [];
-        node.children.forEach(child => {
-          this.doUpdateJsonValue(child);
-          arr.push(child.jsonValue);
-        });
-        json['$value'] = arr;
-      } else {
-        node.children.forEach(child => {
-          this.doUpdateJsonValue(child);
-          json[child.key] = child.jsonValue;
-        });
-      }
-    } else {
-      json['$value'] = node.value;
-    }
-
-    node.jsonValue = json;
-  }
-
-  /**
-   * updates the json value of node and its all parent
-   * @param node the node to update
-   */
-  updateJsonValue(node: TreeNode) {
-    this.doUpdateJsonValue(node.getTopParent());
-  }
-
-  isReservedKey(key: string) {
-    return key === '$type' || key === '$value' || key === '$comment';
   }
 
   private escapeRegExp(text) {
@@ -623,31 +482,31 @@ export class UtilService {
     return result;
   }
 
-  private substitute(target, tokens, depth) {
-    if (target.$type === PROPERTY_VALUE_TYPES.OBJECT) {
-      _.each(target, (item, key) => {
-        if (depth === 0 && item.$type && _.has(tokens, key)) {
-          item.$value = tokens[key];
+  private substitute(target: TreeNode, tokens, depth) {
+    if (target.valueType === PROPERTY_VALUE_TYPES.OBJECT) {
+      _.each(target.children, (child) => {
+        if (depth === 0 && child.isLeaf() && _.has(tokens, child.key)) {
+          child.value = tokens[child.key];
         } else {
-          this.substitute(item, tokens, depth++);
+          this.substitute(child, tokens, depth++);
         }
       });
       return target;
     }
 
-    if (target.$type === PROPERTY_VALUE_TYPES.STRING_ARRAY
-      || target.$type === 'array') {
-      _.each(target.$value, (item) => {
-        this.substitute(item, tokens, depth++);
+    if (target.valueType === PROPERTY_VALUE_TYPES.STRING_ARRAY
+      || target.valueType === 'array') {
+      _.each(target.children, (child) => {
+        this.substitute(child, tokens, depth++);
       });
       return target;
     }
 
-    if (target.$type !== PROPERTY_VALUE_TYPES.STRING) {
+    if (target.valueType !== PROPERTY_VALUE_TYPES.STRING) {
       return target;
     }
 
-    const text = target.$value;
+    const text = target.value;
     let retVal = text;
 
     const regExp = this.createRegExp();
@@ -659,54 +518,77 @@ export class UtilService {
 
       retVal = retVal.replace(fullMatch, tokenValue);
     }
-    target.$value = retVal;
+    target.value = retVal;
     return target;
+  }
+
+  private mergeEnv(dest: TreeNode, src: TreeNode) {
+    if (dest.isLeaf()) {
+      const match = src.findChild(dest.getPathsWithoutRoot());
+      if (match) {
+        dest.value = match.value;
+        dest.comment = match.comment || dest.comment;
+      }
+    } else if (dest.isArray()) {
+      const match = src.findChild(dest.getPathsWithoutRoot());
+      if (match) {
+        dest.comment = match.comment || dest.comment;
+        // Copy array
+        dest.children = [];
+        const arr = _.cloneDeep(match.children);
+        _.each(arr, item => {
+          item.parent = null;
+          dest.addChild(item);
+        });
+      }
+    } else {
+      dest.comment = src.comment || dest.comment;
+      _.each(dest.children, subChild => {
+        this.mergeEnv(subChild, src);
+      });
+    }
   }
 
   compileYAML(env: string, config: Configuration) {
     const mergeStack = [];
     const inheritedEnvs = [env];
 
-    let envNode = config.environments[env] || {};
+    let envNode = config.environments.findChild([env]);
     while (envNode) {
       const deepCopy = _.cloneDeep(envNode);
-      const inherits = deepCopy.inherits;
-      delete deepCopy.inherits;
-      mergeStack.unshift({[env]: deepCopy});
+      const inherits = deepCopy.findChild(['inherits']);
+      mergeStack.unshift(deepCopy);
       if (inherits) {
-        const inheritEnv = inherits.$value;
+        _.remove(deepCopy.children, v => v === inherits);
+        const inheritEnv = inherits.value;
         if (inheritedEnvs.indexOf(inheritEnv) > -1) {
           throw new Error('Cylic env inherits detected!');
         }
         inheritedEnvs.push(inheritEnv);
-        envNode = config.environments[inheritEnv];
+        envNode = config.environments.findChild([inheritEnv]);
       } else {
         break;
       }
     }
 
-    mergeStack.unshift({[env]: _.cloneDeep(config.default)});
-
-    let merged = {};
+    let merged = _.cloneDeep(config.default);
     mergeStack.forEach(m => {
-      merged = _.mergeWith(merged, m, (dst, src) => {
-        if (_.isArray(dst)) {
-          // Copy array instead of merge
-          return src;
-        }
-      });
+      this.mergeEnv(merged, m);
     });
 
     const tokens = {};
-    _.each(merged[env], (value, key) => {
-      if (value && TreeNode.isLeafType(value.$type)) {
-        tokens[key] = value.$value;
+    _.each(merged.children, (child) => {
+      if (child.isLeaf()) {
+        tokens[child.key] = child.value;
       }
     });
 
-    const substituted = this.substitute(merged[env], this.resolveTokens(tokens), 0);
+    const substituted = this.substitute(merged, this.resolveTokens(tokens), 0);
+    substituted.key = env;
 
-    return this.convertJsonToYaml(substituted);
+    const tree = new TreeNode('');
+    tree.children.push(substituted);
+    return this.convertTreeToYaml(tree);
   }
 
   /**

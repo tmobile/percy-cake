@@ -5,7 +5,7 @@ import * as _ from 'lodash';
 
 import * as appStore from 'store';
 import { UtilService } from 'services/util.service';
-import { GetFileContentSuccess, CommitChanges } from 'store/actions/backend.actions';
+import { CommitChanges } from 'store/actions/backend.actions';
 import { ConfigFile } from 'models/config-file';
 
 /**
@@ -34,11 +34,11 @@ export class ConflictDialogComponent implements OnInit {
 
   ngOnInit() {
     this.data.conflictFiles.forEach(file => {
-      file.repoCode = this.utilService.convertJsonToYaml(file.originalConfig);
+      file.repoCode = this.utilService.convertTreeToYaml(file.originalConfig);
 
       const draftFile: any = _.find(this.data.draftFiles, _.pick(file, ['fileName', 'applicationName']));
       file.draftConfig = draftFile.draftConfig;
-      file.draftCode = this.utilService.convertJsonToYaml(file.draftConfig);
+      file.draftCode = this.utilService.convertTreeToYaml(file.draftConfig);
     });
   }
 

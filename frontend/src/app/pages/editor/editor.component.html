@@ -5,7 +5,8 @@
     <span>{{editMode ? 'Edit': 'Add'}} File</span>
   </div>
 
-  <div class="col-container" *ngIf="(environments|async) && (configuration | async); else loader"  appSplit [gutterWidth]="20" [splitAreas]="['#editor-tree-view','#editor-detail-view']" [splitSizes]="[60,40]">
+  <div class="col-container" *ngIf="(environments|async) && (configuration | async); else loader" 
+    appSplit [gutterWidth]="20" [splitAreas]="['#editor-tree-view','#editor-detail-view']" [splitSizes]="[60,40]" [splitMinSizes]="[330,150]">
 
     <!-- col which shows tree view -->
     <div class="col-default-env" id="editor-tree-view">

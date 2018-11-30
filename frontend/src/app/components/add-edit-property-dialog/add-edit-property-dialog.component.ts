@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter, OnChanges } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
+import { MatDialog } from '@angular/material';
 import { Store } from '@ngrx/store';
 import * as _ from 'lodash';
 
@@ -9,7 +10,6 @@ import { UtilService } from 'services/util.service';
 import { TreeNode } from 'models/tree-node';
 import { ConfigProperty } from 'models/config-property';
 import { Alert } from 'store/actions/common.actions';
-import { MatDialog } from '../../../../node_modules/@angular/material';
 import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
 
 /*
@@ -206,16 +206,8 @@ export class AddEditPropertyDialogComponent implements OnChanges {
       return;
     }
 
-    if (this.utilService.isReservedKey(this.key.value)) {
-      this.store.dispatch(new Alert({
-        message: `Property key '${this.key.value}' is reserved`,
-        alertType: 'error'
-      }));
-      return;
-    }
-
     // Validate key is unique
-    if (this.data.node.isDefaultNode() || this.isDefineEnv()) {
+    if (!this.data.editMode || this.data.node.isDefaultNode() || this.isDefineEnv()) {
       const existingKeys = [];
       if (!this.data.editMode) {
         const parent = this.data.node;
@@ -272,8 +264,6 @@ export class AddEditPropertyDialogComponent implements OnChanges {
         } else if (node.valueType === PROPERTY_VALUE_TYPES.STRING) {
           node.value = this.value.value;
         }
-      } else {
-        node.children = [];
       }
   
       if (this.comment.value) {
@@ -301,11 +291,13 @@ export class AddEditPropertyDialogComponent implements OnChanges {
         defaultTree = _.find(defaultTree.children, child => child.key === keyHierarchy[i]);
       }
 
-      // Clone default node by rebuilding it
-      const result = this.utilService.buildConfigTree(
-        defaultTree.jsonValue,
-        keyValue,
-        this.data.editMode ? this.data.node.parent : this.data.node);
+      // Clone default node
+      const parent = defaultTree.parent;
+      defaultTree.parent = null;
+      const result = _.cloneDeep(defaultTree);
+      defaultTree.parent = parent;
+
+      result.key = this.key.value;
 
       this.saveProperty.emit(result);
     }

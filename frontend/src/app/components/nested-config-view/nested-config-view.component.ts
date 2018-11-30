@@ -25,7 +25,7 @@ import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation
 export class NestedConfigViewComponent implements OnChanges {
   currentConfigProperty: ConfigProperty;
   @Input() envFileMode: boolean; // Mode to create/edit environments.yaml file
-  @Input() configuration: any;
+  @Input() configuration: Configuration;
   @Input() environments: Array<string>;
 
   @Output() configurationChange = new EventEmitter<any>();
@@ -58,27 +58,19 @@ export class NestedConfigViewComponent implements OnChanges {
    * handle component initialization
    */
   ngOnChanges() {
-    let defaultConf = this.configuration.default;
-    if (defaultConf && defaultConf.$type !== 'object') {
-      // Due to format change of environments file
-      defaultConf = null;
-    }
-
-    const defaultTree = this.utilService.buildConfigTree(
-      defaultConf || { $type: 'object' }, 'default');
+    const defaultTree = this.configuration.default;
 
     if (!this.defaultDataSource.data
       || !this.defaultDataSource.data.length
-      || !_.isEqual(this.defaultDataSource.data[0].jsonValue, defaultTree.jsonValue)) {
+      || !_.isEqual(this.defaultDataSource.data[0], defaultTree)) {
       this.defaultDataSource.data = [defaultTree];
     }
 
-    const environmentsTree = this.utilService.buildConfigTree(
-      this.configuration.environments || { $type: 'object' }, 'environments');
+    const environmentsTree = this.configuration.environments;
 
     if (!this.envDataSource.data
       || !this.envDataSource.data.length
-      || !_.isEqual(this.envDataSource.data[0].jsonValue, environmentsTree.jsonValue)) {
+      || !_.isEqual(this.envDataSource.data[0], environmentsTree)) {
       this.envDataSource.data = [environmentsTree];
     }
 
@@ -142,7 +134,7 @@ export class NestedConfigViewComponent implements OnChanges {
         return { key: environment, type: PROPERTY_VALUE_TYPES.OBJECT };
       });
 
-      const existingKeys = _.keys(this.configuration.environments);
+      const existingKeys = _.map(this.configuration.environments.children, c => c.key);
       keyOptions = _.filter(keyOptions, option => !_.includes(existingKeys, option.key));
     } else {
 
@@ -227,12 +219,7 @@ export class NestedConfigViewComponent implements OnChanges {
     this.envDataSource.data = null;
     this.envDataSource.data = _data;
 
-    const newConfig: Configuration = {
-      default: this.defaultDataSource.data[0].jsonValue,
-      environments: this.envDataSource.data[0].jsonValue
-    };
-
-    this.configurationChange.emit(newConfig);
+    this.configurationChange.emit(this.configuration);
   }
 
   /**
@@ -287,14 +274,11 @@ export class NestedConfigViewComponent implements OnChanges {
           node.children : currentNode.children || [];
       }
 
-      this.utilService.updateJsonValue(currentNode);
-
     } else {
       node.parent = currentNode;
 
       currentNode.children = currentNode.children || [];
       currentNode.children.push(node);
-      this.utilService.updateJsonValue(currentNode);
     }
 
     return {
@@ -421,7 +405,7 @@ export class NestedConfigViewComponent implements OnChanges {
         element.key = `[${idx}]`;
       });
     }
-    this.utilService.updateJsonValue(parent);
+    // this.utilService.updateJsonValue(parent);
 
     const isDefaultNode = parent.isDefaultNode();
     let environmentsTree: TreeNode;
@@ -467,21 +451,15 @@ export class NestedConfigViewComponent implements OnChanges {
    * @param action the alignment action
    */
   private alignEnvironmentProperties(node: TreeNode, envsTree: TreeNode, action: (envNode:TreeNode)=>void) {
-    let foundAny = false;
 
-    const paths = node.getPaths().slice(1); // Slice the first 'default' part
+    const paths = node.getPathsWithoutRoot(); // Without the root 'default' part
 
     _.each(envsTree.children, envChild => {
       const found = envChild.findChild(paths);
       if (found) {
         action(found);
-        foundAny = true;
       }
     });
-
-    if (foundAny) {
-      this.utilService.updateJsonValue(envsTree);
-    }
   }
 
 }

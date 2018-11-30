@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, HostListener, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatDialog, MatInput } from '@angular/material';
@@ -21,7 +21,7 @@ import { NestedConfigViewComponent } from 'components/nested-config-view/nested-
 import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
 import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.component';
 import { UtilService } from 'services/util.service';
-import { ConfigFile } from 'models/config-file';
+import { ConfigFile, Configuration } from 'models/config-file';
 
 /*
   Configurations editor page
@@ -32,7 +32,7 @@ import { ConfigFile } from 'models/config-file';
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.scss']
 })
-export class EditorComponent implements OnInit {
+export class EditorComponent implements OnInit, AfterViewInit {
   appName = '';
   filename = new FormControl('', [Validators.required]);
 
@@ -84,7 +84,6 @@ export class EditorComponent implements OnInit {
       this.filename.disable();
     } else {
       this.filename.setValue('');
-      this.fileNameInput.focus();
     }
 
     this.store.dispatch(new PageLoad({ applicationName, editMode: this.editMode }));
@@ -98,10 +97,7 @@ export class EditorComponent implements OnInit {
       const file: ConfigFile = {
         fileName,
         applicationName,
-        draftConfig: {
-          default: { $type: 'object' },
-          environments: { $type: 'object' }
-        },
+        draftConfig: new Configuration(),
         modified: true
       };
       this.store.dispatch(new GetFileContentSuccess({file, newlyCreated: true}));
@@ -116,6 +112,14 @@ export class EditorComponent implements OnInit {
           this.store.dispatch(new GetFileContent(file ? file : {fileName, applicationName}));
         }
       });
+    }
+  }
+
+  ngAfterViewInit() {
+    if (!this.filename.value && this.filename.enabled) {
+      setImmediate(() => {
+        this.fileNameInput.focus();
+      })
     }
   }
 
@@ -165,11 +169,9 @@ export class EditorComponent implements OnInit {
         return {editorState, valid: false};
       }
       try {
-        this.utilService.convertJsonToYaml(editorState.configuration);
-        _.forEach(editorState.configuration.environments, (envNode, envName) => {
-          if (!this.utilService.isReservedKey(envName)) {
-            this.utilService.compileYAML(envName, editorState.configuration);
-          }
+        this.utilService.convertTreeToYaml(editorState.configuration);
+        _.forEach(editorState.configuration.environments.children, (envNode) => {
+          this.utilService.compileYAML(envNode.key, editorState.configuration);
         });
       } catch (err) {
         this.store.dispatch(new Alert({message: `YAML validation failed:\n${err.message}`, alertType: 'error'}));
@@ -232,7 +234,9 @@ export class EditorComponent implements OnInit {
   // handles the node selected request to show the detail
   onNodeSelected(node: TreeNode) {
     if (!node.isLeaf()) {
-        const compiledYAML = this.utilService.convertJsonToYaml({[node.key]: node.jsonValue});
+        const tree = new TreeNode('');
+        tree.children.push(node);
+        const compiledYAML = this.utilService.convertTreeToYaml(tree);
         this.store.dispatch(new NodeSelectedSuccess({ node, compiledYAML }));
     } else {
         this.store.dispatch(new NodeSelectedSuccess({ node, compiledYAML: null }));
