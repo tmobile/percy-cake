@@ -677,27 +677,4 @@ export class UtilService {
     return path.resolve(percyConfig.metaFolder, `${repoFolder}.meta`);
   }
 
-  authenticate(auth: Authenticate) {
-    const {repoName, repoFolder} = this.getRepoFolder(auth);
-
-    // Create token payload
-    const tokenPayload: any = {
-      username: auth.username,
-      iat: Date.now()
-    };
-
-    // Sign token and set to repo metadata
-    const token = this.encrypt(JSON.stringify(tokenPayload));
-    const sessionTimeout = tokenPayload.iat + ms(percyConfig.loginSessionTimeout);
-
-    const user: User = {
-      ...auth,
-      password: this.encrypt(auth.password),
-      repoName,
-      repoFolder,
-      token,
-    };
-
-    return {user, sessionTimeout};
-  }
 }

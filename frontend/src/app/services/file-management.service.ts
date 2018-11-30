@@ -1,4 +1,6 @@
 import { Injectable } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 import * as path from 'path';
 import * as boom from 'boom';
 import * as ms from 'ms';
@@ -38,6 +40,8 @@ class PathFinder {
   }
 }
 
+const sessionsMetaFile = path.resolve(percyConfig.metaFolder, 'user-session.json');
+
 /**
  * This service provides the methods around the file management API endpoints
  */
@@ -45,11 +49,31 @@ class PathFinder {
 export class FileManagementService {
 
     /**
+     * the user session cache variable
+     */
+    private userSessionsCache: {[username: string]: number};
+
+    private userSessions$ = new BehaviorSubject(null);
+
+    /**
      * initializes the service
      * @param utilService the util service
      * @param maintenanceService the maintenance service
      */
-    constructor(private utilService: UtilService, private maintenanceService: MaintenanceService) { }
+    constructor(private utilService: UtilService,
+      private maintenanceService: MaintenanceService) {
+        this.userSessions$.pipe(debounceTime(500)).subscribe(async () => {
+          if (!this.userSessionsCache) {
+            return;
+          }
+          try {
+            const { fs } = await getGitFS();
+            await fs.outputJson(sessionsMetaFile, this.userSessionsCache);
+          } catch(err) {
+            console.warn(err);
+          }
+        });
+    }
 
     /**
      * access the repository and receives the security token to be used in subsequent requests
@@ -57,10 +81,11 @@ export class FileManagementService {
      */
     async accessRepo(auth: Authenticate) {
         const { fs, git } = await getGitFS();
-        const {user, sessionTimeout} = this.utilService.authenticate(auth);
 
-        const repoDir = path.resolve(percyConfig.reposFolder, user.repoFolder);
-        const repoMetadataFile = this.utilService.getMetadataPath(user.repoFolder);
+        const {repoName, repoFolder} = this.utilService.getRepoFolder(auth);
+
+        const repoDir = path.resolve(percyConfig.reposFolder, repoFolder);
+        const repoMetadataFile = this.utilService.getMetadataPath(repoFolder);
 
         let existingRepoMetadata;
         if (await fs.exists(repoDir)) {
@@ -102,16 +127,29 @@ export class FileManagementService {
             throw this.utilService.convertGitError(error);
         }
 
-        const draftFolder = path.resolve(percyConfig.draftFolder, user.repoFolder, percyConfig.yamlAppsFolder);
+        const draftFolder = path.resolve(percyConfig.draftFolder, repoFolder, percyConfig.yamlAppsFolder);
         await fs.ensureDir(draftFolder);
 
-        await this.maintenanceService.addUserName(user.username);
+        await this.maintenanceService.addUserName(auth.username);
 
         // In case of pull, remember the existing commit base SHAs
         const commitBaseSHA = existingRepoMetadata ? existingRepoMetadata.commitBaseSHA || {} : {};
 
+        // Create token payload
+        const tokenPayload: any = {
+          username: auth.username,
+          iat: Date.now()
+        };
+
         // Save user to repo metadata locally
-        await fs.outputJson(repoMetadataFile, {...user, commitBaseSHA, version: percyConfig.repoMetadataVersion, sessionTimeout});
+        const user: User = {
+          ...auth,
+          password: this.utilService.encrypt(auth.password),
+          repoName,
+          repoFolder,
+          token: this.utilService.encrypt(JSON.stringify(tokenPayload)),
+        };
+        await fs.outputJson(repoMetadataFile, {...user, commitBaseSHA, version: percyConfig.repoMetadataVersion});
         return user;
     }
 
@@ -229,6 +267,28 @@ export class FileManagementService {
         }
     }
 
+    async checkSessionTimeout(fs: FSExtra, username: string) {
+      if (!this.userSessionsCache) {
+        try {
+          if (await fs.exists(sessionsMetaFile)) {
+            this.userSessionsCache = await fs.readJson(sessionsMetaFile);
+          }
+        } catch (err) {
+          console.warn(err);
+        }
+      }
+
+      this.userSessionsCache = this.userSessionsCache || {};
+      if (this.userSessionsCache[username] && this.userSessionsCache[username] < Date.now()) {
+        delete this.userSessionsCache[username];
+        this.userSessions$.next(this.userSessionsCache);
+        throw boom.unauthorized('Session expired, please re-login');
+      };
+
+      this.userSessionsCache[username] = Date.now() + ms(percyConfig.loginSessionTimeout);
+      this.userSessions$.next(this.userSessionsCache);
+    }
+
     private async checkRepoAccess(user: User) {
         const { fs, git } = await getGitFS();
 
@@ -257,15 +317,13 @@ export class FileManagementService {
           throw boom.unauthorized('Repo metadata file corruption');
         }
 
-        if (repoMetadata.sessionTimeout < Date.now()) {
-          throw boom.unauthorized('Session expired, please re-login');
-        }
-
         // Verify with repo metadata
         if (!_.isEqual(_.omit(user, 'password'),
           _.omit(repoMetadata, 'password', 'sessionTimeout', 'commitBaseSHA', 'version'))) {
           throw boom.forbidden('Repo metadata mismatch, you are not allowed to access the repo');
         }
+
+        await this.checkSessionTimeout(fs, user.username);
 
         const repoDir = path.resolve(percyConfig.reposFolder, user.repoFolder);
         const password = this.utilService.decrypt(repoMetadata.password);
@@ -276,11 +334,6 @@ export class FileManagementService {
             await this.clone(fs, git, user, repoDir);
           }
         });
-
-        // Update session valid time
-        repoMetadata.sessionTimeout = Date.now() + ms(percyConfig.loginSessionTimeout);
-        await fs.outputJson(repoMetadataFile, repoMetadata);
-
 
         return {fs, git, user, repoMetadata};
     }
