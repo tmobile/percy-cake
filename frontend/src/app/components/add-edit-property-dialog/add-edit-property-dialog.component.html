@@ -63,11 +63,12 @@
       <textarea matInput placeholder="Comments" [formControl]="comment" ></textarea>
     </mat-form-field>
 
-    <ng-container *ngIf="!data.node.isDefaultNode() && key.value !== 'inherits' && (!data.editMode || data.node.getLevel() > 0)">
-      <div class="form-field">
+    <div class="form-field toggle-line">
+      <mat-slide-toggle color="primary" [checked]="autoTrim" (change)="useAutoTrim($event)">Auto trim</mat-slide-toggle>
+      <ng-container *ngIf="!data.node.isDefaultNode() && key.value !== 'inherits' && (!data.editMode || data.node.getLevel() > 0)">
           <mat-slide-toggle color="primary" [checked]="duplicateDefault" (change)="useDefault($event)">Duplicate default properties</mat-slide-toggle>
-      </div>
-    </ng-container>
+      </ng-container>
+    </div>
 
     <div class="buttons-row">
       <button type="button" mat-button color="primary" class="btn-cancel" (click)="onCancel()">

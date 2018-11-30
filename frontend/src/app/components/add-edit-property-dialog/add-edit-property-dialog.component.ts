@@ -35,7 +35,8 @@ export class AddEditPropertyDialogComponent implements OnChanges {
 
   inheritsOptions: string[];
 
-  duplicateDefault: false;
+  duplicateDefault = false;
+  autoTrim = false;
 
   constructor(private utilService: UtilService,
     private store: Store<appStore.AppState>,
@@ -60,6 +61,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     this.comment.enable();
 
     this.duplicateDefault = false;
+    this.autoTrim = false;
     this.inheritsOptions = null;
 
     const { editMode, node } = this.data;
@@ -190,11 +192,23 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     }
   }
 
+  useAutoTrim() {
+    this.autoTrim = true;
+  }
+
   /*
     submit the property form with new/updated property values
    */
   onSubmit() {
     this.formDirty = true;
+
+    if (this.autoTrim) {
+      this.key.setValue(_.trim(this.key.value));
+      if (this.valueType.value === PROPERTY_VALUE_TYPES.STRING) {
+        this.value.setValue(_.trim(this.value.value));
+      }
+      this.comment.setValue(_.trim(this.comment.value));
+    }
 
     // check form validity
     const formValid =
