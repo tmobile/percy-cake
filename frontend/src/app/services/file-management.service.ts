@@ -94,7 +94,7 @@ export class FileManagementService {
                 }
             } else {
                 // Pull
-                await this.pull(git, fs, auth, repoDir, existingRepoMetadata);
+                await this.pull(git, fs, auth, repoDir);
             }
         } catch (error) {
             console.error(error);
@@ -169,7 +169,7 @@ export class FileManagementService {
      *
      * Similar as clone, we never checkout, just fetch from remote repo, and call resetIndexes to keep things clean.
      */
-    private async pull(git: GIT, fs: FSExtra, auth: Authenticate, repoDir: string, repoMetadata): Promise<string> {
+    private async pull(git: GIT, fs: FSExtra, auth: Authenticate, repoDir: string): Promise<string> {
       try {
         const result = await Promise.race([
           (async() => {
@@ -523,7 +523,7 @@ export class FileManagementService {
         let gitPulled = false;
         if (await this.isRepoFileExists(git, pathFinder)) {
   
-            const lastCommit = await this.pull(git, fs, user, pathFinder.repoDir, repoMetadata);
+            const lastCommit = await this.pull(git, fs, user, pathFinder.repoDir);
             gitPulled = true;
 
             // Check whether exists again after pull
@@ -627,7 +627,7 @@ export class FileManagementService {
           lastRepoFiles = _.reduce(lastMap, (r, v) => r.concat(v), []);
         }
 
-        const lastCommit = await this.pull(git, fs, user, repoDir, repoMetadata);
+        const lastCommit = await this.pull(git, fs, user, repoDir);
 
         if (!forcePush) {
           const newMap = await this.findRepoYamlFiles(git, user);
