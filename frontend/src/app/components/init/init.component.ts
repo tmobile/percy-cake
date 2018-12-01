@@ -10,7 +10,7 @@ import { percyConfig } from 'config';
 import { UtilService } from 'services/util.service';
 import { MaintenanceService } from 'services/maintenance.service';
 import { FileManagementService } from 'services/file-management.service';
-import { getGitFS } from 'services/git-fs.service';
+import { getBrowserFS } from 'services/git-fs.service';
 import { User } from 'models/auth';
 import { Initialized } from 'store/actions/backend.actions';
 import { APIError } from "store/actions/common.actions";
@@ -57,8 +57,8 @@ export class InitComponent implements OnInit {
    * @returns the user principal
    */
   private async initialize(user: User) {
-    // Wait GIT and BrowserFS initialize
-    const { fs, git } = await getGitFS();
+    // Wait BrowserFS initialize
+    const fs = await getBrowserFS();
 
     // Validate user
     if (!user || !user.token) {
@@ -89,7 +89,7 @@ export class InitComponent implements OnInit {
 
     // Verify with repo metadata
     if (!_.isEqual(_.omit(user, 'password'),
-      _.omit(repoMetadata, 'password', 'sessionTimeout', 'commitBaseSHA', 'version'))) {
+      _.omit(repoMetadata, 'password', 'commitBaseSHA', 'version'))) {
       throw boom.forbidden('Repo metadata mismatch, you are not allowed to access the repo');
     }
 
@@ -99,7 +99,7 @@ export class InitComponent implements OnInit {
     // Make sure the repo is cloned
     const repoDir = path.resolve(percyConfig.reposFolder, user.repoFolder);
     if (!(await fs.exists(repoDir))) {
-      await this.fileManagementService.clone(fs, git, user, repoDir);
+      await this.fileManagementService.clone(fs, user, repoDir);
     }
 
     return {user, repoMetadata};

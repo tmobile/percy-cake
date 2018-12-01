@@ -2,15 +2,15 @@ import { Sort } from '@angular/material';
 import * as _ from 'lodash';
 
 import { LoginSuccess } from 'store/actions/auth.actions';
-import { API_BASE_URL } from 'services/http-helper.service';
 import { TestUser, Setup, assertDialogOpened } from 'test/test-helper';
 
 import { DashboardComponent } from './dashboard.component';
 import { SaveDraft } from 'store/actions/backend.actions';
-import { ConfigFile } from 'models/config-file';
+import { ConfigFile, Configuration } from 'models/config-file';
 import { SelectAppDialogComponent } from 'components/select-app-dialog/select-app-dialog.component';
 import { AlertDialogComponent } from 'components/alert-dialog/alert-dialog.component';
 import { ConflictDialogComponent } from 'components/conflict-dialog/conflict-dialog.component';
+import { percyConfig } from 'config';
 
 describe('DashboardComponent', () => {
 
@@ -27,7 +27,7 @@ describe('DashboardComponent', () => {
     },
     {
       applicationName: 'app1',
-      fileName: TestUser.envFileName,
+      fileName: percyConfig.environmentsFile,
       timestamp: Date.now(),
       size: 100,
     },
@@ -39,7 +39,7 @@ describe('DashboardComponent', () => {
     },
     {
       applicationName: 'app2',
-      fileName: TestUser.envFileName,
+      fileName: percyConfig.environmentsFile,
       timestamp: Date.now(),
       size: 100,
     },
@@ -47,13 +47,13 @@ describe('DashboardComponent', () => {
   const apps = ['app1', 'app2', 'app3'];
 
   beforeEach(() => {
-    ctx().httpMock.expectOne(`${API_BASE_URL}/${url}/files`).flush(files);
-    ctx().httpMock.expectOne(`${API_BASE_URL}/${url}/applications`).flush(apps);
+    // ctx().httpMock.expectOne(`/${url}/files`).flush(files);
+    // ctx().httpMock.expectOne(`/${url}/applications`).flush(apps);
   });
 
   it('should create DashboardComponent', () => {
     expect(ctx().component).toBeTruthy();
-    expect(ctx().component.envFileName).toEqual(TestUser.envFileName);
+    expect(ctx().component.envFileName).toEqual(percyConfig.environmentsFile);
     ctx().component.ngOnDestroy();
     expect(ctx().component.foldersSubscription.closed).toBeTruthy();
   });
@@ -297,7 +297,7 @@ describe('DashboardComponent', () => {
     ctx().component.addNewFile();
     assertDialogOpened(SelectAppDialogComponent, {
       data: {
-        envFileName: TestUser.envFileName,
+        envFileName: percyConfig.environmentsFile,
         applications: apps,
         selectedApp: '',
         files
@@ -306,7 +306,7 @@ describe('DashboardComponent', () => {
     });
 
     ctx().dialogStub.output.next({createEnv: true, appName: 'app3'});
-    expect(ctx().routerStub.value).toEqual(['/files/newenv', 'app3', TestUser.envFileName]);
+    expect(ctx().routerStub.value).toEqual(['/files/newenv', 'app3', percyConfig.environmentsFile]);
 
     ctx().dialogStub.output.next({createEnv: false, appName: 'app2'});
     expect(ctx().routerStub.value).toEqual(['/files/new', 'app2']);
@@ -318,7 +318,7 @@ describe('DashboardComponent', () => {
     ctx().component.editFile(file);
     expect(ctx().routerStub.value).toEqual(['/files/edit', file.applicationName, file.fileName]);
 
-    file.fileName = TestUser.envFileName;
+    file.fileName = percyConfig.environmentsFile;
     ctx().component.editFile(file);
     expect(ctx().routerStub.value).toEqual(['/files/editenv', file.applicationName, file.fileName]);
   });
@@ -327,7 +327,7 @@ describe('DashboardComponent', () => {
 
     const file = files[0];
 
-    const path = `${API_BASE_URL}/${url}/applications/${file.applicationName}/files/${file.fileName}`;
+    const path = `/${url}/applications/${file.applicationName}/files/${file.fileName}`;
     ctx().component.deleteFile(file);
     ctx().dialogStub.output.next(false);
     ctx().httpMock.expectNone(path);
@@ -353,12 +353,12 @@ describe('DashboardComponent', () => {
     // Should reload from repo
     const newRepoFile = {
       applicationName: 'app2',
-      fileName: TestUser.envFileName,
+      fileName: percyConfig.environmentsFile,
       timestamp: Date.now(),
       size: 100,
     };
-    ctx().httpMock.expectOne(`${API_BASE_URL}/${url}/files`).flush([newRepoFile]);
-    ctx().httpMock.expectOne(`${API_BASE_URL}/${url}/applications`).flush(['app2']);
+    ctx().httpMock.expectOne(`/${url}/files`).flush([newRepoFile]);
+    ctx().httpMock.expectOne(`/${url}/applications`).flush(['app2']);
 
     expect(ctx().observables.folders.value).toEqual([
       {
@@ -376,10 +376,7 @@ describe('DashboardComponent', () => {
     const newDraftFile: ConfigFile = {
       fileName: 'new.yaml',
       applicationName: apps[0],
-      draftConfig: {
-        default: {$type: 'object', key: {$value: 'new value', $type: 'string'}},
-        environments: {$type: 'object'}
-      },
+      draftConfig:  new Configuration(),
       modified: true,
     };
 
@@ -404,15 +401,15 @@ describe('DashboardComponent', () => {
     });
 
     // Shouldn't reload
-    ctx().httpMock.expectNone(`${API_BASE_URL}/${url}/files`);
-    ctx().httpMock.expectNone(`${API_BASE_URL}/${url}/applications`);
+    ctx().httpMock.expectNone(`/${url}/files`);
+    ctx().httpMock.expectNone(`/${url}/applications`);
   });
 
   it('should show alert if failed to delete file', () => {
 
     const file = files[0];
 
-    const path = `${API_BASE_URL}/${url}/applications/${file.applicationName}/files/${file.fileName}`;
+    const path = `/${url}/applications/${file.applicationName}/files/${file.fileName}`;
     ctx().component.deleteFile(file);
     ctx().dialogStub.output.next(true);
 
@@ -461,11 +458,10 @@ describe('DashboardComponent', () => {
     ctx().dialogStub.output.next('commit message');
 
     expect(ctx().observables.isCommitting.value).toBeTruthy();
-    const path = `${API_BASE_URL}/${url}/commit`;
+    const path = `/${url}/commit`;
     const committedFile: ConfigFile = {
       fileName: modifiedFile.fileName,
       applicationName: modifiedFile.applicationName,
-      timestamp: Date.now(),
       size: 100
     };
     ctx().httpMock.expectOne(path).flush([committedFile]);
@@ -482,12 +478,12 @@ describe('DashboardComponent', () => {
     // Should reload from repo
     const newRepoFile = {
       applicationName: 'app2',
-      fileName: TestUser.envFileName,
+      fileName: percyConfig.environmentsFile,
       timestamp: Date.now(),
       size: 100,
     };
-    ctx().httpMock.expectOne(`${API_BASE_URL}/${url}/files`).flush([newRepoFile]);
-    ctx().httpMock.expectOne(`${API_BASE_URL}/${url}/applications`).flush(['app2']);
+    ctx().httpMock.expectOne(`/${url}/files`).flush([newRepoFile]);
+    ctx().httpMock.expectOne(`/${url}/applications`).flush(['app2']);
 
     expect(ctx().observables.folders.value).toEqual([
       {
@@ -525,7 +521,7 @@ describe('DashboardComponent', () => {
     ctx().dialogStub.output.next('commit message');
 
     expect(ctx().observables.isCommitting.value).toBeTruthy();
-    const path = `${API_BASE_URL}/${url}/commit`;
+    const path = `/${url}/commit`;
     ctx().httpMock.expectOne(path).flush(
       {
         message: 'Failed to commit file',
@@ -571,7 +567,7 @@ describe('DashboardComponent', () => {
     ctx().dialogStub.output.next('commit message');
 
     expect(ctx().observables.isCommitting.value).toBeTruthy();
-    const path = `${API_BASE_URL}/${url}/commit`;
+    const path = `/${url}/commit`;
     const conflictFiles = [{
       ..._.pick(modifiedFile, ['fileName', 'applicationName']),
       config: {

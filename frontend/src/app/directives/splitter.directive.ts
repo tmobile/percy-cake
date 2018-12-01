@@ -1,6 +1,6 @@
 import { Directive, Input, AfterViewInit } from '@angular/core';
 
-import * as Split from 'split.js';
+import Split from 'split.js';
 
 @Directive({
   selector: '[appSplit]'

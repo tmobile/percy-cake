@@ -7,11 +7,11 @@ import * as ms from 'ms';
 import * as _ from 'lodash';
 
 import { percyConfig } from 'config';
-import { getGitFS } from './git-fs.service';
+import { getBrowserFS } from './git-fs.service';
 import { Principal } from 'models/auth';
 
-const sessionsMetaFile = path.resolve(percyConfig.metaFolder, 'user-session.json');
-const loggedInUsersMetaFile = path.resolve(percyConfig.metaFolder, percyConfig.loggedInUsersMetaFile);
+export const sessionsMetaFile = path.resolve(percyConfig.metaFolder, 'user-session.json');
+export const loggedInUsersMetaFile = path.resolve(percyConfig.metaFolder, percyConfig.loggedInUsersMetaFile);
 
 /**
  * This service provides the methods around the maintenance API endpoints
@@ -35,14 +35,13 @@ export class MaintenanceService {
      */
     constructor() {
       this.userSessions$.pipe(debounceTime(500)).subscribe(async () => {
-        if (!this.userSessionsCache) {
-          return;
-        }
-        try {
-          const { fs } = await getGitFS();
-          await fs.outputJson(sessionsMetaFile, this.userSessionsCache);
-        } catch(err) {
-          console.warn(err);
+        if (this.userSessionsCache) {
+          try {
+            const fs = await getBrowserFS();
+            await fs.outputJson(sessionsMetaFile, this.userSessionsCache);
+          } catch(err) {
+            console.warn(err);
+          }
         }
       });
     }
@@ -52,7 +51,7 @@ export class MaintenanceService {
    * @param principal the logged in user principal
    */
     async checkSessionTimeout(principal: Principal) {
-      const { fs } = await getGitFS();
+      const fs = await getBrowserFS();
       const { user } = principal;
       const username = user.username;
   
@@ -85,7 +84,7 @@ export class MaintenanceService {
      */
     async getUserTypeAhead(prefix: string) {
       if (!this.userNamesCache) {
-        const { fs } = await getGitFS();
+        const fs = await getBrowserFS();
         if (await fs.exists(loggedInUsersMetaFile)) {
           this.userNamesCache = await fs.readJson(loggedInUsersMetaFile);
         } else {
@@ -98,7 +97,7 @@ export class MaintenanceService {
     async addUserName(user) {
       this.userNamesCache = _.union(this.userNamesCache || [], [user]);
 
-      const { fs } = await getGitFS();
+      const fs = await getBrowserFS();
       await fs.outputJson(loggedInUsersMetaFile, this.userNamesCache);
     }
 }

@@ -4,7 +4,6 @@ import { Setup, TestUser } from 'test/test-helper';
 
 import { ConflictDialogComponent } from './conflict-dialog.component';
 import { LoginSuccess } from 'store/actions/auth.actions';
-import { API_BASE_URL } from 'services/http-helper.service';
 
 describe('ConflictDialogComponent', () => {
 
@@ -116,8 +115,8 @@ describe('ConflictDialogComponent', () => {
 
     ctx().component.confirmAction();
 
-    ctx().httpMock.expectOne(`${API_BASE_URL}/${url}/commit`);
-    ctx().httpMock.expectNone(`${API_BASE_URL}/${url}/files`);
+    ctx().httpMock.expectOne(`/${url}/commit`);
+    ctx().httpMock.expectNone(`/${url}/files`);
   });
 
   it('should confirm to use repo and reload files', () => {
@@ -129,8 +128,8 @@ describe('ConflictDialogComponent', () => {
 
     ctx().component.confirmAction();
 
-    ctx().httpMock.expectNone(`${API_BASE_URL}/${url}/commit`);
-    ctx().httpMock.expectOne(`${API_BASE_URL}/${url}/files`);
+    ctx().httpMock.expectNone(`/${url}/commit`);
+    ctx().httpMock.expectOne(`/${url}/files`);
   });
 
   it('should confirm to use repo, still recommit because there is one more unconflicted draft', () => {
@@ -163,7 +162,7 @@ describe('ConflictDialogComponent', () => {
 
     ctx().component.confirmAction();
 
-    ctx().httpMock.expectOne(`${API_BASE_URL}/${url}/commit`);
-    ctx().httpMock.expectNone(`${API_BASE_URL}/${url}/files`);
+    ctx().httpMock.expectOne(`/${url}/commit`);
+    ctx().httpMock.expectNone(`/${url}/files`);
   });
 });

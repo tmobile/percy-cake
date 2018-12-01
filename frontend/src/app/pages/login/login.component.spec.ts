@@ -1,7 +1,6 @@
 import * as _ from 'lodash';
 
 import { LoginRedirect, Logout } from 'store/actions/auth.actions';
-import { API_BASE_URL } from 'services/http-helper.service';
 import { TestUser, Setup } from 'test/test-helper';
 
 import { LoginComponent } from './login.component';
@@ -22,7 +21,7 @@ describe('LoginComponent', () => {
       branchName: 'admin'
     };
 
-    ctx().httpMock.expectOne(`${API_BASE_URL}/defaultRepo`).flush(defaultRepo);
+    ctx().httpMock.expectOne(`/defaultRepo`).flush(defaultRepo);
 
     expect(ctx().component.repositoryURL.value).toEqual(defaultRepo.repositoryUrl);
     expect(ctx().component.branchName.value).toEqual(defaultRepo.branchName);
@@ -36,7 +35,7 @@ describe('LoginComponent', () => {
       'Mike',
       'Muller',
     ];
-    ctx().httpMock.expectOne(`${API_BASE_URL}/userTypeAhead?prefix=m`).flush(usernames);
+    ctx().httpMock.expectOne(`/userTypeAhead?prefix=m`).flush(usernames);
 
     expect(ctx().observables.filteredUsernames.value).toEqual(['Mike', 'Muller']);
 
@@ -73,7 +72,7 @@ describe('LoginComponent', () => {
     ctx().component.login();
 
     expect(ctx().observables.formProcessing.value).toBeTruthy();
-    ctx().httpMock.expectOne(`${API_BASE_URL}/accessRepo`).flush(result, opts);
+    ctx().httpMock.expectOne(`/accessRepo`).flush(result, opts);
     expect(ctx().observables.formProcessing.value).toBeFalsy();
   }
 

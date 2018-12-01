@@ -5,13 +5,12 @@ import * as yamlJS from 'yaml-js';
 import * as aesjs from 'aes-js';
 import * as pbkdf2 from 'pbkdf2';
 import * as path from 'path';
-import * as ms from 'ms';
 import * as boom from 'boom';
 
 import { TreeNode } from 'models/tree-node';
 import { Configuration } from 'models/config-file';
 import { PROPERTY_VALUE_TYPES, percyConfig } from 'config';
-import { Authenticate, User } from 'models/auth';
+import { Authenticate } from 'models/auth';
 
 const aesKey = pbkdf2.pbkdf2Sync(percyConfig.encryptKey, percyConfig.encryptSalt, 1, 32);
 
@@ -45,41 +44,6 @@ export class UtilService {
    * initializes the service
    */
   constructor() { }
-
-  /**
-   * saves the key, value to storage default persistence is false
-   * @param key the key to store
-   * @param value the value to store
-   * @param persist the flag whether to persist in local storage or not
-   */
-  saveToStorage(key: string, value: any, persist: boolean = true): void {
-    const jsonData = JSON.stringify(value);
-    sessionStorage.setItem(key, jsonData);
-    if (persist) {
-      localStorage.setItem(key, jsonData);
-    }
-  }
-
-  /**
-   * gets the key, value from storage
-   * @param key the key to get from store
-   */
-  getFromStorage(key: string): any {
-    let value = sessionStorage.getItem(key);
-    if (!value) {
-      value = localStorage.getItem(key);
-    }
-    return value !== 'undefined' ? JSON.parse(value) : null;
-  }
-
-  /**
-   * removes the key, value from storage
-   * @param key the key to remove store
-   */
-  removeFromStorage(key: string): void {
-    sessionStorage.removeItem(key);
-    localStorage.removeItem(key);
-  }
 
   /**
    * Extract yaml comment.
@@ -377,8 +341,8 @@ export class UtilService {
   * @returns Yaml format string
   */
   convertTreeToYaml(tree: TreeNode) {
-    if (_.isEmpty(tree)) {
-      return _.isArray(tree) ? '[]' : '{}';
+    if (_.isEmpty(tree.children)) {
+      return tree.isArray() ? '[]' : '{}';
     }
 
     let result = '';
@@ -388,8 +352,6 @@ export class UtilService {
       _.each(tree.comment, (comment) => {
         if (/^(\s)*(#.*)/.test(comment) || _.isEmpty(comment)) {
           result += comment + '\n';
-        } else {
-          result += '# ' + comment + '\n';
         }
       });
     }
@@ -650,7 +612,7 @@ export class UtilService {
    * @param url The repo url
    * @returns the repo name
    */
-  getRepoName(url: URL) {
+  private getRepoName(url: URL) {
     const split = url.pathname.split('/');
     return split.filter((e) => e).join('/');
   }

@@ -6,17 +6,17 @@ import * as FsExtra from 'fs-extra/index';
 import { percyConfig } from 'config';
 
 // BrowserFS miss ReadStream/WriteStream, patch them
-const fs = BrowserFS.BFSRequire('fs');
-const streams = legacy(fs);
-fs['ReadStream'] = streams.ReadStream;
-fs['WriteStream'] = streams.WriteStream;
+const bfs = BrowserFS.BFSRequire('fs');
+const streams = legacy(bfs);
+bfs['ReadStream'] = streams.ReadStream;
+bfs['WriteStream'] = streams.WriteStream;
 
 // Patch fs with fs-extra
 const fsExtra = require('fs-extra');
 
 // For readFile/writeFile/appendFile, fs-extra has problem with BrowserFS
 // when passing null options
-// (Here we don't care callback because we'll use always promise)
+// (Here we don't care callback because we'll always use promise)
 const fs$readFile = fsExtra.readFile;
 fsExtra.readFile = function (path, options) {
   return fs$readFile(path, options || {});
@@ -34,7 +34,7 @@ fsExtra.appendFile = function (path, data, options) {
 
 // BrowserFS synchronous file system (like InMemory) has issue
 // to bypass zone.js promise handling
-const patchSynchronousMethod = (synFileSystem, func) => {
+const patchSynchronousFS = (synFileSystem, func) => {
   const existFunc = synFileSystem[func];
 
   synFileSystem[func] = (...args) => {
@@ -42,21 +42,17 @@ const patchSynchronousMethod = (synFileSystem, func) => {
 
     args[args.length - 1] = (error, result) => {
       // Use setImmediate to join the zone.js promise
-      if (error) {
-        setImmediate(() => callback(error));
-      } else {
-        setImmediate(() => callback(null, result));
-      }
+      setImmediate(() => callback(error, result));
     };
 
     existFunc.apply(synFileSystem, args);
   }
 }
 
-export type GIT = typeof Git;
+export const git = { ...Git };
 export type FSExtra = typeof FsExtra;
 
-const initializer = new Promise<[GIT, FSExtra]>((resolve, reject) => {
+const initBrowserFS = new Promise<FSExtra>((resolve, reject) => {
   
   BrowserFS.configure(
     // For InMemory only repo folder, page refersh will be slow (since it needs fetch from remote),
@@ -82,31 +78,25 @@ const initializer = new Promise<[GIT, FSExtra]>((resolve, reject) => {
         return reject(err);
       };
 
-      const rootFS = fs.getRootFS();
-      const synMethods = ['rename', 'stat', 'exists', 'open', 'unlink', 'rmdir', 'mkdir', 'readdir'];
-      synMethods.forEach(m => {
-        patchSynchronousMethod(rootFS, m);
+      // Root FS of AsyncMirror is a synchronous InMemory FS, patch it
+      const rootFS = bfs.getRootFS();
+      const methods = ['rename', 'stat', 'exists', 'open', 'unlink', 'rmdir', 'mkdir', 'readdir'];
+      methods.forEach(m => {
+        patchSynchronousFS(rootFS, m);
       });
 
-      Git.plugins.set('fs', fs);
+      git.plugins.set('fs', bfs);
 
-      if (!await fsExtra.exists(percyConfig.reposFolder)) {
-        await fsExtra.ensureDir(percyConfig.reposFolder);
-      }
-      if (!await fsExtra.exists(percyConfig.draftFolder)) {
-        await fsExtra.ensureDir(percyConfig.draftFolder);
-      }
-      if (!await fsExtra.exists(percyConfig.metaFolder)) {
-        await fsExtra.ensureDir(percyConfig.metaFolder);
-      }
+      await fsExtra.ensureDir(percyConfig.reposFolder);
+      await fsExtra.ensureDir(percyConfig.draftFolder);
+      await fsExtra.ensureDir(percyConfig.metaFolder);
 
       console.info('Browser Git initialized');
-      resolve([Git, fsExtra]);
+      resolve(fsExtra);
     }
   );
 });
 
-export async function getGitFS() {
-  const [git, fs] = await initializer;
-  return { git, fs };
+export async function getBrowserFS() {
+  return await initBrowserFS;
 }

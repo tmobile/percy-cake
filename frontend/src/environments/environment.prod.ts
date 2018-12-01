@@ -15,6 +15,7 @@ export const percyConfig = {
   loggedInUsersMetaFile: process.env.LOGGED_IN_USERS_METAFILE || 'logged-in-users.json',
   yamlAppsFolder: process.env.YAML_APPS_FOLDER || 'apps',
   environmentsFile: process.env.ENVIRONMENTS_FILE || 'environments.yaml',
+  pullTimeout: process.env.PULL_TIMEOUT || '30s',
   loginSessionTimeout: process.env.LOGIN_SESSION_TIMEOUT || '1h',
   encryptKey: process.env.ENCRYPT_KEY || '&Ddf23&*Dksd',
   encryptSalt: process.env.ENCRYPT_SALT || '23E80(9Dls6$s',

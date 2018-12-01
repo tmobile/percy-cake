@@ -17,7 +17,6 @@ import { BackendEffects } from 'store/affects/backend.effects';
 import { EditorEffects } from 'store/affects/editor.effects';
 import { DashboardEffects } from 'store/affects/dashboard.effects';
 
-import { InitializerDirective } from 'directives/initializer.directive';
 import { MaterialComponentsModule } from 'material-components/material-components.module';
 
 import * as _ from 'lodash';
@@ -27,12 +26,11 @@ declare var afterEach: (any) => any;
 
 export const TestUser: User = {
   username: 'test-user',
-  repositoryUrl: 'https://test.com/repo',
+  repositoryUrl: 'https://bitbucket.org/tc/repo',
   branchName: 'admin',
   token: 'test-token',
-  repoName: 'test-repo',
-  validUntil: new Date(Date.now() + 1000000).toISOString(),
-  envFileName: 'environments.yaml',
+  repoName: 'tc/repo',
+  repoFolder: 'test-user!tc%20Frepo!admin'
 };
 
 const DialogStub = {
@@ -88,7 +86,6 @@ export const Setup = <T>(componentType: Type<T>, triggerLifecyle: boolean = true
         EffectsModule.forRoot([AppEffects, AuthEffects, BackendEffects, DashboardEffects, EditorEffects])
       ],
       declarations: [
-        InitializerDirective,
         componentType
       ],
       providers: [

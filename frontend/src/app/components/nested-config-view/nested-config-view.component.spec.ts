@@ -5,82 +5,10 @@ import { NestedConfigViewComponent } from './nested-config-view.component';
 import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
 import { PROPERTY_VALUE_TYPES } from 'config';
 import { ConfigProperty } from 'models/config-property';
+import { Configuration } from 'models/config-file';
 
 describe('NestedConfigViewComponent', () => {
-  const config = {
-    'default': {
-      'api': {
-        '$comment': ['urls used by this application'],
-        '$type': 'object',
-        'host': {
-          '$comment': ['qat data server'],
-          '$type': 'string',
-          '$value': 'https://pd01.qat.t-mobile.com:9000'
-        },
-        'urls': {
-          '$type': 'object',
-          'getCatalog': {
-            '$type': 'string',
-            '$value': '{{api.host}}/api/catalog?device=phone&pageSize={{size}}&pageNum={{page}}'
-          },
-          'getDetails': {
-            '$type': 'string',
-            '$value': '{{api.host}}/api/product/details/{{deviceId}}'
-          },
-          '$comment': [
-            'all known properties are defined in the default block.',
-            'The most common values are assigned in the default block'
-          ],
-        },
-        'staging-items': {
-          '$value': [
-              {
-                  '$comment': ['item1 comment'],
-                  '$value': 'item1',
-                  '$type': 'string'
-              },
-              {
-                  '$comment': ['item2 comment'],
-                  '$value': 'item2',
-                  '$type': 'string'
-              },
-          ],
-          '$type': 'array'
-        },
-      },
-      '$type': 'object'
-    },
-    'environments': {
-      'qat': {
-          'api': {
-            '$type': 'object',
-            'urls': {
-              '$type': 'object',
-              'getCatalog': {
-                '$type': 'string',
-                '$value': '{{api.host}}/api/catalog?device=phone&pageSize={{size}}&pageNum={{page}}'
-              },
-              '$comment': [
-                'all known properties are defined in the default block.',
-                'The most common values are assigned in the default block'
-              ],
-            },
-            'staging-items': {
-              '$value': [
-                  {
-                      '$comment': ['item1 comment'],
-                      '$value': 'item1',
-                      '$type': 'string'
-                  },
-              ],
-              '$type': 'array'
-            },
-          },
-          '$type': 'object'
-      },
-      '$type': 'object'
-    }
-  };
+  const config = new Configuration();
 
   const environments = ['dev', 'qat'];
 
@@ -374,14 +302,14 @@ describe('NestedConfigViewComponent', () => {
 
     ctx().component.refreshTree();
     expect(ctx().observables.configurationChange.value).toEqual({
-      default: ctx().component.defaultDataSource.data[0].jsonValue,
-      environments: ctx().component.envDataSource.data[0].jsonValue
+      default: ctx().component.defaultDataSource.data[0],
+      environments: ctx().component.envDataSource.data[0]
     });
 
     ctx().component.envFileMode = true;
     ctx().component.refreshTree();
     expect(ctx().observables.configurationChange.value).toEqual({
-      default: ctx().component.defaultDataSource.data[0].jsonValue,
+      default: ctx().component.defaultDataSource.data[0],
     });
   });
 

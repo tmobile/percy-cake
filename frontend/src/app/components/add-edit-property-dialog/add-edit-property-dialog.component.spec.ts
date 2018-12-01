@@ -381,91 +381,91 @@ describe('AddEditPropertyDialogComponent', () => {
     expect(ctx().observables.saveProperty.value).toEqual(result);
   });
 
-  it('add property, should submit changes with default values', () => {
-    const defaultJSON = {
-      'default': {
-        'api': {
-          '$comment': ['urls used by this application'],
-          '$type': 'object',
-          'host': {
-            '$comment': ['qat data server'],
-            '$type': 'string',
-            '$value': 'https://pd01.qat.t-mobile.com:9000'
-          },
-          'urls': {
-            '$type': 'object',
-            'getCatalog': {
-              '$type': 'string',
-              '$value': '{{api.host}}/api/catalog?device=phone&pageSize={{size}}&pageNum={{page}}'
-            },
-            'getDetails': {
-              '$type': 'string',
-              '$value': '{{api.host}}/api/product/details/{{deviceId}}'
-            },
-            '$comment': [
-              'all known properties are defined in the default block.',
-              'The most common values are assigned in the default block'
-            ],
-          },
-          'staging-items': {
-            '$value': [
-                {
-                    '$comment': ['item1 comment'],
-                    '$value': 'item1',
-                    '$type': 'string'
-                },
-                {
-                    '$comment': ['item2 comment'],
-                    '$value': 'item2',
-                    '$type': 'string'
-                },
-            ],
-            '$type': 'array'
-          },
-        },
-        '$type': 'object'
-      }
-    };
+  // it('add property, should submit changes with default values', () => {
+  //   const defaultJSON = {
+  //     'default': {
+  //       'api': {
+  //         '$comment': ['urls used by this application'],
+  //         '$type': 'object',
+  //         'host': {
+  //           '$comment': ['qat data server'],
+  //           '$type': 'string',
+  //           '$value': 'https://pd01.qat.t-mobile.com:9000'
+  //         },
+  //         'urls': {
+  //           '$type': 'object',
+  //           'getCatalog': {
+  //             '$type': 'string',
+  //             '$value': '{{api.host}}/api/catalog?device=phone&pageSize={{size}}&pageNum={{page}}'
+  //           },
+  //           'getDetails': {
+  //             '$type': 'string',
+  //             '$value': '{{api.host}}/api/product/details/{{deviceId}}'
+  //           },
+  //           '$comment': [
+  //             'all known properties are defined in the default block.',
+  //             'The most common values are assigned in the default block'
+  //           ],
+  //         },
+  //         'staging-items': {
+  //           '$value': [
+  //               {
+  //                   '$comment': ['item1 comment'],
+  //                   '$value': 'item1',
+  //                   '$type': 'string'
+  //               },
+  //               {
+  //                   '$comment': ['item2 comment'],
+  //                   '$value': 'item2',
+  //                   '$type': 'string'
+  //               },
+  //           ],
+  //           '$type': 'array'
+  //         },
+  //       },
+  //       '$type': 'object'
+  //     }
+  //   };
 
-    const utilService = new UtilService();
-    const defaultRoot = utilService.buildConfigTree(defaultJSON.default, 'default');
+  //   const utilService = new UtilService();
+  //   const defaultRoot = utilService.buildConfigTree(defaultJSON.default, 'default');
 
-    const environmentsJSON = {
-      'environments': {
-        'qat': {
-            'api': {
-              '$type': 'object',
-              'host': {
-                '$type': 'string',
-                '$value': 'https://pd03.qat.t-mobile.com'
-              }
-            },
-            '$type': 'object'
-        },
-        '$type': 'object'
-      }
-    };
-    const envRoot = utilService.buildConfigTree(environmentsJSON.environments, 'environments');
+  //   const environmentsJSON = {
+  //     'environments': {
+  //       'qat': {
+  //           'api': {
+  //             '$type': 'object',
+  //             'host': {
+  //               '$type': 'string',
+  //               '$value': 'https://pd03.qat.t-mobile.com'
+  //             }
+  //           },
+  //           '$type': 'object'
+  //       },
+  //       '$type': 'object'
+  //     }
+  //   };
+  //   const envRoot = utilService.buildConfigTree(environmentsJSON.environments, 'environments');
 
-    const data: ConfigProperty = {
-      editMode: false,
-      node: envRoot.children[0].children[0], // Add property to 'environments.qat.api'
-      keyOptions: [],
-      defaultTree: defaultRoot
-    };
-    ctx().component.data = data;
-    ctx().component.ngOnChanges();
+  //   const data: ConfigProperty = {
+  //     editMode: false,
+  //     node: envRoot.children[0].children[0], // Add property to 'environments.qat.api'
+  //     keyOptions: [],
+  //     defaultTree: defaultRoot
+  //   };
+  //   ctx().component.data = data;
+  //   ctx().component.ngOnChanges();
 
-    ctx().component.key.setValue('urls'); // Add 'urls' property
-    ctx().component.useDefault({ checked: true});
-    ctx().component.onSubmit();
+  //   ctx().component.key.setValue('urls'); // Add 'urls' property
+  //   ctx().component.useDefault({ checked: true});
+  //   ctx().component.onSubmit();
 
-    const result = utilService.buildConfigTree(
-      defaultRoot.children[0].children[1].jsonValue,
-      'urls',
-      data.editMode ? data.node.parent : data.node);
-    expect(ctx().observables.saveProperty.value).toEqual(result);
-  });
+  //   const result = utilService.buildConfigTree(
+  //     defaultRoot.children[0].children[1].jsonValue,
+  //     'urls',
+  //     data.editMode ? data.node.parent : data.node);
+  //   expect(ctx().observables.saveProperty.value).toEqual(result);
+  // });
 
   it('should cancle changes', () => {
     ctx().component.onCancel();

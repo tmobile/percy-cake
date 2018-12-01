@@ -15,6 +15,7 @@ import { ConfirmationDialogComponent } from 'components/confirmation-dialog/conf
 import { EditorComponent } from './editor.component';
 
 import { percyConfig } from 'config';
+import { Configuration } from 'models/config-file';
 
 const API_BASE_URL = '';
 
@@ -229,94 +230,7 @@ describe('EditorComponent', () => {
   });
 
   it('should view compiled yaml code', async () => {
-    const config = {
-      'default': {
-        'server.url': {
-          '$type': 'string',
-          '$value': '_{dcp.host}_/api'
-        },
-        'client.url': {
-          '$type': 'string',
-          '$value': '_{dcp.host}_/client'
-        },
-        'dcp.host': {
-          '$type': 'string',
-          '$value': '_{protocol}_prod.dcp.com'
-        },
-        'protocol': {
-          '$type': 'string',
-          '$value': 'https://'
-        },
-        'size': {
-          '$type': 'number',
-          '$value': 10
-        },
-        'sort': {
-          '$type': 'boolean',
-          '$value': true
-        },
-        'api': {
-          '$type': 'object',
-          'urls': {
-            '$type': 'object',
-            'dcpcart': {
-              '$type': 'string',
-              '$value': '_{server.url}_/cart?size=_{size}_&sort=_{sort}_'
-            },
-            'dcpupdate': {
-              '$type': 'string',
-              '$value': '_{server.url}_/update?size=_{size}_&sort=_{sort}_'
-            },
-          },
-          'urlsarr': {
-            '$type': 'array',
-            '$value': [
-              {
-                '$type': 'string',
-                '$value': '_{server.url}_/cart?size=_{size}_&sort=_{sort}_'
-              },
-              {
-                '$type': 'string',
-                '$value': '_{server.url}_/update?size=_{size}_&sort=_{sort}_'
-              }
-            ],
-          },
-        }
-      },
-      'environments': {
-        'dev': {
-          'size': {
-            '$type': 'number',
-            '$value': 20
-          },
-          '$type': 'object'
-        },
-        'qat': {
-          'inherits' : {
-            '$type': 'string',
-            '$value': 'dev'
-          },
-          'sort': {
-            '$type': 'boolean',
-            '$value': false
-          },
-          'api': {
-            '$type': 'object',
-            'urlsarr': {
-              '$type': 'array',
-              '$value': [
-                {
-                  '$type': 'string',
-                  '$value': '_{server.url}_/cart?size=_{size}_&sort=_{sort}_'
-                },
-              ],
-            },
-          },
-          '$type': 'object'
-        },
-        '$type': 'object'
-      }
-    };
+    const config = new Configuration()
     ctx().store.dispatch(new ConfigurationChange(config));
 
     ctx().component.showCompiledYAML('dev');
@@ -355,65 +269,7 @@ api: !!map
 
 
   it('should show error alert when loop variable reference exists', async () => {
-    const config = {
-      'default': {
-        'server.url': {
-          '$type': 'string',
-          '$value': '_{dcp.host}_/api'
-        },
-        'dcp.host': {
-          '$type': 'string',
-          '$value': '_{protocol}_prod.dcp.com'
-        },
-        'protocol': {
-          '$type': 'string',
-          '$value': 'https://_{server.url}_'
-        },
-        'size': {
-          '$type': 'number',
-          '$value': 10
-        },
-        'sort': {
-          '$type': 'boolean',
-          '$value': true
-        },
-        'api': {
-          '$type': 'object',
-          'urls': {
-            '$type': 'object',
-            'dcpcart': {
-              '$type': 'string',
-              '$value': '_{server.url}_/cart?size=_{size}_&sort=_{sort}_'
-            },
-            'dcpupdate': {
-              '$type': 'string',
-              '$value': '_{server.url}_/update?size=_{size}_&sort=_{sort}_'
-            },
-          },
-        }
-      },
-      'environments': {
-        'dev': {
-          'size': {
-            '$type': 'number',
-            '$value': 20
-          },
-          '$type': 'object'
-        },
-        'qat': {
-          'inherits' : {
-            '$type': 'string',
-            '$value': 'dev'
-          },
-          'sort': {
-            '$type': 'boolean',
-            '$value': false
-          },
-          '$type': 'object'
-        },
-        '$type': 'object'
-      }
-    };
+    const config = new Configuration()
     ctx().store.dispatch(new ConfigurationChange(config));
 
     ctx().component.showCompiledYAML('dev');
@@ -426,65 +282,7 @@ api: !!map
       });
   });
   it('should show error alert when refer to the property itself', async () => {
-    const config = {
-      'default': {
-        'server.url': {
-          '$type': 'string',
-          '$value': '_{dcp.host}_/api'
-        },
-        'dcp.host': {
-          '$type': 'string',
-          '$value': 'prod.dcp.com'
-        },
-        'protocol': {
-          '$type': 'string',
-          '$value': 'https://_{protocol}_'
-        },
-        'size': {
-          '$type': 'number',
-          '$value': 10
-        },
-        'sort': {
-          '$type': 'boolean',
-          '$value': true
-        },
-        'api': {
-          '$type': 'object',
-          'urls': {
-            '$type': 'object',
-            'dcpcart': {
-              '$type': 'string',
-              '$value': '_{server.url}_/cart?size=_{size}_&sort=_{sort}_'
-            },
-            'dcpupdate': {
-              '$type': 'string',
-              '$value': '_{server.url}_/update?size=_{size}_&sort=_{sort}_'
-            },
-          },
-        }
-      },
-      'environments': {
-        'dev': {
-          'size': {
-            '$type': 'number',
-            '$value': 20
-          },
-          '$type': 'object'
-        },
-        'qat': {
-          'inherits' : {
-            '$type': 'string',
-            '$value': 'dev'
-          },
-          'sort': {
-            '$type': 'boolean',
-            '$value': false
-          },
-          '$type': 'object'
-        },
-        '$type': 'object'
-      }
-    };
+    const config = new Configuration();
     ctx().store.dispatch(new ConfigurationChange(config));
 
     ctx().component.showCompiledYAML('dev');
@@ -498,51 +296,7 @@ api: !!map
   });
 
   it('should show error alert when loop env inherits', async () => {
-    const config = {
-      'default': {
-        'server.url': {
-          '$type': 'string',
-          '$value': '_{dcp.host}_/api'
-        },
-        'dcp.host': {
-          '$type': 'string',
-          '$value': 'prod.dcp.com'
-        },
-        'size': {
-          '$type': 'number',
-          '$value': 10
-        },
-        'sort': {
-          '$type': 'boolean',
-          '$value': true
-        },
-      },
-      'environments': {
-        'dev': {
-          'inherits' : {
-            '$type': 'string',
-            '$value': 'qat'
-          },
-          'size': {
-            '$type': 'number',
-            '$value': 20
-          },
-          '$type': 'object'
-        },
-        'qat': {
-          'inherits' : {
-            '$type': 'string',
-            '$value': 'dev'
-          },
-          'sort': {
-            '$type': 'boolean',
-            '$value': false
-          },
-          '$type': 'object'
-        },
-        '$type': 'object'
-      }
-    };
+    const config = new Configuration();
     ctx().store.dispatch(new ConfigurationChange(config));
 
     ctx().component.showCompiledYAML('dev');
