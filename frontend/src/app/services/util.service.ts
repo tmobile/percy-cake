@@ -125,9 +125,10 @@ export class UtilService {
    * @private
    */
   private walkYamlNode(keyNode, valueNode, lines: string[], simpleArray: boolean) {
-    if (valueNode.id === 'mapping') {
+    const type = this.extractYamlDataType(valueNode.tag);
+    if (type === 'object') {
       // Mapping node, represents an object
-      const result = new TreeNode(keyNode ? keyNode.value : '', this.extractYamlDataType(valueNode.tag));
+      const result = new TreeNode(keyNode ? keyNode.value : '', type);
 
       _.each(valueNode.value, ([subKeyNode, subValueNode]) => {
         // Recursively walk the value node
@@ -143,13 +144,11 @@ export class UtilService {
       }
 
       return result;
-    } else if (valueNode.id === 'sequence') {
+    } else if (type === 'array') {
       // Sequence node, represents an array
-      const result = new TreeNode(keyNode ? keyNode.value : '', this.extractYamlDataType(valueNode.tag));
+      const result = new TreeNode(keyNode ? keyNode.value : '', type);
   
-      if (valueNode.value.length) {
-        result.comment = this.parseYamlCommentLines(valueNode.start_mark, lines);
-      }
+      result.comment = this.parseYamlCommentLines(valueNode.start_mark, lines);
 
       const children = [];
       _.each(valueNode.value, (subValueNode, idx) => {
@@ -195,7 +194,7 @@ export class UtilService {
       return result;
     } else {
       // Scalar node, represents a string/number..
-      const result = new TreeNode(keyNode ? keyNode.value : '', this.extractYamlDataType(valueNode.tag));
+      const result = new TreeNode(keyNode ? keyNode.value : '', type);
 
       // This will parse inline comment like:
       // key: value  # some inline comment...
@@ -241,6 +240,16 @@ export class UtilService {
     const result = !yamlNode ? null : this.walkYamlNode(null, yamlNode, lines, simpleArray);
     result.comment = rootComments;
     return result;
+  }
+
+  /**
+   * Parse yaml to Configuration object.
+   * @param yaml The yaml string
+   * @param simpleArray The flag indicates whether only supports simple array
+   * @returns Configuration object
+   */
+  parseYamlConfig(yaml: string, simpleArray: boolean = true) {
+    return new Configuration(this.convertYamlToTree(yaml, simpleArray));
   }
 
   /**
@@ -336,10 +345,10 @@ export class UtilService {
   }
 
   /**
-  * Convert TreeNode object to yaml format.
-  * @param tree The TreeNode object
-  * @returns Yaml format string
-  */
+   * Convert TreeNode object to yaml format.
+   * @param tree The TreeNode object
+   * @returns Yaml format string
+   */
   convertTreeToYaml(tree: TreeNode) {
     if (_.isEmpty(tree.children)) {
       return tree.isArray() ? '[]' : '{}';
@@ -357,6 +366,7 @@ export class UtilService {
     }
 
     result += this.walkTreeNode(tree);
+    result = _.trim(result);
 
     try {
       // Validate against safe schema

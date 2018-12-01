@@ -10,8 +10,7 @@ describe('UtilService', () => {
   const utilService = new UtilService();
 
   const yaml =
-`
-###
+`###
   # Sample yaml.
   #
   # @author TCSCODER
@@ -63,8 +62,7 @@ environments: !!map  # specific environments can override the default values 1 p
       - !!bool false  # item2 comment
       - !!bool true
     host: !!str "staging.mobilex.com"  # host comment line1
-      # host comment line2
-`;
+      # host comment line2`;
 
   it('should convert between Yaml and TreeNode', () => {
 
@@ -73,6 +71,37 @@ environments: !!map  # specific environments can override the default values 1 p
     const yaml2 = utilService.convertTreeToYaml(tree);
 
     expect(yaml2).toEqual(yaml);
+  });
+
+  it('simple value type should be converted', () => {
+
+    const yaml = 'host: !!str "staging.mobilex.com"  # host comment line1'
+    const tree = utilService.convertYamlToTree(yaml);
+    let yaml2 = utilService.convertTreeToYaml(tree);
+    expect(yaml2).toEqual(yaml);
+
+    const config = new Configuration();
+    config.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, 'value', ['comment1', 'comment2']));
+    config.default.addChild(new TreeNode('key2', PROPERTY_VALUE_TYPES.BOOLEAN, true, ['comment1', 'comment2']));
+    config.default.addChild(new TreeNode('key3', PROPERTY_VALUE_TYPES.NUMBER, 10, ['comment1', 'comment2']));
+
+    yaml2 = utilService.convertTreeToYaml(config);
+    const config2 = utilService.parseYamlConfig(yaml2, true);
+
+    expect(config2).toEqual(config);
+  });
+
+  it('empty array with comment should be converted', () => {
+
+    const config = new Configuration();
+    config.default.addChild(new TreeNode('array', PROPERTY_VALUE_TYPES.STRING_ARRAY, undefined, ['comment1', 'comment2']));
+    config.environments.addChild(new TreeNode('dev'));
+    config.environments.addChild(new TreeNode('qat'));
+
+    const yaml = utilService.convertTreeToYaml(config);
+    const config2 = utilService.parseYamlConfig(yaml, true);
+
+    expect(config2).toEqual(config);
   });
 
   it('empty TreeNode should be converted', () => {
@@ -229,9 +258,9 @@ environments: !!map  # specific environments can override the default values 1 p
     - !!bool true
     - !!bool false
   obj: !!map  # obj-comment
-    subkey: !!str "dev-value"
-`);
-expect(utilService.compileYAML('qat', config)).toEqual(
+    subkey: !!str "dev-value"`);
+
+  expect(utilService.compileYAML('qat', config)).toEqual(
 `qat: !!map
   key1: !!str "dev-value"  # comment1
   key2: !!int 50  # qat-comment2
@@ -249,9 +278,9 @@ expect(utilService.compileYAML('qat', config)).toEqual(
     - !!bool true
     - !!bool false
   obj: !!map  # obj-comment
-    subkey: !!str "dev-value"
-`);
-expect(utilService.compileYAML('prod', config)).toEqual(
+    subkey: !!str "dev-value"`);
+
+  expect(utilService.compileYAML('prod', config)).toEqual(
 `prod: !!map
   key1: !!str "dev-value"  # comment1
   key2: !!int 50  # qat-comment2
@@ -269,8 +298,7 @@ expect(utilService.compileYAML('prod', config)).toEqual(
     - !!bool false  # prod-item1-comment
     - !!bool true  # prod-item2-comment
   obj: !!map  # obj-comment
-    subkey: !!str "dev-value/false"
-`);
+    subkey: !!str "dev-value/false"`);
   });
 
   it('should encrypt/decrypt', () => {

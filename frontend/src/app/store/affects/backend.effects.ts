@@ -71,10 +71,9 @@ export class BackendEffects {
         ofType<GetFileContent>(BackendActionTypes.GetFileContent),
         withLatestFrom(this.store.pipe(select(appStore.getPrincipal))),
         switchMap(async ([action, user]) => {
-          const file = action.payload;
           try {
-            const result = await this.fileManagementService.getFileContent(user, file);
-            return new GetFileContentSuccess({file: {...file, ...result}});
+            const result = await this.fileManagementService.getFileContent(user, action.payload);
+            return new GetFileContentSuccess({file: result});
           } catch (error) {
             return new GetFileContentFailure(error);
           }

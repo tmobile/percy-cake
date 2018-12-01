@@ -13,7 +13,7 @@ import { UtilService } from './util.service';
 import { MaintenanceService } from './maintenance.service';
 
 
-class PathFinder {
+export class PathFinder {
 
   public readonly repoDir: string;
   public readonly repoAppDir: string;
@@ -133,7 +133,7 @@ export class FileManagementService {
      * The repo will only contain the '.git' folder, nothing else.
      * The file content will directly be read from pack files in '.git', by using git.readObject.
      */
-    async clone(fs: FSExtra, auth: Authenticate, repoDir: string) {
+    private async clone(fs: FSExtra, auth: Authenticate, repoDir: string) {
 
         const branch = auth.branchName;
         await git.clone({
@@ -157,8 +157,7 @@ export class FileManagementService {
 
         // Reset Index to be same with HEAD, so they will not commit. We say this is a 'clean' index.
         // Specific files are added to index only when needed (when delete or commit changes)
-        const oid = await this.getRemoteCommit(repoDir, branch);
-        await this.resetIndexes(fs, repoDir, oid, branch);
+        const oid = await this.resetIndexes(fs, repoDir, branch);
 
         console.info(`Cloned repo: ${repoDir}`);
 
@@ -191,7 +190,7 @@ export class FileManagementService {
             const fetchHead = fetchResult['fetchHead'];
             if (lastCommit !== fetchHead) {
               // Only need reset Index if commit actaully changes
-              await this.resetIndexes(fs, repoDir, fetchHead, auth.branchName);
+              await this.resetIndexes(fs, repoDir, auth.branchName, fetchHead);
             }
 
             return fetchHead;
@@ -217,9 +216,12 @@ export class FileManagementService {
     }
 
     /**
-     * Set HEAD to given commit oid, and ensure Index status identical to HEAD status.
+     * Set HEAD to given commit oid (if not present will use current remote commit oid),
+     * and ensure Index status identical to HEAD status.
      */
-    private async resetIndexes(fs: FSExtra, dir: string, oid: string, branch: string) {
+    private async resetIndexes(fs: FSExtra, dir: string, branch: string, oid?: string) {
+        oid = oid || await this.getRemoteCommit(dir, branch);
+
         // Save commit oid to HEAD
         await fs.writeFile(path.resolve(dir, '.git', 'refs', 'heads', branch), oid);
 
@@ -240,6 +242,8 @@ export class FileManagementService {
             await git.resetIndex({ fs: git.plugins.get('fs'), dir, filepath: row[0] });
           }
         }
+
+        return oid;
     }
 
     /**
@@ -253,12 +257,11 @@ export class FileManagementService {
 
         const pathFinder = new PathFinder(user, {applicationName, fileName: percyConfig.environmentsFile});
 
-        const oid = await this.getRemoteCommit(pathFinder.repoDir, user.branchName);
-
         if (await this.isRepoFileExists(pathFinder)) {
+          const oid = await this.getRemoteCommit(pathFinder.repoDir, user.branchName);
           const {object} = await git.readObject({dir: pathFinder.repoDir, oid, filepath: pathFinder.repoFilePath, encoding: 'utf8'});
-          const loaded = this.utilService.convertYamlToTree(object.toString());
-          return _.map(_.get(loaded.findChild(['environments']), 'children', []), child => child.key);
+          const loaded = this.utilService.parseYamlConfig(object.toString());
+          return _.map(_.get(loaded.environments, 'children', []), child => child.key);
         }
 
         console.warn(`App environments file '${pathFinder.fullFilePath}' does not exist`);
@@ -273,25 +276,23 @@ export class FileManagementService {
       const dir = path.resolve(percyConfig.reposFolder, user.repoFolder);
       if (depth === 0) {
         const remoteOid = await this.getRemoteCommit(dir, user.branchName);
-        const { object: commit } = await git.readObject({dir, oid: remoteOid});
-        oid = (commit as CommitDescription).tree;
+        const { object } = await git.readObject({dir, oid: remoteOid});
+        oid = (<CommitDescription> object).tree;
       }
 
-      let { object: tree } = await git.readObject({ dir, oid });
+      const { object } = await git.readObject({ dir, oid });
 
-      for (let entry of (tree as TreeDescription).entries) {
+      for (let entry of (<TreeDescription> object).entries) {
         if (depth === 0) {
           if (entry.path === percyConfig.yamlAppsFolder && entry.type === 'tree') {
             await this.findRepoYamlFiles(user, result, 1, entry.oid);
           }
         } else if (depth === 1) {
           if (entry.type === 'tree') {
-            if (!result[entry.path]) {
-              result[entry.path] = [];
-            }
+            result[entry.path] = [];
             await this.findRepoYamlFiles(user, result, 2, entry.oid, entry.path);
           }
-        } else if (depth === 2) {
+        } else {
           if (entry.type === 'blob') {
             const ext = path.extname(entry.path).toLowerCase();
             if (ext === '.yaml' || ext === '.yml') {
@@ -398,34 +399,32 @@ export class FileManagementService {
 
         const pathFinder = new PathFinder(user, file);
 
-        const oid = await this.getRemoteCommit(pathFinder.repoDir, user.branchName);
-        let originalConfig: Configuration;
-
         if (await this.isRepoFileExists(pathFinder)) {
-          const { object } = await git.readObject({dir: pathFinder.repoDir, oid, filepath: pathFinder.repoFilePath, encoding: 'utf8'});
-          originalConfig = new Configuration(this.utilService.convertYamlToTree(object.toString()));
+          const commitOid = await this.getRemoteCommit(pathFinder.repoDir, user.branchName);
+          const { object, oid } = await git.readObject({dir: pathFinder.repoDir, oid: commitOid, filepath: pathFinder.repoFilePath, encoding: 'utf8'});
+          file.oid = oid;
+          file.originalConfig = this.utilService.parseYamlConfig(object.toString());
         }
 
-        let draftConfig: Configuration;
         if (await fs.exists(pathFinder.draftFullFilePath)) {
           const content = await fs.readFile(pathFinder.draftFullFilePath);
-          draftConfig = new Configuration(this.utilService.convertYamlToTree(content.toString()));
+          file.draftConfig = this.utilService.parseYamlConfig(content.toString());
         }
 
-        if (!originalConfig && !draftConfig) {
+        if (!file.originalConfig && !file.draftConfig) {
             throw new Error(`File '${file.applicationName}/${file.fileName}' does not exist`);
         }
 
-        file.modified = draftConfig ? !_.isEqual(originalConfig, draftConfig) : false;
+        file.modified = file.draftConfig ? !_.isEqual(file.originalConfig, file.draftConfig) : false;
 
-        if (draftConfig && !file.modified) {
+        if (file.draftConfig && !file.modified) {
             // Remove draft file
             await fs.remove(pathFinder.draftFullFilePath);
             // Clear commit base SHA
             await this.saveCommitBaseSHA(fs, repoMetadata, { [pathFinder.repoFilePath]: '' });
         }
 
-        return { ...file, draftConfig, originalConfig };
+        return file;
     }
 
     /**
@@ -441,19 +440,15 @@ export class FileManagementService {
     /**
      * Save commit base SHA (which is file's oid).
      */
-    private async saveCommitBaseSHA(fs: FSExtra, repoMetadata, baseSHAs: {[filepath: string]: string}) {
+    private async saveCommitBaseSHA(fs: FSExtra, repoMetadata, newBaseSHAs: {[filepath: string]: string}) {
         let anyChange = false;
-        _.each(baseSHAs, (baseSHA, filepath) => {
-          if (!baseSHA) {
-            if (repoMetadata.commitBaseSHA[filepath]) {
-              delete repoMetadata.commitBaseSHA[filepath];
-              anyChange = true;
-            }
-          } else {
-            if (repoMetadata.commitBaseSHA[filepath] !== baseSHA) {
-              repoMetadata.commitBaseSHA[filepath] = baseSHA;
-              anyChange = true;
-            }
+        _.each(newBaseSHAs, (newBaseSHA, filepath) => {
+          if (!newBaseSHA && repoMetadata.commitBaseSHA[filepath]) {
+            delete repoMetadata.commitBaseSHA[filepath];
+            anyChange = true;
+          } else if (newBaseSHA && repoMetadata.commitBaseSHA[filepath] !== newBaseSHA) {
+            repoMetadata.commitBaseSHA[filepath] = newBaseSHA;
+            anyChange = true;
           }
         });
 
@@ -480,9 +475,8 @@ export class FileManagementService {
 
         if (!file.modified) {
             // Not modified, don't need draft file
-            const repoFileExists = await this.isRepoFileExists(pathFinder);
             const draftFileExists = await fs.exists(pathFinder.draftFullFilePath);
-            if (repoFileExists && draftFileExists) {
+            if (draftFileExists) {
                 console.info(`Draft file '${file.applicationName}/${file.fileName}' found to have same content as repo, will be deleted`)
                 await fs.remove(pathFinder.draftFullFilePath);
             }
@@ -492,11 +486,11 @@ export class FileManagementService {
             // Save draft
             await fs.ensureDir(pathFinder.draftAppDir);
 
-            // Only save the draft config
+            // Save the draft config
             await fs.writeFile(pathFinder.draftFullFilePath, this.utilService.convertTreeToYaml(file.draftConfig));
 
             if (!repoMetadata.commitBaseSHA[pathFinder.repoFilePath]) {
-                // Save commit base SHA
+                // Save draft file's commit base SHA if not saved yet
                 await this.saveCommitBaseSHA(fs, repoMetadata, { [pathFinder.repoFilePath]: file.oid });
             }
         }
@@ -523,49 +517,20 @@ export class FileManagementService {
         const pathFinder = new PathFinder(user, file);
 
         let gitPulled = false;
+
         if (await this.isRepoFileExists(pathFinder)) {
-  
             const lastCommit = await this.pull(fs, user, pathFinder.repoDir);
             gitPulled = true;
 
             // Check whether exists again after pull
             if (await this.isRepoFileExists(pathFinder)) {
-  
-              try {
-                  if (await fs.exists(pathFinder.fullFilePath)) {
-                    // Just in case file exist in workdir
-                    await fs.remove(pathFinder.fullFilePath);
-                  }
-      
-                  await git.remove({
-                      dir: pathFinder.repoDir,
-                      filepath: pathFinder.repoFilePath
-                  });
-      
-                  const commitSHA = await git.commit({
-                      dir: pathFinder.repoDir,
-                      message: 'Percy delete',
-                      author: {
-                          name: user.username,
-                          email: user.username
-                      }
-                  });
-  
-                  await git.push({
-                      dir: pathFinder.repoDir,
-                      ref: user.branchName,
-                      username: user.username,
-                      password: user.password,
-                      corsProxy: percyConfig.corsProxy,
-                  });
-
-                  // Weird bug, isogit sometimes don't update the remote commit SHA
-                  await fs.writeFile(path.resolve(pathFinder.repoDir, '.git', 'refs', 'remotes', 'origin', user.branchName), commitSHA);
-                  await this.resetIndexes(fs, pathFinder.repoDir, commitSHA, user.branchName);
-              } catch (err) {
-                  await this.resetIndexes(fs, pathFinder.repoDir, lastCommit, user.branchName);
-                  throw err;
-              }
+              // Do push
+              await this.doPush(fs, pathFinder.repoDir, user, lastCommit, 'Percy delete',
+                () => git.remove({
+                  dir: pathFinder.repoDir,
+                  filepath: pathFinder.repoFilePath
+                })
+              );
             }
         }
 
@@ -580,32 +545,40 @@ export class FileManagementService {
     }
 
     /**
-     * Resolve conflicts
-     * @param auth the logged in user
-     * @param configFiles the config files to commit
-     * @param message the commit message
+     * Do push. Will rollback to last commit if any error.
      */
-    async resovelConflicts(principal: Principal, configFiles: ConfigFile[], message: string) {
-      const modified: ConfigFile[] = [];
-      const unchanged: ConfigFile[] = [];
+    private async doPush(fs: FSExtra, dir: string, user: User, lastCommit: string, message: string,
+      commitAction: () => Promise<any>, forcePush = false) {
 
-      await Promise.all(configFiles.map(async(file) => {
-        file.modified = !_.isEqual(file.draftConfig, file.originalConfig);
+        try {
+          await commitAction();
 
-        if (file.modified) {
-          modified.push(file);
-        } else {
-          await this.saveDraft(principal, file); // This will clean draft data
-          unchanged.push(file);
-        }
-      }));
+          const commitSHA = await git.commit({
+              dir,
+              message,
+              author: {
+                  name: user.username,
+                  email: user.username
+              }
+          });
 
-      if (modified.length) {
-        const committed = await this.commitFiles(principal, modified, message, true);
-        return _.concat(committed, unchanged);
+          await git.push({
+              dir,
+              ref: user.branchName,
+              username: user.username,
+              password: user.password,
+              corsProxy: percyConfig.corsProxy,
+              force: forcePush
+          });
+
+          // Weird, isogit does't update the remote commit SHA after push
+          await fs.writeFile(path.resolve(dir, '.git', 'refs', 'remotes', 'origin', user.branchName), commitSHA);
+          await this.resetIndexes(fs, dir, user.branchName, commitSHA);
+      } catch (err) {
+          // Rollback to last commit
+          await this.resetIndexes(fs, dir, user.branchName, lastCommit);
+          throw err;
       }
-
-      return unchanged;
     }
 
     /**
@@ -615,22 +588,15 @@ export class FileManagementService {
      * @param message the commit message
      * @param forcePush the flag indicates whether to force push
      */
-    async commitFiles(principal: Principal, configFiles: ConfigFile[], message: string, forcePush: boolean = false) {
+    async commitFiles(principal: Principal, configFiles: ConfigFile[], message: string, forcePush = false) {
         const fs = await getBrowserFS();
         const { user, repoMetadata } = await this.maintenanceService.checkSessionTimeout(principal);
 
         const repoDir = path.resolve(percyConfig.reposFolder, user.repoFolder);
 
-        let lastRepoFiles: ConfigFile[];
-        let newRepoFiles: ConfigFile[];
-
-        if (!forcePush) {
-          const lastMap = await this.findRepoYamlFiles(user);
-          lastRepoFiles = _.reduce(lastMap, (r, v) => r.concat(v), []);
-        }
-
         const lastCommit = await this.pull(fs, user, repoDir);
 
+        let newRepoFiles: ConfigFile[];
         if (!forcePush) {
           const newMap = await this.findRepoYamlFiles(user);
           newRepoFiles = _.reduce(newMap, (r, v) => r.concat(v), []);
@@ -645,24 +611,23 @@ export class FileManagementService {
 
             if (!file.draftConfig) {
               const content = await fs.readFile(pathFinder.draftFullFilePath);
-              file.draftConfig = new Configuration(this.utilService.convertYamlToTree(content.toString()));
+              file.draftConfig = this.utilService.parseYamlConfig(content.toString());
             }
 
             if (!forcePush) {
-              let oldOid = commitBaseSHA[pathFinder.repoFilePath];
-              if (!oldOid) {
-                const found = _.find(lastRepoFiles, f => f.applicationName === file.applicationName && f.fileName === file.fileName);
-                if (found) {
-                  commitBaseSHA[pathFinder.repoFilePath] = oldOid = found.oid;
-                }
+              const oldOid = commitBaseSHA[pathFinder.repoFilePath] || file.oid;
+              if (oldOid) {
+                // When commit added file, there is no oldOid
+                // When commit edited file, assign it as base SHA
+                commitBaseSHA[pathFinder.repoFilePath] = oldOid;
               }
 
-              const newFound = _.find(newRepoFiles, f => f.applicationName === file.applicationName && f.fileName === file.fileName);
-              const newOid = newFound ? newFound.oid : null;
+              const newFile = _.find(newRepoFiles, f => f.applicationName === file.applicationName && f.fileName === file.fileName);
+              const newOid = newFile ? newFile.oid : undefined;
 
               if ((!oldOid && newOid) || (oldOid && newOid && oldOid !== newOid)) { // Should conflict if found to be deleted?
                 const { object } = await git.readObject({dir: pathFinder.repoDir, oid: lastCommit, filepath: pathFinder.repoFilePath, encoding: 'utf8'});
-                const originalConfig = new Configuration(this.utilService.convertYamlToTree(object.toString()));
+                const originalConfig = this.utilService.parseYamlConfig(object.toString());
                 conflictFiles.push({
                     ...file,
                     originalConfig,
@@ -672,6 +637,10 @@ export class FileManagementService {
         }));
 
         if (conflictFiles.length) {
+            // Conflict happens, save the conflicted commit base SHA, then user will have 3 options:
+            // 1. Use repo file to discard local draft changes (commit base SHA will be cleared)
+            // 2. Force to push draft file (commit base SHA will be cleared upon successful push)
+            // 3. None of the above, and try to commit again, conflict will happen again
             await this.saveCommitBaseSHA(fs, repoMetadata, commitBaseSHA);
 
             const names = conflictFiles.map((file) => `• ${file.applicationName}/${file.fileName}`).join('\n');
@@ -680,53 +649,26 @@ export class FileManagementService {
             throw error;
         }
 
-        let commitSHA;
-        try {
-            // Commit
-            await Promise.all(configFiles.map(async(file) => {
-                const folderPath = path.resolve(repoDir, percyConfig.yamlAppsFolder, file.applicationName);
-                const fullFilePath = path.resolve(folderPath, file.fileName);
-    
-                await fs.ensureDir(folderPath);
-        
-                // Convert json to yaml
-                await fs.writeFile(fullFilePath, this.utilService.convertTreeToYaml(file.draftConfig));
-        
-                file.size = (await fs.stat(fullFilePath)).size;
+        await this.doPush(fs, repoDir, user, lastCommit, message,
+          () => Promise.all(configFiles.map(async(file) => {
+              const folderPath = path.resolve(repoDir, percyConfig.yamlAppsFolder, file.applicationName);
+              const fullFilePath = path.resolve(folderPath, file.fileName);
 
-                // Add file to index
-                await git.add({
-                    dir: repoDir,
-                    filepath: path.join(percyConfig.yamlAppsFolder, file.applicationName, file.fileName)
-                });
-            }));
-        
-            commitSHA = await git.commit({
-                dir: repoDir,
-                message,
-                author: {
-                    name: user.username,
-                    email: user.username
-                }
-            });
+              await fs.ensureDir(folderPath);
+      
+              // Convert json to yaml
+              await fs.writeFile(fullFilePath, this.utilService.convertTreeToYaml(file.draftConfig));
+      
+              file.size = (await fs.stat(fullFilePath)).size;
 
-            // Push
-            await git.push({
-                dir: repoDir,
-                ref: user.branchName,
-                username: user.username,
-                password: user.password,
-                corsProxy: percyConfig.corsProxy,
-                force: forcePush
-            });
-
-            // Weird bug, isogit sometimes don't update the remote commit SHA
-            await fs.writeFile(path.resolve(repoDir, '.git', 'refs', 'remotes', 'origin', user.branchName), commitSHA);
-            await this.resetIndexes(fs, repoDir, commitSHA, user.branchName);
-        } catch (err) {
-            await this.resetIndexes(fs, repoDir, lastCommit, user.branchName);
-            throw err;
-        }
+              // Add file to index
+              await git.add({
+                  dir: repoDir,
+                  filepath: path.join(percyConfig.yamlAppsFolder, file.applicationName, file.fileName)
+              });
+          })),
+          forcePush
+        );
 
         // Delete draft files
         commitBaseSHA = {};
@@ -737,6 +679,7 @@ export class FileManagementService {
             }
             file.modified = false;
             file.originalConfig = file.draftConfig;
+            file.draftConfig = undefined;
             commitBaseSHA[pathFinder.repoFilePath] = '';
         }));
 
@@ -744,5 +687,34 @@ export class FileManagementService {
         await this.saveCommitBaseSHA(fs, repoMetadata, commitBaseSHA);
 
         return configFiles;
+    }
+
+    /**
+     * Resolve conflicts
+     * @param auth the logged in user
+     * @param configFiles the config files to commit
+     * @param message the commit message
+     */
+    async resovelConflicts(principal: Principal, configFiles: ConfigFile[], message: string) {
+      const modified: ConfigFile[] = [];
+      let result: ConfigFile[] = [];
+
+      await Promise.all(configFiles.map(async(file) => {
+        file.modified = !_.isEqual(file.draftConfig, file.originalConfig);
+
+        if (file.modified) {
+          modified.push(file);
+        } else {
+          await this.saveDraft(principal, file); // This will remove draft file and clear commit base SHA
+          result.push(file);
+        }
+      }));
+
+      if (modified.length) {
+        const committed = await this.commitFiles(principal, modified, message, true);
+        result = _.concat(committed, result);
+      }
+
+      return result;
     }
 }

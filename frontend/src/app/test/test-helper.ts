@@ -30,7 +30,7 @@ export const TestUser: User = {
   branchName: 'admin',
   token: 'test-token',
   repoName: 'tc/repo',
-  repoFolder: 'test-user!tc%20Frepo!admin'
+  repoFolder: 'test-user!tc%2Frepo!admin'
 };
 
 const DialogStub = {

@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, HostListener, ViewChild, AfterViewInit } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatDialog, MatInput } from '@angular/material';
@@ -109,7 +109,7 @@ export class EditorComponent implements OnInit, AfterViewInit {
         if (file && (file.originalConfig || file.draftConfig)) { // Newly added (but uncommitted) file has only draft config
           this.store.dispatch(new GetFileContentSuccess({file}));
         } else {
-          this.store.dispatch(new GetFileContent(file ? file : {fileName, applicationName}));
+          this.store.dispatch(new GetFileContent(file ? {...file} : {fileName, applicationName}));
         }
       });
     }

@@ -2,7 +2,6 @@ import { OnInit, Component } from "@angular/core";
 import { Store, select } from '@ngrx/store';
 import * as fromStore from 'store';
 import { take } from 'rxjs/operators';
-import * as path from 'path';
 import * as boom from 'boom';
 import * as _ from 'lodash';
 
@@ -88,19 +87,13 @@ export class InitComponent implements OnInit {
     }
 
     // Verify with repo metadata
-    if (!_.isEqual(_.omit(user, 'password'),
-      _.omit(repoMetadata, 'password', 'commitBaseSHA', 'version'))) {
+    if (!_.isEqual({..._.omit(user, 'password'), version: percyConfig.repoMetadataVersion},
+      _.omit(repoMetadata, 'password', 'commitBaseSHA'))) {
       throw boom.forbidden('Repo metadata mismatch, you are not allowed to access the repo');
     }
 
     const password = this.utilService.decrypt(repoMetadata.password);
     user = {...user, password};
-
-    // Make sure the repo is cloned
-    const repoDir = path.resolve(percyConfig.reposFolder, user.repoFolder);
-    if (!(await fs.exists(repoDir))) {
-      await this.fileManagementService.clone(fs, user, repoDir);
-    }
 
     return {user, repoMetadata};
   }
