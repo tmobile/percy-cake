@@ -11,8 +11,6 @@ import { Alert } from 'store/actions/common.actions';
 import { CommitChanges, SaveDraft, GetFileContentSuccess, GetFileContent } from 'store/actions/backend.actions';
 import {
   PageLoad, ConfigurationChange, 
-  OpenAddEditProperty, CancelAddEditProperty, SaveAddEditProperty,
-  ViewCompiledYAMLSuccess, NodeSelectedSuccess,
 } from 'store/actions/editor.actions';
 import { GetConfigFile } from 'store/reducers/backend.reducers';
 import { TreeNode } from 'models/tree-node';
@@ -39,11 +37,6 @@ export class EditorComponent implements OnInit, AfterViewInit {
   environments = this.store.pipe(select(appStore.getEnvironments));
   configFile = this.store.pipe(select(appStore.getConfigFile));
   configuration = this.store.pipe(select(appStore.getConfiguration));
-  selectedNode = this.store.pipe(select(appStore.getSelectedNode));
-  showAsCode = this.store.pipe(select(appStore.getShowAsCode));
-  showAsCompiledYAMLEnvironment = this.store.pipe(select(appStore.getShowAsCompiledYAMLEnvironment));
-  previewCode = this.store.pipe(select(appStore.getPreviewCode));
-  currentConfigProperty = this.store.pipe(select(appStore.getCurrentConfigProperty));
   isCommitting = this.store.pipe(select(appStore.getIsCommitting));
   isSaving = this.store.pipe(select(appStore.getIsSaving));
   isPageDirty$ = this.store.pipe(select(appStore.getIsPageDirty));
@@ -51,6 +44,12 @@ export class EditorComponent implements OnInit, AfterViewInit {
   editMode = false;
   envFileMode = false;
   isPageDirty = false;
+
+  showAsCode: boolean;
+  previewCode: string;
+  selectedNode: TreeNode;
+  showAsCompiledYAMLEnvironment: string;
+  currentConfigProperty: ConfigProperty;
 
   @ViewChild('fileNameInput') fileNameInput: MatInput;
 
@@ -125,7 +124,7 @@ export class EditorComponent implements OnInit, AfterViewInit {
 
   fileNameChange() {
     if (!this.editMode) {
-      this.store.pipe(select(appStore.backendState)).pipe(take(1), tap((backendState) => {
+      this.store.pipe(select(appStore.backendState), take(1), tap((backendState) => {
         if (!this.filename.value) {
           return;
         }
@@ -163,7 +162,7 @@ export class EditorComponent implements OnInit, AfterViewInit {
   }
 
   private validate() {
-    return this.store.pipe(select(appStore.editorState)).pipe(take(1), map((editorState) => {
+    return this.store.pipe(select(appStore.editorState), take(1), map((editorState) => {
       if (!this.editMode && this.filename.invalid) {
         this.fileNameInput.focus();
         return {editorState, valid: false};
@@ -231,39 +230,53 @@ export class EditorComponent implements OnInit, AfterViewInit {
     });
   }
 
+  /**
+   * Reset UI elements.
+   */
+  private reset() {
+    this.showAsCode = false;
+    this.previewCode = null;
+    this.selectedNode = null;
+    this.showAsCompiledYAMLEnvironment = null;
+    this.currentConfigProperty = null;
+  }
+
   // handles the node selected request to show the detail
   onNodeSelected(node: TreeNode) {
-    if (!node.isLeaf()) {
-        const tree = new TreeNode('');
-        tree.children.push(node);
-        const compiledYAML = this.utilService.convertTreeToYaml(tree);
-        this.store.dispatch(new NodeSelectedSuccess({ node, compiledYAML }));
-    } else {
-        this.store.dispatch(new NodeSelectedSuccess({ node, compiledYAML: null }));
+    this.reset();
+
+    this.selectedNode = node;
+    this.showAsCode = !node.isLeaf();
+
+    if (this.showAsCode) {
+      const tree = new TreeNode('');
+      tree.children.push(node);
+      this.previewCode = this.utilService.convertTreeToYaml(tree);
     }
   }
 
   // handles the open add/edit property request
   onAddEditProperty(property: ConfigProperty) {
-    this.store.dispatch(new OpenAddEditProperty({ property }));
+    this.reset();
+    this.currentConfigProperty = property;
   }
 
   // handles the cancel add/edit property request
   onCancelAddEditProperty() {
-    this.store.dispatch(new CancelAddEditProperty());
+    this.reset();
   }
 
   // handles the save add/edit property request
   onSaveAddEditProperty(node: TreeNode) {
     if (this.nestedConfig.saveAddEditProperty(node)) {
-      this.store.dispatch(new SaveAddEditProperty({ node }));
+      this.reset();
     }
   }
 
   openEditPropertyDialog() {
-    this.selectedNode.pipe(take(1)).subscribe(node => {
-      this.nestedConfig.openEditPropertyDialog(node);
-    })
+    if (this.selectedNode) {
+      this.nestedConfig.openEditPropertyDialog(this.selectedNode);
+    }
   }
 
   // handles the compiled YAML view request
@@ -271,7 +284,9 @@ export class EditorComponent implements OnInit, AfterViewInit {
     this.store.pipe(select(appStore.getConfiguration), take(1), tap(config => {
       try {
         const compiledYAML = this.utilService.compileYAML(environment, config);
-        this.store.dispatch(new ViewCompiledYAMLSuccess({ environment, compiledYAML }));
+        this.reset();
+        this.showAsCompiledYAMLEnvironment = environment;
+        this.previewCode = compiledYAML;
       } catch (err) {
         this.store.dispatch(new Alert({message: err.message, alertType: 'error'}));
       }

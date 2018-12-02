@@ -249,7 +249,7 @@ export class UtilService {
    * @returns Configuration object
    */
   parseYamlConfig(yaml: string, simpleArray: boolean = true) {
-    return new Configuration(this.convertYamlToTree(yaml, simpleArray));
+    return Configuration.fromTreeNode(this.convertYamlToTree(yaml, simpleArray));
   }
 
   /**

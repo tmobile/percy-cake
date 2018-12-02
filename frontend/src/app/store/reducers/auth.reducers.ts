@@ -2,7 +2,6 @@ import { AuthActionsUnion, AuthActionTypes } from '../actions/auth.actions';
 import { User } from 'models/auth';
 
 export interface State {
-    loggedIn: boolean;
     currentUser: User;
     loginError: Error;
     formProcessing: boolean;
@@ -10,7 +9,6 @@ export interface State {
 }
 
 export const initialState: State = {
-    loggedIn: false,
     currentUser: null,
     loginError: null,
     formProcessing: false,
@@ -31,7 +29,6 @@ export function reducer(state = initialState, action: AuthActionsUnion): State {
         case AuthActionTypes.LoginSuccess: {
             return {
                 ...state,
-                loggedIn: true,
                 loginError: null,
                 formProcessing: false,
                 currentUser: action.payload
@@ -63,10 +60,7 @@ export function reducer(state = initialState, action: AuthActionsUnion): State {
     }
 }
 
-export const getLoggedIn = (state: State) => state.loggedIn && state.currentUser;
-
-export const getLoggedInUser = (state: State) => state.currentUser;
+export const getCurrentUser = (state: State) => state.currentUser;
 export const getError = (state: State) => state.loginError;
 export const getFormProcessing = (state: State) => state.formProcessing;
 export const getRedirectUrl = (state: State) => state.redirectUrl;
-export const getRepositoryName = (state: State) => state.currentUser ? state.currentUser.repoName : null;

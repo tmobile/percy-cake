@@ -55,7 +55,11 @@ export function reducer(state = initialState, action: BackendActionsUnion): Stat
               files = ConfigFileAdapter.removeOne(id, files);
             } else {
               const freshFile = freshFiles[id];
-              freshFile.originalConfig = freshFile.draftConfig = null; // Nullify the config (so it will reload)
+              const oldOid = state.files.entities[id].oid;
+              const newOid = freshFile.oid;
+              if ((!oldOid && newOid) || (oldOid && !newOid) || (oldOid && newOid && oldOid !== newOid)) {
+                freshFile.originalConfig = freshFile.draftConfig = undefined; // Nullify the config (so it will reload)
+              }
               files = ConfigFileAdapter.upsertOne(freshFile, files);
               delete freshFiles[id];
             }

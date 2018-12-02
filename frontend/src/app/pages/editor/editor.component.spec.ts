@@ -235,7 +235,7 @@ describe('EditorComponent', () => {
 
     ctx().component.showCompiledYAML('dev');
     let editorState = await ctx().store.pipe(select(appStore.editorState), take(1)).toPromise();
-    expect(editorState.previewCode).toEqual(`server.url: !!str "https://prod.dcp.com/api"
+    expect('').toEqual(`server.url: !!str "https://prod.dcp.com/api"
 client.url: !!str "https://prod.dcp.com/client"
 dcp.host: !!str "https://prod.dcp.com"
 protocol: !!str "https://"
@@ -252,7 +252,7 @@ api: !!map
 
     ctx().component.showCompiledYAML('qat');
     editorState = await ctx().store.pipe(select(appStore.editorState), take(1)).toPromise();
-    expect(editorState.previewCode).toEqual(`server.url: !!str "https://prod.dcp.com/api"
+    expect('').toEqual(`server.url: !!str "https://prod.dcp.com/api"
 client.url: !!str "https://prod.dcp.com/client"
 dcp.host: !!str "https://prod.dcp.com"
 protocol: !!str "https://"

@@ -62,7 +62,7 @@ export class LoginComponent implements OnInit {
    */
   ngOnInit() {
     // if currentURL is login then route depending on whether user is logged-in or not
-    this.store.pipe(select(appStore.getLoggedIn)).pipe(
+    this.store.pipe(select(appStore.getCurrentUser)).pipe(
       withLatestFrom(this.store.pipe(select(appStore.getRedirectUrl))),
       tap(([isAuthenticated, redirectUrl]) => {
         if (isAuthenticated) {

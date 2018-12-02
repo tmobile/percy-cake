@@ -6,6 +6,7 @@ import { Observable, combineLatest, Subject, BehaviorSubject, Subscription } fro
 import { take, map, withLatestFrom } from 'rxjs/operators';
 
 import { percyConfig } from 'config';
+import { User } from 'models/auth';
 import { ConfigFile } from 'models/config-file';
 import * as appStore from 'store';
 import { SelectApp, CollapseApps, ToggleApp, TableSort } from 'store/actions/dashboard.actions';
@@ -28,7 +29,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   collapsedApps: Observable<string[]> = this.store.pipe(select(appStore.getCollapsedApps));
   allAppsExpanded: Observable<boolean> = this.collapsedApps.pipe(map(c => !c.length));
   tableSort: Observable<any> = this.store.pipe(select(appStore.getTableSort));
-  repositoryName: Observable<string> = this.store.pipe(select(appStore.getRepositoryName));
+  currentUser: Observable<User> = this.store.pipe(select(appStore.getCurrentUser));
   selectedApp: Observable<string> = this.store.pipe(select(appStore.getSelectedApp));
   applications: Observable<string[]> = this.store.pipe(select(appStore.getApplications));
   isDeleting: Observable<boolean> = this.store.pipe(select(appStore.getDashboardFileDeleting));

@@ -217,7 +217,10 @@ describe('FileManagementService', () => {
     await fileService.accessRepo(TestUser);
     await fs.writeFile(dir + '/test.txt', 'aaaa');
 
-    pullStub.and.returnValue({ fetchHead: commitOid2 });
+    pullStub.and.callFake(async (ops) => {
+      await fs.writeFile(path.resolve(ops.dir, '.git', 'refs', 'remotes', 'origin', TestUser.branchName), commitOid2);
+      return { fetchHead: commitOid2 };
+    });
     statusMatrixStub.and.returnValue([['a.txt', 1, 0, 1], ['b.txt', 1, 0, 0]]);
 
     const user = await fileService.accessRepo(TestUser);
@@ -235,7 +238,8 @@ describe('FileManagementService', () => {
     expect(await fs.exists(dir + '/test.txt')).toBeFalsy();
 
     // Head SHA ref should be same as remotes SHA
-    assertHeadRef(pullStub.calls.first().returnValue.fetchHead);
+    assertHeadRef(commitOid2);
+    assertRemoteRef(commitOid2);
 
     // Status matrix should be queried
     expect(statusMatrixStub.calls.count()).toEqual(2);
@@ -253,10 +257,13 @@ describe('FileManagementService', () => {
     expect(await maintenanceService.getUserTypeAhead(TestUser.username[0])).toEqual([TestUser.username]);
   });
 
-  it('pull should need reset Index if commit actaully changes', async () => {
+  it('pull should only reset Index if commit actaully changes', async () => {
     await fileService.accessRepo(TestUser);
 
     await fileService.accessRepo(TestUser);
+
+    assertHeadRef(commitOid1);
+    assertRemoteRef(commitOid1);
 
     expect(statusMatrixStub.calls.count()).toEqual(1);
   });
@@ -330,10 +337,10 @@ describe('FileManagementService', () => {
     expect(result.applications.sort()).toEqual(['app1', 'app2', 'app3']);
     expect(_.sortBy(result.files, ['applicationName', 'filename'])).toEqual([
       {applicationName: "app1", fileName: "app1-client.yaml", size: 2, modified: true, oid: '111111'},
-      {applicationName: "app1", fileName: "app1-server.yaml", oid: '222222'},
-      {applicationName: "app1", fileName: "environments.yml", oid: '333333'},
-      {applicationName: "app2", fileName: "app2-client.yaml", oid: '444444'},
-      {applicationName: "app2", fileName: "app2-server.yaml", oid: '555555'}
+      {applicationName: "app1", fileName: "app1-server.yaml", modified: false, oid: '222222'},
+      {applicationName: "app1", fileName: "environments.yml", modified: false, oid: '333333'},
+      {applicationName: "app2", fileName: "app2-client.yaml", modified: false, oid: '444444'},
+      {applicationName: "app2", fileName: "app2-server.yaml", modified: false, oid: '555555'}
     ]);
   });
 
@@ -445,7 +452,7 @@ describe('FileManagementService', () => {
 
     const result = await fileService.getFileContent(principal, file);
 
-    expect(result).toEqual({...file, modified: false, originalConfig, draftConfig});
+    expect(result).toEqual({...file, modified: false, originalConfig, draftConfig: undefined});
 
     // Draft file should be deleted
     expect(await fs.exists(pathFinder.draftFullFilePath)).toBeFalsy();
@@ -680,7 +687,7 @@ describe('FileManagementService', () => {
   it('should commit changed files successfully', async () => {
     await fileService.accessRepo(TestUser);
 
-    readObjectStub.and.returnValues(...objectTree);
+    readObjectStub.and.returnValues(...objectTree, ...objectTree);
     commitStub.and.returnValue(commitOid2);
 
     const draftConfig = new Configuration();

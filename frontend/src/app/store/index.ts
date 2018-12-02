@@ -49,12 +49,10 @@ export const metaReducers: MetaReducer<AppState>[] = [localStorageSyncReducer, c
 // dashboard related selectors
 export const authState = createFeatureSelector<AppState, fromAuth.State>('auth');
 
-export const getLoggedIn = createSelector(authState, fromAuth.getLoggedIn);
 export const getFormProcessing = createSelector(authState, fromAuth.getFormProcessing);
-export const getCurrentUser = createSelector(authState, fromAuth.getLoggedInUser);
+export const getCurrentUser = createSelector(authState, fromAuth.getCurrentUser);
 export const getRedirectUrl = createSelector(authState, fromAuth.getRedirectUrl);
 export const getLoginError = createSelector(authState, fromAuth.getError);
-export const getRepositoryName = createSelector(authState, fromAuth.getRepositoryName);
 
 // backend related selectors
 export const backendState = createFeatureSelector<AppState, fromBackend.State>('backend');
@@ -79,11 +77,6 @@ export const getConfiguration = createSelector(editorState, fromEditor.getConfig
 export const getEnvironments = createSelector(editorState, fromEditor.getEnvironments);
 export const getIsCommitting = createSelector(editorState, fromEditor.isCommitting);
 export const getIsSaving = createSelector(editorState, fromEditor.isSaving);
-export const getShowAsCode = createSelector(editorState, fromEditor.getShowAsCode);
-export const getPreviewCode = createSelector(editorState, fromEditor.getPreviewCode);
-export const getShowAsCompiledYAMLEnvironment = createSelector(editorState, fromEditor.getShowAsCompiledYAMLEnvironment);
-export const getSelectedNode = createSelector(editorState, fromEditor.getSelectedNode);
-export const getCurrentConfigProperty = createSelector(editorState, fromEditor.getCurrentConfigProperty);
 export const getIsPageDirty = createSelector(editorState, fromEditor.getIsPageDirty);
 
 

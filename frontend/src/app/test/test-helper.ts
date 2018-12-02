@@ -1,16 +1,16 @@
 import { Router, ActivatedRoute } from '@angular/router';
-import { Type, NO_ERRORS_SCHEMA } from '@angular/core';
+import { Type, NO_ERRORS_SCHEMA, Component } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { Observable, isObservable, BehaviorSubject, Subscription } from 'rxjs';
 import { Store, StoreModule, Action } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
 
 import { TestBed } from '@angular/core/testing';
-import { HttpTestingController, HttpClientTestingModule } from '@angular/common/http/testing';
+import { HttpTestingController } from '@angular/common/http/testing';
 import { TestCtx, createTestContext, configureTestSuite } from 'ng-bullet';
 
 import { User } from 'models/auth';
-import { reducers } from 'store';
+import { reducers, AppState } from 'store';
 import { AppEffects } from 'store/affects/app.effects';
 import { AuthEffects } from 'store/affects/auth.effects';
 import { BackendEffects } from 'store/affects/backend.effects';
@@ -33,26 +33,49 @@ export const TestUser: User = {
   repoFolder: 'test-user!tc%2Frepo!admin'
 };
 
+@Component({
+  selector: 'app-test-store-host',
+  template: '<div></div>',
+})
+export class StoreTestComponent {
+  constructor(private store: Store<AppState>) { };
+}
+
 const DialogStub = {
   input: new BehaviorSubject(undefined),
   output: new BehaviorSubject(undefined)
 };
-const RouterStub = new BehaviorSubject(undefined);
+const RouterStub = new BehaviorSubject<string[]>(undefined);
 
 export class TestContext<T> extends TestCtx<T> {
 
   readonly routerStub = RouterStub;
   readonly dialogStub = DialogStub;
   readonly activatedRouteStub: any;
+  readonly store: Store<AppState>;
   readonly httpMock: HttpTestingController;
-  readonly store: Store<any>;
   readonly observables: { [name: string]: BehaviorSubject<any>} = {};
 
   constructor(testCtx: TestCtx<T>) {
     super(testCtx.fixture);
-    this.httpMock = TestBed.get(HttpTestingController);
     this.store = this.resolve(Store);
     this.activatedRouteStub = this.resolve(ActivatedRoute);
+  }
+
+  authState() {
+    return this.observables.store.value.auth;
+  }
+
+  backendState() {
+    return this.observables.store.value.backend;
+  }
+
+  dashboarState() {
+    return this.observables.store.value.dashboard;
+  }
+
+  editorState() {
+    return this.observables.store.value.editor;
   }
 }
 
@@ -81,7 +104,6 @@ export const Setup = <T>(componentType: Type<T>, triggerLifecyle: boolean = true
     TestBed.configureTestingModule({
       imports: [
         MaterialComponentsModule,
-        HttpClientTestingModule,
         StoreModule.forRoot(reducers),
         EffectsModule.forRoot([AppEffects, AuthEffects, BackendEffects, DashboardEffects, EditorEffects])
       ],

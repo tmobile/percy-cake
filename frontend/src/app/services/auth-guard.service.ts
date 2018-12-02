@@ -26,7 +26,7 @@ export class AuthGuardService implements CanActivate {
    */
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> {
     return this.store.pipe(
-      select(fromStore.getLoggedIn),
+      select(fromStore.getCurrentUser),
       map(authenticated => {
         if (!authenticated) {
           const redirectUrl = state.url !== '/login' ? state.url : null;

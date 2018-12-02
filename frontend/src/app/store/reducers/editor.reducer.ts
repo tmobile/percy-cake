@@ -1,8 +1,6 @@
 import * as _ from 'lodash';
 
 import { Configuration, ConfigFile } from 'models/config-file';
-import { TreeNode } from 'models/tree-node';
-import { ConfigProperty } from 'models/config-property';
 
 import { BackendActionsUnion, BackendActionTypes } from '../actions/backend.actions';
 import { EditorActionTypes, EditorActionsUnion } from '../actions/editor.actions';
@@ -12,49 +10,29 @@ export interface State {
     isSaving: boolean;
     environments: Array<string>;
     editMode: boolean;
-    applicationName: string;
     configFile: ConfigFile;
     configuration: Configuration; // In-edit config, not saved as draft
-    showAsCode: boolean;
-    previewCode: string;
-    showAsCompiledYAMLEnvironment: string;
-    selectedNode: TreeNode;
-    currentConfigProperty: ConfigProperty;
     isPageDirty: boolean;
 }
 
 export const initialState: State = {
     isCommitting: false,
     isSaving: false,
-    applicationName: null,
     environments: [],
     editMode: false,
     configFile: null,
     configuration: null,
-    showAsCode: false,
-    previewCode: null,
-    showAsCompiledYAMLEnvironment: null,
-    selectedNode: null,
-    currentConfigProperty: null,
     isPageDirty: false,
-};
-
-const cancelRightPanel = {
-    showAsCode: false,
-    previewCode: null,
-    showAsCompiledYAMLEnvironment: null,
-    selectedNode: null,
-    currentConfigProperty: null,
 };
 
 export function reducer(state = initialState, action: EditorActionsUnion | BackendActionsUnion): State {
     switch (action.type) {
-      case EditorActionTypes.PageLoad: {
-          return {
-              ...initialState,
-              ...action.payload
-          };
-      }
+        case EditorActionTypes.PageLoad: {
+            return {
+                ...initialState,
+                editMode: action.payload.editMode
+            };
+        }
 
         case EditorActionTypes.PageLoadSuccess: {
             return {
@@ -65,11 +43,10 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
 
         case BackendActionTypes.GetFileContentSuccess: {
           const {file} = action.payload;
-          const configuration = _.cloneDeep(file.draftConfig || file.originalConfig);
           return {
               ...state,
               configFile: {...file},
-              configuration,
+              configuration:  _.cloneDeep(file.draftConfig || file.originalConfig),
               isPageDirty: !state.editMode
           };
         }
@@ -77,23 +54,11 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
         case EditorActionTypes.ConfigurationChange: {
             const configuration = action.payload;
             const file = state.configFile;
-
             return {
                 ...state,
                 configFile: {...file, modified: !_.isEqual(file.originalConfig, configuration)},
                 configuration,
                 isPageDirty: !state.editMode || !_.isEqual(file.draftConfig || file.originalConfig, configuration)
-            };
-        }
-
-        case EditorActionTypes.ViewCompiledYAMLSuccess: {
-            return {
-                ...state,
-                showAsCode: false,
-                selectedNode: null,
-                currentConfigProperty: null,
-                showAsCompiledYAMLEnvironment: action.payload.environment,
-                previewCode: action.payload.compiledYAML,
             };
         }
 
@@ -105,10 +70,13 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
         }
 
         case BackendActionTypes.SaveDraftSuccess: {
+          const file = action.payload;
           return {
               ...state,
-              configFile: {...action.payload},
+              configFile: {...file, draftConfig: _.cloneDeep(file.draftConfig)},
+              configuration: file.draftConfig,
               isPageDirty: false,
+              isSaving: false,
           };
         }
 
@@ -137,7 +105,7 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
             const file = action.payload.files[0];
             return {
                 ...state,
-                configFile: {...file},
+                configFile: {...file, originalConfig: _.cloneDeep(file.originalConfig)},
                 configuration: file.originalConfig,
                 isCommitting: false,
                 isPageDirty: false,
@@ -155,43 +123,6 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
             };
         }
 
-        case EditorActionTypes.OpenAddEditProperty: {
-            return {
-                ...state,
-                showAsCode: false,
-                previewCode: null,
-                showAsCompiledYAMLEnvironment: null,
-                selectedNode: null,
-                currentConfigProperty: action.payload.property,
-            };
-        }
-
-        case EditorActionTypes.CancelAddEditProperty: {
-
-            return {
-                ...state,
-                ...cancelRightPanel
-            };
-        }
-
-        case EditorActionTypes.SaveAddEditProperty: {
-            return {
-                ...state,
-                ...cancelRightPanel
-            };
-        }
-
-        case EditorActionTypes.NodeSelectedSuccess: {
-          return {
-              ...state,
-              showAsCompiledYAMLEnvironment: null,
-              currentConfigProperty: null,
-              selectedNode: action.payload.node,
-              showAsCode: !action.payload.node.isLeaf(),
-              previewCode: action.payload.compiledYAML,
-          };
-        }
-
         default: {
             return state;
         }
@@ -203,9 +134,4 @@ export const getConfiguration = (state: State) => state.configuration;
 export const isCommitting = (state: State) => state.isCommitting;
 export const isSaving = (state: State) => state.isSaving;
 export const getEnvironments = (state: State) => state.environments;
-export const getShowAsCode = (state: State) => state.showAsCode;
-export const getPreviewCode = (state: State) => state.previewCode;
-export const getShowAsCompiledYAMLEnvironment = (state: State) => state.showAsCompiledYAMLEnvironment;
-export const getSelectedNode = (state: State) => state.selectedNode;
-export const getCurrentConfigProperty = (state: State) => state.currentConfigProperty;
 export const getIsPageDirty = (state: State) => state.isPageDirty;

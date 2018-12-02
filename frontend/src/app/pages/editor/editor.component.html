@@ -43,17 +43,17 @@
     <!-- detail panel -->
     <div class="col-other-envs" id="editor-detail-view">
         <!-- if node is selected to view detail -->
-        <h3 class="section-heading" *ngIf="(selectedNode | async)">{{(selectedNode | async).getPathsString()}}</h3>
-        <div class="preview" *ngIf="(selectedNode | async)">
+        <h3 class="section-heading" *ngIf="selectedNode">{{selectedNode.getPathsString()}}</h3>
+        <div class="preview" *ngIf="selectedNode">
           <!-- shows the node as YAML for non-leaf node -->
-          <pre *ngIf="(showAsCode | async)"><code highlight [code]="previewCode | async"></code></pre>
+          <pre *ngIf="showAsCode"><code highlight [code]="previewCode"></code></pre>
           <!-- shows the leaf node as readonly label -->
-          <div *ngIf="!(showAsCode | async) && (selectedNode | async)" class="property">
+          <div *ngIf="!showAsCode && selectedNode" class="property">
             <div class="mat-form-field mat-form-field-appearance-legacy mat-form-field-disabled mat-form-field-can-float mat-form-field-should-float">
               <div class="mat-form-field-wrapper">
                 <div class="mat-form-field-flex">
                   <div class="mat-form-field-infix">
-                    <mat-label>{{(selectedNode|async).key}}</mat-label>
+                    <mat-label>{{selectedNode.key}}</mat-label>
                     <span class="mat-form-field-label-wrapper">
                       <label class="mat-form-field-label">Name</label>
                     </span>
@@ -68,7 +68,7 @@
               <div class="mat-form-field-wrapper">
                 <div class="mat-form-field-flex">
                   <div class="mat-form-field-infix">
-                    <mat-label>{{(selectedNode|async).valueType}}</mat-label>
+                    <mat-label>{{selectedNode.valueType}}</mat-label>
                     <span class="mat-form-field-label-wrapper">
                       <label class="mat-form-field-label">Value Type</label>
                     </span>
@@ -83,7 +83,7 @@
               <div class="mat-form-field-wrapper">
                 <div class="mat-form-field-flex">
                   <div class="mat-form-field-infix">
-                    <mat-label>{{(selectedNode|async).value}}</mat-label>
+                    <mat-label>{{selectedNode.value}}</mat-label>
                     <span class="mat-form-field-label-wrapper">
                       <label class="mat-form-field-label">Value</label>
                     </span>
@@ -98,7 +98,7 @@
               <div class="mat-form-field-wrapper">
                 <div class="mat-form-field-flex">
                   <div class="mat-form-field-infix">
-                    <mat-label class="comment"><pre>{{(selectedNode|async).getCommentStr()}}</pre></mat-label>
+                    <mat-label class="comment"><pre>{{selectedNode.getCommentStr()}}</pre></mat-label>
                     <span class="mat-form-field-label-wrapper">
                       <label class="mat-form-field-label"> Comment</label>
                     </span>
@@ -118,14 +118,14 @@
           </div>
         </div>
         <!-- shows the compiled YAML -->
-        <h3 class="section-heading" *ngIf="(showAsCompiledYAMLEnvironment | async)">{{showAsCompiledYAMLEnvironment | async}} environment compiled yaml</h3>
-        <div class="preview" *ngIf="(showAsCompiledYAMLEnvironment | async)">
-          <pre><code highlight [code]="(previewCode|async)"></code></pre>
+        <h3 class="section-heading" *ngIf="showAsCompiledYAMLEnvironment">{{showAsCompiledYAMLEnvironment}} environment compiled yaml</h3>
+        <div class="preview" *ngIf="showAsCompiledYAMLEnvironment">
+          <pre><code highlight [code]="previewCode"></code></pre>
         </div>
         <!-- shows the add/edit panel -->
-        <div class="add-edit-property-mode" *ngIf="(currentConfigProperty | async)">
+        <div class="add-edit-property-mode" *ngIf="currentConfigProperty">
           <app-add-edit-property-dialog (saveProperty)="onSaveAddEditProperty($event)" (cancel)="onCancelAddEditProperty($event)"
-            [data]="currentConfigProperty | async"></app-add-edit-property-dialog>
+            [data]="currentConfigProperty"></app-add-edit-property-dialog>
         </div>
     </div>
   </div>

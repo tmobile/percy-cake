@@ -4,11 +4,14 @@ export class Configuration extends TreeNode {
     default: TreeNode;
     environments: TreeNode;
 
-    constructor(root?: TreeNode) {
+    static fromTreeNode(root?: TreeNode) {
+      return new Configuration(root ? root.findChild(['default']) : null, root ? root.findChild(['environments']) : null);
+    }
+    constructor(_default?: TreeNode, _environments?: TreeNode) {
       super('');
 
-      this.default = root ? root.findChild(['default']) : null;
-      this.environments = root ? root.findChild(['environments']) : null;
+      this.default = _default;
+      this.environments = _environments;
 
       if (!this.default || this.default.valueType !== 'object') {
         this.default = new TreeNode('default');

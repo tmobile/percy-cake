@@ -333,6 +333,7 @@ export class FileManagementService {
             _.forEach(repoFiles[app], repoFile => {
                 const draftFile = _.find(draft.files, f => f.applicationName === repoFile.applicationName && f.fileName === repoFile.fileName);
                 if (!draftFile) {
+                    repoFile.modified = false;
                     draft.files.push(repoFile);
                 } else {
                   _.assign(draftFile, repoFile);
@@ -422,6 +423,7 @@ export class FileManagementService {
             await fs.remove(pathFinder.draftFullFilePath);
             // Clear commit base SHA
             await this.saveCommitBaseSHA(fs, repoMetadata, { [pathFinder.repoFilePath]: '' });
+            file.draftConfig = undefined;
         }
 
         return file;
@@ -598,8 +600,7 @@ export class FileManagementService {
 
         let newRepoFiles: ConfigFile[];
         if (!forcePush) {
-          const newMap = await this.findRepoYamlFiles(user);
-          newRepoFiles = _.reduce(newMap, (r, v) => r.concat(v), []);
+          newRepoFiles = _.reduce(await this.findRepoYamlFiles(user), (r, v) => r.concat(v), []);
         }
 
         // Do optimistic check
@@ -686,6 +687,11 @@ export class FileManagementService {
         // Clear commit base SHAs
         await this.saveCommitBaseSHA(fs, repoMetadata, commitBaseSHA);
 
+        // Important Note:
+        // This method does NOT return newest oid of files, the app will
+        // redirect to dashboard and reload files, thus get the newest oid.
+        // In future if the app behavior is changed (e.g no redirect to dashboard),
+        // then this method need return the newest oid
         return configFiles;
     }
 

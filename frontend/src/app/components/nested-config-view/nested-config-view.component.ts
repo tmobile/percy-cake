@@ -219,7 +219,8 @@ export class NestedConfigViewComponent implements OnChanges {
     this.envDataSource.data = null;
     this.envDataSource.data = _data;
 
-    this.configurationChange.emit(this.configuration);
+    const newConfiguration = new Configuration(this.defaultDataSource.data[0], this.envDataSource.data[0]);
+    this.configurationChange.emit(newConfiguration);
   }
 
   /**
