@@ -28,6 +28,10 @@ describe('Auth store action/effect/reducer', () => {
     expect(reducer.getFormProcessing(ctx.authState())).toEqual(false);
     expect(reducer.getError(ctx.authState())).toEqual(null);
     expect(ctx.routerStub.value).toEqual(['/dashboard']);
+
+    await ctx.fixture.whenStable();
+
+    expect(JSON.parse(window.localStorage.getItem('auth'))).toEqual({currentUser: TestUser})
   });
 
   it('Login action fail, login error should be saved to state', async () => {
@@ -54,5 +58,7 @@ describe('Auth store action/effect/reducer', () => {
 
     expect(reducer.getCurrentUser(ctx.authState())).toEqual(null);
     expect(ctx.routerStub.value).toEqual(['/login']);
+
+    expect(JSON.parse(window.localStorage.getItem('auth'))).toEqual({currentUser: null});
   });
 });

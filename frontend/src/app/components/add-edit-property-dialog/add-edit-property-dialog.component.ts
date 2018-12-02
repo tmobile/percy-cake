@@ -6,7 +6,6 @@ import * as _ from 'lodash';
 
 import { PROPERTY_VALUE_TYPES } from 'config';
 import * as appStore from 'store';
-import { UtilService } from 'services/util.service';
 import { TreeNode } from 'models/tree-node';
 import { ConfigProperty } from 'models/config-property';
 import { Alert } from 'store/actions/common.actions';
@@ -38,7 +37,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
   duplicateDefault = false;
   autoTrim = false;
 
-  constructor(private utilService: UtilService,
+  constructor(
     private store: Store<appStore.AppState>,
     private dialog: MatDialog) {
 
@@ -143,11 +142,9 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     if (this.data.node.getLevel() === 1) {
       envsNode = this.data.node.parent;
       thisEnvKey = this.data.node.key;
-    } else if (this.data.node.getLevel() === 2) {
+    } else {
       envsNode = this.data.node.parent.parent;
       thisEnvKey = this.data.node.parent.key;
-    } else {
-      return [];
     }
 
     const hasCylic = (child) => {
@@ -275,7 +272,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
           node.value = this.value.value === 'true' || this.value.value === true;
         } else if (node.valueType === PROPERTY_VALUE_TYPES.NUMBER) {
           node.value = _.toNumber(this.value.value);
-        } else if (node.valueType === PROPERTY_VALUE_TYPES.STRING) {
+        } else {
           node.value = this.value.value;
         }
       }
@@ -307,7 +304,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
 
       // Clone default node
       const parent = defaultTree.parent;
-      defaultTree.parent = null;
+      defaultTree.parent = undefined;
       const result = _.cloneDeep(defaultTree);
       defaultTree.parent = parent;
 

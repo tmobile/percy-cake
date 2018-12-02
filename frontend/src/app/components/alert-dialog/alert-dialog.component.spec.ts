@@ -1,13 +1,18 @@
-import { Setup } from 'test/test-helper';
+import { Setup, TestContext } from 'test/test-helper';
 
 import { AlertDialogComponent } from './alert-dialog.component';
 
 describe('AlertDialogComponent', () => {
 
-  const ctx = Setup(AlertDialogComponent);
+  const setup = Setup(AlertDialogComponent, false);
+
+  let ctx: TestContext<AlertDialogComponent>;
+  beforeEach(() => {
+    ctx = setup();
+  });
 
   it('should create AlertDialogComponent', () => {
-    expect(ctx().component).toBeTruthy();
+    expect(ctx.component).toBeTruthy();
   });
 
   it('should trigger logout', async () => {
@@ -16,11 +21,11 @@ describe('AlertDialogComponent', () => {
       message: 'Logout message',
       alertType: 'logout',
     };
-    ctx().component.data = data;
+    ctx.component.data = data;
 
-    ctx().component.afterClosed();
+    ctx.component.afterClosed();
 
-    expect(ctx().routerStub.value).toEqual(['/login']);
+    expect(ctx.routerStub.value).toEqual(['/login']);
   });
 
   it('should not trigger logout', async () => {
@@ -29,10 +34,10 @@ describe('AlertDialogComponent', () => {
       message: 'Test message',
       alertType: 'info',
     };
-    ctx().component.data = data;
+    ctx.component.data = data;
 
-    ctx().component.afterClosed();
+    ctx.component.afterClosed();
 
-    expect(ctx().routerStub.value).toBeUndefined();
+    expect(ctx.routerStub.value).toBeUndefined();
   });
 });

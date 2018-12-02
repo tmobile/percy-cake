@@ -35,8 +35,7 @@ export function localStorageSyncReducer(reducer: ActionReducer<AppState>): Actio
 export function clearState(reducer) {
   return function (state, action) {
 
-    if (action.type === AuthActionTypes.LogoutSuccess
-      || action.type === CommonActionTypes.Reset) {
+    if (action.type === AuthActionTypes.LogoutSuccess) {
       state = undefined;
     }
 

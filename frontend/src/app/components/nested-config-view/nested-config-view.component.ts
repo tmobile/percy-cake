@@ -2,12 +2,9 @@ import { Component, Input, Output, EventEmitter, OnChanges } from '@angular/core
 import { NestedTreeControl } from '@angular/cdk/tree';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
 import { MatDialog } from '@angular/material';
-import { Store } from '@ngrx/store';
-import * as appStore from 'store';
 import * as _ from 'lodash';
 
 import { PROPERTY_VALUE_TYPES } from 'config';
-import { UtilService } from 'services/util.service';
 import { Configuration } from 'models/config-file';
 import { TreeNode } from 'models/tree-node';
 import { ConfigProperty } from 'models/config-property';
@@ -47,10 +44,11 @@ export class NestedConfigViewComponent implements OnChanges {
    * @param dialog the material dialog instance
    * @param store the application store
    */
-  constructor(private dialog: MatDialog, private store: Store<appStore.AppState>, private utilService: UtilService) {
-    this.defaultTreeControl = new NestedTreeControl<TreeNode>(this._getChildren);
+  constructor(private dialog: MatDialog) {
+    const _getChildren = (node: TreeNode) => node.children;
+    this.defaultTreeControl = new NestedTreeControl<TreeNode>(_getChildren);
     this.defaultDataSource = new MatTreeNestedDataSource();
-    this.envTreeControl = new NestedTreeControl<TreeNode>(this._getChildren);
+    this.envTreeControl = new NestedTreeControl<TreeNode>(_getChildren);
     this.envDataSource = new MatTreeNestedDataSource();
   }
 
@@ -80,9 +78,6 @@ export class NestedConfigViewComponent implements OnChanges {
       this.toggle(this.envTreeControl, this.envDataSource.data[0], true);
     }
   }
-
-  // get a node's children
-  private _getChildren = (node: TreeNode) => node.children;
 
   toggle(treeControl, node, toggleAll?: boolean) {
     const expanded = treeControl.isExpanded(node);
@@ -144,11 +139,9 @@ export class NestedConfigViewComponent implements OnChanges {
       }
 
       const existingKeys = [];
-      if (node.children) {
-        node.children.forEach(child => {
-          existingKeys.push(child.key);
-        });
-      }
+      _.each(node.children, child => {
+        existingKeys.push(child.key);
+      })
 
       if (node.getLevel() === 1 && !_.includes(existingKeys, 'inherits')) {
         keyOptions.push({ key: 'inherits', type: 'string' });
@@ -210,7 +203,7 @@ export class NestedConfigViewComponent implements OnChanges {
   /**
    * Refresh the tree
    */
-  refreshTree() {
+  private refreshTree() {
     let _data = this.defaultDataSource.data;
     this.defaultDataSource.data = null;
     this.defaultDataSource.data = _data;
@@ -226,26 +219,16 @@ export class NestedConfigViewComponent implements OnChanges {
   /**
    * Do save property
    * @param node the added/edited node
-   * @param dryRun the flag indiates whether dry run to validate (in which case the node will be cloned without affecting state)
-   * @returns the modified top-level default and environments node
    */
-  private doSaveAddEditProperty(node: TreeNode, dryRun: boolean) {
+  private doSaveAddEditProperty(node: TreeNode) {
 
-    const currentNode = dryRun ? _.cloneDeep(this.currentConfigProperty.node) : this.currentConfigProperty.node;
-    const isDefaultNode = currentNode.isDefaultNode();
-
-    let environmentsTree: TreeNode;
-    if (!isDefaultNode) {
-      environmentsTree = currentNode.getTopParent();
-    } else {
-      environmentsTree = dryRun ? _.cloneDeep(this.envDataSource.data[0]) : this.envDataSource.data[0];
-    }
+    const currentNode = this.currentConfigProperty.node;
 
     if (this.currentConfigProperty.editMode) {
-      if (isDefaultNode) {
+      if (currentNode.isDefaultNode()) {
         if (currentNode.valueType !== node.valueType) {
           // if value type changes, delete respective nodes from environments tree
-          this.alignEnvironmentProperties(currentNode, environmentsTree, envNode => {
+          this.alignEnvironmentProperties(currentNode, envNode => {
               _.remove(envNode.parent.children, item => item.key === node.key);
           });
           if (currentNode.isArray()) {
@@ -254,7 +237,7 @@ export class NestedConfigViewComponent implements OnChanges {
           }
         } else if (currentNode.key !== node.key) {
           // if key changes, rename respective nodes from environments tree
-          this.alignEnvironmentProperties(currentNode, environmentsTree, envNode => {
+          this.alignEnvironmentProperties(currentNode, envNode => {
             envNode.key = node.key;
           });
         }
@@ -272,7 +255,7 @@ export class NestedConfigViewComponent implements OnChanges {
         currentNode.children = undefined;
       } else {
         currentNode.children = node.children && node.children.length ?
-          node.children : currentNode.children || [];
+          node.children : _.defaultTo(currentNode.children, []);
         _.each(currentNode.children, child => {
           child.parent = currentNode;
         });
@@ -281,14 +264,9 @@ export class NestedConfigViewComponent implements OnChanges {
     } else {
       node.parent = currentNode;
 
-      currentNode.children = currentNode.children || [];
+      currentNode.children = _.defaultTo(currentNode.children, []);
       currentNode.children.push(node);
     }
-
-    return {
-      defaultTree: isDefaultNode ? currentNode.getTopParent() : this.defaultDataSource.data[0],
-      environmentsTree
-    };
   }
 
   /**
@@ -298,12 +276,7 @@ export class NestedConfigViewComponent implements OnChanges {
    */
   saveAddEditProperty(node: TreeNode) {
 
-    // Do a test and check can compile YAML
-    // if (!this.validateYAML(node, false)) {
-    //   return false;
-    // }
-
-    this.doSaveAddEditProperty(node, false);
+    this.doSaveAddEditProperty(node);
 
     if (!this.currentConfigProperty.editMode) {
       if (this.currentConfigProperty.node.isDefaultNode()) {
@@ -318,32 +291,6 @@ export class NestedConfigViewComponent implements OnChanges {
     return true;
   }
 
-  /**
-   * Validates can compile to YAML
-   * @param node the added/edited/deleted node
-   * @param forDelete the flag indicates to add/edit or to delete node
-   * @return true if succesfully validated; false otherwise
-   */
-  // private validateYAML(node, forDelete): boolean {
-
-  // const {defaultTree, environmentsTree} = forDelete ? this.doDeleteProperty(node, true) : this.doSaveAddEditProperty(node, true);
-  // const newConfig = {
-  //   default: defaultTree.jsonValue,
-  //   environments: environmentsTree.jsonValue
-  // };
-  // try {
-  //   this.utilService.convertJsonToYaml(newConfig);
-
-  //   _.forEach(environmentsTree.children, (envNode) => {
-  //     this.utilService.compileYAML(envNode.key, newConfig);
-  //   });
-  // } catch (err) {
-  //   this.store.dispatch(new Alert({message: err.message, alertType: 'error'}));
-  //   return false;
-  // }
-
-  //   return true;
-  // }
 
   openMenu(event, menuTrigger) {
     event.preventDefault();
@@ -379,12 +326,7 @@ export class NestedConfigViewComponent implements OnChanges {
     dialogRef.afterClosed().subscribe(response => {
       if (response) {
 
-        // Do a test and check can compile YAML
-        // if (!this.validateYAML(node, true)) {
-        //   return;
-        // }
-
-        this.doDeleteProperty(node, false);
+        this.doDeleteProperty(node);
         this.refreshTree();
         this.cancelAddEditProperty();
       }
@@ -394,13 +336,8 @@ export class NestedConfigViewComponent implements OnChanges {
   /**
    * Do delete property
    * @param node the deleted node
-   * @param dryRun the flag indiates whether dry run to validate (in which case the node will be cloned without affecting state)
-   * @returns the modified top-level default and environments node
    */
-  private doDeleteProperty(node: TreeNode, dryRun: boolean) {
-    if (dryRun) {
-      node = _.cloneDeep(node);
-    }
+  private doDeleteProperty(node: TreeNode) {
 
     const parent = node.parent;
     _.remove(parent.children, item => item.key === node.key);
@@ -409,27 +346,13 @@ export class NestedConfigViewComponent implements OnChanges {
         element.key = `[${idx}]`;
       });
     }
-    // this.utilService.updateJsonValue(parent);
-
-    const isDefaultNode = parent.isDefaultNode();
-    let environmentsTree: TreeNode;
-    if (!isDefaultNode) {
-      environmentsTree = parent.getTopParent();
-    } else {
-      environmentsTree = dryRun ? _.cloneDeep(this.envDataSource.data[0]) : this.envDataSource.data[0];
-    }
 
     // if deleted node is from default tree, delete respective properties from environments tree
-    if (isDefaultNode) {
-      this.alignEnvironmentProperties(node, environmentsTree, envNode => {
+    if (parent.isDefaultNode()) {
+      this.alignEnvironmentProperties(node, envNode => {
           _.remove(envNode.parent.children, item => item.key === node.key);
       });
     }
-
-    return {
-      defaultTree: isDefaultNode ? parent.getTopParent() : this.defaultDataSource.data[0],
-      environmentsTree
-    };
   }
 
   /**
@@ -451,10 +374,10 @@ export class NestedConfigViewComponent implements OnChanges {
   /**
    * align the corresponding nodes from other environments
    * @param node node which is modified/deleted
-   * @param envsTree the envs tree
    * @param action the alignment action
    */
-  private alignEnvironmentProperties(node: TreeNode, envsTree: TreeNode, action: (envNode:TreeNode)=>void) {
+  private alignEnvironmentProperties(node: TreeNode, action: (envNode:TreeNode)=>void) {
+    const envsTree = this.envDataSource.data[0];
 
     const paths = node.getPathsWithoutRoot(); // Without the root 'default' part
 

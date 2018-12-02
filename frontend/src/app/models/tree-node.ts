@@ -22,9 +22,7 @@ export class TreeNode {
     }
 
     addChild(child: TreeNode) {
-      if (!this.children) {
-        this.children = [];
-      }
+      this.children = _.defaultTo(this.children, []);
       this.children.push(child);
       child.parent = this;
     }

@@ -10,7 +10,7 @@ import { HttpTestingController } from '@angular/common/http/testing';
 import { TestCtx, createTestContext, configureTestSuite } from 'ng-bullet';
 
 import { User } from 'models/auth';
-import { reducers, AppState } from 'store';
+import { reducers, metaReducers, AppState } from 'store';
 import { AppEffects } from 'store/affects/app.effects';
 import { AuthEffects } from 'store/affects/auth.effects';
 import { BackendEffects } from 'store/affects/backend.effects';
@@ -104,7 +104,7 @@ export const Setup = <T>(componentType: Type<T>, triggerLifecyle: boolean = true
     TestBed.configureTestingModule({
       imports: [
         MaterialComponentsModule,
-        StoreModule.forRoot(reducers),
+        StoreModule.forRoot(reducers, { metaReducers }),
         EffectsModule.forRoot([AppEffects, AuthEffects, BackendEffects, DashboardEffects, EditorEffects])
       ],
       declarations: [

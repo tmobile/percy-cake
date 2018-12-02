@@ -5,7 +5,6 @@ export enum CommonActionTypes {
     AlertClosed = '[App] Alert Closed',
     APIError = '[App] API Error',
     Navigate = '[App] Navigate',
-    Reset = '[App] Reset',
 }
 
 export class Alert implements Action {
@@ -32,14 +31,9 @@ export class Navigate implements Action {
     constructor(public payload: string[]) { }
 }
 
-export class Reset implements Action {
-    readonly type = CommonActionTypes.Reset;
-}
-
 
 export type DashboardActionsUnion =
     | Alert
     | AlertClosed
     | APIError
-    | Navigate
-    | Reset;
+    | Navigate;
