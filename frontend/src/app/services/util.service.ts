@@ -150,7 +150,7 @@ export class UtilService {
   
       result.comment = this.parseYamlCommentLines(valueNode.start_mark, lines);
 
-      const children = [];
+      const children: TreeNode[] = [];
       _.each(valueNode.value, (subValueNode, idx) => {
         children.push(this.walkYamlNode({value: `[${idx}]`}, subValueNode, lines, simpleArray));
       });
@@ -163,13 +163,13 @@ export class UtilService {
         let itemType;
         children.forEach((item) => {
           if (!item.isLeaf()) {
-            console.warn(`Only support array of same simple type, but got: ${item}`);
+            console.warn(`Only support array of simple type, but got: ${item.valueType}`);
             return;
           }
           if (!itemType) {
             itemType = item.valueType;
           } else if (itemType !== item.valueType) {
-            console.warn(`Only support array of same simple type, ${itemType} detected, but got: ${item}`);
+            console.warn(`Only support array of items with same type, ${itemType} already detected, and got: ${item.valueType}`);
             return;
           }
           result.addChild(item);

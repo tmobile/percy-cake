@@ -489,7 +489,7 @@ export class FileManagementService {
             // Save the draft config
             await fs.writeFile(pathFinder.draftFullFilePath, this.utilService.convertTreeToYaml(file.draftConfig));
 
-            if (!repoMetadata.commitBaseSHA[pathFinder.repoFilePath]) {
+            if (!repoMetadata.commitBaseSHA[pathFinder.repoFilePath] && file.oid) {
                 // Save draft file's commit base SHA if not saved yet
                 await this.saveCommitBaseSHA(fs, repoMetadata, { [pathFinder.repoFilePath]: file.oid });
             }
