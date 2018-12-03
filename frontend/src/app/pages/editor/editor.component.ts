@@ -156,11 +156,6 @@ export class EditorComponent implements OnInit, AfterViewInit {
     return true;
   }
 
-  // handles the configuration change request
-  onConfigChange(configuration) {
-    this.store.dispatch(new ConfigurationChange(configuration));
-  }
-
   private validate() {
     return this.store.pipe(select(appStore.editorState), take(1), map((editorState) => {
       if (!this.editMode && this.filename.invalid) {
@@ -228,6 +223,11 @@ export class EditorComponent implements OnInit, AfterViewInit {
         }
       });
     });
+  }
+
+  // handles the configuration change request
+  onConfigChange(configuration) {
+    this.store.dispatch(new ConfigurationChange(configuration));
   }
 
   /**

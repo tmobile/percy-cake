@@ -1,114 +1,175 @@
-import * as _ from 'lodash';
+import * as boom from 'boom';
 
-import { LoginRedirect, Logout } from 'store/actions/auth.actions';
-import { TestUser, Setup } from 'test/test-helper';
+import { TestUser, Setup, TestContext } from 'test/test-helper';
+
+import { percyConfig } from 'config';
+import { LoginRedirect, LoginSuccess, LoginFailure } from 'store/actions/auth.actions';
+import { MaintenanceService } from 'services/maintenance.service';
 
 import { LoginComponent } from './login.component';
 
-
 describe('LoginComponent', () => {
+  const setup = Setup(LoginComponent);
 
-  const ctx = Setup(LoginComponent);
+  let ctx: TestContext<LoginComponent>;
+  let maintenanceService: MaintenanceService;
+  let dispatchSpy: jasmine.Spy;
 
-  it('should create LoginComponent', () => {
-    expect(ctx().component).toBeTruthy();
+  beforeEach(() => {
+    ctx = setup();
+    maintenanceService = ctx.resolve(MaintenanceService);
+    dispatchSpy = spyOn(ctx.store, 'dispatch');
   });
 
-  it('should show default repo', () => {
+  it('should create LoginComponent', () => {
+    expect(ctx.component).toBeTruthy();
+  });
 
-    const defaultRepo = {
-      repositoryUrl: 'https://test.com/default-repo',
-      branchName: 'admin'
-    };
+  it('should redirect to dashboard page if already logged in', () => {
 
-    ctx().httpMock.expectOne(`/defaultRepo`).flush(defaultRepo);
+    ctx.store.next(new LoginSuccess(TestUser));
 
-    expect(ctx().component.repositoryURL.value).toEqual(defaultRepo.repositoryUrl);
-    expect(ctx().component.branchName.value).toEqual(defaultRepo.branchName);
+    expect(ctx.routerStub.value).toEqual(['/dashboard']);
+  });
+
+  it('should redirect to given page if already logged in', () => {
+
+    ctx.store.next(new LoginRedirect({redirectUrl: '/redirect-to'}));
+    ctx.store.next(new LoginSuccess(TestUser));
+
+    expect(ctx.routerStub.value).toEqual(['/redirect-to']);
+  });
+
+  it('should show default repo url and branch', () => {
+    expect(ctx.component.repositoryURL.value).toEqual(percyConfig.defaultRepositoryUrl);
+    expect(ctx.component.branchName.value).toEqual(percyConfig.defaultBranchName);
+    expect(ctx.component.lockedBranches).toEqual(percyConfig.lockedBranches);
   });
 
   it('should show auto complete prompt for username', async () => {
-    ctx().component.username.setValue('m');
-    await new Promise(resolve => setTimeout(resolve, 250)); // wait for debouce time
-
     const usernames = [
       'Mike',
       'Muller',
     ];
-    ctx().httpMock.expectOne(`/userTypeAhead?prefix=m`).flush(usernames);
+    spyOn(maintenanceService, 'getUserTypeAhead').and.returnValue(usernames);
 
-    expect(ctx().observables.filteredUsernames.value).toEqual(['Mike', 'Muller']);
-
-    ctx().component.username.setValue('mi');
+    ctx.component.username.setValue('m');
     await new Promise(resolve => setTimeout(resolve, 250)); // wait for debouce time
+    expect(ctx.observables.filteredUsernames.value).toEqual(['Mike', 'Muller']);
 
-    expect(ctx().observables.filteredUsernames.value).toEqual(['Mike']);
+    ctx.component.username.setValue('mi');
+    await new Promise(resolve => setTimeout(resolve, 250)); // wait for debouce time
+    expect(ctx.observables.filteredUsernames.value).toEqual(['Mike']);
+
+    ctx.component.username.setValue('mouse');
+    await new Promise(resolve => setTimeout(resolve, 250)); // wait for debouce time
+    expect(ctx.observables.filteredUsernames.value).toEqual([]);
   });
 
   it('input should trigger auto complete change', () => {
-    ctx().component.username.setValue('');
-    expect(ctx().component.username.valid).toBeFalsy();
+    ctx.component.username.setValue('');
+    expect(ctx.component.username.valid).toBeFalsy();
 
-    const input = { value: 'test-user' };
+    const target = { value: 'test-user' };
 
     const event = new KeyboardEvent('click');
-    spyOnProperty(event, 'currentTarget', 'get').and.returnValue(input);
-    ctx().component.onInput(event);
+    spyOnProperty(event, 'currentTarget', 'get').and.returnValue(target);
 
-    expect(ctx().component.username.value).toEqual(input.value);
-    expect(ctx().component.username.valid).toBeTruthy();
+    const eleSyp = spyOnProperty(document, 'activeElement', 'get');
+
+    eleSyp.and.returnValue(target);
+    ctx.component.onInput(event);
+    expect(ctx.component.username.valid).toBeFalsy();
+
+    eleSyp.and.returnValue({});
+    ctx.component.onInput(event);
+
+    expect(ctx.component.username.value).toEqual(target.value);
+    expect(ctx.component.username.valid).toBeTruthy();
   });
 
-  function doLogin(result, opts?) {
+  it('required input missing, should not login', () => {
+    ctx.component.login();
 
-    ctx().component.username.setValue(TestUser.username);
-    ctx().component.username.setErrors(null);
-    ctx().component.password.setValue('test-pass');
-    ctx().component.password.setErrors(null);
-    ctx().component.repositoryURL.setValue(TestUser.repositoryUrl);
-    ctx().component.repositoryURL.setErrors(null);
-    ctx().component.branchName.setValue(TestUser.branchName);
-    ctx().component.branchName.setErrors(null);
-    ctx().component.login();
+    expect(ctx.component.username.hasError('required')).toBeTruthy();
+    expect(ctx.component.password.hasError('required')).toBeTruthy();
+    expect(dispatchSpy.calls.count()).toEqual(0);
+  })
 
-    expect(ctx().observables.formProcessing.value).toBeTruthy();
-    ctx().httpMock.expectOne(`/accessRepo`).flush(result, opts);
-    expect(ctx().observables.formProcessing.value).toBeFalsy();
-  }
+  it('invalid url, should not login', () => {
+    ctx.component.username.setValue(TestUser.username);
+    ctx.component.username.setErrors(null);
+    ctx.component.password.setValue('test-pass');
+    ctx.component.password.setErrors(null);
+    ctx.component.repositoryURL.setValue('Not a valid url');
+    ctx.component.login();
+
+    expect(ctx.component.repositoryURL.hasError('pattern')).toBeTruthy();
+    expect(dispatchSpy.calls.count()).toEqual(0);
+  })
+
+  it('branch locked, should not login', () => {
+
+    ctx.component.username.setValue(TestUser.username);
+    ctx.component.username.setErrors(null);
+    ctx.component.password.setValue('test-pass');
+    ctx.component.password.setErrors(null);
+    ctx.component.repositoryURL.setValue(TestUser.repositoryUrl);
+    ctx.component.repositoryURL.setErrors(null);
+    ctx.component.branchName.setValue(percyConfig.lockedBranches[0]);
+    ctx.component.branchName.setErrors(null);
+    ctx.component.login();
+
+    expect(ctx.component.branchName.hasError('locked')).toBeTruthy();
+    expect(dispatchSpy.calls.count()).toEqual(0);
+  })
 
   it('login function should work', () => {
-    doLogin(_.pick(TestUser, ['repoName', 'token', 'validUntil', 'envFileName']));
-    expect(ctx().routerStub.value).toEqual([ '/dashboard' ]);
 
-    // logout
-    ctx().store.dispatch(new Logout());
+    ctx.component.username.setValue(TestUser.username);
+    ctx.component.username.setErrors(null);
+    ctx.component.password.setValue('test-pass');
+    ctx.component.password.setErrors(null);
+    ctx.component.repositoryURL.setValue(TestUser.repositoryUrl);
+    ctx.component.repositoryURL.setErrors(null);
+    ctx.component.branchName.setValue(TestUser.branchName);
+    ctx.component.branchName.setErrors(null);
+    ctx.component.login();
 
-    // set the redirect url after login
-    ctx().store.dispatch(new LoginRedirect({ redirectUrl: '/redirect-to-page'}));
-
-    doLogin(_.pick(TestUser, ['repoName', 'token', 'validUntil', 'envFileName']));
-    expect(ctx().routerStub.value).toEqual([ '/redirect-to-page' ]);
+    const payload = dispatchSpy.calls.mostRecent().args[0].payload;
+    expect(payload).toEqual({
+      repositoryUrl: TestUser.repositoryUrl,
+      branchName: TestUser.branchName,
+      username: TestUser.username,
+      password: 'test-pass'
+    })
   });
 
   it('should show login error propery', () => {
-    expect(ctx().component.loginError).toBeNull();
+    expect(ctx.component.loginError).toBeNull();
 
-    doLogin({statusCode: 401}, { status: 401, statusText: 'Unauthorized'});
-    expect(ctx().component.password.hasError('invalid')).toBeTruthy();
+    ctx.store.next(new LoginFailure(boom.unauthorized()))
+    expect(ctx.component.password.hasError('invalid')).toBeTruthy();
 
-    doLogin({statusCode: 403}, { status: 403, statusText: 'Forbidden'});
-    expect(ctx().component.repositoryURL.hasError('forbidden')).toBeTruthy();
+    ctx.store.next(new LoginFailure(boom.forbidden()))
+    expect(ctx.component.repositoryURL.hasError('forbidden')).toBeTruthy();
 
-    doLogin({message: 'Repository not found'}, { status: 404, statusText: 'Not Found'});
-    expect(ctx().component.repositoryURL.hasError('notFound')).toBeTruthy();
+    ctx.store.next(new LoginFailure(boom.notFound('Repository not found')))
+    expect(ctx.component.repositoryURL.hasError('notFound')).toBeTruthy();
 
-    doLogin({message: 'Branch not found'}, { status: 404, statusText: 'Not Found'});
-    expect(ctx().component.branchName.hasError('notFound')).toBeTruthy();
+    ctx.component.branchName.setValue(TestUser.branchName)
+    const branchNotFoundError = boom.notFound<any>('Branch not found');
+    branchNotFoundError['code'] = 'ResolveRefError';
+    branchNotFoundError['data'] = {
+      ref: TestUser.branchName
+    };
+    ctx.store.next(new LoginFailure(branchNotFoundError))
+    expect(ctx.component.branchName.hasError('notFound')).toBeTruthy();
 
-    doLogin({statusCode: 500}, { status: 500, statusText: 'Internal Server Error'});
-    expect(ctx().component.loginError).toEqual('Login failed');
+    ctx.store.next(new LoginFailure(boom.serverUnavailable()))
+    expect(ctx.component.loginError).toEqual('Login failed');
 
-    ctx().component.inputChange();
-    expect(ctx().component.loginError).toBeNull();
+    ctx.component.inputChange();
+    expect(ctx.component.loginError).toBeNull();
   });
 });

@@ -2,11 +2,10 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { Type, NO_ERRORS_SCHEMA, Component } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { Observable, isObservable, BehaviorSubject, Subscription } from 'rxjs';
-import { Store, StoreModule, Action } from '@ngrx/store';
+import { Store, StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
 
 import { TestBed } from '@angular/core/testing';
-import { HttpTestingController } from '@angular/common/http/testing';
 import { TestCtx, createTestContext, configureTestSuite } from 'ng-bullet';
 
 import { User } from 'models/auth';
@@ -53,7 +52,6 @@ export class TestContext<T> extends TestCtx<T> {
   readonly dialogStub = DialogStub;
   readonly activatedRouteStub: any;
   readonly store: Store<AppState>;
-  readonly httpMock: HttpTestingController;
   readonly observables: { [name: string]: BehaviorSubject<any>} = {};
 
   constructor(testCtx: TestCtx<T>) {
@@ -94,11 +92,11 @@ class ValueOfObservable<T> extends BehaviorSubject<T> {
   }
 }
 
-export const assertDialogOpened = <T>(dialogType: Type<T>, options) => {
+export const assertDialogOpened = <T>(dialogType: Type<T>, options?) => {
   expect(DialogStub.input.value).toEqual({dialogType, options});
 };
 
-export const Setup = <T>(componentType: Type<T>, triggerLifecyle: boolean = true, initActions?: Action[]) => {
+export const Setup = <T>(componentType: Type<T>, triggerLifecyle: boolean = true) => {
 
   configureTestSuite(() => {
     TestBed.configureTestingModule({
@@ -160,10 +158,6 @@ export const Setup = <T>(componentType: Type<T>, triggerLifecyle: boolean = true
 
     // Create component and the test context
     ctx = new TestContext(createTestContext(componentType));
-
-    if (initActions) {
-      initActions.forEach(action => ctx.store.dispatch(action));
-    }
 
     // For best practice, the component's observables should be
     // created directly as component's instance properties
