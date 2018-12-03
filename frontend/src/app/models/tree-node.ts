@@ -46,8 +46,6 @@ export class TreeNode {
           return PROPERTY_VALUE_TYPES.BOOLEAN;
         case PROPERTY_VALUE_TYPES.NUMBER_ARRAY:
           return PROPERTY_VALUE_TYPES.NUMBER;
-        default:
-          break;
       }
     }
 
