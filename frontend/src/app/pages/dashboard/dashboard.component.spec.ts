@@ -3,11 +3,13 @@ import { Sort } from '@angular/material';
 import { Setup, assertDialogOpened, TestContext } from 'test/test-helper';
 
 import { DashboardComponent } from './dashboard.component';
-import { LoadFilesSuccess } from 'store/actions/backend.actions';
+import { LoadFilesSuccess, Refresh } from 'store/actions/backend.actions';
 import { SelectAppDialogComponent } from 'components/select-app-dialog/select-app-dialog.component';
 import { percyConfig } from 'config';
 import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
 import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.component';
+import { Alert } from 'store/actions/common.actions';
+import { ToggleApp, CollapseApps, TableSort, SelectApp } from 'store/actions/dashboard.actions';
 
 describe('DashboardComponent', () => {
   const setup = Setup(DashboardComponent);
@@ -45,8 +47,15 @@ describe('DashboardComponent', () => {
   let dispatchSpy: jasmine.Spy;
   beforeEach(() => {
     ctx = setup();
+    const backup = ctx.store.dispatch;
     dispatchSpy = spyOn(ctx.store, 'dispatch');
-    dispatchSpy.and.callThrough();
+    dispatchSpy.and.callFake((action) => {
+      if (action instanceof Alert || action instanceof ToggleApp || action instanceof SelectApp
+         || action instanceof CollapseApps || action instanceof TableSort) {
+        return backup.apply(ctx.store, [action]);
+      }
+    })
+
     ctx.store.next(new LoadFilesSuccess({ files, applications }));
   });
 
@@ -333,7 +342,6 @@ describe('DashboardComponent', () => {
   });
 
   it('should commit files successfully', () => {
-    dispatchSpy.and.stub();
     ctx.component.commitChanges();
     assertDialogOpened(CommitDialogComponent);
     ctx.dialogStub.output.next('commit message');
@@ -345,8 +353,6 @@ describe('DashboardComponent', () => {
   });
 
   it('should delete file successfully', () => {
-    dispatchSpy.and.stub();
-
     const file = files[0];
 
     ctx.component.deleteFile(file);
@@ -367,6 +373,12 @@ describe('DashboardComponent', () => {
     ctx.dialogStub.output.next(true);
     expect(dispatchSpy.calls.count()).toEqual(1);
     expect(dispatchSpy.calls.mostRecent().args[0].payload).toEqual(file);
+  });
+
+  it('should refresh files successfully', () => {
+    ctx.component.refresh();
+
+    expect(dispatchSpy.calls.mostRecent().args[0] instanceof Refresh).toBeTruthy();
   });
 
 });

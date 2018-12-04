@@ -589,15 +589,15 @@ describe('FileManagementService', () => {
     const result = await fileService.deleteFile(principal, file);
 
     // Should pushed to repo
-    expect(result).toBeTruthy();
+    expect(result).toBeFalsy();
     expect(pullStub.calls.count()).toEqual(1);
     expect(removeStub.calls.count()).toEqual(1);
     expect(commitStub.calls.count()).toEqual(1);
     expect(pushStub.calls.count()).toEqual(1);
 
     // Head/Remote ref should be updated
-    assertHeadRef(commitStub.calls.first().returnValue);
-    assertRemoteRef(commitStub.calls.first().returnValue);
+    assertHeadRef(commitOid2);
+    assertRemoteRef(commitOid2);
 
     // Draft file should be deleted
     expect(await fs.exists(pathFinder.draftFullFilePath)).toBeFalsy();
@@ -625,15 +625,15 @@ describe('FileManagementService', () => {
     const result = await fileService.deleteFile(principal, file);
 
     // Should pushed to repo
-    expect(result).toBeTruthy();
+    expect(result).toBeFalsy();
     expect(pullStub.calls.count()).toEqual(1);
     expect(removeStub.calls.count()).toEqual(1);
     expect(commitStub.calls.count()).toEqual(1);
     expect(pushStub.calls.count()).toEqual(1);
 
     // Head/Remote ref should be updated
-    assertHeadRef(commitStub.calls.first().returnValue);
-    assertRemoteRef(commitStub.calls.first().returnValue);
+    assertHeadRef(commitOid2);
+    assertRemoteRef(commitOid2);
 
     // Commit base SHA should be cleared
     expect(principal.repoMetadata.commitBaseSHA).toEqual({});

@@ -13,7 +13,7 @@ import {
     SaveDraft, CommitChanges, CommitChangesSuccess, CommitChangesFailure,
     LoadFiles, LoadFilesSuccess, LoadFilesFailure,
     DeleteFile, DeleteFileFailure, DeleteFileSuccess,
-    GetFileContent, GetFileContentSuccess, GetFileContentFailure, SaveDraftSuccess, SaveDraftFailure
+    GetFileContent, GetFileContentSuccess, GetFileContentFailure, SaveDraftSuccess, SaveDraftFailure, Refresh, RefreshFailure, RefreshSuccess
 } from '../actions/backend.actions';
 import { FileManagementService } from 'services/file-management.service';
 import { ConflictDialogComponent } from 'components/conflict-dialog/conflict-dialog.component';
@@ -62,6 +62,36 @@ export class BackendEffects {
     @Effect()
     loadFilesFailure$ = this.actions$.pipe(
         ofType<LoadFilesFailure>(BackendActionTypes.LoadFilesFailure),
+        map((action) => new APIError(action.payload))
+    );
+
+    // refresh repo effect
+    @Effect()
+    refreshFiles$ = this.actions$.pipe(
+      ofType<Refresh>(BackendActionTypes.Refresh),
+      withLatestFrom(this.store.pipe(select(appStore.getPrincipal))),
+      switchMap(async ([action, pricinpal]) => {
+
+        try {
+          const { changed } = await this.fileManagementService.pull(pricinpal.user);
+          const result = [];
+
+          result.push(new RefreshSuccess())
+          if (changed) {
+            result.push(new LoadFiles())
+          }
+          return result;
+        } catch(error) {
+          return [new RefreshFailure(error)];
+        }
+      }),
+      switchMap(res => res),
+    );
+
+    // refresh failure effect
+    @Effect()
+    refreshFailure$ = this.actions$.pipe(
+        ofType<RefreshFailure>(BackendActionTypes.RefreshFailure),
         map((action) => new APIError(action.payload))
     );
 

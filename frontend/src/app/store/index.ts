@@ -67,6 +67,7 @@ export const getCollapsedApps = createSelector(dashboardState, fromDashboard.get
 export const getTableSort = createSelector(dashboardState, fromDashboard.getTableSort);
 export const getDashboardFileDeleting = createSelector(dashboardState, fromDashboard.isDeletingFile);
 export const getDashboardCommittingFile = createSelector(dashboardState, fromDashboard.isCommittingFile);
+export const getDashboardRefreshing = createSelector(dashboardState, fromDashboard.isRefreshing);
 
 // editor selectors
 export const editorState = createFeatureSelector<AppState, fromEditor.State>('editor');

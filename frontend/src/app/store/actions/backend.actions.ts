@@ -24,6 +24,9 @@ export enum BackendActionTypes {
   CommitChanges = '[Backend] Commit Changes',
   CommitChangesSuccess = '[Backend] Commit Changes Success',
   CommitChangesFailure = '[Backend] Commit Changes Failure',
+  Refresh = '[Backend] Refresh',
+  RefreshSuccess = '[Backend] Refresh Success',
+  RefreshFailure = '[Backend] Refresh Failure',
 }
 
 export class Initialize implements Action {
@@ -121,6 +124,24 @@ export class CommitChangesFailure implements Action {
   constructor(public payload: {error: Error, files: ConfigFile[], commitMessage: string, fromEditor?: boolean}) { }
 }
 
+export class Refresh implements Action {
+  readonly type = BackendActionTypes.Refresh;
+
+  constructor() { }
+}
+
+export class RefreshSuccess implements Action {
+  readonly type = BackendActionTypes.RefreshSuccess;
+
+  constructor() { }
+}
+
+export class RefreshFailure implements Action {
+  readonly type = BackendActionTypes.RefreshFailure;
+
+  constructor(public payload: Error) { }
+}
+
 
 export type BackendActionsUnion =
   | Initialize
@@ -140,4 +161,7 @@ export type BackendActionsUnion =
   | CommitChanges
   | CommitChangesSuccess
   | CommitChangesFailure
+  | Refresh
+  | RefreshSuccess
+  | RefreshFailure
   ;

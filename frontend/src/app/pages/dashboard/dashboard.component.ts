@@ -10,7 +10,7 @@ import { User } from 'models/auth';
 import { ConfigFile } from 'models/config-file';
 import * as appStore from 'store';
 import { SelectApp, CollapseApps, ToggleApp, TableSort } from 'store/actions/dashboard.actions';
-import { DeleteFile, CommitChanges } from 'store/actions/backend.actions';
+import { DeleteFile, CommitChanges, Refresh } from 'store/actions/backend.actions';
 import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
 import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.component';
 import { SelectAppDialogComponent } from 'components/select-app-dialog/select-app-dialog.component';
@@ -34,6 +34,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   applications: Observable<string[]> = this.store.pipe(select(appStore.getApplications));
   isDeleting: Observable<boolean> = this.store.pipe(select(appStore.getDashboardFileDeleting));
   isCommitting: Observable<boolean> = this.store.pipe(select(appStore.getDashboardCommittingFile));
+  isRefreshing: Observable<boolean> = this.store.pipe(select(appStore.getDashboardRefreshing));
 
   folders = new BehaviorSubject<any[]>(null);
   disableCommit = new BehaviorSubject<boolean>(true);
@@ -200,5 +201,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.store.dispatch(new DeleteFile(file));
       }
     });
+  }
+
+  /**
+   * pull repo to refresh.
+   */
+  refresh() {
+    this.store.dispatch(new Refresh());
   }
 }

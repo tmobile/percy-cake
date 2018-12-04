@@ -393,4 +393,63 @@ describe('Backend store action/effect/reducer', () => {
     await ctx.fixture.whenStable();
     expect(ctx.backendState().files.ids.length).toEqual(2);
   });
+
+  it('Refresh action should be successful', async () => {
+
+    ctx.store.dispatch(new BackendActions.Initialized({ principal: { user: TestUser, repoMetadata: {}}}));
+
+    spyOn(fileService, 'pull').and.returnValue({changed: true});
+    spyOn(fileService, 'getFiles').and.returnValues({files: [file1, file2], applications: ['app1']});
+
+    ctx.store.dispatch(new BackendActions.Refresh());
+    expect(ctx.dashboarState().refreshing).toBeTruthy();
+
+    await ctx.fixture.whenStable();
+
+    expect(ctx.backendState().files.ids.length).toEqual(0);
+    expect(ctx.dashboarState().refreshing).toBeFalsy();
+
+    await ctx.fixture.whenStable();
+
+    expect(ctx.backendState().files.ids.length).toEqual(2);
+  });
+
+  it('Refresh action should be successful without change', async () => {
+    ctx.store.dispatch(new BackendActions.Initialized({ principal: { user: TestUser, repoMetadata: {}}}));
+
+    spyOn(fileService, 'pull').and.returnValue({changed: false});
+    spyOn(fileService, 'getFiles').and.returnValues({files: [file1, file2], applications: ['app1']});
+
+    ctx.store.dispatch(new BackendActions.Refresh());
+    expect(ctx.dashboarState().refreshing).toBeTruthy();
+
+    await ctx.fixture.whenStable();
+
+    expect(ctx.backendState().files.ids.length).toEqual(0);
+    expect(ctx.dashboarState().refreshing).toBeFalsy();
+
+    await ctx.fixture.whenStable();
+
+    expect(ctx.backendState().files.ids.length).toEqual(0);
+  });
+
+  it('Refresh action fail, alert dialog should show', async () => {
+    ctx.store.dispatch(new BackendActions.Initialized({ principal: { user: TestUser, repoMetadata: {}}}));
+
+    spyOn(fileService, 'pull').and.throwError('Mock error');
+
+    ctx.store.dispatch(new BackendActions.Refresh());
+    expect(ctx.dashboarState().refreshing).toBeTruthy();
+
+    await ctx.fixture.whenStable();
+
+    expect(ctx.dashboarState().refreshing).toBeFalsy();
+
+    assertDialogOpened(AlertDialogComponent, {
+      data: {
+        message: 'Mock error',
+        alertType: 'error'
+      }
+    });
+  });
 });

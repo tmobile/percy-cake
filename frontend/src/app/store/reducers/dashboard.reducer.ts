@@ -6,6 +6,7 @@ import * as _ from 'lodash';
 export interface State {
     deletingFile: boolean;
     committingFile: boolean;
+    refreshing: boolean;
     selectedApp: string;
     tableSort: any;
     collapsedApps: string[];
@@ -14,6 +15,7 @@ export interface State {
 export const initialState: State = {
     deletingFile: false,
     committingFile: false,
+    refreshing: false,
     selectedApp: '',
     tableSort: {
       applicationName: 'asc',
@@ -97,6 +99,27 @@ export function reducer(state = initialState, action: BackendActionsUnion | Dash
             };
         }
 
+        case BackendActionTypes.Refresh: {
+          return {
+              ...state,
+              refreshing: true,
+          };
+        }
+
+        case BackendActionTypes.RefreshSuccess: {
+          return {
+              ...state,
+              refreshing: false,
+          };
+        }
+
+        case BackendActionTypes.RefreshFailure: {
+          return {
+              ...state,
+              refreshing: false,
+          };
+        }
+
         default: {
             return state;
         }
@@ -108,3 +131,4 @@ export const getTableSort = (state: State) => state.tableSort;
 export const getCollapsedApps = (state: State) => state.collapsedApps;
 export const isDeletingFile = (state: State) => state.deletingFile;
 export const isCommittingFile = (state: State) => state.committingFile;
+export const isRefreshing = (state: State) => state.refreshing;

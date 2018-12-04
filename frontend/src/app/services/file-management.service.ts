@@ -61,6 +61,19 @@ export class FileManagementService {
         const repoDir = path.resolve(percyConfig.reposFolder, repoFolder);
         const repoMetadataFile = this.utilService.getMetadataPath(repoFolder);
 
+        // Create token payload
+        const tokenPayload: any = {
+          username: auth.username,
+          iat: Date.now()
+        };
+
+        const user: User = {
+          ...auth,
+          repoName,
+          repoFolder,
+          token: this.utilService.encrypt(JSON.stringify(tokenPayload))
+        };
+
         let existingRepoMetadata;
         if (await fs.exists(repoDir)) {
             // Check repo metadata file
@@ -94,7 +107,7 @@ export class FileManagementService {
                 }
             } else {
                 // Pull
-                await this.pull(fs, auth, repoDir);
+                await this.pull(user, repoDir);
             }
         } catch (error) {
             console.error(error);
@@ -109,21 +122,10 @@ export class FileManagementService {
         // In case of pull, remember the existing commit base SHAs
         const commitBaseSHA = existingRepoMetadata ? existingRepoMetadata.commitBaseSHA || {} : {};
 
-        // Create token payload
-        const tokenPayload: any = {
-          username: auth.username,
-          iat: Date.now()
-        };
-
-        // Save user to repo metadata locally
-        const user: User = {
-          ...auth,
-          password: this.utilService.encrypt(auth.password),
-          repoName,
-          repoFolder,
-          token: this.utilService.encrypt(JSON.stringify(tokenPayload)),
-        };
+        // Encryt password and save user to repo metadata locally
+        user.password = this.utilService.encrypt(auth.password);
         await fs.outputJson(repoMetadataFile, {...user, commitBaseSHA, version: percyConfig.repoMetadataVersion});
+
         return user;
     }
 
@@ -168,12 +170,16 @@ export class FileManagementService {
      *
      * Similar as clone, we never checkout, just fetch from remote repo, and call resetIndexes to keep things clean.
      */
-    private async pull(fs: FSExtra, auth: Authenticate, repoDir: string): Promise<string> {
-      try {
-        const result = await Promise.race([
-          (async() => {
-            const lastCommit = await this.getRemoteCommit(repoDir, auth.branchName);
+    async pull(auth: User, repoDir?: string) {
+      const fs = await this.utilService.getBrowserFS();
+      repoDir = repoDir || path.resolve(percyConfig.reposFolder, auth.repoFolder);
 
+      const lastCommit = await this.getRemoteCommit(repoDir, auth.branchName);
+      let fetchHead;
+
+      try {
+        await Promise.race([
+          (async() => {
             const fetchResult = await git.fetch({
                 url: auth.repositoryUrl,
                 username: auth.username,
@@ -186,13 +192,11 @@ export class FileManagementService {
                 corsProxy: percyConfig.corsProxy
             });
 
-            const fetchHead = fetchResult['fetchHead'];
+            fetchHead = fetchResult['fetchHead'];
             if (lastCommit !== fetchHead) {
               // Only need reset Index if commit actaully changes
               await this.resetIndexes(fs, repoDir, auth.branchName, fetchHead);
             }
-
-            return fetchHead;
           })(),
           new Promise((resolve, reject) => {
             setTimeout(() => {
@@ -200,8 +204,8 @@ export class FileManagementService {
               err.name = 'PullTimeoutError';
               reject(err);
             }, ms(percyConfig.pullTimeout)); // timeout
-          })]);
-          return result.toString();
+          })
+        ]);
       } catch (err) {
         console.error(err);
         if (err.name !== 'PullTimeoutError') {
@@ -210,8 +214,10 @@ export class FileManagementService {
 
         // Just in case pull timeout, fallback to clone
         await fs.remove(repoDir);
-        return await this.clone(fs, auth, repoDir);
+        fetchHead = await this.clone(fs, auth, repoDir);
       }
+
+      return {pulledCommit: fetchHead, changed: lastCommit !== fetchHead};
     }
 
     /**
@@ -525,13 +531,13 @@ export class FileManagementService {
         let gitPulled = false;
 
         if (await this.isRepoFileExists(pathFinder)) {
-            const lastCommit = await this.pull(fs, user, pathFinder.repoDir);
-            gitPulled = true;
+            const { pulledCommit, changed } = await this.pull(user, pathFinder.repoDir);
+            gitPulled = changed;
 
             // Check whether exists again after pull
             if (await this.isRepoFileExists(pathFinder)) {
               // Do push
-              await this.doPush(fs, pathFinder.repoDir, user, lastCommit, 'Percy delete',
+              await this.doPush(fs, pathFinder.repoDir, user, pulledCommit, 'Percy delete',
                 () => git.remove({
                   dir: pathFinder.repoDir,
                   filepath: pathFinder.repoFilePath
@@ -600,7 +606,7 @@ export class FileManagementService {
 
         const repoDir = path.resolve(percyConfig.reposFolder, user.repoFolder);
 
-        const lastCommit = await this.pull(fs, user, repoDir);
+        const { pulledCommit } = await this.pull(user, repoDir);
 
         let newRepoFiles: ConfigFile[];
         if (!forcePush) {
@@ -631,7 +637,7 @@ export class FileManagementService {
               const newOid = newFile ? newFile.oid : undefined;
 
               if ((!oldOid && newOid) || (oldOid && newOid && oldOid !== newOid)) { // Should conflict if found to be deleted?
-                const { object } = await git.readObject({dir: pathFinder.repoDir, oid: lastCommit, filepath: pathFinder.repoFilePath, encoding: 'utf8'});
+                const { object } = await git.readObject({dir: pathFinder.repoDir, oid: pulledCommit, filepath: pathFinder.repoFilePath, encoding: 'utf8'});
                 const originalConfig = this.utilService.parseYamlConfig(object.toString());
                 conflictFiles.push({
                     ...file,
@@ -654,7 +660,7 @@ export class FileManagementService {
             throw error;
         }
 
-        await this.doPush(fs, repoDir, user, lastCommit, message,
+        await this.doPush(fs, repoDir, user, pulledCommit, message,
           () => Promise.all(configFiles.map(async(file) => {
               const folderPath = path.resolve(repoDir, percyConfig.yamlAppsFolder, file.applicationName);
               const fullFilePath = path.resolve(folderPath, file.fileName);
