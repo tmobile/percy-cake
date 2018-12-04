@@ -251,20 +251,25 @@ export class FileManagementService {
      * @param applicationName the app name
      */
     async getEnvironments(principal: Principal, applicationName: string) {
-        await this.utilService.getBrowserFS();
-        const { user } = await this.maintenanceService.checkSessionTimeout(principal);
-
-        const pathFinder = new PathFinder(user, {applicationName, fileName: percyConfig.environmentsFile});
-
-        if (await this.isRepoFileExists(pathFinder)) {
-          const oid = await this.getRemoteCommit(pathFinder.repoDir, user.branchName);
-          const {object} = await git.readObject({dir: pathFinder.repoDir, oid, filepath: pathFinder.repoFilePath, encoding: 'utf8'});
-          const loaded = this.utilService.parseYamlConfig(object.toString());
-          return _.map(_.get(loaded.environments, 'children', []), child => child.key);
+        const file = {
+          fileName: percyConfig.environmentsFile,
+          applicationName
         }
 
-        console.warn(`App environments file '${pathFinder.fullFilePath}' does not exist`);
-        return [];
+        let envFile;
+        try {
+          envFile = await this.getFileContent(principal, file)
+        } catch (err) {
+          if (boom.isBoom(err) && err.output.statusCode === 404) {
+            console.warn(`${applicationName} environments file does not exist`);
+            return []
+          }
+          throw err;
+        }
+
+        const config = envFile.draftConfig || envFile.originalConfig;
+
+        return _.map(_.get(config.environments, 'children', []), child => child.key);
     }
 
     /**
@@ -412,7 +417,7 @@ export class FileManagementService {
         }
 
         if (!file.originalConfig && !file.draftConfig) {
-            throw new Error(`File '${file.applicationName}/${file.fileName}' does not exist`);
+            throw boom.notFound(`File '${file.applicationName}/${file.fileName}' does not exist`);
         }
 
         file.modified = file.draftConfig ? !_.isEqual(file.originalConfig, file.draftConfig) : false;
