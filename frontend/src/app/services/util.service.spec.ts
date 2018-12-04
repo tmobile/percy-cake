@@ -284,63 +284,60 @@ environments: !!map  # specific environments can override the default values 1 p
     config.environments.findChild(['prod', 'obj']).addChild(new TreeNode('subkey', PROPERTY_VALUE_TYPES.STRING, `${getVariable('key1')}/${getVariable('key3')}`));
 
     expect(utilService.compileYAML('dev', config)).toEqual(
-`dev: !!map
-  key1: !!str "dev-value"  # comment1
-  key2: !!int 10  # comment2
-  key3: !!bool true
-  var3: !!str "dev-value/dev-value/10/true"
-  var2: !!str "dev-value/10"
-  var1: !!str "dev-value"
-  arr1: !!seq  # dev-arr1-comment
-    - !!str "dev-item1-value"  # dev-item1-comment
-  arr2: !!seq  # arr2-comment
-    - !!int 100
-    - !!int 200
-  arr3: !!seq  # arr3-comment
-    - !!bool true
-    - !!bool false
-  obj: !!map  # obj-comment
-    subkey: !!str "dev-value"`);
+`key1: !!str "dev-value"  # comment1
+key2: !!int 10  # comment2
+key3: !!bool true
+var3: !!str "dev-value/dev-value/10/true"
+var2: !!str "dev-value/10"
+var1: !!str "dev-value"
+arr1: !!seq  # dev-arr1-comment
+  - !!str "dev-item1-value"  # dev-item1-comment
+arr2: !!seq  # arr2-comment
+  - !!int 100
+  - !!int 200
+arr3: !!seq  # arr3-comment
+  - !!bool true
+  - !!bool false
+obj: !!map  # obj-comment
+  subkey: !!str "dev-value"`);
 
   expect(utilService.compileYAML('qat', config)).toEqual(
-`qat: !!map
-  key1: !!str "dev-value"  # comment1
-  key2: !!int 50  # qat-comment2
-  key3: !!bool true
-  var3: !!str "dev-value/dev-value/50/true"
-  var2: !!str "dev-value/50"
-  var1: !!str "dev-value"
-  arr1: !!seq  # dev-arr1-comment
-    - !!str "dev-item1-value"  # dev-item1-comment
-  arr2: !!seq  # dev-arr2-comment
-    - !!int 1000  # qat-item1-comment
-    - !!int 2000  # qat-item2-comment
-    - !!int 3000  # qat-item3-comment
-  arr3: !!seq  # arr3-comment
-    - !!bool true
-    - !!bool false
-  obj: !!map  # obj-comment
-    subkey: !!str "dev-value"`);
+`key1: !!str "dev-value"  # comment1
+key2: !!int 50  # qat-comment2
+key3: !!bool true
+var3: !!str "dev-value/dev-value/50/true"
+var2: !!str "dev-value/50"
+var1: !!str "dev-value"
+arr1: !!seq  # dev-arr1-comment
+  - !!str "dev-item1-value"  # dev-item1-comment
+arr2: !!seq  # dev-arr2-comment
+  - !!int 1000  # qat-item1-comment
+  - !!int 2000  # qat-item2-comment
+  - !!int 3000  # qat-item3-comment
+arr3: !!seq  # arr3-comment
+  - !!bool true
+  - !!bool false
+obj: !!map  # obj-comment
+  subkey: !!str "dev-value"`);
 
   expect(utilService.compileYAML('prod', config)).toEqual(
-`prod: !!map
-  key1: !!str "dev-value"  # comment1
-  key2: !!int 50  # qat-comment2
-  key3: !!bool false
-  var3: !!str "dev-value/dev-value/50/false"
-  var2: !!str "dev-value/50"
-  var1: !!str "dev-value"
-  arr1: !!seq  # dev-arr1-comment
-    - !!str "dev-item1-value"  # dev-item1-comment
-  arr2: !!seq  # dev-arr2-comment
-    - !!int 1000  # qat-item1-comment
-    - !!int 2000  # qat-item2-comment
-    - !!int 3000  # qat-item3-comment
-  arr3: !!seq  # arr3-comment
-    - !!bool false  # prod-item1-comment
-    - !!bool true  # prod-item2-comment
-  obj: !!map  # obj-comment
-    subkey: !!str "dev-value/false"`);
+`key1: !!str "dev-value"  # comment1
+key2: !!int 50  # qat-comment2
+key3: !!bool false
+var3: !!str "dev-value/dev-value/50/false"
+var2: !!str "dev-value/50"
+var1: !!str "dev-value"
+arr1: !!seq  # dev-arr1-comment
+  - !!str "dev-item1-value"  # dev-item1-comment
+arr2: !!seq  # dev-arr2-comment
+  - !!int 1000  # qat-item1-comment
+  - !!int 2000  # qat-item2-comment
+  - !!int 3000  # qat-item3-comment
+arr3: !!seq  # arr3-comment
+  - !!bool false  # prod-item1-comment
+  - !!bool true  # prod-item2-comment
+obj: !!map  # obj-comment
+  subkey: !!str "dev-value/false"`);
   });
 
   it('should encrypt/decrypt', () => {

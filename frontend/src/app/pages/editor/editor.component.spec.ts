@@ -419,7 +419,7 @@ describe('EditorComponent', () => {
 
     expect(ctx.component.selectedNode).toEqual(null);
     expect(ctx.component.showAsCode).toEqual(false);
-    expect(ctx.component.previewCode).toEqual('dev: !!map\n  key1: !!str "aaa"\n  key2: !!str "bbb"');
+    expect(ctx.component.previewCode).toEqual('key1: !!str "aaa"\nkey2: !!str "bbb"');
     expect(ctx.component.showAsCompiledYAMLEnvironment).toEqual('dev');
     expect(ctx.component.currentConfigProperty).toEqual(null);
   })

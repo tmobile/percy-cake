@@ -670,9 +670,7 @@ export class UtilService {
     const substituted = this.substitute(merged, this.resolveTokens(tokens), 0);
     substituted.key = env;
 
-    const tree = new TreeNode('');
-    tree.children.push(substituted);
-    return this.convertTreeToYaml(tree);
+    return this.convertTreeToYaml(substituted);
   }
 
   /**
