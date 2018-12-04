@@ -96,6 +96,9 @@ export class MaintenanceService {
 
     async addUserName(user) {
       this.userNamesCache = _.union(this.userNamesCache || [], [user]);
+      this.userSessionsCache = this.userSessionsCache || {};
+      this.userSessionsCache[user] = Date.now() + ms(percyConfig.loginSessionTimeout);
+      this.userSessions$.next(this.userSessionsCache);
 
       const fs = await this.utilsService.getBrowserFS();
 
