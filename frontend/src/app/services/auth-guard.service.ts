@@ -5,7 +5,9 @@ import { Store, select } from '@ngrx/store';
 import * as fromStore from 'store';
 import * as AuthActions from 'store/actions/auth.actions';
 import { Observable } from 'rxjs';
-import { map, take } from 'rxjs/operators';
+import { take, switchMap } from 'rxjs/operators';
+
+import { UtilService } from './util.service';
 
 /**
  * This service implements the CanActivate method to provide the auth guard
@@ -16,8 +18,9 @@ export class AuthGuardService implements CanActivate {
   /**
    * initializes the service
    * @param store the store instance
+   * @param utilService the util service
    */
-  constructor(private store: Store<fromStore.AppState>) { }
+  constructor(private store: Store<fromStore.AppState>, private utilService: UtilService) { }
 
   /**
    * implements guard deciding if a child route which required authentication can be activated or not
@@ -27,11 +30,18 @@ export class AuthGuardService implements CanActivate {
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> {
     return this.store.pipe(
       select(fromStore.getCurrentUser),
-      map(authenticated => {
+      switchMap(async (authenticated) => {
+
+        await this.utilService.initConfig();
+
+        if (state.url === '/login') {
+          return true;
+        }
+
         if (!authenticated) {
-          const redirectUrl = state.url !== '/login' ? state.url : null;
+          const redirectUrl = state.url;
           // if the user is not logged-in then navigate to login page and store the attempted URL
-          this.store.dispatch(new AuthActions.LoginRedirect({ redirectUrl: redirectUrl }));
+          this.store.dispatch(new AuthActions.LoginRedirect({ redirectUrl }));
           return false;
         }
         return true;

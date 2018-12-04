@@ -15,7 +15,8 @@ import { CanDeactivateGuard } from 'services/can-deactivate-guard.service';
 const routes: Routes = [
   {
     path: 'login',
-    component: LoginComponent
+    component: LoginComponent,
+    canActivate: [AuthGuardService],
   },
   {
     path: '',

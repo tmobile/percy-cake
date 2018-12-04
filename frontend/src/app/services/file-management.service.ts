@@ -7,9 +7,8 @@ import * as _ from 'lodash';
 
 import { percyConfig } from 'config';
 import { User, Authenticate, Principal } from 'models/auth';
-import { ConfigFile, Configuration } from 'models/config-file';
-import { git, FSExtra, getBrowserFS } from './git-fs.service';
-import { UtilService } from './util.service';
+import { ConfigFile } from 'models/config-file';
+import { UtilService, git, FSExtra } from './util.service';
 import { MaintenanceService } from './maintenance.service';
 
 
@@ -55,7 +54,7 @@ export class FileManagementService {
      * @param auth the authenticate request
      */
     async accessRepo(auth: Authenticate) {
-        const fs = await getBrowserFS();
+        const fs = await this.utilService.getBrowserFS();
 
         const {repoName, repoFolder} = this.utilService.getRepoFolder(auth);
 
@@ -252,7 +251,7 @@ export class FileManagementService {
      * @param applicationName the app name
      */
     async getEnvironments(principal: Principal, applicationName: string) {
-        await getBrowserFS();
+        await this.utilService.getBrowserFS();
         const { user } = await this.maintenanceService.checkSessionTimeout(principal);
 
         const pathFinder = new PathFinder(user, {applicationName, fileName: percyConfig.environmentsFile});
@@ -317,7 +316,7 @@ export class FileManagementService {
      * @param user the logged in user
      */
     async getFiles(principal: Principal) {
-        const fs = await getBrowserFS();
+        const fs = await this.utilService.getBrowserFS();
 
         const { user } = await this.maintenanceService.checkSessionTimeout(principal);
 
@@ -395,7 +394,7 @@ export class FileManagementService {
      * @param file the file to get its draft and original content
      */
     async getFileContent(principal: Principal, file: ConfigFile): Promise<ConfigFile> {
-        const fs = await getBrowserFS();
+        const fs = await this.utilService.getBrowserFS();
         const { user, repoMetadata } = await this.maintenanceService.checkSessionTimeout(principal);
 
         const pathFinder = new PathFinder(user, file);
@@ -470,7 +469,7 @@ export class FileManagementService {
      * @param file the draft file to save
      */
     async saveDraft(principal: Principal, file: ConfigFile) {
-        const fs = await getBrowserFS();
+        const fs = await this.utilService.getBrowserFS();
         const { user, repoMetadata } = await this.maintenanceService.checkSessionTimeout(principal);
 
         const pathFinder = new PathFinder(user, file);
@@ -514,7 +513,7 @@ export class FileManagementService {
      * @param file the file to delete
      */
     async deleteFile(principal: Principal, file: ConfigFile) {
-        const fs = await getBrowserFS();
+        const fs = await this.utilService.getBrowserFS();
         const { user, repoMetadata } = await this.maintenanceService.checkSessionTimeout(principal);
         const pathFinder = new PathFinder(user, file);
 
@@ -591,7 +590,7 @@ export class FileManagementService {
      * @param forcePush the flag indicates whether to force push
      */
     async commitFiles(principal: Principal, configFiles: ConfigFile[], message: string, forcePush = false) {
-        const fs = await getBrowserFS();
+        const fs = await this.utilService.getBrowserFS();
         const { user, repoMetadata } = await this.maintenanceService.checkSessionTimeout(principal);
 
         const repoDir = path.resolve(percyConfig.reposFolder, user.repoFolder);

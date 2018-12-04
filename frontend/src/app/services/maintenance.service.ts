@@ -7,11 +7,8 @@ import * as ms from 'ms';
 import * as _ from 'lodash';
 
 import { percyConfig } from 'config';
-import { getBrowserFS } from './git-fs.service';
+import { UtilService } from './util.service';
 import { Principal } from 'models/auth';
-
-export const sessionsMetaFile = path.resolve(percyConfig.metaFolder, 'user-session.json');
-export const loggedInUsersMetaFile = path.resolve(percyConfig.metaFolder, percyConfig.loggedInUsersMetaFile);
 
 /**
  * This service provides the methods around the maintenance API endpoints
@@ -33,11 +30,12 @@ export class MaintenanceService {
     /**
      * initializes the service
      */
-    constructor() {
+    constructor(private utilsService: UtilService) {
       this.userSessions$.pipe(debounceTime(500)).subscribe(async () => {
         if (this.userSessionsCache) {
           try {
-            const fs = await getBrowserFS();
+            const fs = await this.utilsService.getBrowserFS();
+            const sessionsMetaFile = path.resolve(percyConfig.metaFolder, 'user-session.json');
             await fs.outputJson(sessionsMetaFile, this.userSessionsCache);
           } catch(err) {
             console.warn(err);
@@ -51,12 +49,13 @@ export class MaintenanceService {
    * @param principal the logged in user principal
    */
     async checkSessionTimeout(principal: Principal) {
-      const fs = await getBrowserFS();
+      const fs = await this.utilsService.getBrowserFS();
       const { user } = principal;
       const username = user.username;
   
       if (!this.userSessionsCache) {
         try {
+          const sessionsMetaFile = path.resolve(percyConfig.metaFolder, 'user-session.json');
           if (await fs.exists(sessionsMetaFile)) {
             this.userSessionsCache = await fs.readJson(sessionsMetaFile);
           }
@@ -84,7 +83,8 @@ export class MaintenanceService {
      */
     async getUserTypeAhead(prefix: string) {
       if (!this.userNamesCache) {
-        const fs = await getBrowserFS();
+        const fs = await this.utilsService.getBrowserFS();
+        const loggedInUsersMetaFile = path.resolve(percyConfig.metaFolder, percyConfig.loggedInUsersMetaFile);
         if (await fs.exists(loggedInUsersMetaFile)) {
           this.userNamesCache = await fs.readJson(loggedInUsersMetaFile);
         } else {
@@ -97,7 +97,10 @@ export class MaintenanceService {
     async addUserName(user) {
       this.userNamesCache = _.union(this.userNamesCache || [], [user]);
 
-      const fs = await getBrowserFS();
+      const fs = await this.utilsService.getBrowserFS();
+
+      const loggedInUsersMetaFile = path.resolve(percyConfig.metaFolder, percyConfig.loggedInUsersMetaFile);
+
       await fs.outputJson(loggedInUsersMetaFile, this.userNamesCache);
     }
 }

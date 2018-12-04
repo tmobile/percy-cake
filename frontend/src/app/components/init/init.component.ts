@@ -9,7 +9,6 @@ import { percyConfig } from 'config';
 import { UtilService } from 'services/util.service';
 import { MaintenanceService } from 'services/maintenance.service';
 import { FileManagementService } from 'services/file-management.service';
-import { getBrowserFS } from 'services/git-fs.service';
 import { User } from 'models/auth';
 import { Initialized } from 'store/actions/backend.actions';
 import { APIError } from "store/actions/common.actions";
@@ -57,7 +56,7 @@ export class InitComponent implements OnInit {
    */
   private async initialize(user: User) {
     // Wait BrowserFS initialize
-    const fs = await getBrowserFS();
+    const fs = await this.utilService.getBrowserFS();
 
     // Validate user
     if (!user || !user.token) {

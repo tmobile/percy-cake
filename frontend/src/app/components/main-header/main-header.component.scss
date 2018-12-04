@@ -9,9 +9,13 @@
   height: 80px;
   padding: 5px 50px;
 
-  img {
+  .logo {
     width: 220px;
     height: 70px;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-image: url('../../../assets/Logo-Landscape.svg')
   }
   .btn-logout {
     margin-left: auto;

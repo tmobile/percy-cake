@@ -52,7 +52,12 @@ import { LocationStrategy, HashLocationStrategy } from '@angular/common';
 import { SplitDirective } from 'directives/splitter.directive';
 import { FollowCursorDirective } from 'directives/follow-cursor.directive';
 
-
+import yaml from 'highlight.js/lib/languages/yaml';
+export function hljsLanguages() {
+  return [
+    {name: 'yaml', func: yaml},
+  ];
+}
 @NgModule({
   declarations: [
     AppComponent,
@@ -78,7 +83,7 @@ import { FollowCursorDirective } from 'directives/follow-cursor.directive';
     HttpClientModule,
     AppRoutingModule,
     MaterialComponentsModule,
-    HighlightModule.forRoot({ theme: 'default' }),
+    HighlightModule.forRoot({ languages: hljsLanguages }),
     StoreModule.forRoot(reducers, { metaReducers }),
     !environment.production ? StoreDevtoolsModule.instrument() : [],
     EffectsModule.forRoot([AuthEffects, AppEffects, BackendEffects, DashboardEffects, EditorEffects])

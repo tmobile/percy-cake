@@ -6,27 +6,6 @@ export const environment = {
   production: false,
 };
 
-export const percyConfig = {
-  corsProxy: 'http://localhost:9999',
-  defaultBranchName: 'admin',
-  defaultRepositoryUrl: 'https://bitbucket.org/leviastan/sample-yaml-config',
-  lockedBranches: ['master', 'trunk'],
-  storeName: 'PercyGitRepo-Dev',
-  reposFolder: '/percy-repo-dev',
-  draftFolder: '/percy-draft-dev',
-  metaFolder: '/percy-meta-dev',
-  repoMetadataVersion: '2.0',
-  loggedInUsersMetaFile: 'logged-in-users.json',
-  yamlAppsFolder: 'apps',
-  environmentsFile: 'environments.yaml',
-  pullTimeout: '30s',
-  loginSessionTimeout: '1h',
-  encryptKey: '&Ddf23&*Dksd',
-  encryptSalt: '23E80(9Dls6$s',
-  variableSubstitutePrefix: '_{',
-  variableSubstituteSuffix: '}_',
-}
-
 /*
  * For easier debugging in development mode, you can import the following file
  * to ignore zone related error stack frames such as `zone.run`, `zoneDelegate.invokeTask`.

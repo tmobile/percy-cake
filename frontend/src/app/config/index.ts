@@ -12,4 +12,5 @@ export enum PROPERTY_VALUE_TYPES {
   BOOLEAN_ARRAY = 'boolean[]',
 }
 
-export * from '../../environments/environment';
+// The percy config will be loaded at page load, see UtilService#initConfig method
+export const percyConfig: any = {};

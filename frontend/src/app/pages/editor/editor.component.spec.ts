@@ -1,6 +1,6 @@
 import { convertToParamMap } from '@angular/router';
 
-import { Setup, assertDialogOpened, TestContext } from 'test/test-helper';
+import { Setup, assertDialogOpened, TestContext, getVariable } from 'test/test-helper';
 
 import { PROPERTY_VALUE_TYPES } from 'config';
 import { TreeNode } from 'models/tree-node';
@@ -210,7 +210,7 @@ describe('EditorComponent', () => {
     await initNewFileMode();
 
     const config = new Configuration();
-    config.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, '_{key1}_'));
+    config.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, getVariable('key1')));
     config.environments.addChild(new TreeNode('dev'))
 
     ctx.component.onConfigChange(config);
@@ -268,7 +268,7 @@ describe('EditorComponent', () => {
     await initNewFileMode();
 
     const config = new Configuration();
-    config.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, '_{key1}_'));
+    config.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, getVariable('key1')));
     config.environments.addChild(new TreeNode('dev'))
 
     ctx.component.onConfigChange(config);
@@ -424,11 +424,11 @@ describe('EditorComponent', () => {
     expect(ctx.component.currentConfigProperty).toEqual(null);
   })
 
-  it('show compiled YAML should work', async () => {
+  it('show compiled YAML should alert error if yaml is invalid', async () => {
     await initNewFileMode();
 
     const config = new Configuration();
-    config.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, '_{key1}_'));
+    config.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, getVariable('key1')));
     config.environments.addChild(new TreeNode('dev'))
 
     ctx.component.onConfigChange(config);

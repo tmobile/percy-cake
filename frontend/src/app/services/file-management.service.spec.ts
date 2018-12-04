@@ -1,19 +1,17 @@
 import * as path from 'path';
 import * as _ from 'lodash';
 
-import { TestUser } from 'test/test-helper';
+import { TestUser, utilService } from 'test/test-helper';
 
 import { percyConfig } from 'config';
 import { Configuration } from 'models/config-file';
 import { TreeNode } from 'models/tree-node';
-import { UtilService } from './util.service';
 import { MaintenanceService } from './maintenance.service';
 import { FileManagementService, PathFinder } from './file-management.service';
-import { git, FSExtra, getBrowserFS } from './git-fs.service';
+import { git, FSExtra } from './util.service';
 
 describe('FileManagementService', () => {
 
-  const utilService = new UtilService();
   let maintenanceService: MaintenanceService;
 
   const {repoFolder} = utilService.getRepoFolder(TestUser);
@@ -90,12 +88,12 @@ describe('FileManagementService', () => {
   let pushStub: jasmine.Spy;
 
   beforeEach(async() => {
-    fs = await getBrowserFS();
+    fs = await utilService.getBrowserFS();
     await fs.emptyDir(percyConfig.reposFolder);
     await fs.emptyDir(percyConfig.draftFolder);
     await fs.emptyDir(percyConfig.metaFolder);
 
-    maintenanceService = new MaintenanceService();
+    maintenanceService = new MaintenanceService(utilService);
     fileService = new FileManagementService(utilService, maintenanceService);
 
     cloneStub = spyOn(git, 'clone');

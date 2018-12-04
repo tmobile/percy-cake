@@ -18,10 +18,10 @@
               </mat-radio-group>
               <div class="view-codes" appSplit [gutterHeight]="400" [splitAreas]="['#draft-code-' + i,'#repo-code-' + i]" [splitSizes]="[50,50]">
                   <mat-card class="view-code mat-elevation-z" id="{{'draft-code-' + i}}">
-                      <pre><code highlight [code]="file.draftCode"></code></pre>
+                      <pre><code [highlight]="file.draftCode" [languages]="['yaml']"></code></pre>
                   </mat-card>
                   <mat-card class="view-code mat-elevation-z" id="{{'repo-code-' + i}}">
-                      <pre><code highlight [code]="file.repoCode"></code></pre>
+                      <pre><code [highlight]="file.repoCode" [languages]="['yaml']"></code></pre>
                   </mat-card>
               </div>
             </mat-expansion-panel>

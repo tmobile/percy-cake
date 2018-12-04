@@ -1,17 +1,22 @@
-import { TestUser } from 'test/test-helper';
-import { FSExtra, getBrowserFS } from './git-fs.service';
+import { TestUser, utilService } from 'test/test-helper';
+import { FSExtra } from './util.service';
 
-import { MaintenanceService, sessionsMetaFile, loggedInUsersMetaFile } from './maintenance.service';
+import * as path from 'path';
+
+import { percyConfig } from 'config';
+import { MaintenanceService } from './maintenance.service';
 
 describe('MaintenanceService', () => {
+  const loggedInUsersMetaFile = path.resolve(percyConfig.metaFolder, percyConfig.loggedInUsersMetaFile);
+  const sessionsMetaFile = path.resolve(percyConfig.metaFolder, 'user-session.json');
 
   let fs: FSExtra;
   beforeAll(async() => {
-    fs = await getBrowserFS();
+    fs = await utilService.getBrowserFS();
   });
 
   it('should get user type ahead', async () => {
-    const maintenanceService = new MaintenanceService();
+    const maintenanceService = new MaintenanceService(utilService);
 
     await fs.remove(loggedInUsersMetaFile);
 
@@ -30,7 +35,7 @@ describe('MaintenanceService', () => {
   });
 
   it('should get user type ahead from metafile', async () => {
-    const maintenanceService = new MaintenanceService();
+    const maintenanceService = new MaintenanceService(utilService);
 
     await fs.outputJson(loggedInUsersMetaFile, ['Bob', 'Tom', 'Bike']);
 
@@ -39,7 +44,7 @@ describe('MaintenanceService', () => {
   });
 
   it('should be successful to check session timout', async () => {
-    const maintenanceService = new MaintenanceService();
+    const maintenanceService = new MaintenanceService(utilService);
 
     await fs.remove(sessionsMetaFile);
 
@@ -57,7 +62,7 @@ describe('MaintenanceService', () => {
   });
 
   it('error expected because session timout', async () => {
-    const maintenanceService = new MaintenanceService();
+    const maintenanceService = new MaintenanceService(utilService);
 
     let sessions = {
       [TestUser.username]: Date.now() - 1000

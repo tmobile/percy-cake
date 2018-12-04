@@ -21,10 +21,14 @@
         text-align: center;
         background-color: #EFEFEF;
 
-        img {
-          width: 160px;
-          height: 160px;
+        .logo {
+          width: 200px;
+          height: 180px;
           margin-top: 4em;
+          background-position: center;
+          background-size: cover;
+          background-repeat: no-repeat;
+          background-image: url('../../../assets/Logo.svg')
         }
       }
 

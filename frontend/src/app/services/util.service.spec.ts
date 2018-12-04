@@ -1,13 +1,55 @@
 import { TreeNode } from 'models/tree-node';
 import { Configuration } from 'models/config-file';
 import { PROPERTY_VALUE_TYPES, percyConfig } from 'config';
-import { TestUser } from 'test/test-helper';
+import { TestUser, utilService, getVariable } from 'test/test-helper';
 
-import { UtilService } from './util.service';
+import { git } from './util.service';
 
 describe('UtilService', () => {
 
-  const utilService = new UtilService();
+  it('should initialize git and browser fs', async () => {
+    const fs = await utilService.getBrowserFS();
+
+    expect(git.version()).toBeDefined();
+
+    expect(await fs.exists(percyConfig.reposFolder)).toBeTruthy();
+
+    expect(await fs.exists(percyConfig.metaFolder)).toBeTruthy();
+
+    expect(await fs.exists(percyConfig.draftFolder)).toBeTruthy();
+
+    // Now read/write some file to test
+    const file = '/temp/temp2/test.txt';
+    try {
+      await fs.remove('/temp');
+      await fs.mkdirs('/temp/temp2');
+  
+      await fs.writeFile(file, 'hello test');
+  
+      expect(await fs.exists(file)).toBeTruthy();
+  
+      expect((await fs.readFile(file)).toString()).toEqual('hello test');
+  
+      await fs.appendFile(file, ' appended');
+  
+      expect((await fs.readFile(file)).toString()).toEqual('hello test appended');
+  
+      expect(await fs.readdir('/temp/temp2')).toEqual(['test.txt']);
+  
+      expect((await fs.stat(file)).size).toBeGreaterThan(0);
+  
+      const newFile = '/temp/temp2/new.txt';
+      await fs.rename(file, newFile);
+  
+      expect(await fs.exists(newFile)).toBeTruthy();
+  
+      await fs.unlink(newFile);
+  
+      expect(await fs.exists(newFile)).toBeFalsy();
+    } finally {
+      await fs.remove('/temp');
+    }
+  });
 
   const yaml =
 `###
@@ -173,9 +215,9 @@ environments: !!map  # specific environments can override the default values 1 p
     config.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, 'value', ['comment1']));
     config.default.addChild(new TreeNode('key2', PROPERTY_VALUE_TYPES.NUMBER, 10, ['comment2']));
     config.default.addChild(new TreeNode('key3', PROPERTY_VALUE_TYPES.BOOLEAN, true));
-    config.default.addChild(new TreeNode('var3', PROPERTY_VALUE_TYPES.STRING, '_{var1}_/_{var2}_/_{key3}_'));
-    config.default.addChild(new TreeNode('var2', PROPERTY_VALUE_TYPES.STRING, '_{var1}_/_{key2}_'));
-    config.default.addChild(new TreeNode('var1', PROPERTY_VALUE_TYPES.STRING, '_{var3}_'));
+    config.default.addChild(new TreeNode('var3', PROPERTY_VALUE_TYPES.STRING, `${getVariable('var1')}/${getVariable('var2')}/${getVariable('key3')}`));
+    config.default.addChild(new TreeNode('var2', PROPERTY_VALUE_TYPES.STRING, `${getVariable('var1')}/${getVariable('key2')}`));
+    config.default.addChild(new TreeNode('var1', PROPERTY_VALUE_TYPES.STRING, getVariable('var3')));
 
     config.environments.addChild(new TreeNode('dev'));
     try {
@@ -185,7 +227,7 @@ environments: !!map  # specific environments can override the default values 1 p
       expect(err.message.indexOf('Loop variable reference') > -1).toBeTruthy();
     }
 
-    config.default.findChild(['var1']).value = '_{var1}_';
+    config.default.findChild(['var1']).value = getVariable('var1');
     try {
       utilService.compileYAML('dev', config);
       fail('error expected');
@@ -199,9 +241,9 @@ environments: !!map  # specific environments can override the default values 1 p
     config.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, 'value', ['comment1']));
     config.default.addChild(new TreeNode('key2', PROPERTY_VALUE_TYPES.NUMBER, 10, ['comment2']));
     config.default.addChild(new TreeNode('key3', PROPERTY_VALUE_TYPES.BOOLEAN, true));
-    config.default.addChild(new TreeNode('var3', PROPERTY_VALUE_TYPES.STRING, '_{var1}_/_{var2}_/_{key3}_'));
-    config.default.addChild(new TreeNode('var2', PROPERTY_VALUE_TYPES.STRING, '_{var1}_/_{key2}_'));
-    config.default.addChild(new TreeNode('var1', PROPERTY_VALUE_TYPES.STRING, '_{key1}_'));
+    config.default.addChild(new TreeNode('var3', PROPERTY_VALUE_TYPES.STRING, `${getVariable('var1')}/${getVariable('var2')}/${getVariable('key3')}`));
+    config.default.addChild(new TreeNode('var2', PROPERTY_VALUE_TYPES.STRING, `${getVariable('var1')}/${getVariable('key2')}`));
+    config.default.addChild(new TreeNode('var1', PROPERTY_VALUE_TYPES.STRING, getVariable('key1')));
 
     config.default.addChild(new TreeNode('arr1', PROPERTY_VALUE_TYPES.STRING_ARRAY, null, ['arr1-comment']));
     config.default.findChild(['arr1']).addChild(new TreeNode('[0]', PROPERTY_VALUE_TYPES.STRING, 'value1'));
@@ -216,7 +258,7 @@ environments: !!map  # specific environments can override the default values 1 p
     config.default.findChild(['arr3']).addChild(new TreeNode('[1]', PROPERTY_VALUE_TYPES.BOOLEAN, false));
 
     config.default.addChild(new TreeNode('obj', PROPERTY_VALUE_TYPES.OBJECT, null, ['obj-comment']));
-    config.default.findChild(['obj']).addChild(new TreeNode('subkey', PROPERTY_VALUE_TYPES.STRING, '_{key1}_'));
+    config.default.findChild(['obj']).addChild(new TreeNode('subkey', PROPERTY_VALUE_TYPES.STRING, getVariable('key1')));
 
     config.environments.addChild(new TreeNode('dev'));
     config.environments.addChild(new TreeNode('qat'));
@@ -239,7 +281,7 @@ environments: !!map  # specific environments can override the default values 1 p
     config.environments.findChild(['prod', 'arr3']).addChild(new TreeNode('[0]', PROPERTY_VALUE_TYPES.BOOLEAN, false, ['prod-item1-comment']));
     config.environments.findChild(['prod', 'arr3']).addChild(new TreeNode('[1]', PROPERTY_VALUE_TYPES.BOOLEAN, true, ['prod-item2-comment']));
     config.environments.findChild(['prod']).addChild(new TreeNode('obj', PROPERTY_VALUE_TYPES.OBJECT, null, ['prod-obj-comment']));
-    config.environments.findChild(['prod', 'obj']).addChild(new TreeNode('subkey', PROPERTY_VALUE_TYPES.STRING, '_{key1}_/_{key3}_'));
+    config.environments.findChild(['prod', 'obj']).addChild(new TreeNode('subkey', PROPERTY_VALUE_TYPES.STRING, `${getVariable('key1')}/${getVariable('key3')}`));
 
     expect(utilService.compileYAML('dev', config)).toEqual(
 `dev: !!map
