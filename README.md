@@ -14,31 +14,37 @@ Build app frontend (which will build in production mode), the static assets are 
 
 ```bash
 ./docker/build.sh
+
+# After build, 3 files will be generated in frontend/dist:
+# index.html
+# percy.bundle.min.js
+# percy.conf.json (which is a copy of frontend/src/percy.conf.prod.json)
 ```
 
 
 
-In this build step supports configuration via environment variables, you can refer to [frontend/src/environments/environment.prod.ts](frontend/src/environments/environment.prod.ts):
+The [frontend/src/percy.conf.prod.json](frontend/src/percy.conf.prod.json) (which will be copied to `frontend/dist/percy.conf.json`) contains following configurations:
 
-| Environment                | Description                                                  |
-| -------------------------- | ------------------------------------------------------------ |
-| CORS_PROXY                 | The cors proxy for isomorphic-git                            |
-| DEFAULT_BRANCH_NAME        | Default branch name shown in login page                      |
-| DEFAULT_REPOSITORY_URL     | Default repository url shown in login page                   |
-| LOCKED_BRANCHES            | Locked branches                                              |
-| STORE_NAME                 | The browser indexeddb store name                             |
-| REPOS_FOLDER               | The browserfs folder to clone repos into                     |
-| DRAFT_FOLDER               | The browserfs folder to store draft files                    |
-| META_FOLDER                | The browserfs folder contains metadata file                  |
-| LOGGED_IN_USERS_METAFILE   | The file name which contains logged in user names            |
-| YAML_APPS_FOLDER           | The folder name which contains apps' yaml config             |
-| ENVIRONMENTS_FILE          | The environment file name (JUST file name)                   |
-| HEALTHCHECK_FILE           | The path to health check file                                |
-| LOGIN_SESSION_TIMEOUT      | The login session timeout, like "1m", "2.5 hrs", "2 days". Default to 30m. |
-| ENCRYPT_KEY                | The key used to encrypt security information like password   |
-| ENCRYPT_SALT               | The salt used to encrypt security information like password  |
-| VARIABLE_SUBSTITUTE_PREFIX | The Yaml variable substitute prefix                          |
-| VARIABLE_SUBSTITUTE_SUFFIX | The Yaml variable substitute suffix                          |
+| Variable                 | Description                                                  |
+| ------------------------ | ------------------------------------------------------------ |
+| corsProxy                | The cors proxy for isomorphic-git                            |
+| defaultBranchName        | Default branch name shown in login page                      |
+| defaultRepositoryUrl     | Default repository url shown in login page                   |
+| lockedBranches           | Locked branches                                              |
+| storeName                | The browser indexeddb store name                             |
+| reposFolder              | The browserfs folder to clone repos into                     |
+| draftFolder              | The browserfs folder to store draft files                    |
+| metaFolder               | The browserfs folder contains metadata file                  |
+| repoMetadataVersion      | The repo metdata version (in case the structrure of repo metadata changes, update this version) |
+| loggedInUsersMetaFile    | The file name which contains logged in user names            |
+| yamlAppsFolder           | The folder name which contains apps' yaml config             |
+| environmentsFile         | The environment file name (JUST file name)                   |
+| pullTimeout              | The pull timeout, in which case will switch to clone         |
+| loginSessionTimeout      | The login session timeout, like "1m", "2.5 hrs", "2 days". Default to 30m. |
+| encryptKey               | The key used to encrypt security information like password   |
+| encryptSalt              | The salt used to encrypt security information like password  |
+| variableSubstitutePrefix | The Yaml variable substitute prefix                          |
+| variableSubstituteSuffix | The Yaml variable substitute suffix                          |
 
 
 
@@ -52,11 +58,10 @@ docker-compose -f ./docker/docker-compose.yml up --build
 
 
 
-In this step support 2 configuration, you can refer to [docker/docker-compose.yml](docker/docker-compose.yml)  :
+In this step supports config the nginx port, you can refer to [docker/docker-compose.yml](docker/docker-compose.yml)  :
 
 | Environment | Description                                                  |
 | ----------- | ------------------------------------------------------------ |
-| NODE_ENV    | Typically 'production' for production build                  |
 | NGINX_PORT  | The nginx server port. The nginx will serve both the static assets in `frontend/dist` and the isomorphic-git proxy. |
 
 
