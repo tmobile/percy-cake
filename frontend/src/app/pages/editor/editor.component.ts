@@ -273,10 +273,8 @@ export class EditorComponent implements OnInit, AfterViewInit {
     }
   }
 
-  openEditPropertyDialog() {
-    if (this.selectedNode) {
-      this.nestedConfig.openEditPropertyDialog(this.selectedNode);
-    }
+  openEditPropertyDialog(node: TreeNode) {
+    this.nestedConfig.openEditPropertyDialog(node);
   }
 
   // handles the compiled YAML view request

@@ -43,12 +43,17 @@
     <!-- detail panel -->
     <div class="col-other-envs" id="editor-detail-view">
         <!-- if node is selected to view detail -->
-        <h3 class="section-heading" *ngIf="selectedNode">{{selectedNode.getPathsString()}}</h3>
+        <div class="section-heading" *ngIf="selectedNode">
+            <h3>{{selectedNode.getPathsString()}}</h3>
+            <button mat-flat-button  *ngIf="!showAsCode" class="btn-submit" (click)="openEditPropertyDialog(selectedNode)">
+              Edit
+            </button>
+        </div>
         <div class="preview" *ngIf="selectedNode">
           <!-- shows the node as YAML for non-leaf node -->
           <pre *ngIf="showAsCode"><code [highlight]="previewCode" [languages]="['yaml']"></code></pre>
           <!-- shows the leaf node as readonly label -->
-          <div *ngIf="!showAsCode && selectedNode" class="property">
+          <div *ngIf="!showAsCode" class="property">
             <div class="mat-form-field mat-form-field-appearance-legacy mat-form-field-disabled mat-form-field-can-float mat-form-field-should-float">
               <div class="mat-form-field-wrapper">
                 <div class="mat-form-field-flex">
@@ -109,16 +114,12 @@
                 </div>
               </div>
             </div>
-
-            <div class="property-buttons-row">
-              <button mat-flat-button class="btn-submit" (click)="openEditPropertyDialog()">
-                Edit
-              </button>
-            </div>
           </div>
         </div>
         <!-- shows the compiled YAML -->
-        <h3 class="section-heading" *ngIf="showAsCompiledYAMLEnvironment">{{showAsCompiledYAMLEnvironment}} environment compiled yaml</h3>
+        <div class="section-heading" *ngIf="showAsCompiledYAMLEnvironment">
+            <h3>{{showAsCompiledYAMLEnvironment}} environment compiled yaml</h3>
+        </div>
         <div class="preview" *ngIf="showAsCompiledYAMLEnvironment">
           <pre><code [highlight]="previewCode" [languages]="['yaml']"></code></pre>
         </div>

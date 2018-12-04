@@ -383,8 +383,7 @@ describe('EditorComponent', () => {
     ctx.component.nestedConfig = spy;
 
     const node = new TreeNode('key');
-    ctx.component.onNodeSelected(node);
-    ctx.component.openEditPropertyDialog();
+    ctx.component.openEditPropertyDialog(node);
 
     expect(spy.openEditPropertyDialog.calls.mostRecent().args[0]).toEqual(node);
   })
