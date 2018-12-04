@@ -73,7 +73,7 @@ export class BackendEffects {
       switchMap(async ([action, pricinpal]) => {
 
         try {
-          const { changed } = await this.fileManagementService.pull(pricinpal.user);
+          const { changed } = await this.fileManagementService.refresh(pricinpal);
           const result = [];
 
           result.push(new RefreshSuccess())

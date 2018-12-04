@@ -395,10 +395,7 @@ describe('Backend store action/effect/reducer', () => {
   });
 
   it('Refresh action should be successful', async () => {
-
-    ctx.store.dispatch(new BackendActions.Initialized({ principal: { user: TestUser, repoMetadata: {}}}));
-
-    spyOn(fileService, 'pull').and.returnValue({changed: true});
+    spyOn(fileService, 'refresh').and.returnValue({changed: true});
     spyOn(fileService, 'getFiles').and.returnValues({files: [file1, file2], applications: ['app1']});
 
     ctx.store.dispatch(new BackendActions.Refresh());
@@ -415,9 +412,7 @@ describe('Backend store action/effect/reducer', () => {
   });
 
   it('Refresh action should be successful without change', async () => {
-    ctx.store.dispatch(new BackendActions.Initialized({ principal: { user: TestUser, repoMetadata: {}}}));
-
-    spyOn(fileService, 'pull').and.returnValue({changed: false});
+    spyOn(fileService, 'refresh').and.returnValue({changed: false});
     spyOn(fileService, 'getFiles').and.returnValues({files: [file1, file2], applications: ['app1']});
 
     ctx.store.dispatch(new BackendActions.Refresh());
@@ -434,9 +429,7 @@ describe('Backend store action/effect/reducer', () => {
   });
 
   it('Refresh action fail, alert dialog should show', async () => {
-    ctx.store.dispatch(new BackendActions.Initialized({ principal: { user: TestUser, repoMetadata: {}}}));
-
-    spyOn(fileService, 'pull').and.throwError('Mock error');
+    spyOn(fileService, 'refresh').and.throwError('Mock error');
 
     ctx.store.dispatch(new BackendActions.Refresh());
     expect(ctx.dashboarState().refreshing).toBeTruthy();

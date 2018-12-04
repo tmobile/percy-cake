@@ -61,19 +61,6 @@ export class FileManagementService {
         const repoDir = path.resolve(percyConfig.reposFolder, repoFolder);
         const repoMetadataFile = this.utilService.getMetadataPath(repoFolder);
 
-        // Create token payload
-        const tokenPayload: any = {
-          username: auth.username,
-          iat: Date.now()
-        };
-
-        const user: User = {
-          ...auth,
-          repoName,
-          repoFolder,
-          token: this.utilService.encrypt(JSON.stringify(tokenPayload))
-        };
-
         let existingRepoMetadata;
         if (await fs.exists(repoDir)) {
             // Check repo metadata file
@@ -99,7 +86,7 @@ export class FileManagementService {
             if (!existingRepoMetadata) {
                 // Shallow clone repo with --depth as 1
                 try {
-                  await this.clone(fs, auth, repoDir);
+                  await this.clone(auth, repoDir, fs);
                 } catch (err) {
                     // If error while clone remove the repo dir
                     await fs.remove(repoDir);
@@ -107,7 +94,7 @@ export class FileManagementService {
                 }
             } else {
                 // Pull
-                await this.pull(user, repoDir);
+                await this.pull(auth, repoDir, fs);
             }
         } catch (error) {
             console.error(error);
@@ -122,8 +109,21 @@ export class FileManagementService {
         // In case of pull, remember the existing commit base SHAs
         const commitBaseSHA = existingRepoMetadata ? existingRepoMetadata.commitBaseSHA || {} : {};
 
-        // Encryt password and save user to repo metadata locally
-        user.password = this.utilService.encrypt(auth.password);
+        // Create token payload
+        const tokenPayload: any = {
+          username: auth.username,
+          iat: Date.now()
+        };
+
+        const user: User = {
+          ...auth,
+          password: this.utilService.encrypt(auth.password),
+          repoName,
+          repoFolder,
+          token: this.utilService.encrypt(JSON.stringify(tokenPayload))
+        };
+
+        // Save user to repo metadata locally
         await fs.outputJson(repoMetadataFile, {...user, commitBaseSHA, version: percyConfig.repoMetadataVersion});
 
         return user;
@@ -134,7 +134,7 @@ export class FileManagementService {
      * The repo will only contain the '.git' folder, nothing else.
      * The file content will directly be read from pack files in '.git', by using git.readObject.
      */
-    private async clone(fs: FSExtra, auth: Authenticate, repoDir: string) {
+    private async clone(auth: Authenticate, repoDir: string, fs: FSExtra) {
 
         const branch = auth.branchName;
         await git.clone({
@@ -170,9 +170,7 @@ export class FileManagementService {
      *
      * Similar as clone, we never checkout, just fetch from remote repo, and call resetIndexes to keep things clean.
      */
-    async pull(auth: User, repoDir?: string) {
-      const fs = await this.utilService.getBrowserFS();
-      repoDir = repoDir || path.resolve(percyConfig.reposFolder, auth.repoFolder);
+    async pull(auth: Authenticate, repoDir: string, fs: FSExtra) {
 
       const lastCommit = await this.getRemoteCommit(repoDir, auth.branchName);
       let fetchHead;
@@ -214,7 +212,7 @@ export class FileManagementService {
 
         // Just in case pull timeout, fallback to clone
         await fs.remove(repoDir);
-        fetchHead = await this.clone(fs, auth, repoDir);
+        fetchHead = await this.clone(auth, repoDir, fs);
       }
 
       return {pulledCommit: fetchHead, changed: lastCommit !== fetchHead};
@@ -249,6 +247,21 @@ export class FileManagementService {
         }
 
         return oid;
+    }
+
+    /**
+     * refresh files for a particular repository.
+     *
+     * @param principal the logged in user principal
+     */
+    async refresh(principal: Principal) {
+      const fs = await this.utilService.getBrowserFS();
+
+      const { user } = await this.maintenanceService.checkSessionTimeout(principal);
+
+      const repoDir = path.resolve(percyConfig.reposFolder, user.repoFolder);
+
+      return await this.pull(user, repoDir, fs);
     }
 
     /**
@@ -531,7 +544,7 @@ export class FileManagementService {
         let gitPulled = false;
 
         if (await this.isRepoFileExists(pathFinder)) {
-            const { pulledCommit, changed } = await this.pull(user, pathFinder.repoDir);
+            const { pulledCommit, changed } = await this.pull(user, pathFinder.repoDir, fs);
             gitPulled = changed;
 
             // Check whether exists again after pull
@@ -606,7 +619,7 @@ export class FileManagementService {
 
         const repoDir = path.resolve(percyConfig.reposFolder, user.repoFolder);
 
-        const { pulledCommit } = await this.pull(user, repoDir);
+        const { pulledCommit } = await this.pull(user, repoDir, fs);
 
         let newRepoFiles: ConfigFile[];
         if (!forcePush) {
