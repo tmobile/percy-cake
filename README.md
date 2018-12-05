@@ -165,6 +165,11 @@ There are 3 configuration files:
 
 ## Development
 
+Prerequisite
+
+- Node.js 10
+- Npm 6
+
 ```bash
 # Install dependencies
 npm i
@@ -185,8 +190,6 @@ npm start
 
 Prerequisite
 
-- Node.js 10+
-- Npm 6
 - Docker
 - Docker Compose
 
