@@ -10,5 +10,5 @@ echo "installing frontend packages"
 
 npm install --silent
 
-# build angular app and put the output to public folder of backend
+# build angular app and put the output to dist folder
 npm run build:prod
