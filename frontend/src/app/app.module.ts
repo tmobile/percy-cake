@@ -1,7 +1,8 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
-import { HighlightModule } from 'ngx-highlightjs';
+import { HIGHLIGHT_OPTIONS } from 'ngx-highlightjs';
+import yaml from 'highlight.js/lib/languages/yaml';
 
 // angular material components
 import { MaterialComponentsModule } from 'material-components/material-components.module';
@@ -50,14 +51,9 @@ import { LocationStrategy, HashLocationStrategy } from '@angular/common';
 
 // directives
 import { SplitDirective } from 'directives/splitter.directive';
+import { HighlightDirective } from 'directives/highlight.directive';
 import { FollowCursorDirective } from 'directives/follow-cursor.directive';
 
-import yaml from 'highlight.js/lib/languages/yaml';
-export function hljsLanguages() {
-  return [
-    {name: 'yaml', func: yaml},
-  ];
-}
 @NgModule({
   declarations: [
     AppComponent,
@@ -76,6 +72,7 @@ export function hljsLanguages() {
     AlertDialogComponent,
     ConflictDialogComponent,
     SplitDirective,
+    HighlightDirective,
     FollowCursorDirective,
   ],
   imports: [
@@ -83,7 +80,6 @@ export function hljsLanguages() {
     HttpClientModule,
     AppRoutingModule,
     MaterialComponentsModule,
-    HighlightModule.forRoot({ languages: hljsLanguages }),
     StoreModule.forRoot(reducers, { metaReducers }),
     !environment.production ? StoreDevtoolsModule.instrument() : [],
     EffectsModule.forRoot([AuthEffects, AppEffects, BackendEffects, DashboardEffects, EditorEffects])
@@ -102,6 +98,7 @@ export function hljsLanguages() {
     InitGuardService,
     FileManagementService,
     CanDeactivateGuard,
+    {provide: HIGHLIGHT_OPTIONS, useValue: { languages: () => [{name: 'yaml', func: yaml}] }},
     {provide: LocationStrategy, useClass: HashLocationStrategy}
   ],
   bootstrap: [AppComponent]

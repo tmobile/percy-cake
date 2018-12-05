@@ -51,7 +51,7 @@
         </div>
         <div class="preview" *ngIf="selectedNode">
           <!-- shows the node as YAML for non-leaf node -->
-          <pre *ngIf="showAsCode"><code [highlight]="previewCode" [languages]="['yaml']"></code></pre>
+          <pre *ngIf="showAsCode"><code appHighlight [highlight]="previewCode" [languages]="['yaml']"></code></pre>
           <!-- shows the leaf node as readonly label -->
           <div *ngIf="!showAsCode" class="property">
             <div class="mat-form-field mat-form-field-appearance-legacy mat-form-field-disabled mat-form-field-can-float mat-form-field-should-float">
@@ -121,7 +121,7 @@
             <h3>{{showAsCompiledYAMLEnvironment}} environment compiled yaml</h3>
         </div>
         <div class="preview" *ngIf="showAsCompiledYAMLEnvironment">
-          <pre><code [highlight]="previewCode" [languages]="['yaml']"></code></pre>
+          <pre><code appHighlight [highlight]="previewCode" [languages]="['yaml']"></code></pre>
         </div>
         <!-- shows the add/edit panel -->
         <div class="add-edit-property-mode" *ngIf="currentConfigProperty">

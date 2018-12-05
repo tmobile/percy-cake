@@ -1,29 +1,50 @@
-# YAML EDITOR SETUP
+# YAML EDITOR
 
-# Prerequisite
+## Overview
 
-- Docker
-- Docker Compose
-- Node.js 10+
+This app is an Angular 6 web app to provide an editor for yaml configuration files.
 
 
 
-## Build
+## Feature List
 
-Build app frontend (which will build in production mode), the static assets are built under `frontend/dist`:
-
-```bash
-./docker/build.sh
-
-# After build, 3 files will be generated in frontend/dist:
-# index.html
-# percy.bundle.min.js
-# percy.conf.json (which is a copy of frontend/src/percy.conf.prod.json)
-```
+- Shallow clone from specific repo url and branch
+- An intuitive structured tree view
+- Create/edit/delete functions, and save draft changes in browser
+- Resolve conflicts when commit changes
+- Variable reference and environment inherits in yaml files
 
 
 
-The [frontend/src/percy.conf.prod.json](frontend/src/percy.conf.prod.json) (which will be copied to `frontend/dist/percy.conf.json`) contains following configurations:
+## How it works
+
+[Material components](https://material.angular.io/components/categories) are used extensively to build UI interface. [@ngrx](http://ngrx.github.io/) is used for reactive state management for the app.
+
+[isomorphic-git](https://github.com/isomorphic-git/isomorphic-git) is used to clone remote git repo and commit changes. Repo files and draft changes are all saved in browser by using [BrowserFS](https://github.com/jvilk/BrowserFS) which simulates a file system (with IndexedDB as underlying storage).
+
+If this web app is hosted in a different domain than the git server domain, a [CORS proxy](https://github.com/isomorphic-git/isomorphic-git#cors-support) server need be setup to allow cross sites requests.
+
+
+
+## Known Issues
+
+The browser filesystem is built on top of IndexedDB, the perfomance and stablitity is limited by IndexedDB and thus is not good as a real filesystem.
+
+To relieve the impact, we have adopted serveral ways to reduce file I/O:
+
+- Shallow clone with 1 depth
+- Fetch remote commits with 1 depth
+- After clone/fetch, we never checkout the files to working copy, just saving the git packed objects/files and will directly query the packed objects/files afterwards.
+
+
+
+## Configuration
+
+There are 3 configuration files:
+
+- [frontend/src/percy.conf.json](frontend/src/percy.conf.json): configuration used in development
+- [frontend/src/percy.conf.test.json](frontend/src/test/percy.conf.test.json): configuration used in Karma test
+- [frontend/src/percy.conf.prod.json](frontend/src/percy.conf.prod.json): for production configuration, it will be copied to `frontend/dist/percy.conf.json` in production build
 
 | Variable                 | Description                                                  |
 | ------------------------ | ------------------------------------------------------------ |
@@ -48,9 +69,31 @@ The [frontend/src/percy.conf.prod.json](frontend/src/percy.conf.prod.json) (whic
 
 
 
-# Start docker
+## Run from Docker
 
-Run
+Prerequisite
+
+- Node.js 10+
+- Npm 6
+- Docker
+- Docker Compose
+
+
+
+Build app (which will build in production mode), the static assets are built under `dist`:
+
+```bash
+./docker/build.sh
+
+# After build, 3 files will be generated in frontend/dist:
+# index.html
+# percy.bundle.min.js
+# percy.conf.json (which is a copy of frontend/src/percy.conf.prod.json)
+```
+
+
+
+Run docker compose:
 
 ```bash
 docker-compose -f ./docker/docker-compose.yml up --build

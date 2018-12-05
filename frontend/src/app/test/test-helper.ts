@@ -5,9 +5,14 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, isObservable, BehaviorSubject, Subscription } from 'rxjs';
 import { Store, StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
+import { HIGHLIGHT_OPTIONS } from 'ngx-highlightjs';
+import yaml from 'highlight.js/lib/languages/yaml';
+import * as _ from 'lodash';
 
 import { TestBed } from '@angular/core/testing';
 import { TestCtx, createTestContext, configureTestSuite } from 'ng-bullet';
+
+import { MaterialComponentsModule } from 'material-components/material-components.module';
 
 import { User } from 'models/auth';
 import { reducers, metaReducers, AppState } from 'store';
@@ -16,16 +21,16 @@ import { AuthEffects } from 'store/affects/auth.effects';
 import { BackendEffects } from 'store/affects/backend.effects';
 import { EditorEffects } from 'store/affects/editor.effects';
 import { DashboardEffects } from 'store/affects/dashboard.effects';
-import * as _ from 'lodash';
 
-import { MaterialComponentsModule } from 'material-components/material-components.module';
-import { UtilService } from '../services/util.service';
+import { UtilService } from 'services/util.service';
+import { HighlightDirective } from 'directives/highlight.directive';
+
 import { percyConfig } from 'config';
 
 declare var beforeEach: (any) => any;
 declare var afterEach: (any) => any;
 
-const percyTestConfig = require('./percy.conf.test.json');
+const percyTestConfig = require('../../percy.conf.test.json');
 
 // Inject test config
 _.assign(percyConfig, percyTestConfig);
@@ -121,7 +126,8 @@ export const Setup = <T>(componentType: Type<T>, triggerLifecyle: boolean = true
         EffectsModule.forRoot([AppEffects, AuthEffects, BackendEffects, DashboardEffects, EditorEffects])
       ],
       declarations: [
-        componentType
+        componentType,
+        HighlightDirective
       ],
       providers: [
         {
@@ -161,6 +167,9 @@ export const Setup = <T>(componentType: Type<T>, triggerLifecyle: boolean = true
         },
         {
           provide: MAT_DIALOG_DATA, useValue: {},
+        },
+        {
+          provide: HIGHLIGHT_OPTIONS, useValue: { languages: () => [{name: 'yaml', func: yaml}] }
         },
       ],
       schemas: [ NO_ERRORS_SCHEMA ],

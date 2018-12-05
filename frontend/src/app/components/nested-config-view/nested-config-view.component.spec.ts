@@ -1,4 +1,3 @@
-import * as _ from 'lodash';
 import { Setup, assertDialogOpened, TestContext } from 'test/test-helper';
 
 import { NestedConfigViewComponent } from './nested-config-view.component';

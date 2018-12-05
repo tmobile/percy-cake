@@ -495,7 +495,7 @@ export class UtilService {
     return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
   }
 
-  private createRegExp() {
+  createRegExp() {
     const regexPattern =
       `${this.escapeRegExp(percyConfig.variableSubstitutePrefix)}(.+?)${this.escapeRegExp(percyConfig.variableSubstituteSuffix)}`;
     return new RegExp(regexPattern, 'g');
