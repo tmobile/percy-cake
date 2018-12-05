@@ -1,0 +1,107 @@
+/* normalize */
+*, *:before, *:after {
+  margin: 0;
+  padding: 0;
+  outline: none;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  
+  &:focus {
+    outline: none;
+  }
+}
+
+/* base/common styles */
+body {
+  line-height: 1;
+  font-family: Roboto, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: $color-text-primary;
+  background-color: $color-bg-body;
+  overflow-x: hidden;
+  -ms-overflow-style: scrollbar;  // to fix IE scrollbar issue
+}
+
+a {
+  text-decoration: none;
+  outline: none;
+  cursor: pointer;
+  
+  &:hover,
+  &:active,
+  &:focus {
+    text-decoration: none;
+    outline: none;
+  }
+}
+
+
+/*** helper classes ***/
+// align child element in the center
+.align-item-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
+// text ellipsis
+.is-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gutter-vertical {
+  cursor: row-resize;
+  position: relative;
+}
+.gutter-horizontal {
+  cursor: col-resize;
+  position: relative;
+}
+.gutter::before {
+  content: '';
+  position: absolute;
+}
+.gutter-vertical::before {
+  left: 0;
+  top: 50%;
+  width: 100%;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+.gutter-horizontal::before {
+  top: 0;
+  left: 50%;
+  height: 100%;
+  border-left: 1px solid rgba(0, 0, 0, 0.12);
+}
+.mat-select-panel {
+  max-height: 296px !important;
+}
+
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
+.hljs {
+  .hljs-string {
+    .yaml-var {
+      font-weight: bold;
+      color: chocolate;
+    }
+  }
+}

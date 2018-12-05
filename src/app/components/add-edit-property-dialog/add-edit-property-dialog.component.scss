@@ -1,0 +1,49 @@
+// add or edit property parameters
+@import "variables";
+
+h2 {
+    padding: 0px;
+    margin-bottom: 0;
+}
+.property-form-wrapper {
+    background-color: $white;
+    .property-form {
+        display: flex;
+        flex-direction: column;
+        padding: 10px;
+        margin-top: 10px;
+        .form-field {
+            margin-bottom: 15px;
+        }
+        .toggle-line {
+          display: inline;
+          .mat-slide-toggle {
+            margin-right: 10px;
+          }
+        }
+        .value-radio-options {
+            .section-heading {
+                margin-bottom: 15px;
+            }
+            ::ng-deep .mat-radio-group {
+                display: block;
+                >* {
+                    margin-right: 25px;
+                }
+            }
+            ::ng-deep .mat-error {
+                font-size: 10.5px;
+                margin-top: 10px;
+            }
+        }
+    }
+    .buttons-row {
+        display: flex;
+        >* {
+            margin-right: 10px;
+        }
+        button {
+          text-transform: uppercase;
+        }
+    }
+}

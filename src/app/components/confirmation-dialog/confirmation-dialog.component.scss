@@ -1,0 +1,22 @@
+@import "variables";
+
+.confirmation-dialog {
+  width: auto;
+  min-width: 300px;
+  max-width: 500px;
+  pre {
+    white-space: pre-wrap;
+  }
+  .buttons-row {
+    padding-top: 30px;
+    display: flex;
+    justify-content: center;
+
+    > * {
+      margin: 0 8px;
+    }
+    button {
+      text-transform: uppercase;
+    }
+  }
+}

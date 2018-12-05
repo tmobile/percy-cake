@@ -1,10 +1,20 @@
-FROM node:10
+FROM nginx:1.15
 
-RUN git config --global user.email "admin@percy.com"
-RUN git config --global user.name "Admin"
+RUN apt-get update \
+  && apt-get -y install wget gnupg \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /percy-app/backend
+RUN wget https://deb.nodesource.com/setup_10.x && chmod +x setup_10.x
 
-EXPOSE $PORT
+RUN ./setup_10.x
 
-CMD ["npm", "start"]
+RUN apt-get install -y nodejs && apt-get clean
+
+RUN npm i -g @isomorphic-git/cors-proxy
+
+Add docker-entrypoint.sh /docker-entrypoint.sh
+
+ADD nginx.conf /etc/nginx/nginx.conf.template
+
+ENTRYPOINT ["/docker-entrypoint.sh"]

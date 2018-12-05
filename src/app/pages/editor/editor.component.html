@@ -1,0 +1,142 @@
+<!-- configuration editor -->
+<div class="editor-page">
+  <div class="breadcrumbs-wrapper">
+    <a routerLink="/" color="primary">Dashboard</a>
+    <span>{{editMode ? 'Edit': 'Add'}} File</span>
+  </div>
+
+  <div class="col-container" *ngIf="(environments|async) && (configuration | async); else loader" 
+    appSplit [gutterWidth]="20" [splitAreas]="['#editor-tree-view','#editor-detail-view']" [splitSizes]="[60,40]" [splitMinSizes]="[330,150]">
+
+    <!-- col which shows tree view -->
+    <div class="col-default-env" id="editor-tree-view">
+        <!-- filename input -->
+        <mat-form-field class="filename" [floatLabel]="'always'">
+          <label>{{appName}}/</label>
+          <input type="text" #fileNameInput="matInput" matInput placeholder="Filename" [formControl]="filename" (input)="fileNameChange()"/>
+          <mat-error *ngIf="filename.hasError('required')">*Required</mat-error>
+          <mat-error *ngIf="filename.hasError('alreadyExists')">*File name arealdy exists</mat-error>
+        </mat-form-field>
+        <!-- property tree -->
+        <app-nested-config-view #nestedConfig [configuration]="configuration | async" [environments]="environments| async"
+          [envFileMode]="envFileMode" (configurationChange)="onConfigChange($event)"
+          (selectedNode)="onNodeSelected($event)" (cancelAddEditPropertyChange)="onCancelAddEditProperty()"
+          (viewCompiledYAMLEvent)="showCompiledYAML($event)" (addEditProperty)="onAddEditProperty($event)"></app-nested-config-view>
+
+        <div class="buttons-row">
+          <button type="button" mat-button color="primary" class="btn-cancel" [routerLink]="['/dashboard']">
+            Cancel
+          </button>
+        
+          <button type="button" mat-raised-button color="primary" [disabled]="(isSaving | async) || !this.isPageDirty" class="btn-save"
+            (click)="saveConfig()">
+            Save As Draft
+          </button>
+        
+          <button type="button" mat-raised-button color="primary" [disabled]="(isCommitting | async) || !(configFile | async)?.modified" class="btn-save"
+            (click)="commitFile()">
+            Commit
+          </button>
+        </div>
+    </div>
+
+    <!-- detail panel -->
+    <div class="col-other-envs" id="editor-detail-view">
+        <!-- if node is selected to view detail -->
+        <div class="section-heading" *ngIf="selectedNode">
+            <h3>{{selectedNode.getPathsString()}}</h3>
+            <button mat-flat-button  *ngIf="!showAsCode" class="btn-submit" (click)="openEditPropertyDialog(selectedNode)">
+              Edit
+            </button>
+        </div>
+        <div class="preview" *ngIf="selectedNode">
+          <!-- shows the node as YAML for non-leaf node -->
+          <pre *ngIf="showAsCode"><code appHighlight [highlight]="previewCode" [languages]="['yaml']"></code></pre>
+          <!-- shows the leaf node as readonly label -->
+          <div *ngIf="!showAsCode" class="property">
+            <div class="mat-form-field mat-form-field-appearance-legacy mat-form-field-disabled mat-form-field-can-float mat-form-field-should-float">
+              <div class="mat-form-field-wrapper">
+                <div class="mat-form-field-flex">
+                  <div class="mat-form-field-infix">
+                    <mat-label>{{selectedNode.key}}</mat-label>
+                    <span class="mat-form-field-label-wrapper">
+                      <label class="mat-form-field-label">Name</label>
+                    </span>
+                  </div>
+                </div>
+                <div class="mat-form-field-underline">
+                  <span class="mat-form-field-ripple"></span>
+                </div>
+              </div>
+            </div>
+            <div class="mat-form-field mat-form-field-appearance-legacy mat-form-field-disabled mat-form-field-can-float mat-form-field-should-float">
+              <div class="mat-form-field-wrapper">
+                <div class="mat-form-field-flex">
+                  <div class="mat-form-field-infix">
+                    <mat-label>{{selectedNode.valueType}}</mat-label>
+                    <span class="mat-form-field-label-wrapper">
+                      <label class="mat-form-field-label">Value Type</label>
+                    </span>
+                  </div>
+                </div>
+                <div class="mat-form-field-underline">
+                  <span class="mat-form-field-ripple"></span>
+                </div>
+              </div>
+            </div>
+            <div class="mat-form-field mat-form-field-appearance-legacy mat-form-field-disabled mat-form-field-can-float mat-form-field-should-float">
+              <div class="mat-form-field-wrapper">
+                <div class="mat-form-field-flex">
+                  <div class="mat-form-field-infix">
+                    <mat-label>{{selectedNode.value}}</mat-label>
+                    <span class="mat-form-field-label-wrapper">
+                      <label class="mat-form-field-label">Value</label>
+                    </span>
+                  </div>
+                </div>
+                <div class="mat-form-field-underline">
+                  <span class="mat-form-field-ripple"></span>
+                </div>
+              </div>
+            </div>
+            <div class="mat-form-field mat-form-field-appearance-legacy mat-form-field-disabled mat-form-field-can-float mat-form-field-should-float">
+              <div class="mat-form-field-wrapper">
+                <div class="mat-form-field-flex">
+                  <div class="mat-form-field-infix">
+                    <mat-label class="comment"><pre>{{selectedNode.getCommentStr()}}</pre></mat-label>
+                    <span class="mat-form-field-label-wrapper">
+                      <label class="mat-form-field-label"> Comment</label>
+                    </span>
+                  </div>
+                </div>
+                <div class="mat-form-field-underline">
+                  <span class="mat-form-field-ripple"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- shows the compiled YAML -->
+        <div class="section-heading" *ngIf="showAsCompiledYAMLEnvironment">
+            <h3>{{showAsCompiledYAMLEnvironment}} environment compiled yaml</h3>
+        </div>
+        <div class="preview" *ngIf="showAsCompiledYAMLEnvironment">
+          <pre><code appHighlight [highlight]="previewCode" [languages]="['yaml']"></code></pre>
+        </div>
+        <!-- shows the add/edit panel -->
+        <div class="add-edit-property-mode" *ngIf="currentConfigProperty">
+          <app-add-edit-property-dialog (saveProperty)="onSaveAddEditProperty($event)" (cancel)="onCancelAddEditProperty($event)"
+            [data]="currentConfigProperty"></app-add-edit-property-dialog>
+        </div>
+    </div>
+  </div>
+
+  <div *ngIf="(isSaving | async) || (isCommitting|async)">
+    <app-loader></app-loader>
+  </div>
+</div>
+
+<!-- loading indicator -->
+<ng-template #loader>
+  <app-loader></app-loader>
+</ng-template>
