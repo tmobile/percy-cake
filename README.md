@@ -119,15 +119,15 @@ You can also save multiple files as draft, and use the 'COMMIT CHANGES' button o
 
 [isomorphic-git](https://github.com/isomorphic-git/isomorphic-git) is used to clone remote git repo and commit changes. Repo files and draft changes are all saved in browser by using [BrowserFS](https://github.com/jvilk/BrowserFS) which simulates a file system (with IndexedDB as underlying storage).
 
-If this web app is hosted in a different domain than the git server domain, a [CORS proxy](https://github.com/isomorphic-git/isomorphic-git#cors-support) server need be setup to allow cross sites requests.
+If this web app is hosted in a different domain than the git server domain, a [CORS proxy](https://github.com/isomorphic-git/isomorphic-git#cors-support) server need to be setup to allow cross sites requests.
 
 
 
 ## Known Issues
 
-The browser filesystem is built on top of IndexedDB, the perfomance and stablitity is limited by IndexedDB and thus is not as good as a real filesystem.
+The browser filesystem is built on top of IndexedDB, the performance and stablity is limited by IndexedDB and thus is not as good as a real filesystem.
 
-To relieve the impact, we have adopted serveral ways to reduce file I/O:
+To relieve the impact, we have adopted several ways to reduce file I/O:
 
 - Shallow clone with 1 depth
 - Fetch remote commits with 1 depth
