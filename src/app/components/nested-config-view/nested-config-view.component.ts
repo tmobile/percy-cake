@@ -396,10 +396,6 @@ export class NestedConfigViewComponent implements OnChanges {
    * @returns html rendered with highlighted variable
    */
   highlightVariable(node: TreeNode) {
-    if (node.valueType !== PROPERTY_VALUE_TYPES.STRING) {
-      return node.value;
-    }
-    const span = this.utilService.highlightVariable(_.defaultTo(node.value, ''));
-    return span.html();
+    return this.utilService.highlightNodeVariable(node);
   }
 }

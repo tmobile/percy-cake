@@ -705,6 +705,19 @@ export class UtilService {
   }
 
   /**
+   * Highlight variable within yaml text string value
+   * @param node the string node to highlight its value
+   * @returns html rendered with highlighted variable
+   */
+  highlightNodeVariable(node: TreeNode) {
+    if (node.valueType !== PROPERTY_VALUE_TYPES.STRING) {
+      return node.value;
+    }
+    const span = this.highlightVariable(_.defaultTo(node.value, ''));
+    return span.html();
+  }
+
+  /**
    * Encrypt.
    * @param text The text to encrypt
    * @returns encrypted text
