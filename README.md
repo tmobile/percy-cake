@@ -39,7 +39,9 @@ environments: !!map
 
 ```
 
-The `default` node contains the default configuration properties for the application, and the `environments` node contains multiple environment nodes, with each environment node containing properties *overriding* the default values defined in `default` node.
+The `default` node contains the default configuration properties for the application, and the `environments` node contains multiple environment nodes, with each environment node inheriting from the `default` node. 
+
+In environment node, you can override properties defined in the `default` node to provide different values.
 
 And here is an example of YAML file, and you can notice the `environments` node contains `prod`, `dev` and `qa` environment nodes. 
 ```
@@ -99,6 +101,7 @@ You can also save multiple files as draft, and use the 'COMMIT CHANGES' button o
 
 - Load YAML files from a mono structured repository
 - Display YAML file in an intuitive structured tree view
+- Support YAML property with object, bool, string, and number types, and array of simple types
 - Create a new YAML file
 - Edit an existing YAML file
 - Delete an existing YAML file
