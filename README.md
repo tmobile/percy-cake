@@ -4,6 +4,16 @@
 
 This app is an Angular 6 web app to provide an editor for yaml configuration files.
 
+The editor works for the mono configuration directory structure in git repository. In **apps** folders each subfolder(**app1**, **app2**...) represents an app, and contains the yaml configuration files:
+
+![docs/mono.png](docs/mono.png)
+
+
+
+Editor screenshot:
+
+![docs/editor.png](docs/editor.png)
+
 
 
 ## Feature List
@@ -18,7 +28,7 @@ This app is an Angular 6 web app to provide an editor for yaml configuration fil
 
 ## How it works
 
-[Material components](https://material.angular.io/components/categories) are used extensively to build UI interface. [@ngrx](http://ngrx.github.io/) is used for reactive state management for the app.
+[Material components](https://material.angular.io/components/categories) are used extensively to build UI interface. [@ngrx](http://ngrx.github.io/) is used for reactive state management of the UI.
 
 [isomorphic-git](https://github.com/isomorphic-git/isomorphic-git) is used to clone remote git repo and commit changes. Repo files and draft changes are all saved in browser by using [BrowserFS](https://github.com/jvilk/BrowserFS) which simulates a file system (with IndexedDB as underlying storage).
 
@@ -34,7 +44,7 @@ To relieve the impact, we have adopted serveral ways to reduce file I/O:
 
 - Shallow clone with 1 depth
 - Fetch remote commits with 1 depth
-- After clone/fetch, we never checkout the files to working copy, just saving the git packed objects/files and will directly query the packed objects/files afterwards.
+- After clone/fetch, we never checkout the files to working copy, just saving the git packed objects/files and will directly use the packed objects/files afterwards.
 
 
 
@@ -43,7 +53,7 @@ To relieve the impact, we have adopted serveral ways to reduce file I/O:
 There are 3 configuration files:
 
 - [src/percy.conf.json](src/percy.conf.json): configuration used in development
-- [src/percy.conf.test.json](src/test/percy.conf.test.json): configuration used in Karma test
+- [src/percy.conf.test.json](src/percy.conf.test.json): configuration used in Karma test
 - [src/percy.conf.prod.json](src/percy.conf.prod.json): for production configuration, it will be copied to `dist/percy.conf.json` in production build
 
 | Variable                 | Description                                                  |
