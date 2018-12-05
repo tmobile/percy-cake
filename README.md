@@ -113,10 +113,10 @@ Build app (which will build in production mode), the static assets are built und
 ```bash
 ./docker/build.sh
 
-# After build, 3 files will be generated in frontend/dist:
+# After build, 3 files will be generated in 'dist':
 # index.html
 # percy.bundle.min.js
-# percy.conf.json (which is a copy of frontend/src/percy.conf.prod.json)
+# percy.conf.json (which is a copy of src/percy.conf.prod.json)
 ```
 
 
