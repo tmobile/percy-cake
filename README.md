@@ -78,17 +78,17 @@ Each application will have a special YAML file called `environments.yaml` (the f
 
 ## Usage
 
-Login with your username / password of your git account, the URL and branch of your configuration repository.
+Login with your username / password of your git account, the URL and branch of your configuration repository:
 ![docs/login.png](docs/login.png)
 
-The editor will load the YAML files in each application folder from your repository. 
+The editor will load the YAML files in each application folder from your repository:
 ![docs/dashboard.png](docs/dashboard.png)
 
-Then you can select any file to edit.
+Then you can select any file to edit:
 ![docs/edit.png](docs/edit.png)
 
 View the compiled YAML:
-![docs/view-compiled-yaml.png](docs/view-compiled-yaml.png)
+![docs/compiled-yaml-view.png](docs/compiled-yaml-view.png)
 
 You can also add a new YAML file or delete an existing YAML file. 
 
