@@ -42,9 +42,9 @@ To relieve the impact, we have adopted serveral ways to reduce file I/O:
 
 There are 3 configuration files:
 
-- [frontend/src/percy.conf.json](frontend/src/percy.conf.json): configuration used in development
-- [frontend/src/percy.conf.test.json](frontend/src/test/percy.conf.test.json): configuration used in Karma test
-- [frontend/src/percy.conf.prod.json](frontend/src/percy.conf.prod.json): for production configuration, it will be copied to `frontend/dist/percy.conf.json` in production build
+- [src/percy.conf.json](src/percy.conf.json): configuration used in development
+- [src/percy.conf.test.json](src/test/percy.conf.test.json): configuration used in Karma test
+- [src/percy.conf.prod.json](src/percy.conf.prod.json): for production configuration, it will be copied to `dist/percy.conf.json` in production build
 
 | Variable                 | Description                                                  |
 | ------------------------ | ------------------------------------------------------------ |
@@ -66,6 +66,24 @@ There are 3 configuration files:
 | encryptSalt              | The salt used to encrypt security information like password  |
 | variableSubstitutePrefix | The Yaml variable substitute prefix                          |
 | variableSubstituteSuffix | The Yaml variable substitute suffix                          |
+
+
+
+## Development
+
+```bash
+# Install dependencies
+npm i
+
+# Lint code
+npm run lint
+
+# Run unit tests
+npm test
+
+# Start development server at http://localhost:4200
+npm start
+```
 
 
 
@@ -105,7 +123,7 @@ In this step supports config the nginx port, you can refer to [docker/docker-com
 
 | Environment | Description                                                  |
 | ----------- | ------------------------------------------------------------ |
-| NGINX_PORT  | The nginx server port. The nginx will serve both the static assets in `frontend/dist` and the isomorphic-git proxy. |
+| NGINX_PORT  | The nginx server port. The nginx will serve both the static assets in `dist` and the isomorphic-git proxy. |
 
 
 
