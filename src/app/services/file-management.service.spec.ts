@@ -273,7 +273,7 @@ describe('FileManagementService', () => {
     expect(resolveRefStub.calls.count()).toEqual(2);
 
     // Repo files should be cleaned
-    expect(await fs.exists(dir + '/test.txt')).toBeFalsy();
+    expect(await fs.pathExists(dir + '/test.txt')).toBeFalsy();
 
     // Head SHA ref should be same as remotes SHA
     assertHeadRef(commitOid2);
