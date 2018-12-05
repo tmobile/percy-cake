@@ -12,11 +12,11 @@ describe('UtilService', () => {
 
     expect(git.version()).toBeDefined();
 
-    expect(await fs.exists(percyConfig.reposFolder)).toBeTruthy();
+    expect(await fs.pathExists(percyConfig.reposFolder)).toBeTruthy();
 
-    expect(await fs.exists(percyConfig.metaFolder)).toBeTruthy();
+    expect(await fs.pathExists(percyConfig.metaFolder)).toBeTruthy();
 
-    expect(await fs.exists(percyConfig.draftFolder)).toBeTruthy();
+    expect(await fs.pathExists(percyConfig.draftFolder)).toBeTruthy();
 
     // Now read/write some file to test
     const file = '/temp/temp2/test.txt';
@@ -26,7 +26,7 @@ describe('UtilService', () => {
 
       await fs.writeFile(file, 'hello test');
 
-      expect(await fs.exists(file)).toBeTruthy();
+      expect(await fs.pathExists(file)).toBeTruthy();
 
       expect((await fs.readFile(file)).toString()).toEqual('hello test');
 
@@ -41,11 +41,11 @@ describe('UtilService', () => {
       const newFile = '/temp/temp2/new.txt';
       await fs.rename(file, newFile);
 
-      expect(await fs.exists(newFile)).toBeTruthy();
+      expect(await fs.pathExists(newFile)).toBeTruthy();
 
       await fs.unlink(newFile);
 
-      expect(await fs.exists(newFile)).toBeFalsy();
+      expect(await fs.pathExists(newFile)).toBeFalsy();
     } finally {
       await fs.remove('/temp');
     }
@@ -59,6 +59,7 @@ describe('UtilService', () => {
 # @version 1.0
 # @copyright Copyright (c) 2018 TopCoder, Inc. All rights reserved.
 ###
+
 default: !!map  # all known properties are defined in the default block.
   # The most common values are assigned in the default block
   appVer: !!str "0.1.0"  # appVer comment line1

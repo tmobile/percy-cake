@@ -24,7 +24,7 @@ export class InitGuardService implements CanActivate {
    * @param route the route associated with a component load.
    * @param state the state of the router at a moment in time.
    */
-  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> {
+  canActivate(_route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> {
     return this.store.pipe(
       select(fromStore.getPrincipal),
       switchMap(async (principal) => {

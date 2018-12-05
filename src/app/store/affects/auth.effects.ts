@@ -45,7 +45,7 @@ export class AuthEffects {
   loginSuccess$ = this.actions$.pipe(
     ofType<LoginSuccess>(AuthActionTypes.LoginSuccess),
     withLatestFrom(this.store.pipe(select(appStore.getRedirectUrl))),
-    map(([action, redirectUrl]) => new Navigate([redirectUrl || '/dashboard']))
+    map(([_action, redirectUrl]) => new Navigate([redirectUrl || '/dashboard']))
   );
 
   // login redirect effect

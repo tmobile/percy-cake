@@ -62,7 +62,7 @@ export class SplitDirective implements AfterViewInit {
     }
 
     if (this._flexLayout) {
-      options.elementStyle = function (dimension, size, gutterSize) {
+      options.elementStyle = function (_dimension, size, gutterSize) {
         return {
           'flex-basis': 'calc(' + size + '% - ' + gutterSize + 'px)',
         };

@@ -10,6 +10,7 @@ import { TreeNode } from 'models/tree-node';
 import { ConfigProperty } from 'models/config-property';
 
 import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
+import { UtilService } from 'services/util.service';
 
 /**
  *  Tree with nested nodes
@@ -42,9 +43,9 @@ export class NestedConfigViewComponent implements OnChanges {
   /**
    * initializes the component
    * @param dialog the material dialog instance
-   * @param store the application store
+   * @param utilService the util service
    */
-  constructor(private dialog: MatDialog) {
+  constructor(private dialog: MatDialog, private utilService: UtilService) {
     const _getChildren = (node: TreeNode) => node.children;
     this.defaultTreeControl = new NestedTreeControl<TreeNode>(_getChildren);
     this.defaultDataSource = new MatTreeNestedDataSource();
@@ -100,7 +101,7 @@ export class NestedConfigViewComponent implements OnChanges {
    * when condition in mat-nested-tree-node
    * which returns true if a node has children
    */
-  hasNestedChild = (n: number, node: TreeNode) => !node.isLeaf();
+  hasNestedChild = (_n: number, node: TreeNode) => !node.isLeaf();
 
   /**
    * prepare the dropdown options based node and mode
@@ -389,4 +390,12 @@ export class NestedConfigViewComponent implements OnChanges {
     });
   }
 
+  /**
+   * Highlight variable within yaml text string value
+   * @param node the string node to highlight its value
+   * @returns html rendered with highlighted variable
+   */
+  highlightVariable(node: TreeNode) {
+    return this.utilService.highlightNodeVariable(node);
+  }
 }

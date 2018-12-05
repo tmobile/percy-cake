@@ -57,7 +57,7 @@ export const TestUser: User = {
   template: '<div></div>',
 })
 export class StoreTestComponent {
-  constructor(private store: Store<AppState>) { }
+  constructor(public store: Store<AppState>) { }
 }
 
 const DialogStub = {

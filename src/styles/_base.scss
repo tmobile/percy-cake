@@ -97,11 +97,7 @@ a {
   -webkit-font-smoothing: antialiased;
 }
 
-.hljs {
-  .hljs-string {
-    .yaml-var {
-      font-weight: bold;
-      color: chocolate;
-    }
-  }
+.yaml-var {
+  font-weight: bold;
+  color: chocolate;
 }
