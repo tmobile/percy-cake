@@ -10,6 +10,7 @@ import * as BrowserFS from 'browserfs';
 import * as Git from 'isomorphic-git';
 import * as legacy from 'graceful-fs/legacy-streams';
 import * as FsExtra from 'fs-extra/index';
+import * as cheerio from 'cheerio';
 import * as _ from 'lodash';
 
 import { TreeNode } from 'models/tree-node';
@@ -293,8 +294,6 @@ export class UtilService {
             break;
           case PROPERTY_VALUE_TYPES.NUMBER:
             result.valueType = PROPERTY_VALUE_TYPES.NUMBER_ARRAY;
-            break;
-          default:
             break;
         }
       }
@@ -667,6 +666,42 @@ export class UtilService {
     substituted.key = env;
 
     return this.convertTreeToYaml(substituted);
+  }
+
+  /**
+   * Highlight variable within yaml text string value
+   * @param text the yaml text string value
+   * @param parentSpan the parent span node contains the text
+   * @returns span element with variable highlighted, or given parent span if there is no variable found
+   */
+  highlightVariable(text: string, parentSpan?: Cheerio) {
+
+    // Find out the variable token, wrap it in '<span class="yaml-var">${tokenName}</span>'
+    let leftIdx = 0;
+    let regExpResult;
+    let newSpan: Cheerio = null;
+    const $ = cheerio.load('');
+    const regExp = this.createRegExp();
+    while (regExpResult = regExp.exec(text)) {
+      if (!newSpan) {
+        newSpan = $('<span class="hljs-string"></span>');
+      }
+      const tokenName = regExpResult[1];
+
+      // Append left side plus variable substitute prefix
+      newSpan.append($('<span></span>').text(text.slice(leftIdx, regExpResult.index) + percyConfig.variableSubstitutePrefix));
+      // Append variable token name
+      newSpan.append($('<span class="yaml-var"></span>').text(tokenName));
+      // Update index
+      leftIdx = regExpResult.index + percyConfig.variableSubstitutePrefix.length + tokenName.length;
+    }
+
+    if (newSpan) {
+      // Append string left
+      newSpan.append($('<span></span>').text(text.slice(leftIdx)));
+      return newSpan;
+    }
+    return parentSpan ? parentSpan : $('<span></span>').text(text);
   }
 
   /**

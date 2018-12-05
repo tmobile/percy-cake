@@ -46,7 +46,7 @@
             (click)="showDetail(node)" (dblclick)="treeControl.isExpanded(node) ? treeControl.collapse(node): treeControl.expand(node)">
             <div #tooltip [hidden]="!node.comment || !node.comment.length" class="cdk-overlay-pane mat-tooltip-panel"><pre class="mat-tooltip">{{node.comment ? node.comment.join('\n'):''}}</pre></div>
             <div appFollowCursor [follower]="tooltip" class="key" >{{node.key}} :</div>
-            <div appFollowCursor [follower]="tooltip" *ngIf="node.isLeaf()" class="value">{{node.value}}</div>
+            <div appFollowCursor [follower]="tooltip" *ngIf="node.isLeaf()" class="value" [innerHTML]="highlightVariable(node)"></div>
             <button mat-icon-button #menuButton class="btn-action" (click)="$event.stopPropagation()" (contextmenu)="buttonOpenMenu($event, menuButton)" [matMenuTriggerFor]="menu">...</button>
         </div>
 

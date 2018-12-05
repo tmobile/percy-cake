@@ -1,8 +1,9 @@
-import { Setup, assertDialogOpened, TestContext } from 'test/test-helper';
+import * as cheerio from 'cheerio';
+import { Setup, assertDialogOpened, TestContext, getVariable } from 'test/test-helper';
 
 import { NestedConfigViewComponent } from './nested-config-view.component';
 import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
-import { PROPERTY_VALUE_TYPES } from 'config';
+import { PROPERTY_VALUE_TYPES, percyConfig } from 'config';
 import { ConfigProperty } from 'models/config-property';
 import { Configuration } from 'models/config-file';
 import { TreeNode } from 'models/tree-node';
@@ -475,4 +476,19 @@ describe('NestedConfigViewComponent', () => {
     expect(menuButton._elementRef.nativeElement.click).toHaveBeenCalled();
   });
 
+  it('should highlight variable correctly', () => {
+    expect(ctx.component.highlightVariable(new TreeNode('key', PROPERTY_VALUE_TYPES.BOOLEAN, true))).toEqual(true);
+    expect(ctx.component.highlightVariable(new TreeNode('key', PROPERTY_VALUE_TYPES.NUMBER, 10))).toEqual(10);
+    expect(ctx.component.highlightVariable(new TreeNode('key', PROPERTY_VALUE_TYPES.STRING, '\\aa"bb"cc')))
+      .toEqual('\\aa&quot;bb&quot;cc');
+    expect(ctx.component.highlightVariable(new TreeNode('key', PROPERTY_VALUE_TYPES.STRING, '<span></span>')))
+      .toEqual('&lt;span&gt;&lt;/span&gt;');
+
+    const $ = cheerio.load('<span></span>');
+    const span = $('span');
+    span.append($('<span></span>').text(percyConfig.variableSubstitutePrefix));
+    span.append($('<span class="yaml-var"></span>').text('name'));
+    span.append($('<span></span>').text(percyConfig.variableSubstituteSuffix));
+    expect(ctx.component.highlightVariable(new TreeNode('key', PROPERTY_VALUE_TYPES.STRING, getVariable('name')))).toEqual(span.html());
+  });
 });

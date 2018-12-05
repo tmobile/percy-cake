@@ -59,6 +59,7 @@ describe('UtilService', () => {
 # @version 1.0
 # @copyright Copyright (c) 2018 TopCoder, Inc. All rights reserved.
 ###
+
 default: !!map  # all known properties are defined in the default block.
   # The most common values are assigned in the default block
   appVer: !!str "0.1.0"  # appVer comment line1
