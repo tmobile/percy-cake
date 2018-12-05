@@ -41,7 +41,7 @@ export class BackendEffects {
   initialized$ = this.actions$.pipe(
     ofType<Initialized>(BackendActionTypes.Initialized),
     withLatestFrom(this.store.pipe(select(appStore.backendState))),
-    map(([action, backendState]) => new Navigate([backendState.redirectUrl || '/dashboard']))
+    map(([_action, backendState]) => new Navigate([backendState.redirectUrl || '/dashboard']))
   );
 
   // load files effect
@@ -49,7 +49,7 @@ export class BackendEffects {
   loadFiles$ = this.actions$.pipe(
     ofType<LoadFiles>(BackendActionTypes.LoadFiles, BackendActionTypes.Initialized, BackendActionTypes.DeleteFileFailure),
     withLatestFrom(this.store.pipe(select(appStore.getPrincipal))),
-    switchMap(async ([action, user]) => {
+    switchMap(async ([_action, user]) => {
       try {
         const result = await this.fileManagementService.getFiles(user);
         return new LoadFilesSuccess(result);
@@ -71,7 +71,7 @@ export class BackendEffects {
   refreshFiles$ = this.actions$.pipe(
     ofType<Refresh>(BackendActionTypes.Refresh),
     withLatestFrom(this.store.pipe(select(appStore.getPrincipal))),
-    switchMap(async ([action, pricinpal]) => {
+    switchMap(async ([_action, pricinpal]) => {
 
       try {
         const { changed } = await this.fileManagementService.refresh(pricinpal);

@@ -10,6 +10,7 @@ import * as BrowserFS from 'browserfs';
 import * as Git from 'isomorphic-git';
 import * as legacy from 'graceful-fs/legacy-streams';
 import * as FsExtra from 'fs-extra/index';
+import * as universalify from 'universalify';
 import * as cheerio from 'cheerio';
 import * as _ from 'lodash';
 
@@ -27,9 +28,13 @@ const streams = legacy(bfs);
 bfs['ReadStream'] = streams.ReadStream;
 bfs['WriteStream'] = streams.WriteStream;
 
-// Patch fs with fs-extra
-const fsExtra = require('fs-extra');
+// fsExtra.pathExists relies on "access" which is not in BrowserFS
+const pathExists = require('fs-extra/lib/path-exists');
+pathExists.pathExists = universalify.fromCallback((_path, cb) => {
+  bfs.exists(_path, (exists) => cb(null, exists));
+});
 
+const fsExtra = require('fs-extra');
 // For readFile/writeFile/appendFile, fs-extra has problem with BrowserFS
 // when passing null options
 // (Here we don't care callback because we'll always use promise)

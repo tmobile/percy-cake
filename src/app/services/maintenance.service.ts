@@ -56,7 +56,7 @@ export class MaintenanceService {
     if (!this.userSessionsCache) {
       try {
         const sessionsMetaFile = path.resolve(percyConfig.metaFolder, 'user-session.json');
-        if (await fs.exists(sessionsMetaFile)) {
+        if (await fs.pathExists(sessionsMetaFile)) {
           this.userSessionsCache = await fs.readJson(sessionsMetaFile);
         }
       } catch (err) {
@@ -85,7 +85,7 @@ export class MaintenanceService {
     if (!this.userNamesCache) {
       const fs = await this.utilsService.getBrowserFS();
       const loggedInUsersMetaFile = path.resolve(percyConfig.metaFolder, percyConfig.loggedInUsersMetaFile);
-      if (await fs.exists(loggedInUsersMetaFile)) {
+      if (await fs.pathExists(loggedInUsersMetaFile)) {
         this.userNamesCache = await fs.readJson(loggedInUsersMetaFile);
       } else {
         this.userNamesCache = [];

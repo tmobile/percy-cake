@@ -62,9 +62,9 @@ export class FileManagementService {
     const repoMetadataFile = this.utilService.getMetadataPath(repoFolder);
 
     let existingRepoMetadata;
-    if (await fs.exists(repoDir)) {
+    if (await fs.pathExists(repoDir)) {
       // Check repo metadata file
-      if (await fs.exists(repoMetadataFile)) {
+      if (await fs.pathExists(repoMetadataFile)) {
         try {
           existingRepoMetadata = await fs.readJson(repoMetadataFile);
           if (existingRepoMetadata.version !== percyConfig.repoMetadataVersion) {
@@ -194,7 +194,7 @@ export class FileManagementService {
             await this.resetIndexes(fs, repoDir, auth.branchName, fetchHead);
           }
         })(),
-        new Promise((resolve, reject) => {
+        new Promise((_resolve, reject) => {
           setTimeout(() => {
             const err = new Error('Pull takes too long, will switch to clone again');
             err.name = 'PullTimeoutError';
@@ -429,7 +429,7 @@ export class FileManagementService {
       file.originalConfig = this.utilService.parseYamlConfig(object.toString());
     }
 
-    if (await fs.exists(pathFinder.draftFullFilePath)) {
+    if (await fs.pathExists(pathFinder.draftFullFilePath)) {
       const content = await fs.readFile(pathFinder.draftFullFilePath);
       file.draftConfig = this.utilService.parseYamlConfig(content.toString());
     }
@@ -499,7 +499,7 @@ export class FileManagementService {
 
     if (!file.modified) {
       // Not modified, don't need draft file
-      const draftFileExists = await fs.exists(pathFinder.draftFullFilePath);
+      const draftFileExists = await fs.pathExists(pathFinder.draftFullFilePath);
       if (draftFileExists) {
         console.warn(`Draft file '${file.applicationName}/${file.fileName}' found to have same content as repo, will be deleted`);
         await fs.remove(pathFinder.draftFullFilePath);
@@ -559,7 +559,7 @@ export class FileManagementService {
     }
 
     // Also delete draft file if any
-    if (await fs.exists(pathFinder.draftFullFilePath)) {
+    if (await fs.pathExists(pathFinder.draftFullFilePath)) {
       await fs.remove(pathFinder.draftFullFilePath);
     }
     // Also delete commit base SHA if any
@@ -698,7 +698,7 @@ export class FileManagementService {
     commitBaseSHA = {};
     await Promise.all(configFiles.map(async (file) => {
       const pathFinder = new PathFinder(user, file);
-      if (await fs.exists(pathFinder.draftFullFilePath)) {
+      if (await fs.pathExists(pathFinder.draftFullFilePath)) {
         await fs.remove(pathFinder.draftFullFilePath);
       }
       file.modified = false;

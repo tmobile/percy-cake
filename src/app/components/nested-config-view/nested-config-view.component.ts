@@ -101,7 +101,7 @@ export class NestedConfigViewComponent implements OnChanges {
    * when condition in mat-nested-tree-node
    * which returns true if a node has children
    */
-  hasNestedChild = (n: number, node: TreeNode) => !node.isLeaf();
+  hasNestedChild = (_n: number, node: TreeNode) => !node.isLeaf();
 
   /**
    * prepare the dropdown options based node and mode

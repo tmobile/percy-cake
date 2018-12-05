@@ -22,7 +22,7 @@ export class HighlightDirective extends Highlight {
 
       const spans = $('span.hljs-string');
 
-      spans.each((idx, span) => {
+      spans.each((_idx, span) => {
         // Check it really repsents a string value
         if (!span.prev || !span.prev.prev || !span.prev.prev.firstChild || span.prev.prev.firstChild.data !== '!!str') {
           return;

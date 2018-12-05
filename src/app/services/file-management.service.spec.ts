@@ -157,7 +157,7 @@ describe('FileManagementService', () => {
 
     // Draft folder should be created
     const draftFolder = path.resolve(percyConfig.draftFolder, repoFolder, percyConfig.yamlAppsFolder);
-    expect(await fs.exists(draftFolder)).toBeTruthy();
+    expect(await fs.pathExists(draftFolder)).toBeTruthy();
 
     // User name should be added to type ahead
     expect(await maintenanceService.getUserTypeAhead(TestUser.username[0])).toEqual([TestUser.username]);
@@ -233,7 +233,7 @@ describe('FileManagementService', () => {
     expect(resolveRefStub.calls.count()).toEqual(2);
 
     // Repo files should be cleaned
-    expect(await fs.exists(dir + '/test.txt')).toBeFalsy();
+    expect(await fs.pathExists(dir + '/test.txt')).toBeFalsy();
 
     // Head SHA ref should be same as remotes SHA
     assertHeadRef(commitOid2);
@@ -249,7 +249,7 @@ describe('FileManagementService', () => {
 
     // Draft folder should be created
     const draftFolder = path.resolve(percyConfig.draftFolder, repoFolder, percyConfig.yamlAppsFolder);
-    expect(await fs.exists(draftFolder)).toBeTruthy();
+    expect(await fs.pathExists(draftFolder)).toBeTruthy();
 
     // User name should be added to type ahead
     expect(await maintenanceService.getUserTypeAhead(TestUser.username[0])).toEqual([TestUser.username]);
@@ -498,7 +498,7 @@ describe('FileManagementService', () => {
     expect(result).toEqual({ ...file, modified: false, originalConfig, draftConfig: undefined });
 
     // Draft file should be deleted
-    expect(await fs.exists(pathFinder.draftFullFilePath)).toBeFalsy();
+    expect(await fs.pathExists(pathFinder.draftFullFilePath)).toBeFalsy();
 
     // Commit base SHA should be cleared
     expect(principal.repoMetadata.commitBaseSHA).toEqual({});
@@ -580,7 +580,7 @@ describe('FileManagementService', () => {
     await fileService.saveDraft(principal, file);
 
     // Draft file should be deleted
-    expect(await fs.exists(pathFinder.draftFullFilePath)).toBeFalsy();
+    expect(await fs.pathExists(pathFinder.draftFullFilePath)).toBeFalsy();
 
     // Commit base SHA should be cleared
     expect(principal.repoMetadata.commitBaseSHA).toEqual({});
@@ -610,7 +610,7 @@ describe('FileManagementService', () => {
     expect(removeStub.calls.count()).toEqual(0);
 
     // Draft file should be deleted
-    expect(await fs.exists(pathFinder.draftFullFilePath)).toBeFalsy();
+    expect(await fs.pathExists(pathFinder.draftFullFilePath)).toBeFalsy();
   });
 
   it('should delete both draft and original file successfully', async () => {
@@ -645,7 +645,7 @@ describe('FileManagementService', () => {
     assertRemoteRef(commitOid2);
 
     // Draft file should be deleted
-    expect(await fs.exists(pathFinder.draftFullFilePath)).toBeFalsy();
+    expect(await fs.pathExists(pathFinder.draftFullFilePath)).toBeFalsy();
 
     // Commit base SHA should be cleared
     expect(principal.repoMetadata.commitBaseSHA).toEqual({});
@@ -720,7 +720,7 @@ describe('FileManagementService', () => {
       assertRemoteRef(commitOid1);
 
       // Draft file should still exists
-      expect(await fs.exists(pathFinder.draftFullFilePath)).toBeTruthy();
+      expect(await fs.pathExists(pathFinder.draftFullFilePath)).toBeTruthy();
 
       // Commit base SHA should not be cleared
       expect(principal.repoMetadata.commitBaseSHA).toEqual({ [pathFinder.repoFilePath]: file.oid });
@@ -778,7 +778,7 @@ describe('FileManagementService', () => {
     expect(await fs.readdir(pathFinder1.repoDir)).toEqual(['.git']);
 
     // Draft file should be deleted
-    expect(await fs.exists(pathFinder2.draftFullFilePath)).toBeFalsy();
+    expect(await fs.pathExists(pathFinder2.draftFullFilePath)).toBeFalsy();
 
     // Commit base SHA should be cleared
     expect(principal.repoMetadata.commitBaseSHA).toEqual({});
@@ -837,7 +837,7 @@ describe('FileManagementService', () => {
     expect(await fs.readdir(pathFinder1.repoDir)).toEqual(['.git']);
 
     // Draft file should be deleted
-    expect(await fs.exists(pathFinder2.draftFullFilePath)).toBeFalsy();
+    expect(await fs.pathExists(pathFinder2.draftFullFilePath)).toBeFalsy();
 
     // Commit base SHA should be cleared
     expect(principal.repoMetadata.commitBaseSHA).toEqual({});
@@ -904,7 +904,7 @@ describe('FileManagementService', () => {
       expect(await fs.readdir(pathFinder1.repoDir)).toEqual(['.git']);
 
       // Draft file should not be deleted
-      expect(await fs.exists(pathFinder2.draftFullFilePath)).toBeTruthy();
+      expect(await fs.pathExists(pathFinder2.draftFullFilePath)).toBeTruthy();
 
       // Commit base SHA should be updated
       expect(principal.repoMetadata.commitBaseSHA).toEqual({ [pathFinder1.repoFilePath]: file1.oid });
@@ -961,7 +961,7 @@ describe('FileManagementService', () => {
       expect(await fs.readdir(pathFinder1.repoDir)).toEqual(['.git']);
 
       // Draft file should still exists
-      expect(await fs.exists(pathFinder2.draftFullFilePath)).toBeTruthy();
+      expect(await fs.pathExists(pathFinder2.draftFullFilePath)).toBeTruthy();
 
       // Commit base SHA should not be cleared
       expect(principal.repoMetadata.commitBaseSHA).toEqual({ [pathFinder1.repoFilePath]: file1.oid });
@@ -1028,7 +1028,7 @@ describe('FileManagementService', () => {
     expect(await fs.readdir(pathFinder2.repoDir)).toEqual(['.git']);
 
     // Draft file should be deleted
-    expect(await fs.exists(pathFinder2.draftFullFilePath)).toBeFalsy();
+    expect(await fs.pathExists(pathFinder2.draftFullFilePath)).toBeFalsy();
 
     // Commit base SHA should be cleared
     expect(principal.repoMetadata.commitBaseSHA).toEqual({});
@@ -1096,7 +1096,7 @@ describe('FileManagementService', () => {
     expect(await fs.readdir(pathFinder2.repoDir)).toEqual(['.git']);
 
     // Draft file should be deleted
-    expect(await fs.exists(pathFinder2.draftFullFilePath)).toBeFalsy();
+    expect(await fs.pathExists(pathFinder2.draftFullFilePath)).toBeFalsy();
 
     // Commit base SHA should be cleared
     expect(principal.repoMetadata.commitBaseSHA).toEqual({});

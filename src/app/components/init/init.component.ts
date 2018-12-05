@@ -8,7 +8,6 @@ import * as _ from 'lodash';
 import { percyConfig } from 'config';
 import { UtilService } from 'services/util.service';
 import { MaintenanceService } from 'services/maintenance.service';
-import { FileManagementService } from 'services/file-management.service';
 import { User } from 'models/auth';
 import { Initialized } from 'store/actions/backend.actions';
 import { APIError } from 'store/actions/common.actions';
@@ -29,8 +28,7 @@ export class InitComponent implements OnInit {
   constructor(
     private store: Store<fromStore.AppState>,
     private utilService: UtilService,
-    private maintenanceService: MaintenanceService,
-    private fileManagementService: FileManagementService) {
+    private maintenanceService: MaintenanceService) {
   }
 
   /**
@@ -71,7 +69,7 @@ export class InitComponent implements OnInit {
 
     // Validate repo metadata
     const repoMetadataFile = this.utilService.getMetadataPath(user.repoFolder);
-    if (!await fs.exists(repoMetadataFile)) {
+    if (!await fs.pathExists(repoMetadataFile)) {
       throw boom.unauthorized('Repo metadata not found');
     }
 
