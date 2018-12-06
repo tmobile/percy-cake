@@ -327,22 +327,40 @@ describe('FileManagementService', () => {
   it('should get app environments successfully', async () => {
     const principal = { user: TestUser, repoMetadata: {} };
 
-    statusStub.and.returnValue('unmodified');
+    const appPercyConf = { key: 'value' };
 
     const config = new Configuration();
     config.environments.addChild(new TreeNode('dev'));
     config.environments.addChild(new TreeNode('qat'));
     config.environments.addChild(new TreeNode('prod'));
 
-    readObjectStub.and.returnValue({ object: utilService.convertTreeToYaml(config) });
+    statusStub.and.callFake((options) => {
+      if (options.filepath.indexOf('environments') > -1) {
+        return 'unmodified';
+      }
+      if (options.filepath.indexOf(percyConfig.yamlAppsFolder + '/app1/' + '.percyrc') > -1) {
+        return 'unmodified';
+      }
+      return 'absent';
+    });
+    readObjectStub.and.callFake((options) => {
+      if (options.filepath.indexOf('environments') > -1) {
+        return { object: utilService.convertTreeToYaml(config) };
+      }
+      if (options.filepath.indexOf(percyConfig.yamlAppsFolder + '/app1/' + '.percyrc') > -1) {
+        return { object: JSON.stringify(appPercyConf) };
+      }
+      return null;
+    });
 
     const envs = await fileService.getEnvironments(principal, 'app1');
 
-    expect(statusStub.calls.count()).toEqual(1);
-    expect(resolveRefStub.calls.count()).toEqual(1);
-    expect(readObjectStub.calls.count()).toEqual(1);
+    expect(statusStub.calls.count()).toEqual(4);
+    expect(resolveRefStub.calls.count()).toEqual(2);
+    expect(readObjectStub.calls.count()).toEqual(2);
 
     expect(envs.environments).toEqual(['dev', 'qat', 'prod']);
+    expect(envs.appPercyConfig).toEqual(appPercyConf);
   });
 
   it('should get an empty array when environments file does not exists', async () => {
@@ -352,7 +370,7 @@ describe('FileManagementService', () => {
 
     const envs = await fileService.getEnvironments(principal, 'app1');
 
-    expect(statusStub.calls.count()).toEqual(1);
+    expect(statusStub.calls.count()).toEqual(4);
     expect(resolveRefStub.calls.count()).toEqual(0);
     expect(readObjectStub.calls.count()).toEqual(0);
 

@@ -268,7 +268,6 @@ export class FileManagementService {
    * @returns app environments and percy config
    */
   async getEnvironments(principal: Principal, applicationName: string) {
-    const fs = await this.utilService.getBrowserFS();
     const file = {
       fileName: percyConfig.environmentsFile,
       applicationName
@@ -316,13 +315,11 @@ export class FileManagementService {
 
       if (status !== 'absent') {
         const commitOid = await this.getRemoteCommit(dir, user.branchName);
-        const { object } = await git.readObject(
-          { dir, oid: commitOid, filepath: _path, encoding: 'utf8' });
+        const { object } = await git.readObject({ dir, oid: commitOid, filepath: _path, encoding: 'utf8' });
         return JSON.parse(object.toString());
       }
       return {};
     };
-
 
     const result = await Promise.all([
       readPercyrc('.percyrc'),

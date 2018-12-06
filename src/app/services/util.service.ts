@@ -660,7 +660,7 @@ export class UtilService {
    * @param parentSpan the parent span node contains the text
    * @returns span element with variable highlighted, or given parent span if there is no variable found
    */
-  highlightVariable(text: string, appPercyConfig?, parentSpan?: Cheerio) {
+  highlightVariable(text: string, appPercyConfig: any = {}, parentSpan?: Cheerio) {
     const prefix = _.defaultTo(appPercyConfig.variablePrefix, percyConfig.variableSubstitutePrefix);
 
     // Find out the variable token, wrap it in '<span class="yaml-var">${tokenName}</span>'
