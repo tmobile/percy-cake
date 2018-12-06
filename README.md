@@ -1,10 +1,10 @@
-# Percy YAML Editor
+# Percival Editor
 
 ## Overview
 
 "Configuration as code" is a technique to store environmental variables, feature flags, and other configuration items in an SCM the same way the code is stored. When the code is deployed, the CI process generates the specific configuration for the proper environment from the config SCM. Then the CD process deploys it to the appropriate hosts alongside the new code. The significant advantage of this approach is that configuration changes are tracked over time which is critical to support.
 
-Percy YAML Editor is a configuration tool that allows developers and DevOps a standard and hierarchical approach and intuitive form like User Interface for managing and maintaining complex configuration environments. The configuration files created by this tool will be used in DevOps pipeline to generate final configuration for deployment to various environments.
+Percival Editor is a configuration tool that allows developers and DevOps a standard and hierarchical approach and intuitive form like User Interface for managing and maintaining complex configuration environments. The configuration files created by this tool will be used in DevOps pipeline to generate final configuration for deployment to various environments.
 
 The editor allows the user to manage (list, create, edit or delete) YAML configuration files from a git repository in the browser directly. 
 and it's a pure static web page, that requires no back-end. But a proxy maybe needed for it to access the git repository successfully.
