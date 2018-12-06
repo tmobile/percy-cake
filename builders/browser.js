@@ -7,10 +7,7 @@ class CustomWebpackBrowserBuilder extends BrowserBuilder {
     super(context);
   }
 
-  buildWebpackConfig(root,
-    projectRoot,
-    host,
-    options) {
+  buildWebpackConfig(root, projectRoot, host, options) {
     const browserWebpackConfig = super.buildWebpackConfig(root, projectRoot, host, options);
     return mergeWebpack(root, browserWebpackConfig, options);
   }

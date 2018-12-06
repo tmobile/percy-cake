@@ -1,5 +1,5 @@
 import { TestUser, utilService } from 'test/test-helper';
-import { FSExtra } from './util.service';
+import { FS } from './util.service';
 
 import * as path from 'path';
 
@@ -10,7 +10,7 @@ describe('MaintenanceService', () => {
   const loggedInUsersMetaFile = path.resolve(percyConfig.metaFolder, percyConfig.loggedInUsersMetaFile);
   const sessionsMetaFile = path.resolve(percyConfig.metaFolder, 'user-session.json');
 
-  let fs: FSExtra;
+  let fs: FS;
   beforeAll(async () => {
     fs = await utilService.getBrowserFS();
   });

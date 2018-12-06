@@ -2,7 +2,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
 import { HIGHLIGHT_OPTIONS } from 'ngx-highlightjs';
-import yaml from 'highlight.js/lib/languages/yaml';
+import * as yaml from 'highlight.js/lib/languages/yaml';
 
 // angular material components
 import { MaterialComponentsModule } from 'material-components/material-components.module';

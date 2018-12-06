@@ -6,11 +6,6 @@
       "schema": "../node_modules/@angular-devkit/build-angular/src/browser/schema.json",
       "description": "Build browser app extended with custom webpack config"
     },
-    "server": {
-      "class": "./server",
-      "schema": "../node_modules/@angular-devkit/build-angular/src/server/schema.json",
-      "description": "Build server app extended with custom webpack config"
-    },
     "karma": {
       "class": "./karma",
       "schema": "../node_modules/@angular-devkit/build-angular/src/karma/schema.json",

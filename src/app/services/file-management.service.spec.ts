@@ -8,7 +8,7 @@ import { Configuration } from 'models/config-file';
 import { TreeNode } from 'models/tree-node';
 import { MaintenanceService } from './maintenance.service';
 import { FileManagementService, PathFinder } from './file-management.service';
-import { git, FSExtra } from './util.service';
+import { git, FS } from './util.service';
 
 describe('FileManagementService', () => {
 
@@ -72,7 +72,7 @@ describe('FileManagementService', () => {
     }
   ];
 
-  let fs: FSExtra;
+  let fs: FS;
   let fileService: FileManagementService;
 
   let cloneStub: jasmine.Spy;

@@ -45,7 +45,7 @@
         <!-- if node is selected to view detail -->
         <div class="section-heading" *ngIf="selectedNode">
             <h3>{{selectedNode.getPathsString()}}</h3>
-            <button mat-flat-button  *ngIf="!showAsCode" class="btn-submit" (click)="openEditPropertyDialog(selectedNode)">
+            <button mat-flat-button color="primary" *ngIf="!showAsCode" class="btn-submit" (click)="openEditPropertyDialog(selectedNode)">
               Edit
             </button>
         </div>

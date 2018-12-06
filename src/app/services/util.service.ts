@@ -1,16 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import * as fs from 'fs-extra';
 import * as jsYaml from 'js-yaml';
 import * as yamlJS from 'yaml-js';
 import * as aesjs from 'aes-js';
 import * as pbkdf2 from 'pbkdf2';
 import * as path from 'path';
 import * as boom from 'boom';
-import * as BrowserFS from 'browserfs';
-import * as Git from 'isomorphic-git';
-import * as legacy from 'graceful-fs/legacy-streams';
-import * as FsExtra from 'fs-extra/index';
-import * as universalify from 'universalify';
 import * as cheerio from 'cheerio';
 import * as _ from 'lodash';
 
@@ -19,64 +15,16 @@ import { Configuration } from 'models/config-file';
 import { PROPERTY_VALUE_TYPES, percyConfig } from 'config';
 import { Authenticate } from 'models/auth';
 
-export const git = { ...Git };
-export type FSExtra = typeof FsExtra;
+import * as filesystem from 'filesystem';
 
-// BrowserFS miss ReadStream/WriteStream, patch them
-const bfs = BrowserFS.BFSRequire('fs');
-const streams = legacy(bfs);
-bfs['ReadStream'] = streams.ReadStream;
-bfs['WriteStream'] = streams.WriteStream;
-
-// fsExtra.pathExists relies on "access" which is not in BrowserFS
-const pathExists = require('fs-extra/lib/path-exists');
-pathExists.pathExists = universalify.fromCallback((_path, cb) => {
-  bfs.exists(_path, (exists) => cb(null, exists));
-});
-
-const fsExtra = require('fs-extra');
-// For readFile/writeFile/appendFile, fs-extra has problem with BrowserFS
-// when passing null options
-// (Here we don't care callback because we'll always use promise)
-const fs$readFile = fsExtra.readFile;
-fsExtra.readFile = function (_path, options) {
-  return fs$readFile(_path, options || {});
-};
-
-const fs$writeFile = fsExtra.writeFile;
-fsExtra.writeFile = function (_path, data, options) {
-  return fs$writeFile(_path, data, options || {});
-};
-
-const fs$appendFile = fsExtra.appendFile;
-fsExtra.appendFile = function (_path, data, options) {
-  return fs$appendFile(_path, data, options || {});
-};
-
-// BrowserFS synchronous file system (like InMemory) has issue
-// to bypass zone.js promise handling
-const patchSynchronousFS = (synFileSystem, func) => {
-  const existFunc = synFileSystem[func];
-
-  synFileSystem[func] = (...args) => {
-    const callback = args[args.length - 1];
-
-    args[args.length - 1] = (error, result) => {
-      // Use setImmediate to join the zone.js promise
-      setImmediate(() => callback(error, result));
-    };
-
-    existFunc.apply(synFileSystem, args);
-  };
-};
+export const git = filesystem.git;
+export type FS = typeof fs;
 
 /**
  * This service provides the utility methods
  */
 @Injectable({ providedIn: 'root' })
 export class UtilService {
-
-  private browserFSInitialized = false;
 
   // mapping of type from YAML to JSON
   private typeMap = {
@@ -116,51 +64,22 @@ export class UtilService {
   /**
    * Get browser filesytem.
    */
-  async getBrowserFS(): Promise<FSExtra> {
+  async getBrowserFS() {
 
-    if (this.browserFSInitialized) {
-      return fsExtra;
+    if (filesystem.initialized()) {
+      return fs;
     }
 
     await this.initConfig();
 
-    await new Promise<void>((resolve, reject) => {
+    await filesystem.initialize();
 
-      BrowserFS.configure(
-        {
-          fs: 'AsyncMirror',
-          options: {
-            sync: { fs: 'InMemory' },
-            async: { fs: 'IndexedDB', options: { storeName: percyConfig.storeName } }
-          },
-        },
-        async function (err) {
-          if (err) {
-            console.error(err);
-            return reject(err);
-          }
+    await fs.ensureDir(percyConfig.reposFolder);
+    await fs.ensureDir(percyConfig.draftFolder);
+    await fs.ensureDir(percyConfig.metaFolder);
 
-          // Root FS of AsyncMirror is a synchronous InMemory FS, patch it
-          const rootFS = bfs.getRootFS();
-          const methods = ['rename', 'stat', 'exists', 'open', 'unlink', 'rmdir', 'mkdir', 'readdir'];
-          methods.forEach(m => {
-            patchSynchronousFS(rootFS, m);
-          });
-
-          git.plugins.set('fs', bfs);
-
-          await fsExtra.ensureDir(percyConfig.reposFolder);
-          await fsExtra.ensureDir(percyConfig.draftFolder);
-          await fsExtra.ensureDir(percyConfig.metaFolder);
-
-          console.info('Browser Git initialized'); // tslint:disable-line
-          resolve();
-        }
-      );
-    });
-
-    this.browserFSInitialized = true;
-    return fsExtra;
+    console.info('Browser Git initialized'); // tslint:disable-line
+    return fs;
   }
 
   /**

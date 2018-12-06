@@ -6,7 +6,7 @@ import { Observable, isObservable, BehaviorSubject, Subscription } from 'rxjs';
 import { Store, StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
 import { HIGHLIGHT_OPTIONS } from 'ngx-highlightjs';
-import yaml from 'highlight.js/lib/languages/yaml';
+import * as yaml from 'highlight.js/lib/languages/yaml';
 import * as _ from 'lodash';
 
 import { TestBed } from '@angular/core/testing';

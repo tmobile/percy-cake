@@ -8,7 +8,7 @@ import * as _ from 'lodash';
 import { percyConfig } from 'config';
 import { User, Authenticate, Principal } from 'models/auth';
 import { ConfigFile } from 'models/config-file';
-import { UtilService, git, FSExtra } from './util.service';
+import { UtilService, git, FS } from './util.service';
 import { MaintenanceService } from './maintenance.service';
 
 
@@ -134,7 +134,7 @@ export class FileManagementService {
    * The repo will only contain the '.git' folder, nothing else.
    * The file content will directly be read from pack files in '.git', by using git.readObject.
    */
-  private async clone(auth: Authenticate, repoDir: string, fs: FSExtra) {
+  private async clone(auth: Authenticate, repoDir: string, fs: FS) {
 
     const branch = auth.branchName;
     await git.clone({
@@ -168,7 +168,7 @@ export class FileManagementService {
    *
    * Similar as clone, we never checkout, just fetch from remote repo, and call resetIndexes to keep things clean.
    */
-  async pull(auth: Authenticate, repoDir: string, fs: FSExtra) {
+  async pull(auth: Authenticate, repoDir: string, fs: FS) {
 
     const lastCommit = await this.getRemoteCommit(repoDir, auth.branchName);
     let fetchHead;
@@ -220,7 +220,7 @@ export class FileManagementService {
    * Set HEAD to given commit oid (if not present will use current remote commit oid),
    * and ensure Index status identical to HEAD status.
    */
-  private async resetIndexes(fs: FSExtra, dir: string, branch: string, oid?: string) {
+  private async resetIndexes(fs: FS, dir: string, branch: string, oid?: string) {
     oid = oid || await this.getRemoteCommit(dir, branch);
 
     // Save commit oid to HEAD
@@ -374,7 +374,7 @@ export class FileManagementService {
    * @param fs the FS
    * @param repoFolder the repo folder name
    */
-  private async findDraftFiles(fs: FSExtra, repoFolder: string) {
+  private async findDraftFiles(fs: FS, repoFolder: string) {
 
     const files: ConfigFile[] = [];
     const applications: string[] = [];
@@ -464,7 +464,7 @@ export class FileManagementService {
   /**
    * Save commit base SHA (which is file's oid).
    */
-  private async saveCommitBaseSHA(fs: FSExtra, repoMetadata, newBaseSHAs: { [filepath: string]: string }) {
+  private async saveCommitBaseSHA(fs: FS, repoMetadata, newBaseSHAs: { [filepath: string]: string }) {
     let anyChange = false;
     _.each(newBaseSHAs, (newBaseSHA, filepath) => {
       if (!newBaseSHA && repoMetadata.commitBaseSHA[filepath]) {
@@ -571,7 +571,7 @@ export class FileManagementService {
   /**
    * Do push. Will rollback to last commit if any error.
    */
-  private async doPush(fs: FSExtra, dir: string, user: User, lastCommit: string, message: string,
+  private async doPush(fs: FS, dir: string, user: User, lastCommit: string, message: string,
     commitAction: () => Promise<any>, forcePush = false) {
 
     try {
