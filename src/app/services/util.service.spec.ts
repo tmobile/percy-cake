@@ -3,9 +3,11 @@ import * as cheerio from 'cheerio';
 import { TreeNode } from 'models/tree-node';
 import { Configuration } from 'models/config-file';
 import { PROPERTY_VALUE_TYPES, percyConfig } from 'config';
-import { TestUser, utilService, getVariable } from 'test/test-helper';
+import { TestUser, utilService } from 'test/test-helper';
 
 import { git } from './util.service';
+
+const constructVar = utilService.constructVariable;
 
 describe('UtilService', () => {
 
@@ -219,9 +221,9 @@ environments: !!map  # specific environments can override the default values 1 p
     config.default.addChild(new TreeNode('key2', PROPERTY_VALUE_TYPES.NUMBER, 10, ['comment2']));
     config.default.addChild(new TreeNode('key3', PROPERTY_VALUE_TYPES.BOOLEAN, true));
     config.default.addChild(new TreeNode('var3', PROPERTY_VALUE_TYPES.STRING,
-      `${getVariable('var1')}/${getVariable('var2')}/${getVariable('key3')}`));
-    config.default.addChild(new TreeNode('var2', PROPERTY_VALUE_TYPES.STRING, `${getVariable('var1')}/${getVariable('key2')}`));
-    config.default.addChild(new TreeNode('var1', PROPERTY_VALUE_TYPES.STRING, getVariable('var3')));
+      `${constructVar('var1')}/${constructVar('var2')}/${constructVar('key3')}`));
+    config.default.addChild(new TreeNode('var2', PROPERTY_VALUE_TYPES.STRING, `${constructVar('var1')}/${constructVar('key2')}`));
+    config.default.addChild(new TreeNode('var1', PROPERTY_VALUE_TYPES.STRING, constructVar('var3')));
 
     config.environments.addChild(new TreeNode('dev'));
     try {
@@ -231,7 +233,7 @@ environments: !!map  # specific environments can override the default values 1 p
       expect(err.message.indexOf('Loop variable reference') > -1).toBeTruthy();
     }
 
-    config.default.findChild(['var1']).value = getVariable('var1');
+    config.default.findChild(['var1']).value = constructVar('var1');
     try {
       utilService.compileYAML('dev', config);
       fail('error expected');
@@ -246,9 +248,9 @@ environments: !!map  # specific environments can override the default values 1 p
     config.default.addChild(new TreeNode('key2', PROPERTY_VALUE_TYPES.NUMBER, 10, ['comment2']));
     config.default.addChild(new TreeNode('key3', PROPERTY_VALUE_TYPES.BOOLEAN, true));
     config.default.addChild(new TreeNode('var3', PROPERTY_VALUE_TYPES.STRING,
-      `${getVariable('var1')}/${getVariable('var2')}/${getVariable('key3')}`));
-    config.default.addChild(new TreeNode('var2', PROPERTY_VALUE_TYPES.STRING, `${getVariable('var1')}/${getVariable('key2')}`));
-    config.default.addChild(new TreeNode('var1', PROPERTY_VALUE_TYPES.STRING, getVariable('key1')));
+      `${constructVar('var1')}/${constructVar('var2')}/${constructVar('key3')}`));
+    config.default.addChild(new TreeNode('var2', PROPERTY_VALUE_TYPES.STRING, `${constructVar('var1')}/${constructVar('key2')}`));
+    config.default.addChild(new TreeNode('var1', PROPERTY_VALUE_TYPES.STRING, constructVar('key1')));
 
     config.default.addChild(new TreeNode('arr1', PROPERTY_VALUE_TYPES.STRING_ARRAY, null, ['arr1-comment']));
     config.default.findChild(['arr1']).addChild(new TreeNode('[0]', PROPERTY_VALUE_TYPES.STRING, 'value1'));
@@ -263,7 +265,7 @@ environments: !!map  # specific environments can override the default values 1 p
     config.default.findChild(['arr3']).addChild(new TreeNode('[1]', PROPERTY_VALUE_TYPES.BOOLEAN, false));
 
     config.default.addChild(new TreeNode('obj', PROPERTY_VALUE_TYPES.OBJECT, null, ['obj-comment']));
-    config.default.findChild(['obj']).addChild(new TreeNode('subkey', PROPERTY_VALUE_TYPES.STRING, getVariable('key1')));
+    config.default.findChild(['obj']).addChild(new TreeNode('subkey', PROPERTY_VALUE_TYPES.STRING, constructVar('key1')));
 
     config.environments.addChild(new TreeNode('dev'));
     config.environments.addChild(new TreeNode('qat'));
@@ -291,7 +293,7 @@ environments: !!map  # specific environments can override the default values 1 p
     config.environments.findChild(['prod']).addChild(
       new TreeNode('obj', PROPERTY_VALUE_TYPES.OBJECT, null, ['prod-obj-comment']));
     config.environments.findChild(['prod', 'obj']).addChild(
-      new TreeNode('subkey', PROPERTY_VALUE_TYPES.STRING, `${getVariable('key1')}/${getVariable('key3')}`));
+      new TreeNode('subkey', PROPERTY_VALUE_TYPES.STRING, `${constructVar('key1')}/${constructVar('key3')}`));
 
     expect(utilService.compileYAML('dev', config)).toEqual(
 `key1: !!str "dev-value"  # comment1
@@ -402,6 +404,6 @@ obj: !!map  # obj-comment
     span.append($('<span></span>').text(percyConfig.variableSubstitutePrefix));
     span.append($('<span class="yaml-var"></span>').text('name'));
     span.append($('<span></span>').text(percyConfig.variableSubstituteSuffix));
-    expect(utilService.highlightNodeVariable(new TreeNode('key', PROPERTY_VALUE_TYPES.STRING, getVariable('name')))).toEqual(span.html());
+    expect(utilService.highlightNodeVariable(new TreeNode('key', PROPERTY_VALUE_TYPES.STRING, constructVar('name')))).toEqual(span.html());
   });
 });

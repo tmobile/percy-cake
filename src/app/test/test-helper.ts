@@ -35,10 +35,6 @@ const percyTestConfig = require('../../percy.conf.test.json');
 // Inject test config
 _.assign(percyConfig, percyTestConfig);
 
-export function getVariable(key) {
-  return `${percyConfig.variableSubstitutePrefix}${key}${percyConfig.variableSubstituteSuffix}`;
-}
-
 const httpSpy = jasmine.createSpyObj('httpSpy', ['get']);
 httpSpy.get.and.returnValue(percyConfig);
 export const utilService = new UtilService(httpSpy);

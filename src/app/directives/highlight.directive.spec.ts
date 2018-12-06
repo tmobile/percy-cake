@@ -2,8 +2,10 @@ import { Component, Input } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import * as cheerio from 'cheerio';
 
-import { Setup, TestContext, getVariable } from 'test/test-helper';
+import { Setup, TestContext, utilService } from 'test/test-helper';
 import { percyConfig } from 'config';
+
+const constructVar = utilService.constructVariable;
 
 @Component({
   template: `<pre><code appHighlight [highlight]="previewCode" [languages]="['yaml']"></code></pre>`
@@ -26,9 +28,9 @@ describe('HighlightDirective', () => {
     ctx.component.previewCode = `
 default: !!map
   name: !!str "TestUser"
-  host: !!str "${getVariable('name')}/${getVariable('age')}/${getVariable('flag')}/_{host1}"
-  host1: !!str "${getVariable('host')}" #${getVariable('host')}
-  host2: !!str "${getVariable('name')}/${getVariable('age')}"
+  host: !!str "${constructVar('name')}/${constructVar('age')}/${constructVar('flag')}/_{host1}"
+  host1: !!str "${constructVar('host')}" #${constructVar('host')}
+  host2: !!str "${constructVar('name')}/${constructVar('age')}"
   api.port: !!int 8080
 `;
 

@@ -1,6 +1,6 @@
 import { convertToParamMap } from '@angular/router';
 
-import { Setup, assertDialogOpened, TestContext, getVariable } from 'test/test-helper';
+import { Setup, assertDialogOpened, TestContext, utilService } from 'test/test-helper';
 
 import { PROPERTY_VALUE_TYPES } from 'config';
 import { TreeNode } from 'models/tree-node';
@@ -210,7 +210,7 @@ describe('EditorComponent', () => {
     await initNewFileMode();
 
     const config = new Configuration();
-    config.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, getVariable('key1')));
+    config.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, utilService.constructVariable('key1')));
     config.environments.addChild(new TreeNode('dev'));
 
     ctx.component.onConfigChange(config);
@@ -268,7 +268,7 @@ describe('EditorComponent', () => {
     await initNewFileMode();
 
     const config = new Configuration();
-    config.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, getVariable('key1')));
+    config.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, utilService.constructVariable('key1')));
     config.environments.addChild(new TreeNode('dev'));
 
     ctx.component.onConfigChange(config);
@@ -427,7 +427,7 @@ describe('EditorComponent', () => {
     await initNewFileMode();
 
     const config = new Configuration();
-    config.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, getVariable('key1')));
+    config.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, utilService.constructVariable('key1')));
     config.environments.addChild(new TreeNode('dev'));
 
     ctx.component.onConfigChange(config);

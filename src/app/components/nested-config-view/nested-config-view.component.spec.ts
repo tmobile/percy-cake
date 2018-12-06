@@ -1,4 +1,4 @@
-import { Setup, assertDialogOpened, TestContext } from 'test/test-helper';
+import { Setup, assertDialogOpened, TestContext, utilService } from 'test/test-helper';
 
 import { NestedConfigViewComponent } from './nested-config-view.component';
 import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
@@ -295,6 +295,33 @@ describe('NestedConfigViewComponent', () => {
   });
 
   it('rename propery in default tree, correpsonding properties in environments tree should also be renamed', () => {
+
+    config.default.addChild(
+      new TreeNode('variable', PROPERTY_VALUE_TYPES.STRING, utilService.constructVariable('url')));
+    config.environments.findChild(['dev']).addChild(
+      new TreeNode('variable', PROPERTY_VALUE_TYPES.STRING, utilService.constructVariable('url')));
+
+    const node = config.default.findChild(['url']);
+    ctx.component.openEditPropertyDialog(node);
+
+    const newNode = new TreeNode('new url', PROPERTY_VALUE_TYPES.STRING, 'new value', ['new comment']);
+    ctx.component.saveAddEditProperty(newNode);
+
+    expect(node.key).toEqual(newNode.key);
+    expect(node.value).toEqual(newNode.value);
+    expect(node.valueType).toEqual(newNode.valueType);
+    expect(node.comment).toEqual(newNode.comment);
+
+    const defaultNode = config.default.findChild(['variable']);
+    expect(defaultNode.value).toEqual(utilService.constructVariable('new url'));
+
+    const envNode = config.environments.findChild(['dev', 'variable']);
+    expect(envNode.value).toEqual(utilService.constructVariable('new url'));
+
+    expect(ctx.observables.configurationChange.value).toEqual(config);
+  });
+
+  it('rename propery in default tree, referenced variable should also be renamed', () => {
 
     const node = config.default.findChild(['obj', 'host']);
     ctx.component.openEditPropertyDialog(node);

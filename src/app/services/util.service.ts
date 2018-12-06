@@ -416,7 +416,7 @@ export class UtilService {
    * @param text the text might contain reg exp to escape
    * @returns escaped text
    */
-  private escapeRegExp(text) {
+  escapeRegExp(text) {
     return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
   }
 
@@ -431,6 +431,19 @@ export class UtilService {
     const suffix = _.defaultTo(appPercyConfig.variableSuffix, percyConfig.variableSubstituteSuffix);
     const regexPattern = `${this.escapeRegExp(prefix)}(.+?)${this.escapeRegExp(suffix)}`;
     return new RegExp(regexPattern, 'g');
+  }
+
+  /**
+   * Construct variable reference.
+   *
+   * @param variable the variable name
+   * @param appPercyConfig the application's specific percy config
+   * @returns variable reference
+   */
+  constructVariable(variable: string, appPercyConfig: any = {}) {
+    const prefix = _.defaultTo(appPercyConfig.variablePrefix, percyConfig.variableSubstitutePrefix);
+    const suffix = _.defaultTo(appPercyConfig.variableSuffix, percyConfig.variableSubstituteSuffix);
+    return `${prefix}${variable}${suffix}`;
   }
 
   /**
@@ -522,9 +535,9 @@ export class UtilService {
 
   /**
    * Yaml config can contain variable reference.
-   * This method rescusively substitues the variable references.
+   * This method rescusively substitutes the variable references.
    *
-   * @param target the config to substitue
+   * @param target the config to substitute
    * @param tokens the tokens (which are top level properties of default config)
    * @param appPercyConfig the application's specific percy config
    * @param depth the depth of config

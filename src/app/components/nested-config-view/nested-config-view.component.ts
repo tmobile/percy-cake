@@ -46,7 +46,7 @@ export class NestedConfigViewComponent implements OnChanges {
    * @param dialog the material dialog instance
    * @param utilService the util service
    */
-  constructor(private dialog: MatDialog, public utilService: UtilService) {
+  constructor(private dialog: MatDialog, private utilService: UtilService) {
     const _getChildren = (node: TreeNode) => node.children;
     this.defaultTreeControl = new NestedTreeControl<TreeNode>(_getChildren);
     this.defaultDataSource = new MatTreeNestedDataSource();
@@ -219,6 +219,30 @@ export class NestedConfigViewComponent implements OnChanges {
   }
 
   /**
+   * When a property name changes, rename any referenced variable.
+   * @param node the TreeNode
+   * @param oldName old name of the property
+   * @param newName new name of the property
+   */
+  private renameReference(node: TreeNode, oldName: string, newName: string) {
+    if (node.isLeaf()) {
+      if (node.valueType !== PROPERTY_VALUE_TYPES.STRING) {
+        return;
+      }
+      const regExp = new RegExp(this.utilService.escapeRegExp(this.utilService.constructVariable(oldName)), 'g');
+      let regExpResult;
+      let retVal: string = node.value;
+      while (regExpResult = regExp.exec(_.defaultTo(node.value, ''))) {
+        const fullMatch = regExpResult[0];
+        retVal = retVal.replace(fullMatch, this.utilService.constructVariable(newName));
+      }
+      node.value = retVal;
+    } else {
+      _.each(node.children, child => this.renameReference(child, oldName, newName));
+    }
+  }
+
+  /**
    * Do save property
    * @param node the added/edited node
    */
@@ -242,6 +266,8 @@ export class NestedConfigViewComponent implements OnChanges {
           this.alignEnvironmentProperties(currentNode, envNode => {
             envNode.key = node.key;
           });
+          this.renameReference(this.defaultDataSource.data[0], currentNode.key, node.key);
+          this.renameReference(this.envDataSource.data[0], currentNode.key, node.key);
         }
       } else {
         // for environments tree, value types can not be changed
