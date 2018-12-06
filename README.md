@@ -125,7 +125,7 @@ If this web app is hosted in a different domain than the git server domain, a [C
 
 ## Known Issues
 
-The browser filesystem is built on top of IndexedDB, the performance and stablity is limited by IndexedDB and thus is not as good as a real filesystem.
+The browser filesystem is built on top of IndexedDB, the performance and stability is limited by IndexedDB and thus is not as good as a real filesystem.
 
 To relieve the impact, we have adopted several ways to reduce file I/O:
 

@@ -2,13 +2,15 @@
 
 .confirmation-dialog {
   width: auto;
-  min-width: 300px;
-  max-width: 500px;
+  min-width: 250px;
+  max-width: 460px;
   pre {
     white-space: pre-wrap;
+    font-family: Roboto;
+    line-height: 20px;
   }
   .buttons-row {
-    padding-top: 30px;
+    padding-top: 20px;
     display: flex;
     justify-content: center;
 

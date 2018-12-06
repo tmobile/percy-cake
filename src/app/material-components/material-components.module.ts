@@ -79,7 +79,7 @@ import {
     {
       provide: MAT_DIALOG_SCROLL_STRATEGY,
       deps: [Overlay],
-      useFactory: (overlay: Overlay) => () => overlay.scrollStrategies.noop()
+      useFactory: (overlay: Overlay) => () => overlay.scrollStrategies.block()
     }
   ]
 })

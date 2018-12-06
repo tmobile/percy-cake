@@ -1,15 +1,22 @@
 @import "variables";
 .alert-dialog {
-    width: 400px;
+    width: auto;
+    min-width: 300px;
+    max-width: 460px;
     pre {
       white-space: pre-wrap;
+      font-family: Roboto;
+      line-height: 20px;
     }
     .button-row {
-        padding-top: 30px;
+        padding-top: 20px;
         display: flex;
         justify-content: center;
         >* {
             margin: 0 8px;
+        }
+        button {
+          text-transform: uppercase;
         }
     }
 }

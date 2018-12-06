@@ -16,6 +16,7 @@ import { PROPERTY_VALUE_TYPES, percyConfig } from 'config';
 import { Authenticate } from 'models/auth';
 
 import * as filesystem from 'filesystem';
+import { AbstractControl } from '@angular/forms';
 
 export const git = filesystem.git;
 export type FS = typeof fs;
@@ -728,4 +729,11 @@ export class UtilService {
   getMetadataPath(repoFolder: string) {
     return path.resolve(percyConfig.metaFolder, `${repoFolder}.meta`);
   }
+}
+
+export function NotEmpty(control: AbstractControl) {
+  if (!_.trim(control.value)) {
+    return { required: true };
+  }
+  return null;
 }

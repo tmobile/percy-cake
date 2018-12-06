@@ -213,7 +213,7 @@ export class BackendEffects {
         const result = [];
         result.push(new DeleteFileSuccess(file)),
           result.push(new Alert({
-            message: `${file.applicationName} / ${file.fileName} deleted successfully.`,
+            message: `${file.applicationName}/${file.fileName} is deleted successfully.`,
             alertType: 'delete'
           }));
 

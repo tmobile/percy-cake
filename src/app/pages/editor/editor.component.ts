@@ -18,7 +18,7 @@ import { ConfigProperty } from 'models/config-property';
 import { NestedConfigViewComponent } from 'components/nested-config-view/nested-config-view.component';
 import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
 import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.component';
-import { UtilService } from 'services/util.service';
+import { UtilService, NotEmpty } from 'services/util.service';
 import { ConfigFile, Configuration } from 'models/config-file';
 
 /*
@@ -32,7 +32,7 @@ import { ConfigFile, Configuration } from 'models/config-file';
 })
 export class EditorComponent implements OnInit, AfterViewInit {
   appName = '';
-  filename = new FormControl('', [Validators.required]);
+  filename = new FormControl('', [NotEmpty]);
 
   environments = this.store.pipe(select(appStore.getEnvironments));
   configFile = this.store.pipe(select(appStore.getConfigFile));
@@ -125,7 +125,7 @@ export class EditorComponent implements OnInit, AfterViewInit {
   fileNameChange() {
     if (!this.editMode) {
       this.store.pipe(select(appStore.backendState), take(1), tap((backendState) => {
-        if (!this.filename.value) {
+        if (this.filename.invalid) {
           return;
         }
 
@@ -140,7 +140,8 @@ export class EditorComponent implements OnInit, AfterViewInit {
   }
 
   private getFileName() {
-    return this.filename.value.match(/\.[y|Y][a|A]?[m|M][l|L]$/) ? this.filename.value : this.filename.value + '.yaml';
+    const name = _.trim(this.filename.value);
+    return name.match(/\.[y|Y][a|A]?[m|M][l|L]$/) ? name : name + '.yaml';
   }
 
   // checks if component can be deactivated

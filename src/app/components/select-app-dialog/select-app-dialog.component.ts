@@ -1,10 +1,12 @@
 import { Component, Inject, OnInit, ViewChild } from '@angular/core';
-import { FormControl, Validators } from '@angular/forms';
+import { FormControl } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatAutocompleteTrigger } from '@angular/material';
 import { BehaviorSubject } from 'rxjs';
 import { startWith, debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 
 import * as _ from 'lodash';
+
+import { NotEmpty } from 'services/util.service';
 
 /**
  * The select app dialog component
@@ -16,7 +18,7 @@ import * as _ from 'lodash';
 })
 export class SelectAppDialogComponent implements OnInit {
 
-  appname = new FormControl('', [Validators.required]);
+  appname = new FormControl('', [NotEmpty]);
   createEnv = new FormControl();
 
   filteredApps = new BehaviorSubject<string[]>([]);

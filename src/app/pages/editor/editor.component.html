@@ -13,7 +13,7 @@
         <!-- filename input -->
         <mat-form-field class="filename" [floatLabel]="'always'">
           <label>{{appName}}/</label>
-          <input type="text" #fileNameInput="matInput" matInput placeholder="Filename" [formControl]="filename" (input)="fileNameChange()"/>
+          <input type="text" #fileNameInput="matInput" matInput maxlength="30" placeholder="Filename" [formControl]="filename" (input)="fileNameChange()"/>
           <mat-error *ngIf="filename.hasError('required')">*Required</mat-error>
           <mat-error *ngIf="filename.hasError('alreadyExists')">*File name arealdy exists</mat-error>
         </mat-form-field>

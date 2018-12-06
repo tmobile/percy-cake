@@ -6,7 +6,7 @@
   <form class="property-form" *ngSwitchCase="'form'"
     (ngSubmit)="onSubmit()">
     <mat-form-field class="form-field">
-      <input *ngIf="data.node.isDefaultNode() || isDefineEnv()" type="text" matInput placeholder="Name" [formControl]="key" />
+      <input *ngIf="data.node.isDefaultNode() || isDefineEnv()" maxlength="30" type="text" matInput placeholder="Name" [formControl]="key" />
 
       <mat-select *ngIf="!data.node.isDefaultNode() && !isDefineEnv()" placeholder="Name" [formControl]="key"
         (selectionChange)="setValueTypeOption($event.value)">
@@ -14,7 +14,7 @@
           {{option.key}}
         </mat-option>
       </mat-select>
-      <mat-error>Required field</mat-error>
+      <mat-error>*Required</mat-error>
     </mat-form-field>
 
     <mat-form-field class="form-field">
@@ -27,7 +27,7 @@
 
       <input *ngIf="valueTypeDisabled()" type="text" matInput placeholder="Value Type"
         [formControl]="valueType" />
-      <mat-error>Required field</mat-error>
+      <mat-error>*Required</mat-error>
     </mat-form-field>
 
     <ng-container *ngIf="valueType.value === 'string'" [ngSwitch]="showInherits()">
@@ -41,7 +41,7 @@
               {{option}}
             </mat-option>
           </mat-select>
-          <mat-error>Required field</mat-error>
+          <mat-error>*Required</mat-error>
         </mat-form-field>
     </ng-container>
 
@@ -56,7 +56,7 @@
         <mat-radio-button color="primary" value="true">True</mat-radio-button>
         <mat-radio-button color="primary" value="false">False</mat-radio-button>
       </mat-radio-group>
-      <mat-error *ngIf="value.invalid && formDirty">Required field</mat-error>
+      <mat-error *ngIf="value.invalid && formDirty">*Required</mat-error>
     </div>
 
     <mat-form-field class="form-field">

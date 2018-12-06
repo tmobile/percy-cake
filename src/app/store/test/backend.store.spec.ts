@@ -341,7 +341,7 @@ describe('Backend store action/effect/reducer', () => {
 
     assertDialogOpened(AlertDialogComponent, {
       data: {
-        message: `${file1.applicationName} / ${file1.fileName} deleted successfully.`,
+        message: `${file1.applicationName}/${file1.fileName} is deleted successfully.`,
         alertType: 'delete'
       }
     });
@@ -363,7 +363,7 @@ describe('Backend store action/effect/reducer', () => {
 
     assertDialogOpened(AlertDialogComponent, {
       data: {
-        message: `${file1.applicationName} / ${file1.fileName} deleted successfully.`,
+        message: `${file1.applicationName}/${file1.fileName} is deleted successfully.`,
         alertType: 'delete'
       }
     });

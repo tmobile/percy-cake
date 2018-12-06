@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter, OnChanges } from '@angular/core';
-import { FormControl, Validators } from '@angular/forms';
+import { FormControl } from '@angular/forms';
 import { MatDialog } from '@angular/material';
 import { Store } from '@ngrx/store';
 import * as _ from 'lodash';
@@ -10,6 +10,7 @@ import { TreeNode } from 'models/tree-node';
 import { ConfigProperty } from 'models/config-property';
 import { Alert } from 'store/actions/common.actions';
 import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
+import { NotEmpty } from 'services/util.service';
 
 /*
   add or edit new property in the environment configuration
@@ -41,9 +42,9 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     private store: Store<appStore.AppState>,
     private dialog: MatDialog) {
 
-    this.key = new FormControl('', [Validators.required]);
-    this.valueType = new FormControl('', [Validators.required]);
-    this.value = new FormControl('', [Validators.required]);
+    this.key = new FormControl('', [NotEmpty]);
+    this.valueType = new FormControl('', [NotEmpty]);
+    this.value = new FormControl('', [NotEmpty]);
     this.comment = new FormControl('');
   }
 

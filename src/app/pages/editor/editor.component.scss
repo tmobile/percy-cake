@@ -10,12 +10,13 @@
         font-size: 13px;
     }
     .filename {
-        label {
-          color: grey;
-        }
-        input {
-          width: auto;
-        }
+      label {
+        color: grey;
+      }
+      input {
+        width: auto;
+        flex: 1;
+      }
     }
     .col-container {
         display: flex;

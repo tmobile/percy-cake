@@ -93,10 +93,15 @@ a {
   white-space: nowrap;
   word-wrap: normal;
   direction: ltr;
-  -webkit-font-feature-settings: 'liga';
+  font-feature-settings: 'liga';
   -webkit-font-smoothing: antialiased;
 }
-
+.mat-form-field-infix {
+  display: flex !important;
+}
+code.hljs {
+  line-height: 18px;
+}
 .yaml-var {
   font-weight: bold;
   color: chocolate;

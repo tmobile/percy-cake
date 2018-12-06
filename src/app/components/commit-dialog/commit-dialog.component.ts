@@ -1,7 +1,10 @@
 import { Component } from '@angular/core';
 import { MatDialogRef } from '@angular/material';
-import { FormControl, Validators } from '@angular/forms';
+import { FormControl } from '@angular/forms';
 import * as _ from 'lodash';
+
+import { NotEmpty } from 'services/util.service';
+
 /**
  * The commit dialog component
  */
@@ -12,7 +15,7 @@ import * as _ from 'lodash';
 })
 export class CommitDialogComponent {
 
-  comment: FormControl = new FormControl('', [Validators.required]);
+  comment: FormControl = new FormControl('', [NotEmpty]);
 
   /**
    * initializes the component
@@ -24,10 +27,9 @@ export class CommitDialogComponent {
    * handles the commit action
    */
   commit() {
-    const message = _.trim(this.comment.value);
-    if (!message) {
+    if (!this.comment.valid) {
       return;
     }
-    this.dialogRef.close(message);
+    this.dialogRef.close(_.trim(this.comment.value));
   }
 }

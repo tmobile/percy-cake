@@ -15,6 +15,7 @@ import { percyConfig } from 'config';
 import * as appStore from 'store';
 import * as AuthActions from 'store/actions/auth.actions';
 import { MaintenanceService } from 'services/maintenance.service';
+import { NotEmpty } from 'services/util.service';
 
 const urlFormat = /^(http[s]?:\/\/){0,1}(www\.){0,1}[a-zA-Z0-9\.\-]+\.[a-zA-Z]{2,5}[\.]{0,1}/;
 
@@ -28,10 +29,10 @@ const urlFormat = /^(http[s]?:\/\/){0,1}(www\.){0,1}[a-zA-Z0-9\.\-]+\.[a-zA-Z]{2
 })
 export class LoginComponent implements OnInit {
 
-  username = new FormControl('', [Validators.required]);
-  password = new FormControl('', [Validators.required]);
-  repositoryURL = new FormControl('', [Validators.required, Validators.pattern(urlFormat)]);
-  branchName = new FormControl('', [Validators.required]);
+  username = new FormControl('', [NotEmpty]);
+  password = new FormControl('', [NotEmpty]);
+  repositoryURL = new FormControl('', [NotEmpty, Validators.pattern(urlFormat)]);
+  branchName = new FormControl('', [NotEmpty]);
   loginError: string = null;
   formProcessing = this.store.pipe(select(appStore.getFormProcessing));
 
@@ -107,6 +108,9 @@ export class LoginComponent implements OnInit {
     })).subscribe();
   }
 
+  // private trimValue(field) {
+  //   field
+  // }
   /*
    * login if the form is valid
    */
