@@ -59,67 +59,11 @@ describe('EditorComponent', () => {
 
     expect(ctx.component.filename.disabled).toBeTruthy();
 
-    expect(dispatchSpy.calls.count()).toEqual(2);
+    expect(dispatchSpy.calls.count()).toEqual(1);
 
     const pageLoad = dispatchSpy.calls.argsFor(0)[0].payload;
-    expect(pageLoad).toEqual({ applicationName: file.applicationName, editMode: true });
+    expect(pageLoad).toEqual({ fileName: file.fileName, applicationName: file.applicationName, editMode: true });
 
-    const getFileContentPayload = dispatchSpy.calls.argsFor(1)[0].payload;
-    expect(getFileContentPayload).toEqual({ fileName: file.fileName, applicationName: file.applicationName });
-  });
-
-  it('should init EditorComponent with edit file mode, file exists in backend state', () => {
-    ctx.store.next(new LoadFilesSuccess({ files: [file], applications }));
-    ctx.activatedRouteStub.snapshot = {
-      data: {
-        editMode: true,
-        envFileMode: false
-      },
-      paramMap: convertToParamMap({
-        appName: file.applicationName,
-        fileName: file.fileName
-      })
-    };
-    ctx.detectChanges();
-
-    expect(ctx.component.filename.disabled).toBeTruthy();
-
-    expect(dispatchSpy.calls.count()).toEqual(2);
-
-    const pageLoad = dispatchSpy.calls.argsFor(0)[0].payload;
-    expect(pageLoad).toEqual({ applicationName: file.applicationName, editMode: true });
-
-    const getFileContentPayload = dispatchSpy.calls.argsFor(1)[0].payload;
-    expect(getFileContentPayload).toEqual(file);
-  });
-
-  it('should init EditorComponent with edit file mode, file content exists in backend state', () => {
-    const fileWithContent = {
-      ...file,
-      originalConfig: new Configuration()
-    };
-    ctx.store.next(new LoadFilesSuccess({ files: [fileWithContent], applications }));
-    ctx.activatedRouteStub.snapshot = {
-      data: {
-        editMode: true,
-        envFileMode: false
-      },
-      paramMap: convertToParamMap({
-        appName: file.applicationName,
-        fileName: file.fileName
-      })
-    };
-    ctx.detectChanges();
-
-    expect(ctx.component.filename.disabled).toBeTruthy();
-
-    expect(dispatchSpy.calls.count()).toEqual(2);
-
-    const pageLoad = dispatchSpy.calls.argsFor(0)[0].payload;
-    expect(pageLoad).toEqual({ applicationName: file.applicationName, editMode: true });
-
-    const getFileContentPayload = dispatchSpy.calls.argsFor(1)[0].payload;
-    expect(getFileContentPayload).toEqual({ file: fileWithContent });
   });
 
   async function initNewFileMode() {
@@ -137,12 +81,11 @@ describe('EditorComponent', () => {
 
     expect(ctx.component.filename.enabled).toBeTruthy();
     expect(ctx.component.filename.value).toEqual('');
-    expect(dispatchSpy.calls.count()).toEqual(2);
+    expect(dispatchSpy.calls.count()).toEqual(1);
 
     const pageLoad = dispatchSpy.calls.argsFor(0)[0].payload;
-    expect(pageLoad).toEqual({ applicationName: file.applicationName, editMode: false });
+    expect(pageLoad).toEqual({ fileName: null, applicationName: file.applicationName, editMode: false });
 
-    const getFileContentPayload = dispatchSpy.calls.argsFor(1)[0].payload;
     const newFile = {
       file: {
         fileName: null,
@@ -152,7 +95,6 @@ describe('EditorComponent', () => {
       },
       newlyCreated: true
     };
-    expect(getFileContentPayload).toEqual(newFile);
 
     ctx.store.next(new LoadFilesSuccess({ files: [file], applications }));
     ctx.store.next(new PageLoadSuccess({ environments: ['dev'] }));

@@ -9,17 +9,15 @@ import * as _ from 'lodash';
 
 import * as appStore from 'store';
 import { Alert } from 'store/actions/common.actions';
-import { CommitChanges, SaveDraft, GetFileContentSuccess, GetFileContent } from 'store/actions/backend.actions';
+import { CommitChanges, SaveDraft } from 'store/actions/backend.actions';
 import {
   PageLoad, ConfigurationChange,
 } from 'store/actions/editor.actions';
-import { GetConfigFile } from 'store/reducers/backend.reducers';
 
 import { appPercyConfig } from 'config';
 
 import { TreeNode } from 'models/tree-node';
 import { ConfigProperty } from 'models/config-property';
-import { ConfigFile, Configuration } from 'models/config-file';
 import { UtilService, NotEmpty } from 'services/util.service';
 
 import { NestedConfigViewComponent } from 'components/nested-config-view/nested-config-view.component';
@@ -100,33 +98,11 @@ export class EditorComponent implements OnInit, OnDestroy, AfterViewInit {
       this.filename.setValue('');
     }
 
-    this.store.dispatch(new PageLoad({ applicationName, editMode: this.editMode }));
+    this.store.dispatch(new PageLoad({ fileName, applicationName, editMode: this.editMode }));
 
     this.isPageDirty$.subscribe(res => {
       this.isPageDirty = res;
     });
-
-    if (!this.editMode) {
-      // Add new file, set an initial config
-      const file: ConfigFile = {
-        fileName,
-        applicationName,
-        draftConfig: new Configuration(),
-        modified: true
-      };
-      this.store.dispatch(new GetFileContentSuccess({ file, newlyCreated: true }));
-    } else {
-      this.store.pipe(select(appStore.backendState), take(1)).subscribe((backend) => {
-
-        const file = GetConfigFile(backend, fileName, applicationName);
-
-        if (file && (file.originalConfig || file.draftConfig)) { // Newly added (but uncommitted) file has only draft config
-          this.store.dispatch(new GetFileContentSuccess({ file }));
-        } else {
-          this.store.dispatch(new GetFileContent(file ? { ...file } : { fileName, applicationName }));
-        }
-      });
-    }
   }
 
   /**

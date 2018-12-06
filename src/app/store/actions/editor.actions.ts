@@ -12,7 +12,7 @@ export enum EditorActionTypes {
 export class PageLoad implements Action {
   readonly type = EditorActionTypes.PageLoad;
 
-  constructor(public payload: { applicationName: string, editMode: boolean }) { }
+  constructor(public payload: { fileName: string, applicationName: string, editMode: boolean }) { }
 }
 
 export class PageLoadSuccess implements Action {
