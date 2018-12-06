@@ -141,7 +141,7 @@ There are 3 configuration files:
 
 - [src/percy.conf.json](src/percy.conf.json): configuration used in development
 - [src/percy.conf.test.json](src/percy.conf.test.json): configuration used in Karma test
-- [src/percy.conf.prod.json](src/percy.conf.prod.json): for production configuration, it will be copied to `dist/percy.conf.json` in production build
+- [src/percy.conf.prod.json](src/percy.conf.prod.json): for production configuration, it will be copied to `dist/build/percy.conf.json` in production build
 
 | Variable                 | Description                                                  |
 | ------------------------ | ------------------------------------------------------------ |
@@ -198,12 +198,12 @@ Prerequisite
 
 
 
-Build app (which will build in production mode), the static assets are built under `dist`:
+Build app (which will build in production mode), the static assets are built under `dist/build`:
 
 ```bash
 ./docker/build.sh
 
-# After build, 3 files will be generated in 'dist':
+# After build, 3 files will be generated in 'dist/build':
 # index.html
 # percy.bundle.min.js
 # percy.conf.json (which is a copy of src/percy.conf.prod.json)

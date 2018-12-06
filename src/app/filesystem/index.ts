@@ -1,5 +1,5 @@
 /**
- * This represents a shimme 'fs' object.
+ * This represents a shimmed 'fs' object.
  * It implements almost all the methods of node.js builtin 'fs'.
  *
  * With help of webpack alias, this makes require('fs') work.
