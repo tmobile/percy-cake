@@ -89,7 +89,7 @@ You can also save multiple files as draft, and use the 'COMMIT CHANGES' button o
 
 The environment nodes have a `View Compiled YAML` option, which will generate a preview of environment specific YAML file that user uses in application deployment. It does the similar thing as the `hydrate.js` script mentioned above. In this view, all inheritances and variables will be resolved. 
 
-Here is a brief [video]() to demonstrate the features. 
+Here is a brief [video](https://www.youtube.com/watch?v=Ealtb91SUFM&feature=youtu.be) to demonstrate the features. 
 
 
 ## Feature List
