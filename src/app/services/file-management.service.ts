@@ -294,7 +294,7 @@ export class FileManagementService {
 
     const result = await Promise.all([
       getEnvs(),
-      this.loadAppPercyConfig(fs, principal.user, applicationName),
+      this.loadAppPercyConfig(principal.user, applicationName),
     ]);
 
     return { environments: result[0], appPercyConfig: result[1] };
@@ -303,26 +303,31 @@ export class FileManagementService {
   /**
    * Loads application's specific percy config.
    *
-   * @param fs the filesystem
    * @param user the logged in user
    * @param applicationName the application name
    */
-  private async loadAppPercyConfig(fs, user, applicationName) {
+  private async loadAppPercyConfig(user, applicationName) {
+
+    const dir = path.resolve(percyConfig.reposFolder, user.repoFolder);
 
     // Load .percyrc for the app
     const readPercyrc = async(_path) => {
-      if (await fs.pathExists(_path)) {
-        return await fs.readJson(_path);
+      const status = await git.status({ dir, filepath: _path });
+
+      if (status !== 'absent') {
+        const commitOid = await this.getRemoteCommit(dir, user.branchName);
+        const { object } = await git.readObject(
+          { dir, oid: commitOid, filepath: _path, encoding: 'utf8' });
+        return JSON.parse(object.toString());
       }
       return {};
     };
 
-    const dir = path.resolve(percyConfig.reposFolder, user.repoFolder);
 
     const result = await Promise.all([
-      readPercyrc(path.resolve(dir, '.percyrc')),
-      readPercyrc(path.resolve(dir, percyConfig.yamlAppsFolder, '.percyrc')),
-      readPercyrc(path.resolve(dir, percyConfig.yamlAppsFolder, applicationName, '.percyrc')),
+      readPercyrc('.percyrc'),
+      readPercyrc(path.join(percyConfig.yamlAppsFolder, '.percyrc')),
+      readPercyrc(path.join(percyConfig.yamlAppsFolder, applicationName, '.percyrc')),
     ]);
 
     // Merge percyrcs

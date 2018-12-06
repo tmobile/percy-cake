@@ -661,6 +661,7 @@ export class UtilService {
    * @returns span element with variable highlighted, or given parent span if there is no variable found
    */
   highlightVariable(text: string, appPercyConfig?, parentSpan?: Cheerio) {
+    const prefix = _.defaultTo(appPercyConfig.variablePrefix, percyConfig.variableSubstitutePrefix);
 
     // Find out the variable token, wrap it in '<span class="yaml-var">${tokenName}</span>'
     let leftIdx = 0;
@@ -675,11 +676,11 @@ export class UtilService {
       const tokenName = regExpResult[1];
 
       // Append left side plus variable substitute prefix
-      newSpan.append($('<span></span>').text(text.slice(leftIdx, regExpResult.index) + percyConfig.variableSubstitutePrefix));
+      newSpan.append($('<span></span>').text(text.slice(leftIdx, regExpResult.index) + prefix));
       // Append variable token name
       newSpan.append($('<span class="yaml-var"></span>').text(tokenName));
       // Update index
-      leftIdx = regExpResult.index + percyConfig.variableSubstitutePrefix.length + tokenName.length;
+      leftIdx = regExpResult.index + prefix.length + tokenName.length;
     }
 
     if (newSpan) {
