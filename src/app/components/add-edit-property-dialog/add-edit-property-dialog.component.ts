@@ -257,7 +257,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
 
       const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
         data: {
-          confirmationText: 'You have changed the property type, and the corresponding property will be removed from all environments. Do you still want to make the change?' // tslint:disable-line
+          confirmationText: 'You have changed the property type, the corresponding property will be removed from all environments. Do you still want to make the change?' // tslint:disable-line
         }
       });
 

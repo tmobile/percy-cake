@@ -252,7 +252,12 @@ export class EditorComponent implements OnInit, AfterViewInit {
     if (this.showAsCode) {
       const tree = new TreeNode('');
       tree.children.push(node);
-      this.previewCode = this.utilService.convertTreeToYaml(tree);
+      try {
+        this.previewCode = '';
+        this.previewCode = this.utilService.convertTreeToYaml(tree);
+      } catch (err) {
+        this.store.dispatch(new Alert({ message: err.message, alertType: 'error' }));
+      }
     }
   }
 

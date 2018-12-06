@@ -1,7 +1,7 @@
 module.exports = {
   resolve: {
     alias: {
-      'fs': 'filesystem',
+      'fs': 'filesystem', // see src/app/filesystem
     }
   },
   node: {

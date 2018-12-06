@@ -4,7 +4,7 @@
  *
  * With help of webpack alias, this makes require('fs') work.
  *
- * @see custom-webpack-config.js
+ * @see custom-webpack.config.js
  */
 import * as legacy from 'graceful-fs/legacy-streams';
 import { FileSystem } from 'filer/src';
