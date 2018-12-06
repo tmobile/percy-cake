@@ -38,6 +38,11 @@ export class AddEditPropertyDialogComponent implements OnChanges {
   duplicateDefault = false;
   autoTrim = false;
 
+  /**
+   * constructs the component
+   * @param dialogRef the reference to a dialog opened via the MatDialog service
+   * @param store the application state store
+   */
   constructor(
     private store: Store<appStore.AppState>,
     private dialog: MatDialog) {
@@ -48,6 +53,9 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     this.comment = new FormControl('');
   }
 
+  /**
+   * Called when component bound data changes.
+   */
   ngOnChanges() {
 
     this.key.reset();
@@ -86,7 +94,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     }
 
     if (this.isDefineEnv()) {
-      this.valueType.setValue('object');
+      this.valueType.setValue(PROPERTY_VALUE_TYPES.OBJECT);
     }
 
     if (this.keyDisabled()) {
@@ -98,15 +106,27 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     }
   }
 
+  /**
+   * Determine if key should be disabled.
+   * @returns true if key should be disabled, false otherwise
+   */
   keyDisabled() {
     return this.isEditRootNode() || this.isEditArrayItem() ||
       (this.data.editMode && !this.data.node.isDefaultNode() && !this.isDefineEnv());
   }
 
+  /**
+   * Determine if value type should be disabled.
+   * @returns true if key should be disabled, false otherwise
+   */
   valueTypeDisabled() {
     return this.isEditRootNode() || this.isEditArrayItem() || !this.data.node.isDefaultNode();
   }
 
+  /**
+   * Determine if user is adding/editing environment in environment.yaml file.
+   * @returns true if user is defining environment, false otherwise
+   */
   isDefineEnv() {
     if (!this.data.envFileMode || this.data.node.isDefaultNode()) {
       return false;
@@ -114,23 +134,37 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     return (this.data.editMode && this.data.node.getLevel() === 1) || (!this.data.editMode && this.data.node.getLevel() === 0);
   }
 
+  /**
+   * Determine if user is editing an item within array.
+   * @returns true if user is editing an item within array, false otherwise
+   */
   isEditArrayItem() {
     const node: TreeNode = this.data.node;
 
     return (this.data.editMode && node.parent && node.parent.isArray()) || (!this.data.editMode && node.isArray());
   }
 
+  /**
+   * Determine if user is editing the root node.
+   * @returns true if user is editing the root node, false otherwise
+   */
   isEditRootNode() {
     return this.data.editMode && !this.data.node.parent;
   }
 
+  /**
+   * Determine if the inherits options should be shown.
+   * Will also generate the inherits options.
+   *
+   * @returns true if user is inherits options should be shown, false otherwise
+   */
   showInherits() {
     const result = !this.data.node.isDefaultNode() && this.key.value === 'inherits'
       && ((!this.data.editMode && this.data.node.getLevel() === 1) || (this.data.editMode && this.data.node.getLevel() === 2));
 
     if (result) {
       if (!this.inheritsOptions) {
-        this.inheritsOptions = this.getInheritsOptions();
+        this.inheritsOptions = this.constructInheritsOptions();
       }
       this.useDefault(false);
     }
@@ -138,17 +172,22 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     return result;
   }
 
-  private getInheritsOptions() {
-    let envsNode;
-    let thisEnvKey;
+  /**
+   * Construct inherits options available for user to choose from.
+   * @returns inherits options
+   */
+  private constructInheritsOptions() {
+    const envsRoot: TreeNode = this.data.node.getTopParent();
+    let thisEnv;
+
+    // Determine the current env
     if (this.data.node.getLevel() === 1) {
-      envsNode = this.data.node.parent;
-      thisEnvKey = this.data.node.key;
+      thisEnv = this.data.node.key;
     } else {
-      envsNode = this.data.node.parent.parent;
-      thisEnvKey = this.data.node.parent.key;
+      thisEnv = this.data.node.parent.key;
     }
 
+    // Used to exclude the cylic options
     const hasCylic = (child) => {
       let inherited = child;
       while (inherited) {
@@ -156,15 +195,19 @@ export class AddEditPropertyDialogComponent implements OnChanges {
         if (!inheritedEnv) {
           break;
         }
-        if (inheritedEnv.value === thisEnvKey) {
+        if (inheritedEnv.value === thisEnv) {
           return true;
         }
-        inherited = _.find(envsNode.children, { key: inheritedEnv.value });
+        inherited = _.find(envsRoot.children, { key: inheritedEnv.value });
       }
     };
-    return envsNode.children.filter(child => child.key !== thisEnvKey && !hasCylic(child)).map(child => child.key);
+    return envsRoot.children.filter(child => child.key !== thisEnv && !hasCylic(child)).map(child => child.key);
   }
 
+  /**
+   * Get bread crumb to display.
+   * @returns bread crumb
+   */
   getBreadCrumb() {
     const node: TreeNode = this.data.node;
     if (this.data.editMode) {
@@ -174,12 +217,17 @@ export class AddEditPropertyDialogComponent implements OnChanges {
   }
 
   /*
-    set value type in other environments when key is selected
+   * Set value type based on the selected key
+   * @param key the selected key
    */
-  setValueTypeOption(value: string) {
-    this.valueType.setValue(_.find(this.data.keyOptions, { key: value })['type']);
+  setValueTypeOption(key: string) {
+    this.valueType.setValue(_.find(this.data.keyOptions, { key })['type']);
   }
 
+  /**
+   * Checks to copy property from default tree.
+   * @param $event user's check event
+   */
   useDefault($event) {
     this.duplicateDefault = $event && $event.checked;
     if (this.duplicateDefault) {
@@ -191,12 +239,16 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     }
   }
 
-  useAutoTrim() {
-    this.autoTrim = true;
+  /**
+   * Checks to auto trim string value.
+   * @param $event user's check event
+   */
+  useAutoTrim($event) {
+    this.autoTrim = $event && $event.checked;
   }
 
   /*
-    submit the property form with new/updated property values
+   * Submit the property form with new/updated property values
    */
   onSubmit() {
     this.formDirty = true;
@@ -219,6 +271,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
       return;
     }
 
+    // Validate number is in range
     if (this.valueType.value === PROPERTY_VALUE_TYPES.NUMBER) {
       const num = this.value.value;
       if ((_.isInteger(num) && !_.isSafeInteger(num)) ||
@@ -273,6 +326,9 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     this.doSubmit();
   }
 
+  /**
+   * Do submit.
+   */
   private doSubmit() {
 
     if (!this.duplicateDefault) {
@@ -325,6 +381,9 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     }
   }
 
+  /**
+   * Cancel edit.
+   */
   onCancel() {
     this.cancel.emit();
   }

@@ -530,7 +530,7 @@ describe('AddEditPropertyDialogComponent', () => {
     ctx.component.value.setValue('newvalue ');
     ctx.component.comment.setValue('line1\nline2 ');
 
-    ctx.component.useAutoTrim();
+    ctx.component.useAutoTrim({ checked: true });
 
     const result = new TreeNode('newkey', PROPERTY_VALUE_TYPES.STRING);
     result.valueType = ctx.component.valueType.value;
@@ -586,7 +586,7 @@ describe('AddEditPropertyDialogComponent', () => {
     ctx.component.value.setValue(true);
     ctx.component.comment.setValue('line1\nline2 ');
 
-    ctx.component.useAutoTrim();
+    ctx.component.useAutoTrim({ checked: true });
 
     const result = new TreeNode('newkey', PROPERTY_VALUE_TYPES.BOOLEAN);
     result.valueType = ctx.component.valueType.value;
@@ -642,7 +642,7 @@ describe('AddEditPropertyDialogComponent', () => {
     ctx.component.value.setValue(10);
     ctx.component.comment.setValue('line1\nline2 ');
 
-    ctx.component.useAutoTrim();
+    ctx.component.useAutoTrim({ checked: true });
 
     const result = new TreeNode('newkey', PROPERTY_VALUE_TYPES.NUMBER);
     result.valueType = ctx.component.valueType.value;
@@ -695,7 +695,7 @@ describe('AddEditPropertyDialogComponent', () => {
     ctx.component.valueType.setValue(PROPERTY_VALUE_TYPES.STRING_ARRAY);
     ctx.component.comment.setValue('line1\nline2 ');
 
-    ctx.component.useAutoTrim();
+    ctx.component.useAutoTrim({ checked: true });
 
     const result = new TreeNode('newkey', PROPERTY_VALUE_TYPES.STRING_ARRAY);
     result.valueType = ctx.component.valueType.value;
@@ -744,7 +744,7 @@ describe('AddEditPropertyDialogComponent', () => {
     ctx.component.key.setValue('newkey ');
     ctx.component.valueType.setValue(PROPERTY_VALUE_TYPES.OBJECT);
 
-    ctx.component.useAutoTrim();
+    ctx.component.useAutoTrim({ checked: true });
 
     const result = new TreeNode('newkey', PROPERTY_VALUE_TYPES.OBJECT);
     result.valueType = ctx.component.valueType.value;

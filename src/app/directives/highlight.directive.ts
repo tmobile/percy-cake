@@ -1,10 +1,13 @@
-import { Directive, Input, NgZone, HostBinding } from '@angular/core';
+import { Directive, NgZone, HostBinding } from '@angular/core';
 
 import { Highlight, HighlightJS } from 'ngx-highlightjs';
 import * as cheerio from 'cheerio';
 
 import { UtilService } from 'services/util.service';
 
+/**
+ * Extend the Highlight directive to color the variable reference specially.
+ */
 @Directive({
   selector: '[appHighlight]'
 })
@@ -13,8 +16,12 @@ export class HighlightDirective extends Highlight {
   @HostBinding('class.hljs') hljsClass = true;
   @HostBinding('innerHTML') renderedCode: string;
 
-  @Input() appPercyConfig: any;
-
+  /**
+   * Construct the component.
+   * @param hljs The HighlightJS service
+   * @param zone NgZone
+   * @param utilService the util service
+   */
   constructor(hljs: HighlightJS, zone: NgZone, utilService: UtilService) {
     super(hljs, zone);
 
@@ -30,9 +37,10 @@ export class HighlightDirective extends Highlight {
           return;
         }
 
+        // Highlight the color the variable reference
         const spanNode = $(span);
         const text = spanNode.text();
-        const newSpan = utilService.highlightVariable(text, this.appPercyConfig, spanNode);
+        const newSpan = utilService.highlightVariable(text, spanNode);
         if (newSpan !== spanNode) {
           spanNode.replaceWith(newSpan);
         }
@@ -42,6 +50,11 @@ export class HighlightDirective extends Highlight {
     });
   }
 
+  /**
+   * Highlight the yaml code. We override this method to ensure a non-null code is passed in.
+   * @param code The yaml code
+   * @param languages The yaml languages
+   */
   highlightElement(code, languages) {
     super.highlightElement(code || '', languages);
   }

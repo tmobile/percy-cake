@@ -7,6 +7,6 @@ export interface ConfigProperty {
   editMode: boolean;
   envFileMode?: boolean;
   keyOptions: { key: string, type: string }[];
-  node: TreeNode; // When in edit mode, this is node being edited; when in add mode, this is the parent node to be added to
+  node: TreeNode; // When in edit mode, this is node being edited; when in add mode, this is the parent node being added to
   defaultTree: TreeNode; // The 'default' root tree
 }

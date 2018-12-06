@@ -26,13 +26,16 @@ export class SelectAppDialogComponent implements OnInit {
   @ViewChild('trigger') trigger: MatAutocompleteTrigger;
 
   /**
-   * initializes the component
+   * constructs the component
    * @param dialogRef the reference to a dialog opened via the MatDialog service
    * @param data the injection token that can be used to access the data that was passed in to a dialog
    */
   constructor(public dialogRef: MatDialogRef<SelectAppDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data) { }
 
+  /**
+   * initializes the component
+   */
   ngOnInit() {
     const { selectedApp } = this.data;
     if (selectedApp) {
@@ -61,6 +64,10 @@ export class SelectAppDialogComponent implements OnInit {
       ).subscribe(this.filteredApps);
   }
 
+  /**
+   * handles selected app changes event
+   * @param app the newly selected app
+   */
   private onAppChange(app) {
     const result = _.find(this.data.files, { fileName: this.data.envFileName, applicationName: app });
     if (result) {

@@ -25,7 +25,6 @@ export class NestedConfigViewComponent implements OnChanges {
   @Input() envFileMode: boolean; // Mode to create/edit environments.yaml file
   @Input() configuration: Configuration;
   @Input() environments: Array<string>;
-  @Input() appPercyConfig: any;
 
   @Output() configurationChange = new EventEmitter<any>();
   @Output() selectedNode = new EventEmitter<TreeNode>();
@@ -298,9 +297,8 @@ export class NestedConfigViewComponent implements OnChanges {
   }
 
   /**
-   * saves the node
+   * Saves the node
    * @param node the added/edited node
-   * @return true if succesfully saved; false otherwise (like validation fails)
    */
   saveAddEditProperty(node: TreeNode) {
 
@@ -316,7 +314,6 @@ export class NestedConfigViewComponent implements OnChanges {
 
     this.refreshTree();
     this.cancelAddEditProperty();
-    return true;
   }
 
 

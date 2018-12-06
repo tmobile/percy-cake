@@ -24,6 +24,8 @@ export class InitComponent implements OnInit {
   /**
    * initializes the service
    * @param store the store instance
+   * @param utilService the util server
+   * @param maintenanceService the maintenance service
    */
   constructor(
     private store: Store<fromStore.AppState>,
@@ -48,9 +50,9 @@ export class InitComponent implements OnInit {
   }
 
   /**
-   * Initialize git fs, and validate logged in user and repo metadata.
+   * Initialize browser fs, validate logged in user and repo metadata.
    * @param user the logged in user
-   * @returns the user principal
+   * @returns the user principal and repo metadata
    */
   private async initialize(user: User) {
     // Wait BrowserFS initialize

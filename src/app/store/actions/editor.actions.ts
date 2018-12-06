@@ -18,7 +18,7 @@ export class PageLoad implements Action {
 export class PageLoadSuccess implements Action {
   readonly type = EditorActionTypes.PageLoadSuccess;
 
-  constructor(public payload: { environments: string[], appPercyConfig: any }) { }
+  constructor(public payload: { environments: string[] }) { }
 }
 
 export class PageLoadFailure implements Action {

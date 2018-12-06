@@ -74,7 +74,6 @@ export const editorState = createFeatureSelector<AppState, fromEditor.State>('ed
 export const getConfigFile = createSelector(editorState, fromEditor.getConfigFile);
 export const getConfiguration = createSelector(editorState, fromEditor.getConfiguration);
 export const getEnvironments = createSelector(editorState, fromEditor.getEnvironments);
-export const getAppPercyConfig = createSelector(editorState, fromEditor.getAppPercyConfig);
 export const getIsCommitting = createSelector(editorState, fromEditor.isCommitting);
 export const getIsSaving = createSelector(editorState, fromEditor.isSaving);
 export const getIsPageDirty = createSelector(editorState, fromEditor.getIsPageDirty);

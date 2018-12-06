@@ -44,7 +44,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   envFileName;
 
   /**
-   * initializes the component
+   * creates the component
    * @param store the application store
    * @param router the router instance
    * @param dialog the material dialog instance
@@ -99,14 +99,25 @@ export class DashboardComponent implements OnInit, OnDestroy {
       ).subscribe(folders$);
   }
 
+  /**
+   * Hook invoked when component destory.
+   */
   ngOnDestroy() {
     this.foldersSubscription.unsubscribe();
   }
 
+  /**
+   * Expand/collapse an application.
+   * @param app the application to expand/collapse
+   */
   toggleApp(app) {
     this.store.dispatch(new ToggleApp(app));
   }
 
+  /**
+   * Expand/collapse all applications.
+   * @param $event the toggle event
+   */
   toggleAllApps($event) {
     $event.stopPropagation();
     this.allAppsExpanded.pipe(take(1), withLatestFrom(this.applications)).subscribe(([allExpanded, apps]) => {
@@ -120,6 +131,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * On sort column/order change.
+   * @param sort the new sort column/order
+   */
   onSortChange(sort: Sort) {
     this.store.dispatch(new TableSort({ [sort.active]: sort.direction }));
   }
@@ -162,7 +177,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  editFile(file) {
+  /**
+   * Edit existing file.
+   * @param file the file to edit
+   */
+  editFile(file: ConfigFile) {
     this.router.navigate([file.fileName === this.envFileName ? '/files/editenv' : '/files/edit', file.applicationName, file.fileName]);
   }
 
@@ -186,7 +205,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * deletes the file
+   * Deletes the file
    * @param file the file to delete
    */
   deleteFile(file: ConfigFile) {
@@ -204,7 +223,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * pull repo to refresh.
+   * Pull repo to refresh.
    */
   refresh() {
     this.store.dispatch(new Refresh());

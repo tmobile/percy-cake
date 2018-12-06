@@ -2,7 +2,9 @@ import { Injectable } from '@angular/core';
 import { Store, select } from '@ngrx/store';
 import { Actions, Effect, ofType } from '@ngrx/effects';
 import { map, withLatestFrom, switchMap } from 'rxjs/operators';
+import * as _ from 'lodash';
 
+import { appPercyConfig } from 'config';
 import * as appStore from '..';
 import { APIError } from '../actions/common.actions';
 import {
@@ -28,9 +30,16 @@ export class EditorEffects {
     ofType<PageLoad>(EditorActionTypes.PageLoad),
     withLatestFrom(this.store.pipe(select(appStore.getPrincipal))),
     switchMap(async ([action, user]) => {
+
+      // Reset appPercyConfig
+      _.keys(appPercyConfig).forEach(key => delete appPercyConfig[key]);
+
       const applicationName = action.payload.applicationName;
       try {
         const result = await this.fileManagementService.getEnvironments(user, applicationName);
+
+        _.assign(appPercyConfig, result.appPercyConfig);
+
         return new PageLoadSuccess(result);
       } catch (error) {
         return new PageLoadFailure(error);

@@ -47,27 +47,27 @@ default: !!map
 
     // Check "${name}$/${age}$/${flag}$/_{host1}"
     expect(spans.eq(1).children().length).toEqual(7);
-    expect(spans.eq(1).children().eq(0).text()).toEqual('"' + percyConfig.variableSubstitutePrefix);
+    expect(spans.eq(1).children().eq(0).text()).toEqual('"' + percyConfig.variablePrefix);
     expect(spans.eq(1).children().eq(1).text()).toEqual('name');
-    expect(spans.eq(1).children().eq(2).text()).toEqual(percyConfig.variableSubstituteSuffix + '/' + percyConfig.variableSubstitutePrefix);
+    expect(spans.eq(1).children().eq(2).text()).toEqual(percyConfig.variableSuffix + '/' + percyConfig.variablePrefix);
     expect(spans.eq(1).children().eq(3).text()).toEqual('age');
-    expect(spans.eq(1).children().eq(4).text()).toEqual(percyConfig.variableSubstituteSuffix + '/' + percyConfig.variableSubstitutePrefix);
+    expect(spans.eq(1).children().eq(4).text()).toEqual(percyConfig.variableSuffix + '/' + percyConfig.variablePrefix);
     expect(spans.eq(1).children().eq(5).text()).toEqual('flag');
-    expect(spans.eq(1).children().eq(6).text()).toEqual(percyConfig.variableSubstituteSuffix + '/_{host1}"');
+    expect(spans.eq(1).children().eq(6).text()).toEqual(percyConfig.variableSuffix + '/_{host1}"');
 
     // Check "${host}$"
     expect(spans.eq(2).children().length).toEqual(3);
-    expect(spans.eq(2).children().eq(0).text()).toEqual('"' + percyConfig.variableSubstitutePrefix);
+    expect(spans.eq(2).children().eq(0).text()).toEqual('"' + percyConfig.variablePrefix);
     expect(spans.eq(2).children().eq(1).text()).toEqual('host');
-    expect(spans.eq(2).children().eq(2).text()).toEqual(percyConfig.variableSubstituteSuffix + '"');
+    expect(spans.eq(2).children().eq(2).text()).toEqual(percyConfig.variableSuffix + '"');
 
     // Check "${name}$/${age}$"
     expect(spans.eq(3).children().length).toEqual(5);
-    expect(spans.eq(3).children().eq(0).text()).toEqual('"' + percyConfig.variableSubstitutePrefix);
+    expect(spans.eq(3).children().eq(0).text()).toEqual('"' + percyConfig.variablePrefix);
     expect(spans.eq(3).children().eq(1).text()).toEqual('name');
-    expect(spans.eq(3).children().eq(2).text()).toEqual(percyConfig.variableSubstituteSuffix + '/' + percyConfig.variableSubstitutePrefix);
+    expect(spans.eq(3).children().eq(2).text()).toEqual(percyConfig.variableSuffix + '/' + percyConfig.variablePrefix);
     expect(spans.eq(3).children().eq(3).text()).toEqual('age');
-    expect(spans.eq(3).children().eq(4).text()).toEqual(percyConfig.variableSubstituteSuffix + '"');
+    expect(spans.eq(3).children().eq(4).text()).toEqual(percyConfig.variableSuffix + '"');
   });
 
 });

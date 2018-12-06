@@ -9,7 +9,6 @@ export interface State {
   isCommitting: boolean;
   isSaving: boolean;
   environments: Array<string>;
-  appPercyConfig: any;
   editMode: boolean;
   configFile: ConfigFile;
   configuration: Configuration; // In-edit config, not saved as draft
@@ -19,8 +18,7 @@ export interface State {
 export const initialState: State = {
   isCommitting: false,
   isSaving: false,
-  environments: [],
-  appPercyConfig: null,
+  environments: null,
   editMode: false,
   configFile: null,
   configuration: null,
@@ -40,7 +38,6 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
       return {
         ...state,
         environments: action.payload.environments,
-        appPercyConfig: action.payload.appPercyConfig,
       };
     }
 
@@ -137,5 +134,4 @@ export const getConfiguration = (state: State) => state.configuration;
 export const isCommitting = (state: State) => state.isCommitting;
 export const isSaving = (state: State) => state.isSaving;
 export const getEnvironments = (state: State) => state.environments;
-export const getAppPercyConfig = (state: State) => state.appPercyConfig;
 export const getIsPageDirty = (state: State) => state.isPageDirty;

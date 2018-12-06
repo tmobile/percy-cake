@@ -401,9 +401,9 @@ obj: !!map  # obj-comment
 
     const $ = cheerio.load('<span></span>');
     const span = $('span');
-    span.append($('<span></span>').text(percyConfig.variableSubstitutePrefix));
+    span.append($('<span></span>').text(percyConfig.variablePrefix));
     span.append($('<span class="yaml-var"></span>').text('name'));
-    span.append($('<span></span>').text(percyConfig.variableSubstituteSuffix));
+    span.append($('<span></span>').text(percyConfig.variableSuffix));
     expect(utilService.highlightNodeVariable(new TreeNode('key', PROPERTY_VALUE_TYPES.STRING, constructVar('name')))).toEqual(span.html());
   });
 });

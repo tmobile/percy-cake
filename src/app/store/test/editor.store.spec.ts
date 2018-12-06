@@ -3,6 +3,7 @@ import * as BackendActions from '../actions/backend.actions';
 import { FileManagementService } from 'services/file-management.service';
 import { AlertDialogComponent } from 'components/alert-dialog/alert-dialog.component';
 
+import { appPercyConfig } from 'config';
 import { StoreTestComponent, Setup, TestContext, assertDialogOpened } from 'test/test-helper';
 import { TreeNode } from 'models/tree-node';
 import { PageLoad, ConfigurationChange } from '../actions/editor.actions';
@@ -41,14 +42,26 @@ describe('Editor store action/effect/reducer', () => {
   });
 
   it('PageLoad action should be successful', async () => {
-    spyOn(fileService, 'getEnvironments').and.returnValue({ environments: ['dev', 'prod'], appPercyConfig: { key: 'value' } });
+    const spy = spyOn(fileService, 'getEnvironments');
+    // First page load
+    spy.and.returnValue({ environments: ['dev', 'prod'], appPercyConfig: { key: 'value' } });
 
     ctx.store.dispatch(new PageLoad({ applicationName: 'app1', editMode: true }));
     await ctx.fixture.whenStable();
 
     expect(ctx.editorState().editMode).toBeTruthy();
     expect(reducer.getEnvironments(ctx.editorState())).toEqual(['dev', 'prod']);
-    expect(reducer.getAppPercyConfig(ctx.editorState())).toEqual({ key: 'value' });
+    expect(appPercyConfig).toEqual({ key: 'value' });
+
+    // Second page load
+    spy.and.returnValue({ environments: ['qa', 'prod'], appPercyConfig: { key1: 'value1' } });
+
+    ctx.store.dispatch(new PageLoad({ applicationName: 'app1', editMode: true }));
+    await ctx.fixture.whenStable();
+
+    expect(ctx.editorState().editMode).toBeTruthy();
+    expect(reducer.getEnvironments(ctx.editorState())).toEqual(['qa', 'prod']);
+    expect(appPercyConfig).toEqual({ key1: 'value1' });
   });
 
   it('PageLoad action fail, alert dialog should show', async () => {

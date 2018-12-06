@@ -10,9 +10,9 @@ import * as boom from 'boom';
 import * as cheerio from 'cheerio';
 import * as _ from 'lodash';
 
+import { PROPERTY_VALUE_TYPES, percyConfig, appPercyConfig } from 'config';
 import { TreeNode } from 'models/tree-node';
 import { Configuration } from 'models/config-file';
-import { PROPERTY_VALUE_TYPES, percyConfig } from 'config';
 import { Authenticate } from 'models/auth';
 
 import * as filesystem from 'filesystem';
@@ -423,12 +423,11 @@ export class UtilService {
   /**
    * Create regexp for variable reference based on percy config.
    *
-   * @param appPercyConfig the application's specific percy config
    * @returns regexp for variable reference
    */
-  createRegExp(appPercyConfig: any = {}) {
-    const prefix = _.defaultTo(appPercyConfig.variablePrefix, percyConfig.variableSubstitutePrefix);
-    const suffix = _.defaultTo(appPercyConfig.variableSuffix, percyConfig.variableSubstituteSuffix);
+  createRegExp() {
+    const prefix = _.defaultTo(appPercyConfig.variablePrefix, percyConfig.variablePrefix);
+    const suffix = _.defaultTo(appPercyConfig.variableSuffix, percyConfig.variableSuffix);
     const regexPattern = `${this.escapeRegExp(prefix)}(.+?)${this.escapeRegExp(suffix)}`;
     return new RegExp(regexPattern, 'g');
   }
@@ -437,12 +436,11 @@ export class UtilService {
    * Construct variable reference.
    *
    * @param variable the variable name
-   * @param appPercyConfig the application's specific percy config
    * @returns variable reference
    */
-  constructVariable(variable: string, appPercyConfig: any = {}) {
-    const prefix = _.defaultTo(appPercyConfig.variablePrefix, percyConfig.variableSubstitutePrefix);
-    const suffix = _.defaultTo(appPercyConfig.variableSuffix, percyConfig.variableSubstituteSuffix);
+  constructVariable(variable: string) {
+    const prefix = _.defaultTo(appPercyConfig.variablePrefix, percyConfig.variablePrefix);
+    const suffix = _.defaultTo(appPercyConfig.variableSuffix, percyConfig.variableSuffix);
     return `${prefix}${variable}${suffix}`;
   }
 
@@ -485,10 +483,9 @@ export class UtilService {
    * This method resolves them.
    *
    * @param tokens the tokens to resolves
-   * @param appPercyConfig the application's specific percy config
    * @returns the resolved tokens
    */
-  private resolveTokens(tokens, appPercyConfig) {
+  private resolveTokens(tokens) {
     const result = _.cloneDeep(tokens);
     const referenceLinks = [];
 
@@ -502,7 +499,7 @@ export class UtilService {
 
         let retValue = value;
 
-        const regExp = this.createRegExp(appPercyConfig);
+        const regExp = this.createRegExp();
         let regExpResult;
 
         while (regExpResult = regExp.exec(value)) {
@@ -512,7 +509,7 @@ export class UtilService {
           const tokenValue = result[tokenName];
 
           if (typeof tokenValue === 'string') {
-            if (this.createRegExp(appPercyConfig).exec(tokenValue)) {
+            if (this.createRegExp().exec(tokenValue)) {
               referenceFound = true;
               this.addTokenReference(referenceLinks, key, tokenName);
               continue;
@@ -539,17 +536,16 @@ export class UtilService {
    *
    * @param target the config to substitute
    * @param tokens the tokens (which are top level properties of default config)
-   * @param appPercyConfig the application's specific percy config
    * @param depth the depth of config
    * @returns the substitued config
    */
-  private substitute(target: TreeNode, tokens, appPercyConfig, depth) {
+  private substitute(target: TreeNode, tokens, depth) {
     if (target.valueType === PROPERTY_VALUE_TYPES.OBJECT) {
       _.each(target.children, (child) => {
         if (depth === 0 && child.isLeaf() && _.has(tokens, child.key)) {
           child.value = tokens[child.key];
         } else {
-          this.substitute(child, tokens, appPercyConfig, depth++);
+          this.substitute(child, tokens, depth++);
         }
       });
       return target;
@@ -558,7 +554,7 @@ export class UtilService {
     if (target.valueType === PROPERTY_VALUE_TYPES.STRING_ARRAY
       || target.valueType === 'array') {
       _.each(target.children, (child) => {
-        this.substitute(child, tokens, appPercyConfig, depth++);
+        this.substitute(child, tokens, depth++);
       });
       return target;
     }
@@ -570,7 +566,7 @@ export class UtilService {
     const text = target.value;
     let retVal = text;
 
-    const regExp = this.createRegExp(appPercyConfig);
+    const regExp = this.createRegExp();
     let regExpResult;
     while (regExpResult = regExp.exec(text)) {
       const fullMatch = regExpResult[0];
@@ -621,10 +617,9 @@ export class UtilService {
    * Compile yaml for given environment.
    * @param env the environment name
    * @param config the configuration object
-   * @param appPercyConfig the application's specific percy config
    * @returns compiled yaml string
    */
-  compileYAML(env: string, config: Configuration, appPercyConfig?) {
+  compileYAML(env: string, config: Configuration) {
     const mergeStack = [];
     const inheritedEnvs = [env];
 
@@ -658,9 +653,9 @@ export class UtilService {
       }
     });
 
-    tokens = this.resolveTokens(tokens, appPercyConfig);
+    tokens = this.resolveTokens(tokens);
 
-    const substituted = this.substitute(merged, tokens, appPercyConfig, 0);
+    const substituted = this.substitute(merged, tokens, 0);
     substituted.key = env;
 
     return this.convertTreeToYaml(substituted);
@@ -669,19 +664,18 @@ export class UtilService {
   /**
    * Highlight variable within yaml text string value
    * @param text the yaml text string value
-   * @param appPercyConfig the application's specific percy config
    * @param parentSpan the parent span node contains the text
    * @returns span element with variable highlighted, or given parent span if there is no variable found
    */
-  highlightVariable(text: string, appPercyConfig: any = {}, parentSpan?: Cheerio) {
-    const prefix = _.defaultTo(appPercyConfig.variablePrefix, percyConfig.variableSubstitutePrefix);
+  highlightVariable(text: string, parentSpan?: Cheerio) {
+    const prefix = _.defaultTo(appPercyConfig.variablePrefix, percyConfig.variablePrefix);
 
     // Find out the variable token, wrap it in '<span class="yaml-var">${tokenName}</span>'
     let leftIdx = 0;
     let regExpResult;
     let newSpan: Cheerio = null;
     const $ = cheerio.load('');
-    const regExp = this.createRegExp(appPercyConfig);
+    const regExp = this.createRegExp();
     while (regExpResult = regExp.exec(text)) {
       if (!newSpan) {
         newSpan = $('<span class="hljs-string"></span>');
@@ -707,14 +701,13 @@ export class UtilService {
   /**
    * Highlight variable within yaml text string value in a TreeNode
    * @param node the string TreeNode to highlight its value
-   * @param appPercyConfig the application's specific percy config
    * @returns html rendered with highlighted variable
    */
-  highlightNodeVariable(node: TreeNode, appPercyConfig?) {
+  highlightNodeVariable(node: TreeNode) {
     if (node.valueType !== PROPERTY_VALUE_TYPES.STRING) {
       return node.value;
     }
-    const span = this.highlightVariable(_.defaultTo(node.value, ''), appPercyConfig);
+    const span = this.highlightVariable(_.defaultTo(node.value, ''));
     return span.html();
   }
 
@@ -807,6 +800,11 @@ export class UtilService {
   }
 }
 
+/**
+ * A validtor used to verify string value is not empty.
+ * @param control the form control with string value
+ * @returns the validation error of null if not any
+ */
 export function NotEmpty(control: AbstractControl) {
   if (!_.trim(control.value)) {
     return { required: true };

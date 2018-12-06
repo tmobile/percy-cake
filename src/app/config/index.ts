@@ -12,5 +12,8 @@ export enum PROPERTY_VALUE_TYPES {
   BOOLEAN_ARRAY = 'boolean[]',
 }
 
-// The percy config will be loaded at page load, see UtilService#initConfig method
+// The percy config will be loaded at this web app load, see UtilService#initConfig method
 export const percyConfig: any = {};
+
+// The app's specific percy config, will be loaded when editor page load, see EditorEffects#pageLoad method
+export const appPercyConfig: any = {};

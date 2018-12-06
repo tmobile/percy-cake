@@ -156,8 +156,8 @@ There are 3 configuration files:
 | loginSessionTimeout      | The login session timeout, like "1m", "2.5 hrs", "2 days". Default to 30m. |
 | encryptKey               | The key used to encrypt security information like password   |
 | encryptSalt              | The salt used to encrypt security information like password  |
-| variableSubstitutePrefix | The Yaml variable substitute prefix                          |
-| variableSubstituteSuffix | The Yaml variable substitute suffix                          |
+| variablePrefix           | The Yaml variable substitute prefix                          |
+| variableSuffix           | The Yaml variable substitute suffix                          |
 
 
 

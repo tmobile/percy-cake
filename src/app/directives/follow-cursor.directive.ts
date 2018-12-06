@@ -8,8 +8,16 @@ export class FollowCursorDirective {
   @Input()
   follower: HTMLElement;
 
-  constructor(private ele: ElementRef<HTMLDivElement>) { }
+  /**
+   * Construct the component.
+   * @param ele The element reference
+   */
+  constructor(private ele: ElementRef<HTMLElement>) { }
 
+  /**
+   * Follow the mouse move.
+   * @param $event the mouse event
+   */
   @HostListener('mousemove', ['$event'])
   onMouseMove($event) {
 
@@ -22,6 +30,10 @@ export class FollowCursorDirective {
     }
   }
 
+  /**
+   * Stop following the mouse move.
+   * @param $event the mouse event
+   */
   @HostListener('mouseleave', ['$event'])
   @HostListener('click', ['$event'])
   onMouseLeave($event) {

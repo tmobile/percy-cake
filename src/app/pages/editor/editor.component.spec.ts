@@ -2,7 +2,7 @@ import { convertToParamMap } from '@angular/router';
 
 import { Setup, assertDialogOpened, TestContext, utilService } from 'test/test-helper';
 
-import { PROPERTY_VALUE_TYPES } from 'config';
+import { PROPERTY_VALUE_TYPES, appPercyConfig } from 'config';
 import { TreeNode } from 'models/tree-node';
 import { Configuration } from 'models/config-file';
 import { Alert } from 'store/actions/common.actions';
@@ -155,7 +155,7 @@ describe('EditorComponent', () => {
     expect(getFileContentPayload).toEqual(newFile);
 
     ctx.store.next(new LoadFilesSuccess({ files: [file], applications }));
-    ctx.store.next(new PageLoadSuccess({ environments: ['dev'], appPercyConfig: {} }));
+    ctx.store.next(new PageLoadSuccess({ environments: ['dev'] }));
     ctx.store.next(new GetFileContentSuccess(newFile));
 
     ctx.detectChanges();
@@ -331,6 +331,15 @@ describe('EditorComponent', () => {
       }
     });
     ctx.dialogStub.output.next(true);
+  });
+
+  it('should reset app percy config when component destory', () => {
+    appPercyConfig['key1'] = 'value1';
+    appPercyConfig['key2'] = 'value2';
+
+    ctx.component.ngOnDestroy();
+
+    expect(appPercyConfig).toEqual({});
   });
 
   it('select a leaf node should work', () => {

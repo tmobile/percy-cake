@@ -19,7 +19,7 @@ export class MaintenanceService {
   /**
    * the user names cache variable
    */
-  private userNamesCache: any;
+  private userNamesCache: string[];
 
   /**
    * the user session cache variable
@@ -28,13 +28,14 @@ export class MaintenanceService {
   private userSessions$ = new BehaviorSubject(null);
 
   /**
-   * initializes the service
+   * Creats the service
+   * @param utilService the util service
    */
-  constructor(private utilsService: UtilService) {
+  constructor(private utilService: UtilService) {
     this.userSessions$.pipe(debounceTime(500)).subscribe(async () => {
       if (this.userSessionsCache) {
         try {
-          const fs = await this.utilsService.getBrowserFS();
+          const fs = await this.utilService.getBrowserFS();
           const sessionsMetaFile = path.resolve(percyConfig.metaFolder, 'user-session.json');
           await fs.outputJson(sessionsMetaFile, this.userSessionsCache);
         } catch (err) {
@@ -47,9 +48,10 @@ export class MaintenanceService {
   /**
    * Check user session timeout.
    * @param principal the logged in user principal
+   * @returns given principal
    */
   async checkSessionTimeout(principal: Principal) {
-    const fs = await this.utilsService.getBrowserFS();
+    const fs = await this.utilService.getBrowserFS();
     const { user } = principal;
     const username = user.username;
 
@@ -78,12 +80,13 @@ export class MaintenanceService {
   }
 
   /**
-   * gets the user type ahead based on prefix
+   * Gets the user type ahead based on prefix
    * @param prefix the prefix
+   * @returns user type ahead
    */
   async getUserTypeAhead(prefix: string) {
     if (!this.userNamesCache) {
-      const fs = await this.utilsService.getBrowserFS();
+      const fs = await this.utilService.getBrowserFS();
       const loggedInUsersMetaFile = path.resolve(percyConfig.metaFolder, percyConfig.loggedInUsersMetaFile);
       if (await fs.pathExists(loggedInUsersMetaFile)) {
         this.userNamesCache = await fs.readJson(loggedInUsersMetaFile);
@@ -94,14 +97,19 @@ export class MaintenanceService {
     return _.filter(this.userNamesCache, (i) => i.toUpperCase().indexOf(prefix.toUpperCase()) !== -1);
   }
 
-  async addUserName(user) {
-    this.userNamesCache = _.union(this.userNamesCache || [], [user]);
+  /**
+   * Adds user name.
+   * @param username the user name
+   */
+  async addUserName(username: string) {
+    // Update user sessions cache
     this.userSessionsCache = this.userSessionsCache || {};
-    this.userSessionsCache[user] = Date.now() + ms(percyConfig.loginSessionTimeout);
+    this.userSessionsCache[username] = Date.now() + ms(percyConfig.loginSessionTimeout);
     this.userSessions$.next(this.userSessionsCache);
 
-    const fs = await this.utilsService.getBrowserFS();
-
+    // Update user names cache
+    const fs = await this.utilService.getBrowserFS();
+    this.userNamesCache = _.union(this.userNamesCache || [], [username]);
     const loggedInUsersMetaFile = path.resolve(percyConfig.metaFolder, percyConfig.loggedInUsersMetaFile);
 
     await fs.outputJson(loggedInUsersMetaFile, this.userNamesCache);

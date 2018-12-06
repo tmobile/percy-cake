@@ -45,7 +45,7 @@ export class LoginComponent implements OnInit {
   @ViewChild('autoTrigger') private autoTrigger: MatAutocompleteTrigger;
 
   /**
-   * initializes the component
+   * constructs the component
    * @param router the router instance
    * @param store the app store instance
    * @param maintenanceService the maintenance service
@@ -108,9 +108,6 @@ export class LoginComponent implements OnInit {
     })).subscribe();
   }
 
-  // private trimValue(field) {
-  //   field
-  // }
   /*
    * login if the form is valid
    */
@@ -141,6 +138,7 @@ export class LoginComponent implements OnInit {
    * this is used to support browser auto fill pass the validation
    * otherwise chrome will show required for username when username is
    * filled from browser auto fill
+   * @param event the key board input event
    */
   onInput = (event: KeyboardEvent) => {
     const target = event.currentTarget as HTMLInputElement;
