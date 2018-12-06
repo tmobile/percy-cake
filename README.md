@@ -2,9 +2,12 @@
 
 ## Overview
 
-The editor allows the user to manage (list, create, edit or delete) YAML configuration files from a git repository in the browser directly. 
+"Configuration as code" is a technique to store environmental variables, feature flags, and other configuration items in an SCM the same way the code is stored. When the code is deployed, the CI process generates the specific configuration for the proper environment from the config SCM. Then the CD process deploys it to the appropriate hosts alongside the new code. The significant advantage of this approach is that configuration changes are tracked over time which is critical to support.
 
-It is a pure static web page, and doesn't require any back-end. But a proxy is needed for it to access the git repository successfully.
+Percy YAML Editor is a configuration tool that allows developers and DevOps a standard and hierarchical approach and intuitive form like User Interface for managing and maintaining complex configuration environments. The configuration files created by this tool will be used in DevOps pipeline to generate final configuration for deployment to various environments.
+
+The editor allows the user to manage (list, create, edit or delete) YAML configuration files from a git repository in the browser directly. 
+and it's a pure static web page, that requires no back-end. But a proxy maybe needed for it to access the git repository successfully.
 
 The git repository to be managed by this editor must follow the mono directory structure as below:
 ```
@@ -26,7 +29,7 @@ libs/
 readme.md
 ```
 
-It must have an `apps` directory (the directory name is configurable), with each sub-directory representing an application. The editor will load all applications together with all the YAML files inside each application and ignore all the non-YAML files. 
+It must have an `apps` directory (the directory name is configurable), with each sub-directory representing an application. The editor will load all applications together with all the YAML files inside each application and ignore all the non-YAML files. Note that the `hydrate.js` script will be used in the CI process to *hydrate* the YAML files in the repository to generate environment specific YAML files, which is then used for deployment to various environments. 
 
 In each application folder, all YAML files must follow the format as below:
 ```
@@ -84,7 +87,7 @@ Then you can select any file to edit, delete a file or add a new file to the app
 On the add / edit page, the `SAVE AS DRAFT` button will only save your changes locally, the changes are only committed and pushed to the repository when you click `COMMIT` button. 
 You can also save multiple files as draft, and use the 'COMMIT CHANGES' button on the dashboard page to commit and push changes altogether. 
 
-The environment nodes have a `View Compiled YAML` option, which will generate a preview of environment specific YAML file that user uses in application deployment. In this view, all inheritances and variables will be resolved. 
+The environment nodes have a `View Compiled YAML` option, which will generate a preview of environment specific YAML file that user uses in application deployment. It does the similar thing as the `hydrate.js` script mentioned above. In this view, all inheritances and variables will be resolved. 
 
 Here is a brief [video]() to demonstrate the features. 
 
