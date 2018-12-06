@@ -7,6 +7,7 @@ import * as _ from 'lodash';
 
 import { percyConfig } from 'config';
 import { User, Authenticate, Principal } from 'models/auth';
+import { TreeNode } from 'models/tree-node';
 import { ConfigFile } from 'models/config-file';
 import { UtilService, git, FS } from './util.service';
 import { MaintenanceService } from './maintenance.service';
@@ -261,30 +262,71 @@ export class FileManagementService {
   }
 
   /**
-   * get the app environments
+   * get the app environments and percy config
    * @param user the logged in user
    * @param applicationName the app name
+   * @returns app environments and percy config
    */
   async getEnvironments(principal: Principal, applicationName: string) {
+    const fs = await this.utilService.getBrowserFS();
     const file = {
       fileName: percyConfig.environmentsFile,
       applicationName
     };
 
-    let envFile;
-    try {
-      envFile = await this.getFileContent(principal, file);
-    } catch (err) {
-      if (boom.isBoom(err) && err.output.statusCode === 404) {
-        console.warn(`${applicationName} environments file does not exist`);
-        return [];
+    // Load environments.yaml
+    const getEnvs = async() => {
+      let envFile: ConfigFile;
+      try {
+        envFile = await this.getFileContent(principal, file);
+      } catch (err) {
+        if (boom.isBoom(err) && err.output.statusCode === 404) {
+          console.warn(`${applicationName} environments file does not exist`);
+          return [];
+        } else {
+          throw err;
+        }
       }
-      throw err;
-    }
 
-    const config = envFile.draftConfig || envFile.originalConfig;
+      const config = envFile.draftConfig || envFile.originalConfig;
+      return _.map(_.get(config.environments, 'children', <TreeNode[]>[]), child => child.key);
+    };
 
-    return _.map(_.get(config.environments, 'children', []), child => child.key);
+    const result = await Promise.all([
+      getEnvs(),
+      this.loadAppPercyConfig(fs, principal.user, applicationName),
+    ]);
+
+    return { environments: result[0], appPercyConfig: result[1] };
+  }
+
+  /**
+   * Loads application's specific percy config.
+   *
+   * @param fs the filesystem
+   * @param user the logged in user
+   * @param applicationName the application name
+   */
+  private async loadAppPercyConfig(fs, user, applicationName) {
+
+    // Load .percyrc for the app
+    const readPercyrc = async(_path) => {
+      if (await fs.pathExists(_path)) {
+        return await fs.readJson(_path);
+      }
+      return {};
+    };
+
+    const dir = path.resolve(percyConfig.reposFolder, user.repoFolder);
+
+    const result = await Promise.all([
+      readPercyrc(path.resolve(dir, '.percyrc')),
+      readPercyrc(path.resolve(dir, percyConfig.yamlAppsFolder, '.percyrc')),
+      readPercyrc(path.resolve(dir, percyConfig.yamlAppsFolder, applicationName, '.percyrc')),
+    ]);
+
+    // Merge percyrcs
+    return _.assign({}, ...result);
   }
 
   /**

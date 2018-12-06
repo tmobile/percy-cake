@@ -410,40 +410,72 @@ export class UtilService {
     return result;
   }
 
+  /**
+   * Escape reg exp.
+   *
+   * @param text the text might contain reg exp to escape
+   * @returns escaped text
+   */
   private escapeRegExp(text) {
     return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
   }
 
-  createRegExp() {
-    const regexPattern =
-      `${this.escapeRegExp(percyConfig.variableSubstitutePrefix)}(.+?)${this.escapeRegExp(percyConfig.variableSubstituteSuffix)}`;
+  /**
+   * Create regexp for variable reference based on percy config.
+   *
+   * @param appPercyConfig the application's specific percy config
+   * @returns regexp for variable reference
+   */
+  createRegExp(appPercyConfig: any = {}) {
+    const prefix = _.defaultTo(appPercyConfig.variablePrefix, percyConfig.variableSubstitutePrefix);
+    const suffix = _.defaultTo(appPercyConfig.variableSuffix, percyConfig.variableSubstituteSuffix);
+    const regexPattern = `${this.escapeRegExp(prefix)}(.+?)${this.escapeRegExp(suffix)}`;
     return new RegExp(regexPattern, 'g');
   }
 
-  private addReference(referenceLinks, refBy, ref) {
-    if (refBy === ref) {
-      throw new Error('Loop variable reference: ' + [refBy, ref].join('->'));
+  /**
+   * When resolve token variable references, we collect them to detect loop reference.
+   * @param referenceLinks the collected reference links
+   * @param refFrom the reference from (left side)
+   * @param refTo the reference to (right side)
+   * @throws Error if loop reference detected
+   */
+  private addTokenReference(referenceLinks, refFrom, refTo) {
+    if (refFrom === refTo) {
+      throw new Error('Loop variable reference: ' + [refFrom, refTo].join('->'));
     }
+
     let added = false;
+
     _.each(referenceLinks, referenceLink => {
-      if (referenceLink[referenceLink.length - 1] === refBy) {
-        const idx = referenceLink.indexOf(ref);
-        if (idx > -1) {
-          const cyclic = referenceLink.slice(idx);
-          cyclic.push(ref);
-          throw new Error('Loop variable reference: ' + cyclic.join('->'));
-        }
-        referenceLink.push(ref);
-        added = true;
+      if (referenceLink[referenceLink.length - 1] !== refFrom) {
+        return;
       }
+
+      const idx = referenceLink.indexOf(refTo);
+      if (idx > -1) {
+        const cyclic = referenceLink.slice(idx);
+        cyclic.push(refTo);
+        throw new Error('Loop variable reference: ' + cyclic.join('->'));
+      }
+      referenceLink.push(refTo);
+      added = true;
     });
 
     if (!added) {
-      referenceLinks.push([refBy, ref]);
+      referenceLinks.push([refFrom, refTo]);
     }
   }
 
-  private resolveTokens(tokens) {
+  /**
+   * Tokens (which are top level properties of default config) can also be variable and reference each other.
+   * This method resolves them.
+   *
+   * @param tokens the tokens to resolves
+   * @param appPercyConfig the application's specific percy config
+   * @returns the resolved tokens
+   */
+  private resolveTokens(tokens, appPercyConfig) {
     const result = _.cloneDeep(tokens);
     const referenceLinks = [];
 
@@ -451,27 +483,30 @@ export class UtilService {
       let referenceFound = false;
 
       _.each(result, (value, key) => {
+        if (typeof value !== 'string') {
+          return;
+        }
+
         let retValue = value;
 
-        if (typeof value === 'string') {
-          const regExp = this.createRegExp();
-          let regExpResult;
-          while (regExpResult = regExp.exec(value)) {
+        const regExp = this.createRegExp(appPercyConfig);
+        let regExpResult;
 
-            const fullMatch = regExpResult[0];
-            const tokenName = regExpResult[1];
-            const tokenValue = result[tokenName];
+        while (regExpResult = regExp.exec(value)) {
 
-            if (typeof tokenValue === 'string') {
-              if (this.createRegExp().exec(tokenValue)) {
-                referenceFound = true;
-                this.addReference(referenceLinks, key, tokenName);
-                continue;
-              }
+          const fullMatch = regExpResult[0];
+          const tokenName = regExpResult[1];
+          const tokenValue = result[tokenName];
+
+          if (typeof tokenValue === 'string') {
+            if (this.createRegExp(appPercyConfig).exec(tokenValue)) {
+              referenceFound = true;
+              this.addTokenReference(referenceLinks, key, tokenName);
+              continue;
             }
-
-            retValue = retValue.replace(fullMatch, tokenValue);
           }
+
+          retValue = retValue.replace(fullMatch, tokenValue);
         }
 
         result[key] = retValue;
@@ -485,13 +520,23 @@ export class UtilService {
     return result;
   }
 
-  private substitute(target: TreeNode, tokens, depth) {
+  /**
+   * Yaml config can contain variable reference.
+   * This method rescusively substitues the variable references.
+   *
+   * @param target the config to substitue
+   * @param tokens the tokens (which are top level properties of default config)
+   * @param appPercyConfig the application's specific percy config
+   * @param depth the depth of config
+   * @returns the substitued config
+   */
+  private substitute(target: TreeNode, tokens, appPercyConfig, depth) {
     if (target.valueType === PROPERTY_VALUE_TYPES.OBJECT) {
       _.each(target.children, (child) => {
         if (depth === 0 && child.isLeaf() && _.has(tokens, child.key)) {
           child.value = tokens[child.key];
         } else {
-          this.substitute(child, tokens, depth++);
+          this.substitute(child, tokens, appPercyConfig, depth++);
         }
       });
       return target;
@@ -500,7 +545,7 @@ export class UtilService {
     if (target.valueType === PROPERTY_VALUE_TYPES.STRING_ARRAY
       || target.valueType === 'array') {
       _.each(target.children, (child) => {
-        this.substitute(child, tokens, depth++);
+        this.substitute(child, tokens, appPercyConfig, depth++);
       });
       return target;
     }
@@ -512,7 +557,7 @@ export class UtilService {
     const text = target.value;
     let retVal = text;
 
-    const regExp = this.createRegExp();
+    const regExp = this.createRegExp(appPercyConfig);
     let regExpResult;
     while (regExpResult = regExp.exec(text)) {
       const fullMatch = regExpResult[0];
@@ -525,6 +570,13 @@ export class UtilService {
     return target;
   }
 
+  /**
+   * Environment and inherit another environment.
+   * This method merges environment.
+   *
+   * @param dest the dest environment to merge to
+   * @param src the source environment to merge from
+   */
   private mergeEnv(dest: TreeNode, src: TreeNode) {
     if (dest.isLeaf()) {
       const match = src.findChild(dest.getPathsWithoutRoot());
@@ -552,7 +604,14 @@ export class UtilService {
     }
   }
 
-  compileYAML(env: string, config: Configuration) {
+  /**
+   * Compile yaml for given environment.
+   * @param env the environment name
+   * @param config the configuration object
+   * @param appPercyConfig the application's specific percy config
+   * @returns compiled yaml string
+   */
+  compileYAML(env: string, config: Configuration, appPercyConfig?) {
     const mergeStack = [];
     const inheritedEnvs = [env];
 
@@ -579,14 +638,16 @@ export class UtilService {
       this.mergeEnv(merged, m);
     });
 
-    const tokens = {};
+    let tokens = {};
     _.each(merged.children, (child) => {
       if (child.isLeaf()) {
         tokens[child.key] = child.value;
       }
     });
 
-    const substituted = this.substitute(merged, this.resolveTokens(tokens), 0);
+    tokens = this.resolveTokens(tokens, appPercyConfig);
+
+    const substituted = this.substitute(merged, tokens, appPercyConfig, 0);
     substituted.key = env;
 
     return this.convertTreeToYaml(substituted);
@@ -595,17 +656,18 @@ export class UtilService {
   /**
    * Highlight variable within yaml text string value
    * @param text the yaml text string value
+   * @param appPercyConfig the application's specific percy config
    * @param parentSpan the parent span node contains the text
    * @returns span element with variable highlighted, or given parent span if there is no variable found
    */
-  highlightVariable(text: string, parentSpan?: Cheerio) {
+  highlightVariable(text: string, appPercyConfig?, parentSpan?: Cheerio) {
 
     // Find out the variable token, wrap it in '<span class="yaml-var">${tokenName}</span>'
     let leftIdx = 0;
     let regExpResult;
     let newSpan: Cheerio = null;
     const $ = cheerio.load('');
-    const regExp = this.createRegExp();
+    const regExp = this.createRegExp(appPercyConfig);
     while (regExpResult = regExp.exec(text)) {
       if (!newSpan) {
         newSpan = $('<span class="hljs-string"></span>');
@@ -629,15 +691,16 @@ export class UtilService {
   }
 
   /**
-   * Highlight variable within yaml text string value
-   * @param node the string node to highlight its value
+   * Highlight variable within yaml text string value in a TreeNode
+   * @param node the string TreeNode to highlight its value
+   * @param appPercyConfig the application's specific percy config
    * @returns html rendered with highlighted variable
    */
-  highlightNodeVariable(node: TreeNode) {
+  highlightNodeVariable(node: TreeNode, appPercyConfig?) {
     if (node.valueType !== PROPERTY_VALUE_TYPES.STRING) {
       return node.value;
     }
-    const span = this.highlightVariable(_.defaultTo(node.value, ''));
+    const span = this.highlightVariable(_.defaultTo(node.value, ''), appPercyConfig);
     return span.html();
   }
 

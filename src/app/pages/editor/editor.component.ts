@@ -35,6 +35,7 @@ export class EditorComponent implements OnInit, AfterViewInit {
   filename = new FormControl('', [NotEmpty]);
 
   environments = this.store.pipe(select(appStore.getEnvironments));
+  appPercyConfig = this.store.pipe(select(appStore.getAppPercyConfig));
   configFile = this.store.pipe(select(appStore.getConfigFile));
   configuration = this.store.pipe(select(appStore.getConfiguration));
   isCommitting = this.store.pipe(select(appStore.getIsCommitting));
@@ -166,7 +167,7 @@ export class EditorComponent implements OnInit, AfterViewInit {
       try {
         this.utilService.convertTreeToYaml(editorState.configuration);
         _.forEach(editorState.configuration.environments.children, (envNode) => {
-          this.utilService.compileYAML(envNode.key, editorState.configuration);
+          this.utilService.compileYAML(envNode.key, editorState.configuration, editorState.appPercyConfig);
         });
       } catch (err) {
         this.store.dispatch(new Alert({ message: `YAML validation failed:\n${err.message}`, alertType: 'error' }));
@@ -253,7 +254,6 @@ export class EditorComponent implements OnInit, AfterViewInit {
       const tree = new TreeNode('');
       tree.children.push(node);
       try {
-        this.previewCode = '';
         this.previewCode = this.utilService.convertTreeToYaml(tree);
       } catch (err) {
         this.store.dispatch(new Alert({ message: err.message, alertType: 'error' }));
@@ -285,9 +285,9 @@ export class EditorComponent implements OnInit, AfterViewInit {
 
   // handles the compiled YAML view request
   showCompiledYAML(environment: string) {
-    this.store.pipe(select(appStore.getConfiguration), take(1), tap(config => {
+    this.store.pipe(select(appStore.editorState), take(1), tap(editorState => {
       try {
-        const compiledYAML = this.utilService.compileYAML(environment, config);
+        const compiledYAML = this.utilService.compileYAML(environment, editorState.configuration, editorState.appPercyConfig);
         this.reset();
         this.showAsCompiledYAMLEnvironment = environment;
         this.previewCode = compiledYAML;

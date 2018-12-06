@@ -41,13 +41,14 @@ describe('Editor store action/effect/reducer', () => {
   });
 
   it('PageLoad action should be successful', async () => {
-    spyOn(fileService, 'getEnvironments').and.returnValue(['dev', 'prod']);
+    spyOn(fileService, 'getEnvironments').and.returnValue({ environments: ['dev', 'prod'], appPercyConfig: { key: 'value' } });
 
     ctx.store.dispatch(new PageLoad({ applicationName: 'app1', editMode: true }));
     await ctx.fixture.whenStable();
 
     expect(ctx.editorState().editMode).toBeTruthy();
     expect(reducer.getEnvironments(ctx.editorState())).toEqual(['dev', 'prod']);
+    expect(reducer.getAppPercyConfig(ctx.editorState())).toEqual({ key: 'value' });
   });
 
   it('PageLoad action fail, alert dialog should show', async () => {

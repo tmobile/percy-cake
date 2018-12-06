@@ -25,6 +25,7 @@ export class NestedConfigViewComponent implements OnChanges {
   @Input() envFileMode: boolean; // Mode to create/edit environments.yaml file
   @Input() configuration: Configuration;
   @Input() environments: Array<string>;
+  @Input() appPercyConfig: any;
 
   @Output() configurationChange = new EventEmitter<any>();
   @Output() selectedNode = new EventEmitter<TreeNode>();
@@ -45,7 +46,7 @@ export class NestedConfigViewComponent implements OnChanges {
    * @param dialog the material dialog instance
    * @param utilService the util service
    */
-  constructor(private dialog: MatDialog, private utilService: UtilService) {
+  constructor(private dialog: MatDialog, public utilService: UtilService) {
     const _getChildren = (node: TreeNode) => node.children;
     this.defaultTreeControl = new NestedTreeControl<TreeNode>(_getChildren);
     this.defaultDataSource = new MatTreeNestedDataSource();
@@ -388,14 +389,5 @@ export class NestedConfigViewComponent implements OnChanges {
         action(found);
       }
     });
-  }
-
-  /**
-   * Highlight variable within yaml text string value
-   * @param node the string node to highlight its value
-   * @returns html rendered with highlighted variable
-   */
-  highlightVariable(node: TreeNode) {
-    return this.utilService.highlightNodeVariable(node);
   }
 }

@@ -155,7 +155,7 @@ describe('EditorComponent', () => {
     expect(getFileContentPayload).toEqual(newFile);
 
     ctx.store.next(new LoadFilesSuccess({ files: [file], applications }));
-    ctx.store.next(new PageLoadSuccess({ environments: ['dev'] }));
+    ctx.store.next(new PageLoadSuccess({ environments: ['dev'], appPercyConfig: {} }));
     ctx.store.next(new GetFileContentSuccess(newFile));
 
     ctx.detectChanges();

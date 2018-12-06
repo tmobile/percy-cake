@@ -30,8 +30,8 @@ export class EditorEffects {
     switchMap(async ([action, user]) => {
       const applicationName = action.payload.applicationName;
       try {
-        const environments = await this.fileManagementService.getEnvironments(user, applicationName);
-        return new PageLoadSuccess({ environments });
+        const result = await this.fileManagementService.getEnvironments(user, applicationName);
+        return new PageLoadSuccess(result);
       } catch (error) {
         return new PageLoadFailure(error);
       }

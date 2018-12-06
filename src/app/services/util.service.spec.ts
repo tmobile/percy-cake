@@ -1,3 +1,5 @@
+import * as cheerio from 'cheerio';
+
 import { TreeNode } from 'models/tree-node';
 import { Configuration } from 'models/config-file';
 import { PROPERTY_VALUE_TYPES, percyConfig } from 'config';
@@ -385,5 +387,21 @@ obj: !!map  # obj-comment
 
     expect(repoName).toEqual('tc/repo');
     expect(repoFolder).toEqual('test-user!tc%2Frepo!admin');
+  });
+
+  it('should highlight variable correctly', () => {
+    expect(utilService.highlightNodeVariable(new TreeNode('key', PROPERTY_VALUE_TYPES.BOOLEAN, true))).toEqual(true);
+    expect(utilService.highlightNodeVariable(new TreeNode('key', PROPERTY_VALUE_TYPES.NUMBER, 10))).toEqual(10);
+    expect(utilService.highlightNodeVariable(new TreeNode('key', PROPERTY_VALUE_TYPES.STRING, '\\aa"bb"cc')))
+      .toEqual('\\aa&quot;bb&quot;cc');
+    expect(utilService.highlightNodeVariable(new TreeNode('key', PROPERTY_VALUE_TYPES.STRING, '<span></span>')))
+      .toEqual('&lt;span&gt;&lt;/span&gt;');
+
+    const $ = cheerio.load('<span></span>');
+    const span = $('span');
+    span.append($('<span></span>').text(percyConfig.variableSubstitutePrefix));
+    span.append($('<span class="yaml-var"></span>').text('name'));
+    span.append($('<span></span>').text(percyConfig.variableSubstituteSuffix));
+    expect(utilService.highlightNodeVariable(new TreeNode('key', PROPERTY_VALUE_TYPES.STRING, getVariable('name')))).toEqual(span.html());
   });
 });

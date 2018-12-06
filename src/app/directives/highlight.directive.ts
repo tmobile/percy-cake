@@ -1,4 +1,4 @@
-import { Directive, NgZone, HostBinding } from '@angular/core';
+import { Directive, Input, NgZone, HostBinding } from '@angular/core';
 
 import { Highlight, HighlightJS } from 'ngx-highlightjs';
 import * as cheerio from 'cheerio';
@@ -12,6 +12,8 @@ export class HighlightDirective extends Highlight {
 
   @HostBinding('class.hljs') hljsClass = true;
   @HostBinding('innerHTML') renderedCode: string;
+
+  @Input() appPercyConfig: any;
 
   constructor(hljs: HighlightJS, zone: NgZone, utilService: UtilService) {
     super(hljs, zone);
@@ -30,7 +32,7 @@ export class HighlightDirective extends Highlight {
 
         const spanNode = $(span);
         const text = spanNode.text();
-        const newSpan = utilService.highlightVariable(text, spanNode);
+        const newSpan = utilService.highlightVariable(text, this.appPercyConfig, spanNode);
         if (newSpan !== spanNode) {
           spanNode.replaceWith(newSpan);
         }
@@ -40,4 +42,7 @@ export class HighlightDirective extends Highlight {
     });
   }
 
+  highlightElement(code, languages) {
+    super.highlightElement(code || '', languages);
+  }
 }

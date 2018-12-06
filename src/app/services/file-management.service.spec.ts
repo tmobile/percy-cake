@@ -342,7 +342,7 @@ describe('FileManagementService', () => {
     expect(resolveRefStub.calls.count()).toEqual(1);
     expect(readObjectStub.calls.count()).toEqual(1);
 
-    expect(envs).toEqual(['dev', 'qat', 'prod']);
+    expect(envs.environments).toEqual(['dev', 'qat', 'prod']);
   });
 
   it('should get an empty array when environments file does not exists', async () => {
@@ -356,7 +356,7 @@ describe('FileManagementService', () => {
     expect(resolveRefStub.calls.count()).toEqual(0);
     expect(readObjectStub.calls.count()).toEqual(0);
 
-    expect(envs).toEqual([]);
+    expect(envs.environments).toEqual([]);
   });
 
   it('should get files successfully', async () => {
