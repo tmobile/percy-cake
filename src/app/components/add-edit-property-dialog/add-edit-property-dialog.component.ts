@@ -219,6 +219,15 @@ export class AddEditPropertyDialogComponent implements OnChanges {
       return;
     }
 
+    if (this.valueType.value === PROPERTY_VALUE_TYPES.NUMBER) {
+      const num = this.value.value;
+      if ((_.isInteger(num) && !_.isSafeInteger(num)) ||
+        (num >= Number.MAX_SAFE_INTEGER || num <= Number.MIN_SAFE_INTEGER)) {
+        this.value.setErrors({ range: true });
+        return;
+      }
+    }
+
     // Validate key is unique
     if (!this.data.editMode || this.data.node.isDefaultNode() || this.isDefineEnv()) {
       const existingKeys = [];
