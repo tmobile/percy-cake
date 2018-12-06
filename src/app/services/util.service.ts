@@ -404,7 +404,6 @@ export class UtilService {
       // Validate against safe schema
       jsYaml.safeLoad(result, { strict: true });
     } catch (err) {
-      console.error('Error while parsing configuration to yaml', err);
       throw err;
     }
 

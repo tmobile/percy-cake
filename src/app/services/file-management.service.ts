@@ -97,7 +97,6 @@ export class FileManagementService {
         await this.pull(auth, repoDir, fs);
       }
     } catch (error) {
-      console.error(error);
       throw this.utilService.convertGitError(error);
     }
 
@@ -203,7 +202,6 @@ export class FileManagementService {
         })
       ]);
     } catch (err) {
-      console.error(err);
       if (err.name !== 'PullTimeoutError') {
         throw err;
       }
