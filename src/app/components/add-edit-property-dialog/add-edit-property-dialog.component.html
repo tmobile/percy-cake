@@ -33,7 +33,7 @@
     <ng-container *ngIf="valueType.value === 'string'" [ngSwitch]="showInherits()">
         <mat-form-field *ngSwitchCase="false" class="form-field">
             <input type="text" matInput placeholder="Value" [formControl]="value" />
-            <mat-error *ngIf="value.errors && value.errors.required">Required valid {{valueType.value}}</mat-error>
+            <mat-error *ngIf="value.hasError('required')">*Required</mat-error>
         </mat-form-field>
         <mat-form-field *ngSwitchCase="true" class="form-field">
           <mat-select placeholder="Env" [formControl]="value">
@@ -47,7 +47,8 @@
 
     <mat-form-field *ngIf="valueType.value === 'number'" class="form-field">
         <input type="number" matInput placeholder="Value" [formControl]="value" />
-        <mat-error *ngIf="value.errors && value.errors.required">Required valid {{valueType.value}}</mat-error>
+        <mat-error *ngIf="value.hasError('required')">*Required valid number</mat-error>
+        <mat-error *ngIf="value.hasError('range')">Number value exceeds range</mat-error>
     </mat-form-field>
 
     <div *ngIf="valueType.value === 'boolean'" class="value-radio-options form-field">
