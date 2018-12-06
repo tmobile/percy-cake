@@ -53,8 +53,6 @@ export class AppEffects {
     ofType<APIError>(CommonActionTypes.APIError),
     map(action => action.payload),
     exhaustMap(payload => {
-      console.error(payload);
-
       const error = boom.boomify(payload);
       const message = error.message;
       return of(new Alert({

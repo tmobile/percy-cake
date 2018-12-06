@@ -1,5 +1,5 @@
 import { Component, OnInit, HostListener, ViewChild, AfterViewInit } from '@angular/core';
-import { FormControl, Validators } from '@angular/forms';
+import { FormControl } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatDialog, MatInput } from '@angular/material';
 import { map, take, tap } from 'rxjs/operators';
