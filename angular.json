@@ -23,7 +23,7 @@
             "polyfills": "src/polyfills.ts",
             "tsConfig": "src/tsconfig.app.json",
             "assets": [
-              "src/favicon.ico",
+              "src/favicon.png",
               "src/percy.conf.json"
             ],
             "styles": [
@@ -94,7 +94,7 @@
             },
             "scripts": [],
             "assets": [
-              "src/favicon.ico"
+              "src/favicon.png"
             ],
             "sourceMap": true,
             "codeCoverage": true
