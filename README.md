@@ -164,6 +164,7 @@ There are 3 configuration files:
 
 
 The git repository can contain optional `.percyrc` files, which provide repository-specific or application-specific configuration. The following properties are supported now:
+
 | Property                 | Description                                                  |
 | ------------------------ | ------------------------------------------------------------ |
 | variablePrefix           | The YAML variable substitute prefix                          |
