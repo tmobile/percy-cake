@@ -52,30 +52,30 @@ Here is an example of a YAML file, and you can notice the `environments` node co
 ```yaml
 default: !!map
   server.host: !!int 1  # TMO server url
-  mytmo.server.host: !!str https://default.my.t-mobile.com  # MYTMO server url
-  middlewareapipath: !!str _{$middlewareurl}_/mw/api/path
-  $middlewareurl: !!str https://default.middleware.t-mobile.com  # Backend MW url
-  $dcphost: !!str https://default.api.t-mobile.com
-  $api-path: !!str /path/to/api
-  apihost: !!str http://tmonext-gen.com_{$api-path}_
+  mytmo.server.host: !!str "https://default.my.t-mobile.com"  # MYTMO server url
+  middlewareapipath: !!str "_{$middlewareurl}_/mw/api/path"
+  $middlewareurl: !!str "https://default.middleware.t-mobile.com"  # Backend MW url
+  $dcphost: !!str "https://default.api.t-mobile.com"
+  $api-path: !!str "/path/to/api"
+  apihost: !!str "http://tmonext-gen.com_{$api-path}_"
   dcpendpoints: !!map
-    dcpcart: !!str _{$dcphost}_/api/cart
-    dcpupdate: !!str _{$dcphost}_/api/update
-    dcprefund: !!str _{$dcphost}_/api/refund
+    dcpcart: !!str "_{$dcphost}_/api/cart"
+    dcpupdate: !!str "_{$dcphost}_/api/update"
+    dcprefund: !!str "_{$dcphost}_/api/refund"
 environments: !!map
   prod: !!map
-    $middlewareurl: !!str https://e3.my.t-mobile.com  # Production middleware endpoint
-    apihost: !!str http://t-mobile.com_{$api-path}_
-    $dcphost: !!str http://prod.dcp.com
+    $middlewareurl: !!str "https://e3.my.t-mobile.com"  # Production middleware endpoint
+    apihost: !!str "http://t-mobile.com_{$api-path}_"
+    $dcphost: !!str "http://prod.dcp.com"
     dcpendpoints: !!map
-      dcpcart: !!str _{$dcphost}_/api/v2/cart
+      dcpcart: !!str "_{$dcphost}_/api/v2/cart"
   dev: !!map
-    $middlewareurl: !!str https://tmo.tugs.dev.com  # Production middleware endpoint
-    apihost: !!str http://t-mobile.com_{$api-path}_
-    newProperty: !!str hello
+    $middlewareurl: !!str "https://tmo.tugs.dev.com"  # Production middleware endpoint
+    apihost: !!str "http://t-mobile.com_{$api-path}_"
+    newProperty: !!str "hello"
   qa: !!map
-    $middlewareurl: !!str https://tmo.tugs.qat.com  # Production middleware endpoint
-    apihost: !!str http://t-mobile.com_{$api-path}_
+    $middlewareurl: !!str "https://tmo.tugs.qat.com"  # Production middleware endpoint
+    apihost: !!str "http://t-mobile.com_{$api-path}_"
 ```
 
 Each application will have a special YAML file called `environments.yaml` (the file name is configurable), which defines all the environments supported by the application. So in the editor, when editing the other YAML files, you can simply select the environments pre-defined in this file. 
