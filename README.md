@@ -7,11 +7,12 @@
 Percival Editor is a configuration tool that allows developers and DevOps a standard and hierarchical approach and intuitive form like User Interface for managing and maintaining complex configuration environments. The configuration files created by this tool will be used in DevOps pipeline to generate final configuration for deployment to various environments.
 
 The editor allows the user to manage (list, create, edit or delete) YAML configuration files from a git repository in the browser directly. 
-and it's a pure static web page, that requires no back-end. But a proxy maybe needed for it to access the git repository successfully.
+and it's a pure static web page, that requires no back-end. But a proxy may be needed for it to access the git repository successfully.
 
 The git repository to be managed by this editor must follow the mono directory structure as below:
 ```
 apps/
+  +- .percyrc
   +- app1/
   |    +- client.config.yaml
   |    +- server.config.yaml
@@ -19,6 +20,7 @@ apps/
   |    +- environments.yaml
   |    +- hydrate.js
   |    +- readme.md
+  |    +- .percyrc
   +- app2/
   |    +- client.config.yaml
   |    ...
@@ -29,10 +31,12 @@ libs/
 readme.md
 ```
 
-It must have an `apps` directory (the directory name is configurable), with each sub-directory representing an application. The editor will load all applications together with all the YAML files inside each application and ignore all the non-YAML files. Note that the `hydrate.js` script will be used in the CI process to *hydrate* the YAML files in the repository to generate environment specific YAML files, which is then used for deployment to various environments. 
+It must have an `apps` directory (the directory name is configurable), with each sub-directory representing an application. The editor will load all applications together with all the YAML files inside each application (non-YAML files will be ignored). 
+
+The `hydrate.js` script here is used in the CI process to *hydrate* the YAML files in the repository to generate environment specific YAML files, which is then used for deployment to various environments. The editor provides a  feature to allow the user to preview the generated environment specific YAML file. 
 
 In each application folder, all YAML files must follow the format as below:
-```
+```yaml
 default: !!map
 
 
@@ -40,13 +44,12 @@ environments: !!map
 
 ```
 
-The `default` node contains the default configuration properties for the application, and the `environments` node contains multiple environment nodes, with each environment node containing environment specific configuraution properties. 
-inheriting from the `default` node. 
+The `default` node contains the default configuration properties for the application, and the `environments` node contains multiple environment nodes, with each environment node containing environment-specific configuration properties. 
 
-The environment nodes inherit the `default` node, and user can add properties to override the default values in the `default` node.
+The environment nodes inherit the `default` node, and the user can add properties to override the default values in the `default` node.
 
-Here is an example of YAML file, and you can notice the `environments` node contains `prod`, `dev` and `qa` environment nodes. 
-```
+Here is an example of a YAML file, and you can notice the `environments` node contains `prod`, `dev` and `qa` environment nodes. 
+```yaml
 default: !!map
   server.host: !!int 1  # TMO server url
   mytmo.server.host: !!str https://default.my.t-mobile.com  # MYTMO server url
@@ -80,7 +83,7 @@ Each application will have a special YAML file called `environments.yaml` (the f
 
 ## Usage
 
-Login with your username / password of your git account, the URL and branch of your configuration repository. 
+Log in with your username / password of your git account, the URL and branch of your configuration repository. 
 The editor dashboard will load the YAML files in each application folder from your repository. 
 Then you can select any file to edit, delete a file or add a new file to the application. 
 
@@ -96,37 +99,37 @@ Here is a brief [video](https://www.youtube.com/watch?v=Ealtb91SUFM&feature=yout
 
 - Load YAML files from a mono structured repository
 - Display YAML file in an intuitive structured tree view
-- Support YAML property with object, bool, string, and number types, and array of simple types
+- Support YAML property with object, bool, string,  number types, and an array of simple types
 - Create a new YAML file
 - Edit an existing YAML file
 - Delete an existing YAML file
 - Save draft changes locally in the browser
 - Commit changes to the repository
-- Resolve conflicts when commit changes
+- Resolve conflicts when committing changes
 - Define variables at the top-level, and use the variables anywhere in the YAML file
-- The environment node has a special `inherits` property, it can be used to inherit from another environement node. Note that all environment nodes inherit from the default node by default. 
-- View the compiled YAML of the environment node, in this view, the inherites and variables will be resolved. 
+- The environment node has a special `inherits` property, it can be used to inherit from another environment node. Note that all environment nodes inherit from the default node by default. 
+- View the compiled YAML of the environment node, in this view, the inherits and variables will be resolved. 
 
 
 ## How it works
 
-[Material components](https://material.angular.io/components/categories) are used extensively to build UI interface. [@ngrx](http://ngrx.github.io/) is used for reactive state management of the UI.
+The editor is created with Angular 7, and [Material components](https://material.angular.io/components/categories) are used extensively to build UI interface. [@ngrx](http://ngrx.github.io/) is used for reactive state management of the UI.
 
-[isomorphic-git](https://github.com/isomorphic-git/isomorphic-git) is used to clone remote git repo and commit changes. Repo files and draft changes are all saved in browser by using [Filer](https://filer.js.org/) which simulates a file system (with IndexedDB as underlying storage).
+[isomorphic-git](https://github.com/isomorphic-git/isomorphic-git) is used to clone remote git repo and commit changes. Repo files and draft changes are all saved in the browser by using [Filer](https://filer.js.org/) which simulates a file system (with IndexedDB as underlying storage).
 
-If this web app is hosted in a different domain than the git server domain, a [CORS proxy](https://github.com/isomorphic-git/isomorphic-git#cors-support) server need to be setup to allow cross sites requests.
+If this web app is hosted in a different domain than the git server domain, a [CORS proxy](https://github.com/isomorphic-git/isomorphic-git#cors-support) server need to be set up to allow cross sites requests.
 
 
 
 ## Known Issues
 
-The browser filesystem is built on top of IndexedDB, the performance and stability is limited by IndexedDB and thus is not as good as a real filesystem.
+The browser filesystem is built on top of IndexedDB, the performance and stability are limited by IndexedDB and thus is not as good as a real filesystem.
 
 To relieve the impact, we have adopted several ways to reduce file I/O:
 
 - Shallow clone with 1 depth
 - Fetch remote commits with 1 depth
-- After clone/fetch, we never checkout the files to working copy, just saving the git packed objects/files and will directly use the packed objects/files afterwards.
+- After clone/fetch, we never check out the files to working copy, just saving the git packed objects/files and will directly use the packed objects/files afterwards.
 
 
 
@@ -136,7 +139,7 @@ There are 3 configuration files:
 
 - [src/percy.conf.json](src/percy.conf.json): configuration used in development
 - [src/percy.conf.test.json](src/percy.conf.test.json): configuration used in Karma test
-- [src/percy.conf.prod.json](src/percy.conf.prod.json): for production configuration, it will be copied to `dist/build/percy.conf.json` in production build
+- [src/percy.conf.prod.json](src/percy.conf.prod.json): for production configuration, it will be copied to `dist/build/percy.conf.json` in the production build
 
 | Variable                 | Description                                                  |
 | ------------------------ | ------------------------------------------------------------ |
@@ -156,10 +159,25 @@ There are 3 configuration files:
 | loginSessionTimeout      | The login session timeout, like "1m", "2.5 hrs", "2 days". Default to 30m. |
 | encryptKey               | The key used to encrypt security information like password   |
 | encryptSalt              | The salt used to encrypt security information like password  |
-| variablePrefix           | The Yaml variable substitute prefix                          |
-| variableSuffix           | The Yaml variable substitute suffix                          |
+| variablePrefix           | The YAML variable substitute prefix                          |
+| variableSuffix           | The YAML variable substitute suffix                          |
 
 
+The git repository can contain optional `.percyrc` files, which provide repository-specific or application-specific configuration. The following properties are supported now:
+| Property                 | Description                                                  |
+| ------------------------ | ------------------------------------------------------------ |
+| variablePrefix           | The YAML variable substitute prefix                          |
+| variableSuffix           | The YAML variable substitute suffix                          |
+
+If it's in the `apps` folder, the configuration applies to all applications, and if it's in the specific application folder, it only applies to the corresponding application. When provided, the default properties from the `percy.conf.json` will be overridden. 
+
+Here is an example of `.percyrc` file:
+```json
+{
+  "variablePrefix": "{{",
+  "variableSuffix": "}}"
+}
+```
 
 ## Development
 
