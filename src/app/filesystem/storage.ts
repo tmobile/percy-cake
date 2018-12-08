@@ -1,7 +1,8 @@
 import { FileSystem } from 'filer/src';
 import * as _ from 'lodash';
 
-
+// Used to define IndexedDB version.
+// Filer does not pass the version option, so shim the indexedDB.open function.
 const BrowserIndexedDB = window.indexedDB ||
   window['mozIndexedDB'] ||
   window['webkitIndexedDB'] ||
@@ -76,7 +77,7 @@ function createMemoryCache(name: string) {
 }
 
 /**
- * For each fs method call (like readFile/writeFile/readdir/mkdir), a new context will be created.
+ * For each call of fs operation (like readFile/writeFile/readdir/mkdir), a new context will be created.
  * This context adds a cache layer in front of IndexedDB to speed read operations.
  * For write operations, write-through strategy is used to ensure data updates are safely stored on.
  */
