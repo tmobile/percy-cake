@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import * as path from 'path';
-import * as boom from 'boom';
+import * as HttpErrors from 'http-errors';
 import * as ms from 'ms';
 import * as _ from 'lodash';
 
@@ -70,7 +70,7 @@ export class MaintenanceService {
     if (this.userSessionsCache[username] && this.userSessionsCache[username] < Date.now()) {
       delete this.userSessionsCache[username];
       this.userSessions$.next(this.userSessionsCache);
-      throw boom.unauthorized('Session expired, please re-login');
+      throw new HttpErrors.Unauthorized('Session expired, please re-login');
     }
 
     this.userSessionsCache[username] = Date.now() + ms(percyConfig.loginSessionTimeout);

@@ -79,7 +79,9 @@
     .buttons-row {
         display: flex;
         padding-top: 20px;
-        margin-left: auto;
+        .btn-cancel {
+            margin-left: auto;
+        }
         >* {
             margin-right: 10px;
         }

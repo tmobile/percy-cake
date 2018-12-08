@@ -4,7 +4,6 @@ import { Store, select } from '@ngrx/store';
 import { Actions, Effect, ofType } from '@ngrx/effects';
 import { of } from 'rxjs';
 import { map, withLatestFrom, switchMap } from 'rxjs/operators';
-import * as boom from 'boom';
 
 import * as appStore from '..';
 import { Alert, APIError, Navigate } from '../actions/common.actions';
@@ -183,8 +182,8 @@ export class BackendEffects {
   commitChangesFailure$ = this.actions$.pipe(
     ofType<CommitChangesFailure>(BackendActionTypes.CommitChangesFailure),
     switchMap((action) => {
-      const error = boom.boomify(action.payload.error);
-      if (error.output.statusCode === 409) {
+      const error: any = action.payload.error;
+      if (error.statusCode === 409) {
         this.dialog.open(ConflictDialogComponent, {
           data: {
             fromEditor: action.payload.fromEditor,

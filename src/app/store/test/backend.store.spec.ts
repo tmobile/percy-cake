@@ -1,5 +1,5 @@
 import * as _ from 'lodash';
-import * as boom from 'boom';
+import * as HttpErrors from 'http-errors';
 
 import { Principal } from 'models/auth';
 import { ConfigFile, Configuration } from 'models/config-file';
@@ -295,7 +295,7 @@ describe('Backend store action/effect/reducer', () => {
 
   it('CommitChanges action fail with conflict, conflict dialog should show', async () => {
     spyOn(fileService, 'commitFiles').and.callFake(() => {
-      const error = boom.conflict<any>('conflict error');
+      const error = new HttpErrors.Conflict('conflict error');
       error.data = [file2];
       throw error;
     });

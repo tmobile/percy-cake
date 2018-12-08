@@ -1,5 +1,4 @@
-import * as boom from 'boom';
-
+import * as HttpErrors from 'http-errors';
 import { TestUser, Setup, TestContext } from 'test/test-helper';
 
 import { percyConfig } from 'config';
@@ -148,25 +147,25 @@ describe('LoginComponent', () => {
   it('should show login error propery', () => {
     expect(ctx.component.loginError).toBeNull();
 
-    ctx.store.next(new LoginFailure(boom.unauthorized()));
+    ctx.store.next(new LoginFailure(new HttpErrors.Unauthorized('mock error')));
     expect(ctx.component.password.hasError('invalid')).toBeTruthy();
 
-    ctx.store.next(new LoginFailure(boom.forbidden()));
+    ctx.store.next(new LoginFailure(new HttpErrors.Forbidden('mock error')));
     expect(ctx.component.repositoryURL.hasError('forbidden')).toBeTruthy();
 
-    ctx.store.next(new LoginFailure(boom.notFound('Repository not found')));
+    ctx.store.next(new LoginFailure(new HttpErrors.NotFound('Repository not found')));
     expect(ctx.component.repositoryURL.hasError('notFound')).toBeTruthy();
 
     ctx.component.branchName.setValue(TestUser.branchName);
-    const branchNotFoundError = boom.notFound<any>('Branch not found');
-    branchNotFoundError['code'] = 'ResolveRefError';
-    branchNotFoundError['data'] = {
+    const branchNotFoundError = new HttpErrors.NotFound('Branch not found');
+    branchNotFoundError.code = 'ResolveRefError';
+    branchNotFoundError.data = {
       ref: TestUser.branchName
     };
     ctx.store.next(new LoginFailure(branchNotFoundError));
     expect(ctx.component.branchName.hasError('notFound')).toBeTruthy();
 
-    ctx.store.next(new LoginFailure(boom.serverUnavailable()));
+    ctx.store.next(new LoginFailure(new HttpErrors.InternalServerError('mock error')));
     expect(ctx.component.loginError).toEqual('Login failed');
 
     ctx.component.inputChange();

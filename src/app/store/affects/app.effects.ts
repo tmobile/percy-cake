@@ -4,7 +4,6 @@ import { MatDialog } from '@angular/material';
 import { of } from 'rxjs';
 import { map, tap, exhaustMap } from 'rxjs/operators';
 import { Actions, Effect, ofType } from '@ngrx/effects';
-import * as boom from 'boom';
 
 import { Logout } from '../actions/auth.actions';
 import { Alert, CommonActionTypes, AlertClosed, APIError, Navigate } from '../actions/common.actions';
@@ -53,11 +52,10 @@ export class AppEffects {
     ofType<APIError>(CommonActionTypes.APIError),
     map(action => action.payload),
     exhaustMap(payload => {
-      const error = boom.boomify(payload);
-      const message = error.message;
+      const message = payload.message;
       return of(new Alert({
         message: message,
-        alertType: error.output.statusCode === 401 || error.output.statusCode === 403 ? 'logout' : 'error'
+        alertType: payload.statusCode === 401 || payload.statusCode === 403 ? 'logout' : 'error'
       }));
     }),
   );

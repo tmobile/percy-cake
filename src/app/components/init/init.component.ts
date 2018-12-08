@@ -2,7 +2,7 @@ import { OnInit, Component } from '@angular/core';
 import { Store, select } from '@ngrx/store';
 import * as fromStore from 'store';
 import { take } from 'rxjs/operators';
-import * as boom from 'boom';
+import * as HttpErrors from 'http-errors';
 import * as _ from 'lodash';
 
 import { percyConfig } from 'config';
@@ -60,19 +60,19 @@ export class InitComponent implements OnInit {
 
     // Validate user
     if (!user || !user.token) {
-      throw boom.unauthorized('Miss access token');
+      throw new HttpErrors.Unauthorized('Miss access token');
     }
 
     try {
       JSON.parse(this.utilService.decrypt(user.token));
     } catch (err) {
-      throw boom.unauthorized('Invalid access token');
+      throw new HttpErrors.Unauthorized('Invalid access token');
     }
 
     // Validate repo metadata
     const repoMetadataFile = this.utilService.getMetadataPath(user.repoFolder);
     if (!await fs.pathExists(repoMetadataFile)) {
-      throw boom.unauthorized('Repo metadata not found');
+      throw new HttpErrors.Unauthorized('Repo metadata not found');
     }
 
     let repoMetadata: any = await fs.readFile(repoMetadataFile);
@@ -82,13 +82,13 @@ export class InitComponent implements OnInit {
       // Not a valid json format, repo metadata file corruption, remove it
       console.warn(`${repoMetadataFile} file corruption, will be removed:\n${repoMetadata}`);
       await fs.remove(repoMetadataFile);
-      throw boom.unauthorized('Repo metadata file corruption');
+      throw new HttpErrors.Unauthorized('Repo metadata file corruption');
     }
 
     // Verify with repo metadata
     if (!_.isEqual({ ..._.omit(user, 'password'), version: percyConfig.repoMetadataVersion },
       _.omit(repoMetadata, 'password', 'commitBaseSHA'))) {
-      throw boom.forbidden('Repo metadata mismatch, you are not allowed to access the repo');
+      throw new HttpErrors.Forbidden('Repo metadata mismatch, you are not allowed to access the repo');
     }
 
     const password = this.utilService.decrypt(repoMetadata.password);

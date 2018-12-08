@@ -3,16 +3,18 @@ import * as _ from 'lodash';
 
 // Used to define IndexedDB version.
 // Filer does not pass the version option, so shim the indexedDB.open function.
-const BrowserIndexedDB = window.indexedDB ||
+if (!navigator.userAgent.includes('Trident/')) {
+  const BrowserIndexedDB = window.indexedDB ||
   window['mozIndexedDB'] ||
   window['webkitIndexedDB'] ||
   window['msIndexedDB'];
 
-const indexedDBVersion = '2.0';
-const $open = BrowserIndexedDB.open;
-BrowserIndexedDB.open = (name) => {
-  return $open.apply(BrowserIndexedDB, [name, indexedDBVersion]);
-};
+  const indexedDBVersion = '2.0';
+  const $open = BrowserIndexedDB.open;
+  BrowserIndexedDB.open = (name) => {
+    return $open.apply(BrowserIndexedDB, [name, indexedDBVersion]);
+  };
+}
 
 /**
  * A simple in-memory key/value cache.

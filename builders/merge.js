@@ -36,7 +36,7 @@ exports.mergeWebpack = function (defaultWebpackConfig) {
           plugins.unshift(postcssUrl(
             {
               filter: (asset) => {
-                return asset.absolutePath.endsWith('.woff2') || asset.absolutePath.endsWith('.svg');
+                return asset.absolutePath.endsWith('.woff') || asset.absolutePath.endsWith('.woff2') || asset.absolutePath.endsWith('.svg');
               },
               url: 'inline',
               // NOTE: maxSize is in KB

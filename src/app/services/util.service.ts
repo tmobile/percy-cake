@@ -6,7 +6,7 @@ import * as yamlJS from 'yaml-js';
 import * as aesjs from 'aes-js';
 import * as pbkdf2 from 'pbkdf2';
 import * as path from 'path';
-import * as boom from 'boom';
+import * as HttpErrors from 'http-errors';
 import * as cheerio from 'cheerio';
 import * as _ from 'lodash';
 
@@ -749,20 +749,20 @@ export class UtilService {
   convertGitError(err) {
 
     if (err && err.data && err.data.statusCode === 401) {
-      return boom.unauthorized('Invalid username or password');
+      return new HttpErrors.Unauthorized('Invalid username or password');
     }
 
     if (err && err.data && err.data.statusCode === 403) {
-      return boom.forbidden('Git authorization forbidden');
+      return new HttpErrors.Forbidden('Git authorization forbidden');
     }
 
     if (err && err.data && err.data.statusCode === 404) {
-      return boom.notFound('Repository not found');
+      return new HttpErrors.NotFound('Repository not found');
     }
 
-    const resultErr = boom.boomify(err);
+    const resultErr = new HttpErrors.InternalServerError(err.message);
     resultErr.data = err.data;
-    resultErr['code'] = err.code;
+    resultErr.code = err.code;
 
     return resultErr;
   }

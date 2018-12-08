@@ -8,7 +8,6 @@ import { Store, select } from '@ngrx/store';
 import { BehaviorSubject } from 'rxjs';
 import { startWith, debounceTime, distinctUntilChanged, switchMap, withLatestFrom, tap } from 'rxjs/operators';
 
-import * as boom from 'boom';
 import * as _ from 'lodash';
 
 import { percyConfig } from 'config';
@@ -91,16 +90,14 @@ export class LoginComponent implements OnInit {
         return;
       }
 
-      const err = boom.boomify(le);
-
       // Show the error in form field
-      if (err.output.statusCode === 401) {
+      if (le['statusCode'] === 401) {
         return this.password.setErrors({ invalid: true });
-      } else if (err.output.statusCode === 403) {
+      } else if (le['statusCode'] === 403) {
         return this.repositoryURL.setErrors({ forbidden: true });
-      } else if (err.message === 'Repository not found') {
+      } else if (le.message === 'Repository not found') {
         return this.repositoryURL.setErrors({ notFound: true });
-      } else if (err['code'] === 'ResolveRefError' && _.get(err, 'data.ref') === this.branchName.value) {
+      } else if (le['code'] === 'ResolveRefError' && _.get(le, 'data.ref') === this.branchName.value) {
         return this.branchName.setErrors({ notFound: true });
       }
 

@@ -336,16 +336,16 @@ obj: !!map  # obj-comment
   it('should convert git error', () => {
     const err: any = new Error();
     err.data = { statusCode: 401 };
-    expect(utilService.convertGitError(err).output.statusCode).toEqual(401);
+    expect(utilService.convertGitError(err).statusCode).toEqual(401);
 
     err.data = { statusCode: 403 };
-    expect(utilService.convertGitError(err).output.statusCode).toEqual(403);
+    expect(utilService.convertGitError(err).statusCode).toEqual(403);
 
     err.data = { statusCode: 404 };
-    expect(utilService.convertGitError(err).output.statusCode).toEqual(404);
+    expect(utilService.convertGitError(err).statusCode).toEqual(404);
 
     err.data = { statusCode: 500 };
-    expect(utilService.convertGitError(err).output.statusCode).toEqual(500);
+    expect(utilService.convertGitError(err).statusCode).toEqual(500);
   });
 
   it('should get metadata file path', () => {

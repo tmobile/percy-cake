@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as path from 'path';
-import * as boom from 'boom';
+import * as HttpErrors from 'http-errors';
 import { TreeDescription, CommitDescription } from 'isomorphic-git';
 import * as ms from 'ms';
 import * as _ from 'lodash';
@@ -279,7 +279,7 @@ export class FileManagementService {
       try {
         envFile = await this.getFileContent(principal, file);
       } catch (err) {
-        if (boom.isBoom(err) && err.output.statusCode === 404) {
+        if (err instanceof HttpErrors.HttpError && err.statusCode === 404) {
           console.warn(`${applicationName} environments file does not exist`);
           return [];
         } else {
@@ -477,7 +477,7 @@ export class FileManagementService {
     }
 
     if (!file.originalConfig && !file.draftConfig) {
-      throw boom.notFound(`File '${file.applicationName}/${file.fileName}' does not exist`);
+      throw new HttpErrors.NotFound(`File '${file.applicationName}/${file.fileName}' does not exist`);
     }
 
     file.modified = file.draftConfig ? !_.isEqual(file.originalConfig, file.draftConfig) : false;
@@ -710,7 +710,7 @@ export class FileManagementService {
       await this.saveCommitBaseSHA(fs, repoMetadata, commitBaseSHA);
 
       const names = conflictFiles.map((file) => `• ${file.applicationName}/${file.fileName}`).join('\n');
-      const error = boom.conflict<ConfigFile[]>(`The following file(s) are already changed in the repository:\n${names}`);
+      const error = new HttpErrors.Conflict(`The following file(s) are already changed in the repository:\n${names}`);
       error.data = conflictFiles;
       throw error;
     }
