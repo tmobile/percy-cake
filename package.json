@@ -35,7 +35,7 @@
     "boom": "^7.3.0",
     "cheerio": "^0.22.0",
     "core-js": "^2.5.4",
-    "filer": "git+https://github.com/filerjs/filer#61a1f5e02034ee4deac3e8bbe66c6eba2d600377",
+    "filer": "git+https://github.com/filerjs/filer.git#97a6004091f5a2b2a0ec8ac2ce213687a394fdca",
     "fs-extra": "^7.0.1",
     "hammerjs": "^2.0.8",
     "highlight.js": "^9.13.1",
