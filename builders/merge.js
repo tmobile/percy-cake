@@ -1,19 +1,34 @@
-const { getSystemPath } = require('@angular-devkit/core');
-const { IndexHtmlWebpackPlugin } = require("@angular-devkit/build-angular/src/angular-cli-files/plugins/index-html-webpack-plugin")
 const webpackMerge = require('webpack-merge');
 const postcssUrl = require('postcss-url');
-const { differenceWith, keyBy, merge, get, each } = require('lodash');
+const _ = require('lodash');
 
-exports.mergeWebpack = function (root, baseWebpackConfig, options) {
-  const customWebpackConfigPath = './custom-webpack.config.js';
-  const customWebpackConfig = require(`${getSystemPath(root)}/${customWebpackConfigPath}`);
+const customWebpackConfig = require('../custom-webpack.config.js');
 
-  each(baseWebpackConfig.module.rules, rule => {
-    each(rule.use, usedLoader => {
+/**
+ * Push entry.
+ * @param entries array of entries to push into
+ * @param entry the entry to push to array array
+ */
+function pushEntires(entries, entry) {
+  if (_.isArray(entry)) {
+    entries.push(...entry);
+  } else {
+    entries.push(entry);
+  }
+}
+
+/**
+ * Merge Angular's default webpack config with custom-webpack.config.js
+ * @param defaultWebpackConfig Angular's default webpack config
+ */
+exports.mergeWebpack = function (defaultWebpackConfig) {
+  // Use postcss-url to inline woff2 and svg files
+  _.each(defaultWebpackConfig.module.rules, rule => {
+    _.each(rule.use, usedLoader => {
       if (usedLoader.loader !== 'postcss-loader') {
         return;
       }
-      const pluginsCreator = get(usedLoader, 'options.plugins');
+      const pluginsCreator = _.get(usedLoader, 'options.plugins');
       if (pluginsCreator && typeof pluginsCreator === 'function') {
         usedLoader.options.plugins = (loader) => {
           const plugins = pluginsCreator(loader);
@@ -35,35 +50,24 @@ exports.mergeWebpack = function (root, baseWebpackConfig, options) {
     });
   });
 
-  const mergedConfig = webpackMerge.smartStrategy({})(baseWebpackConfig, customWebpackConfig);
+  // Merge webpack config
+  const mergedConfig = webpackMerge.smartStrategy({})(defaultWebpackConfig, customWebpackConfig);
 
-  if (baseWebpackConfig.plugins && customWebpackConfig.plugins) {
-    const conf1ExceptConf2 = differenceWith(baseWebpackConfig.plugins, customWebpackConfig.plugins, (item1, item2) => item1.constructor.name === item2.constructor.name);
-    // const conf1ByName = keyBy(baseWebpackConfig.plugins, 'constructor.name');
-    // customWebpackConfig.plugins = customWebpackConfig.plugins.map(p => conf1ByName[p.constructor.name] ? merge(conf1ByName[p.constructor.name], p) : p);
-    mergedConfig.plugins = [...conf1ExceptConf2, ...customWebpackConfig.plugins];
-  }
-
-  if (process.env.NODE_ENV !== 'test') {
-    // Combine polyfills, main and styles in a single bundle
-    mergedConfig.entry = {
-      percy: [
-        './src/polyfills.ts',
-        './src/styles.scss',
-        './src/main.ts'
-      ]
+  // Combine polyfills, styles and main in a single bundle
+  const entries = [];
+  _.each(mergedConfig.entry, (entry, key) => {
+    if (key !== 'main') {
+      pushEntires(entries, entry);
     }
-    mergedConfig.output.filename = '[name].bundle.min.js';
-    each(mergedConfig.plugins, (plugin, idx) => {
-      if (plugin instanceof IndexHtmlWebpackPlugin) {
-        mergedConfig.plugins[idx] = new IndexHtmlWebpackPlugin({
-          entrypoints: ['percy']
-        });
-      }
-    });
-    mergedConfig.optimization.runtimeChunk = false; // This will embed webpack runtime chunk
+  });
+  // The main entry should be added as last one
+  pushEntires(entries, mergedConfig.entry.main);
+
+  if (process.env.NODE_ENV === 'test') {
+    mergedConfig.entry = { main: entries };
+  } else {
+    mergedConfig.entry = { percy: entries };
   }
 
-  // console.log(require('util').inspect(mergedConfig, false, 100, true))
   return mergedConfig;
 }
