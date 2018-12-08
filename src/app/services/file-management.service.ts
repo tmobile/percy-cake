@@ -715,12 +715,22 @@ export class FileManagementService {
       throw error;
     }
 
+    // Create folder
+    const folders = [];
+    _.each(configFiles, file => {
+      const folderPath = path.resolve(repoDir, percyConfig.yamlAppsFolder, file.applicationName);
+      if (!folders.includes(folderPath)) {
+        folders.push(folderPath);
+      }
+    });
+    for (const folder of folders) {
+      await fs.ensureDir(folder);
+    }
+
     await this.doPush(fs, repoDir, user, pulledCommit, message,
       () => Promise.all(configFiles.map(async (file) => {
         const folderPath = path.resolve(repoDir, percyConfig.yamlAppsFolder, file.applicationName);
         const fullFilePath = path.resolve(folderPath, file.fileName);
-
-        await fs.ensureDir(folderPath);
 
         // Convert json to yaml
         await fs.writeFile(fullFilePath, this.utilService.convertTreeToYaml(file.draftConfig));

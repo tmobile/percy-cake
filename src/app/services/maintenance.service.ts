@@ -56,13 +56,13 @@ export class MaintenanceService {
     const username = user.username;
 
     if (!this.userSessionsCache) {
-      try {
-        const sessionsMetaFile = path.resolve(percyConfig.metaFolder, 'user-session.json');
-        if (await fs.pathExists(sessionsMetaFile)) {
+      const sessionsMetaFile = path.resolve(percyConfig.metaFolder, 'user-session.json');
+      if (await fs.pathExists(sessionsMetaFile)) {
+        try {
           this.userSessionsCache = await fs.readJson(sessionsMetaFile);
+        } catch (err) {
+          console.warn('Invalid user session file: ' + (await fs.readFile(sessionsMetaFile)).toString());
         }
-      } catch (err) {
-        console.warn(err);
       }
     }
 

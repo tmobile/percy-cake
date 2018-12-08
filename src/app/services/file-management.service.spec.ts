@@ -961,7 +961,7 @@ describe('FileManagementService', () => {
     const principal = { user: TestUser, repoMetadata: { ...TestUser, commitBaseSHA: { [pathFinder1.repoFilePath]: file1.oid } } };
 
     try {
-      await await fileService.commitFiles(principal, [file1, file2], 'test commit', true);
+      await fileService.commitFiles(principal, [file1, file2], 'test commit', true);
       fail('error expected');
     } catch (err) {
       expect(err.message.indexOf('mock push error')).toBeGreaterThan(-1);

@@ -130,6 +130,7 @@ To relieve the impact, we have adopted several ways to reduce file I/O:
 - Shallow clone with 1 depth
 - Fetch remote commits with 1 depth
 - After clone/fetch, we never check out the files to working copy, just saving the git packed objects/files and will directly use the packed objects/files afterwards.
+- We use an in-memory cache layer in front of the IndexedDB. Due to the fact that read file operations are much more frequent than write file operations, the cache layer improves the user experience a lot. For write operations, the cache uses write-through strategy to ensure data updates are safely stored on IndexedDB.
 
 
 

@@ -21,38 +21,6 @@ describe('UtilService', () => {
     expect(await fs.pathExists(percyConfig.metaFolder)).toBeTruthy();
 
     expect(await fs.pathExists(percyConfig.draftFolder)).toBeTruthy();
-
-    // Now read/write some file to test
-    const file = '/temp/temp2/test.txt';
-    try {
-      await fs.remove('/temp');
-      await fs.mkdirs('/temp/temp2');
-
-      await fs.writeFile(file, 'hello test');
-
-      expect(await fs.pathExists(file)).toBeTruthy();
-
-      expect((await fs.readFile(file)).toString()).toEqual('hello test');
-
-      await fs.appendFile(file, ' appended');
-
-      expect((await fs.readFile(file)).toString()).toEqual('hello test appended');
-
-      expect(await fs.readdir('/temp/temp2')).toEqual(['test.txt']);
-
-      expect((await fs.stat(file)).size).toBeGreaterThan(0);
-
-      const newFile = '/temp/temp2/new.txt';
-      await fs.rename(file, newFile);
-
-      expect(await fs.pathExists(newFile)).toBeTruthy();
-
-      await fs.unlink(newFile);
-
-      expect(await fs.pathExists(newFile)).toBeFalsy();
-    } finally {
-      await fs.remove('/temp');
-    }
   });
 
   const sampleYaml =

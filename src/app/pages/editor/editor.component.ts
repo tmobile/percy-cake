@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, ViewChild } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatDialog, MatInput } from '@angular/material';
@@ -33,7 +33,7 @@ import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.co
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.scss']
 })
-export class EditorComponent implements OnInit, OnDestroy, AfterViewInit {
+export class EditorComponent implements OnInit, OnDestroy {
   appName = '';
   filename = new FormControl('', [NotEmpty]);
 
@@ -54,7 +54,19 @@ export class EditorComponent implements OnInit, OnDestroy, AfterViewInit {
   showAsCompiledYAMLEnvironment: string;
   currentConfigProperty: ConfigProperty;
 
-  @ViewChild('fileNameInput') fileNameInput: MatInput;
+  fileNameInput: MatInput;
+
+  @ViewChild('fileNameInput')
+  set _fileNameInput (_input: MatInput) {
+    const first = !this.fileNameInput && _input;
+    this.fileNameInput = _input;
+
+    if (!this.filename.value && this.filename.enabled && first) {
+      setImmediate(() => {
+        this.fileNameInput.focus();
+      });
+    }
+  }
 
   @ViewChild('nestedConfig') nestedConfig: NestedConfigViewComponent;
 
@@ -103,17 +115,6 @@ export class EditorComponent implements OnInit, OnDestroy, AfterViewInit {
     this.isPageDirty$.subscribe(res => {
       this.isPageDirty = res;
     });
-  }
-
-  /**
-   * Hook invoked after view init.
-   */
-  ngAfterViewInit() {
-    if (!this.filename.value && this.filename.enabled) {
-      setImmediate(() => {
-        this.fileNameInput.focus();
-      });
-    }
   }
 
   /**

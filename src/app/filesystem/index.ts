@@ -9,11 +9,13 @@
 import * as legacy from 'graceful-fs/legacy-streams';
 import { FileSystem } from 'filer/src';
 import * as Git from 'isomorphic-git';
+import * as uuid from 'uuid/v4';
 import * as _ from 'lodash';
 
 import { percyConfig } from 'config';
+import { CacheStorage } from './storage';
 
-let filerFS; // The Filer fs implementation to delegat to
+let filerFS; // The Filer fs implementation to delegate to
 
 const git = { ...Git };
 
@@ -26,21 +28,22 @@ const ShimFS = {
   initialize: async () => {
     await new Promise<void>((resolve, reject) => {
       filerFS = new FileSystem({
+        guid: uuid,
         flags: ['NOCTIME', 'NOMTIME'], // We use file oid sha, don't need ctime/mtime
-        provider: new FileSystem.providers.IndexedDB(percyConfig.storeName)
+        provider: new CacheStorage(percyConfig.storeName)
       }, (err) => {
         if (err) {
           console.error(err);
           return reject(err);
         }
 
-        // Filer system will write file changes event to localstorage when context.close
-        // We don't need that presently, shim context.close to be an empty method
+        // Filer will write file changes events to localstorage when context.close
+        // We don't need that feature presently, shim context.close to our own 'finish' method
         function shimContext(method) {
           const $method = filerFS.provider[method];
           filerFS.provider[method] = (...args) => {
             const context = $method.apply(filerFS, args);
-            context.close = function () { };
+            context.close = context.finish;
             return context;
           };
         }
@@ -127,14 +130,3 @@ ShimFS['ReadStream'] = streams.ReadStream;
 ShimFS['WriteStream'] = streams.WriteStream;
 
 export = ShimFS;
-
-const indexedDB = window.indexedDB ||
-  window['mozIndexedDB'] ||
-  window['webkitIndexedDB'] ||
-  window['msIndexedDB'];
-
-const indexedDBVersion = '2.0';
-const $open = indexedDB.open;
-indexedDB.open = (name) => {
-  return $open.apply(indexedDB, [name, indexedDBVersion]);
-};
