@@ -111,8 +111,7 @@ describe('File System', () => {
     }));
   });
 
-
-  it('clear memroy cache to simulate page refresh, data should be persistent', async () => {
+  it('clear memory cache to simulate page refresh, data should be persistent', async () => {
 
     const folder = '/temp/repo/apps/app1';
     await fs.ensureDir(folder);
@@ -130,7 +129,7 @@ describe('File System', () => {
       expect(content.toString()).toEqual('test' + idx);
     }));
 
-    // Now clear memroy cache
+    // Now clear memory cache
     Object.keys(MemoryPool).forEach(key => {
       MemoryPool[key].clear();
     });
@@ -142,7 +141,6 @@ describe('File System', () => {
       const content = await fs.readFile(filepath);
       expect(content.toString()).toEqual('test' + i);
     }
-
   });
 
 });

@@ -14,7 +14,7 @@ BrowserIndexedDB.open = (name) => {
 };
 
 /**
- * A simple in-memroy key/value cache.
+ * A simple in-memory key/value cache.
  */
 class MemoryCache {
 
