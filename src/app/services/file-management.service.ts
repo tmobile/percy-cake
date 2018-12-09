@@ -149,13 +149,6 @@ export class FileManagementService {
       noCheckout: true // No checkout
     });
 
-    // Set the HEAD ref
-    await fs.writeFile(path.resolve(repoDir, '.git', 'HEAD'), `ref: refs/heads/${branch}`);
-
-    // Config branch
-    await git.config({ dir: repoDir, path: `branch.${branch}.merge`, value: `refs/heads/${branch}` });
-    await git.config({ dir: repoDir, path: `branch.${branch}.remote`, value: 'origin' });
-
     // Reset Index to be same with HEAD, so they will not commit. We say this is a 'clean' index.
     // Specific files are added to index only when needed (when delete or commit changes)
     const oid = await this.resetIndexes(fs, repoDir, branch);
@@ -216,14 +209,13 @@ export class FileManagementService {
   }
 
   /**
-   * Set HEAD to given commit oid (if not present will use current remote commit oid),
-   * and ensure Index status identical to HEAD status.
+   * Set HEAD to given commit oid, and ensure Index status identical to HEAD status.
    */
   private async resetIndexes(fs: FS, dir: string, branch: string, oid?: string) {
-    oid = oid || await this.getRemoteCommit(dir, branch);
-
-    // Save commit oid to HEAD
-    await fs.writeFile(path.resolve(dir, '.git', 'refs', 'heads', branch), oid);
+    if (oid) {
+      // Set HEAD to given commit oid
+      await fs.writeFile(path.resolve(dir, '.git', 'refs', 'heads', branch), oid + '\n');
+    }
 
     // Remove any workdir files
     const workfiles = await fs.readdir(dir);
@@ -239,7 +231,7 @@ export class FileManagementService {
       if (row[3] !== 1) {
         // Index status not identical to head status, reset index
         // See https://isomorphic-git.org/docs/en/statusMatrix
-        await git.resetIndex({ fs: git.plugins.get('fs'), dir, filepath: row[0] });
+        await git.resetIndex({ fs: git.plugins.get('fs'), dir, filepath: row[0], ref: path.join('refs', 'heads', branch) });
       }
     }
 
@@ -322,7 +314,6 @@ export class FileManagementService {
     };
 
     const result = await Promise.all([
-      readPercyrc('.percyrc'),
       readPercyrc(path.join(percyConfig.yamlAppsFolder, '.percyrc')),
       readPercyrc(path.join(percyConfig.yamlAppsFolder, applicationName, '.percyrc')),
     ]);
@@ -499,7 +490,7 @@ export class FileManagementService {
   private async getRemoteCommit(repoDir: string, branch: string) {
     return await git.resolveRef({
       dir: repoDir,
-      ref: path.join('remotes', 'origin', branch)
+      ref: path.join('refs', 'remotes', 'origin', branch)
     });
   }
 
@@ -638,7 +629,7 @@ export class FileManagementService {
       });
 
       // Weird, isogit does't update the remote commit SHA after push
-      await fs.writeFile(path.resolve(dir, '.git', 'refs', 'remotes', 'origin', user.branchName), commitSHA);
+      await fs.writeFile(path.resolve(dir, '.git', 'refs', 'remotes', 'origin', user.branchName), commitSHA + '\n');
       await this.resetIndexes(fs, dir, user.branchName, commitSHA);
     } catch (err) {
       // Rollback to last commit

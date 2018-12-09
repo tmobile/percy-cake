@@ -19,8 +19,8 @@ describe('FileManagementService', () => {
   const dir = path.resolve(percyConfig.reposFolder, repoFolder);
   const repoMetadataFile = utilService.getMetadataPath(repoFolder);
 
-  const commitOid1 = '12345';
-  const commitOid2 = '67890';
+  const commitOid1 = '1234567890123456789012345678901234567890';
+  const commitOid2 = '6789012345678901234567890123456789012345';
 
   const objectTree = [
     {
@@ -99,12 +99,24 @@ describe('FileManagementService', () => {
     cloneStub = spyOn(git, 'clone');
     cloneStub.and.callFake(async (ops) => {
       await git.init({ dir: ops.dir });
+
+      // Set the remote commit
       await fs.mkdirs(path.resolve(ops.dir, '.git', 'refs', 'remotes', 'origin'));
-      await fs.writeFile(path.resolve(ops.dir, '.git', 'refs', 'remotes', 'origin', TestUser.branchName), commitOid1);
+      await fs.writeFile(path.resolve(ops.dir, '.git', 'refs', 'remotes', 'origin', ops.ref), commitOid1 + '\n');
+
+      // Config branch
+      await git.config({ dir: ops.dir, path: `branch.${ops.ref}.merge`, value: `refs/heads/${ops.ref}` });
+      await git.config({ dir: ops.dir, path: `branch.${ops.ref}.remote`, value: 'origin' });
+
+      // Set the HEAD ref
+      await fs.writeFile(path.resolve(ops.dir, '.git', 'HEAD'), `ref: refs/heads/${ops.ref}`);
+
+      // Set HEAD commit oid
+      await fs.writeFile(path.resolve(dir, '.git', 'refs', 'heads', ops.ref), commitOid1 + '\n');
     });
 
     resolveRefStub = spyOn(git, 'resolveRef');
-    resolveRefStub.and.returnValue(commitOid1);
+    resolveRefStub.and.callThrough();
 
     pullStub = spyOn(git, 'fetch');
     pullStub.and.returnValue({ fetchHead: commitOid1 });
@@ -122,11 +134,11 @@ describe('FileManagementService', () => {
   });
 
   const assertHeadRef = async (sha) => {
-    expect((await fs.readFile(path.resolve(dir, '.git', 'refs', 'heads', TestUser.branchName))).toString()).toEqual(sha);
+    expect(await git.resolveRef({ dir, ref: 'refs/heads/' + TestUser.branchName })).toEqual(sha);
   };
 
   const assertRemoteRef = async (sha) => {
-    expect((await fs.readFile(path.resolve(dir, '.git', 'refs', 'remotes', 'origin', TestUser.branchName))).toString()).toEqual(sha);
+    expect(await git.resolveRef({ dir, ref: 'refs/remotes/origin/' + TestUser.branchName })).toEqual(sha);
   };
 
   it('should clone repo successfully', async () => {
@@ -141,7 +153,7 @@ describe('FileManagementService', () => {
 
     expect(cloneStub.calls.count()).toEqual(1);
 
-    expect(resolveRefStub.calls.count()).toEqual(1);
+    expect(resolveRefStub.calls.count()).toEqual(0);
 
     // Head SHA ref should be same as remotes SHA
     assertHeadRef(commitOid1);
@@ -153,7 +165,10 @@ describe('FileManagementService', () => {
 
     // Index should be reset
     expect(resetIndexStub.calls.count()).toEqual(1);
-    expect(resetIndexStub.calls.first().args[0]).toEqual({ fs: git.plugins.get('fs'), dir, filepath: 'a.txt' });
+    expect(resetIndexStub.calls.first().args[0]).toEqual({
+      fs: git.plugins.get('fs'), dir, filepath: 'a.txt',
+      ref: 'refs/heads/' + TestUser.branchName
+    });
 
     // Draft folder should be created
     const draftFolder = path.resolve(percyConfig.draftFolder, repoFolder, percyConfig.yamlAppsFolder);
@@ -230,7 +245,7 @@ describe('FileManagementService', () => {
 
     expect(cloneStub.calls.count()).toEqual(1);
     expect(pullStub.calls.count()).toEqual(1);
-    expect(resolveRefStub.calls.count()).toEqual(2);
+    expect(resolveRefStub.calls.count()).toEqual(1);
 
     // Repo files should be cleaned
     expect(await fs.pathExists(dir + '/test.txt')).toBeFalsy();
@@ -245,7 +260,10 @@ describe('FileManagementService', () => {
 
     // Index should be reset
     expect(resetIndexStub.calls.count()).toEqual(1);
-    expect(resetIndexStub.calls.first().args[0]).toEqual({ fs: git.plugins.get('fs'), dir, filepath: 'b.txt' });
+    expect(resetIndexStub.calls.first().args[0]).toEqual({
+      fs: git.plugins.get('fs'), dir, filepath: 'b.txt',
+      ref: 'refs/heads/' + TestUser.branchName
+    });
 
     // Draft folder should be created
     const draftFolder = path.resolve(percyConfig.draftFolder, repoFolder, percyConfig.yamlAppsFolder);
@@ -270,7 +288,7 @@ describe('FileManagementService', () => {
     expect(changed).toBeTruthy();
 
     expect(pullStub.calls.count()).toEqual(1);
-    expect(resolveRefStub.calls.count()).toEqual(2);
+    expect(resolveRefStub.calls.count()).toEqual(1);
 
     // Repo files should be cleaned
     expect(await fs.pathExists(dir + '/test.txt')).toBeFalsy();
@@ -285,7 +303,10 @@ describe('FileManagementService', () => {
 
     // Index should be reset
     expect(resetIndexStub.calls.count()).toEqual(1);
-    expect(resetIndexStub.calls.first().args[0]).toEqual({ fs: git.plugins.get('fs'), dir, filepath: 'b.txt' });
+    expect(resetIndexStub.calls.first().args[0]).toEqual({
+      fs: git.plugins.get('fs'), dir, filepath: 'b.txt',
+      ref: 'refs/heads/' + TestUser.branchName
+    });
   });
 
   it('should refresh repo without new commits', async () => {
@@ -295,7 +316,7 @@ describe('FileManagementService', () => {
     expect(changed).toBeFalsy();
 
     expect(pullStub.calls.count()).toEqual(1);
-    expect(resolveRefStub.calls.count()).toEqual(2);
+    expect(resolveRefStub.calls.count()).toEqual(1);
     expect(statusMatrixStub.calls.count()).toEqual(1);
     expect(resetIndexStub.calls.count()).toEqual(0);
   });
@@ -325,6 +346,8 @@ describe('FileManagementService', () => {
   });
 
   it('should get app environments successfully', async () => {
+    await fileService.accessRepo(TestUser);
+
     const principal = { user: TestUser, repoMetadata: {} };
 
     const appPercyConf = { key: 'value' };
@@ -355,7 +378,7 @@ describe('FileManagementService', () => {
 
     const envs = await fileService.getEnvironments(principal, 'app1');
 
-    expect(statusStub.calls.count()).toEqual(4);
+    expect(statusStub.calls.count()).toEqual(3);
     expect(resolveRefStub.calls.count()).toEqual(2);
     expect(readObjectStub.calls.count()).toEqual(2);
 
@@ -370,7 +393,7 @@ describe('FileManagementService', () => {
 
     const envs = await fileService.getEnvironments(principal, 'app1');
 
-    expect(statusStub.calls.count()).toEqual(4);
+    expect(statusStub.calls.count()).toEqual(3);
     expect(resolveRefStub.calls.count()).toEqual(0);
     expect(readObjectStub.calls.count()).toEqual(0);
 
@@ -378,6 +401,8 @@ describe('FileManagementService', () => {
   });
 
   it('should get files successfully', async () => {
+    await fileService.accessRepo(TestUser);
+
     readObjectStub.and.returnValues(...objectTree);
 
     const draftPath = path.resolve(percyConfig.draftFolder, repoFolder);
@@ -406,6 +431,7 @@ describe('FileManagementService', () => {
   });
 
   it('should get file content successfully', async () => {
+    await fileService.accessRepo(TestUser);
 
     statusStub.and.returnValue('unmodified');
 
@@ -437,6 +463,7 @@ describe('FileManagementService', () => {
   });
 
   it('should get file content without draft config successfully', async () => {
+    await fileService.accessRepo(TestUser);
 
     statusStub.and.returnValue('unmodified');
 
@@ -462,6 +489,7 @@ describe('FileManagementService', () => {
   });
 
   it('should get file content without original config successfully', async () => {
+    await fileService.accessRepo(TestUser);
 
     statusStub.and.returnValue('absent');
 
@@ -487,6 +515,7 @@ describe('FileManagementService', () => {
   });
 
   it('get file content, original config and draft config are same', async () => {
+    await fileService.accessRepo(TestUser);
 
     statusStub.and.returnValue('unmodified');
 
