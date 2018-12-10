@@ -79,16 +79,10 @@ function createMemoryCache(name: string) {
 }
 
 /**
- * For each call of fs operation (like readFile/writeFile/readdir/mkdir), a new context will be created.
  * This context adds a cache layer in front of IndexedDB to speed read operations.
  * For write operations, write-through strategy is used to ensure data updates are safely stored on.
  */
 class CacheStorageContext {
-
-  /**
-   * Flag indicates whether this context is close.
-   */
-  private closed;
 
   /**
    * Creates the context.
@@ -98,25 +92,17 @@ class CacheStorageContext {
   constructor(private indexedDB, private memoryCache: MemoryCache) { }
 
   /**
-   * Mark this context finished.
-   */
-  finish() {
-    this.closed = true;
-  }
-
-  /**
    * Call IndexedDB.
    * @param method the method name to call
    * @param args the arguments of the method
    * @param callback the callback
    */
   private callIndexedDB(method, args, callback) {
-    if (this.closed) {
-      return setImmediate(callback(new Error('Context closed')));
-    }
 
     this.indexedDB.getReadWriteContext()[method](...args, (_err, result) => {
-      setImmediate(() => callback(_err, result));
+      Promise.resolve().then(() => {
+        callback(_err, result);
+      });
     });
   }
 
@@ -132,7 +118,7 @@ class CacheStorageContext {
     const cache = _memoryCache.get(key);
     if (cache) {
       // Hit cache, return immediately
-      setImmediate(() => {
+      Promise.resolve().then(() => {
         callback(null, _memoryCache.get(key));
       });
     } else {
@@ -228,6 +214,11 @@ export class CacheStorage {
   private memoryCache: MemoryCache;
 
   /**
+   * The context;
+   */
+  private context: CacheStorageContext;
+
+  /**
    * Creates storage.
    * @param name the storage name.
    */
@@ -244,6 +235,9 @@ export class CacheStorage {
     // Create IndexedDB
     this.indexedDB = new FileSystem.providers.IndexedDB(this.name);
 
+    // Create context
+    this.context = new CacheStorageContext(this.indexedDB, this.memoryCache);
+
     // Open IndexedDB
     this.indexedDB.open(callback);
   }
@@ -253,6 +247,6 @@ export class CacheStorage {
    * @return read/write context
    */
   getReadWriteContext() {
-    return new CacheStorageContext(this.indexedDB, this.memoryCache);
+    return this.context;
   }
 }

@@ -38,12 +38,12 @@ const ShimFS = {
         }
 
         // Filer will write file changes events to localstorage when context.close
-        // We don't need that feature presently, shim context.close to our own 'finish' method
+        // We don't need that feature presently, shim context.close to an empty method
         function shimContext(method) {
           const $method = filerFS.provider[method];
           filerFS.provider[method] = (...args) => {
             const context = $method.apply(filerFS, args);
-            context.close = context.finish;
+            context.close = () => {};
             return context;
           };
         }

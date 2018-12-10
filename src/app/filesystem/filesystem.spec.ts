@@ -91,7 +91,7 @@ describe('File System', () => {
 
   });
 
-  it('concurrently mkdir should be successful', async () => {
+  it('concurrently mkdir to create a same new folder should be successful', async () => {
 
     await fs.ensureDir('/temp/repo/.git');
 
@@ -109,6 +109,38 @@ describe('File System', () => {
       const content = await fs.readFile(filepath);
       expect(content.toString()).toEqual('test' + idx);
     }));
+
+    expect((await fs.readdir(folder)).length).toEqual(count);
+  });
+
+  it('concurrently mkdir to create multiple new folders should be successful', async () => {
+
+    await fs.ensureDir('/temp/repo/.git');
+
+    const concurrency = [];
+    for (let i = 0; i < count; i++) {
+      concurrency.push(i);
+    }
+
+    const folder1 = '/temp/repo/apps/app1';
+    const folder2 = '/temp/repo/apps/app2';
+    const folder3 = '/temp/repo/apps/app3';
+    const folder4 = '/temp/repo/apps/app4';
+    const folder5 = '/temp/repo/apps/app5';
+    const newFolders = [folder1, folder2, folder3, folder4, folder5];
+    await Promise.all(concurrency.map(async (idx) => {
+      const folder = newFolders[idx % newFolders.length];
+      await fs.ensureDir(folder);
+      const filepath = folder + '/' + idx + '.txt';
+      await fs.writeFile(filepath, 'test' + idx);
+      expect(await fs.pathExists(filepath)).toBeTruthy();
+      const content = await fs.readFile(filepath);
+      expect(content.toString()).toEqual('test' + idx);
+    }));
+
+    for (const folder of newFolders) {
+      expect((await fs.readdir(folder)).length).toEqual(count / newFolders.length);
+    }
   });
 
   it('clear memory cache to simulate page refresh, data should be persistent', async () => {
