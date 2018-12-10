@@ -53,20 +53,22 @@ exports.mergeWebpack = function (defaultWebpackConfig) {
   // Merge webpack config
   const mergedConfig = webpackMerge.smartStrategy({})(defaultWebpackConfig, customWebpackConfig);
 
-  // Combine polyfills, styles and main in a single bundle
-  const entries = [];
-  _.each(mergedConfig.entry, (entry, key) => {
-    if (key !== 'main') {
-      pushEntires(entries, entry);
-    }
-  });
-  // The main entry should be added as last one
-  pushEntires(entries, mergedConfig.entry.main);
+  if (process.env.NODE_ENV === 'prod' || process.env.NODE_ENV === 'test') {
+    // Combine polyfills, styles and main in a single bundle
+    const entries = [];
+    _.each(mergedConfig.entry, (entry, key) => {
+      if (key !== 'main') {
+        pushEntires(entries, entry);
+      }
+    });
+    // The main entry should be added as last one
+    pushEntires(entries, mergedConfig.entry.main);
 
-  if (process.env.NODE_ENV === 'test') {
-    mergedConfig.entry = { main: entries };
-  } else {
-    mergedConfig.entry = { percy: entries };
+    if (process.env.NODE_ENV === 'test') {
+      mergedConfig.entry = { main: entries };
+    } else {
+      mergedConfig.entry = { percy: entries };
+    }
   }
 
   return mergedConfig;

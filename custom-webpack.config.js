@@ -44,7 +44,7 @@ module.exports = {
   },
   plugins: [
     new IndexHtmlWebpackPlugin({
-      entrypoints: ['percy']
+      entrypoints: process.env.NODE_ENV === 'prod' ? ['percy'] : ['polyfills', 'styles', 'main']
     }),
   ],
   optimization: {
