@@ -1,6 +1,6 @@
-import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { MatDialogRef, MAT_DIALOG_DATA, MatAutocompleteTrigger } from '@angular/material';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { BehaviorSubject } from 'rxjs';
 import { startWith, debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 
@@ -23,7 +23,6 @@ export class SelectAppDialogComponent implements OnInit {
 
   filteredApps = new BehaviorSubject<string[]>([]);
 
-  @ViewChild('trigger') trigger: MatAutocompleteTrigger;
 
   /**
    * constructs the component

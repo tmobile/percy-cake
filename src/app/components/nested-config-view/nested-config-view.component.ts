@@ -342,9 +342,10 @@ export class NestedConfigViewComponent implements OnChanges {
    * @param node node to delete
    */
   deleteProperty(node: TreeNode) {
+    const isEnvironmentNode = !node.isDefaultNode() && node.getLevel() === 1;
     const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
       data: {
-        confirmationText: 'Are you sure you want to delete this property?'
+        confirmationText: `Are you sure you want to delete this ${isEnvironmentNode ? 'environment' : 'property'}?`
       }
     });
 
@@ -412,5 +413,13 @@ export class NestedConfigViewComponent implements OnChanges {
         action(found);
       }
     });
+  }
+
+  /**
+   * convert node comment array to a string with line breaks
+   * @param {[type]} node
+   */
+  nodeCommentString(node) {
+    return node.comment ? node.comment.join('\n') : '';
   }
 }

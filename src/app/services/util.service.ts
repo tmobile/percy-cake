@@ -270,7 +270,9 @@ export class UtilService {
 
     // Walk yaml tree
     const result = !yamlNode ? null : this.walkYamlNode(null, yamlNode, lines, simpleArray);
-    result.comment = rootComments;
+    if (result) {
+      result.comment = rootComments;
+    }
     return result;
   }
 

@@ -1,20 +1,24 @@
-<h2 mat-dialog-title>{{ data.editMode ? 'Edit Property' : (data.node.isDefaultNode() ? 'Add Property': (data.node.getLevel() === 0 ? 'Add Environment' : 'Override Property')) }}</h2>
+<h2 mat-dialog-title>{{ data.editMode ? ((!data.node.isDefaultNode() && data.node.getLevel() === 1) ? 'Edit Environment' : 'Edit Property') : (data.node.isDefaultNode() ? 'Add Property': (data.node.getLevel() === 0 ? 'Add Environment' : 'Override Property')) }}</h2>
 <h3>{{getBreadCrumb()}}</h3>
 
 <div class="property-form-wrapper" [ngSwitch]="(data.node.isDefaultNode() || data.keyOptions.length || keyDisabled() || isDefineEnv()) ? 'form' : 'error'">
 
   <form class="property-form" *ngSwitchCase="'form'"
     (ngSubmit)="onSubmit()">
-    <mat-form-field class="form-field">
-      <input *ngIf="data.node.isDefaultNode() || isDefineEnv()" maxlength="30" type="text" matInput placeholder="Name" [formControl]="key" />
-
-      <mat-select *ngIf="!data.node.isDefaultNode() && !isDefineEnv()" placeholder="Name" [formControl]="key"
+    <mat-form-field *ngIf="!data.node.isDefaultNode() && !isDefineEnv()" class="form-field">
+      <mat-select placeholder="Name" [formControl]="key"
         (selectionChange)="setValueTypeOption($event.value)">
         <mat-option *ngFor="let option of data.keyOptions" [value]="option.key">
           {{option.key}}
         </mat-option>
       </mat-select>
       <mat-error>*Required</mat-error>
+    </mat-form-field>
+
+    <mat-form-field *ngIf="data.node.isDefaultNode() || isDefineEnv()" class="form-field">
+      <input maxlength="30" type="text" matInput placeholder="Name" [formControl]="key" />
+      <mat-error *ngIf="key.hasError('required')">*Required</mat-error>
+      <mat-error *ngIf="key.hasError('pattern')">The name should only contain these characters: "0-9a-zA-Z$-_."</mat-error>
     </mat-form-field>
 
     <mat-form-field class="form-field">
@@ -41,14 +45,15 @@
               {{option}}
             </mat-option>
           </mat-select>
-          <mat-error>*Required</mat-error>
+          <mat-error *ngIf="value.hasError('required') && inheritsOptions.length > 0">*Required</mat-error>
+          <mat-error *ngIf="inheritsOptions.length === 0">There is no other environment node to inherit.</mat-error>
         </mat-form-field>
     </ng-container>
 
     <mat-form-field *ngIf="valueType.value === 'number'" class="form-field">
         <input type="number" matInput placeholder="Value" [formControl]="value" />
         <mat-error *ngIf="value.hasError('required')">*Required valid number</mat-error>
-        <mat-error *ngIf="value.hasError('range')">Number value exceeds range</mat-error>
+        <mat-error *ngIf="value.hasError('range')">The value should be a valid number</mat-error>
     </mat-form-field>
 
     <div *ngIf="valueType.value === 'boolean'" class="value-radio-options form-field">
@@ -61,7 +66,9 @@
     </div>
 
     <mat-form-field class="form-field">
-      <textarea matInput placeholder="Comments" [formControl]="comment" ></textarea>
+      <textarea
+        matTextareaAutosize matAutosizeMaxRows="6" matAutosizeMinRows="2"
+        matInput placeholder="Comments" [formControl]="comment" ></textarea>
     </mat-form-field>
 
     <div class="form-field toggle-line">
@@ -81,7 +88,10 @@
       </button>
     </div>
   </form>
-  <h4 *ngSwitchCase="'error'">
-    There is no property to add in <code>{{data.node.getPathsString()}}</code>
+  <h4 *ngSwitchCase="'error'" class="no-property-error">
+    {{
+      (!data.node.isDefaultNode() && data.node.getLevel() === 0) ?
+        'Please add the environment to your environments file first.' : 'There is no property left to override in the corresponding node of the default environment.'
+    }}
   </h4>
 </div>

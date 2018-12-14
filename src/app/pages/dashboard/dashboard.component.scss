@@ -31,9 +31,6 @@
           margin-left: 100px;
           margin-right: 20px;
         }
-        .apps-selector {
-          width: 150px;
-        }
     }
     .files-table {
         width: 100%;
@@ -45,7 +42,7 @@
         td.mat-cell {
             padding: 7px 25px;
             &.mat-column-applicationName {
-              width: 20%;
+              width: 25%;
               div {
                 display: inline-flex;
                 align-items: center;
@@ -64,7 +61,7 @@
               }
             }
             &.actions-col {
-                width: 25%;
+                width: 20%;
                 .btn-group {
                     display: flex;
                     margin-left: -16px;

@@ -19,5 +19,7 @@
   "encryptKey": "&Ddf23&*Dksd",
   "encryptSalt": "23E80(9Dls6$s",
   "variablePrefix": "_{",
-  "variableSuffix": "}_"
+  "variableSuffix": "}_",
+  "propertyNameRegex": "^[a-zA-Z0-9$_.-]*$",
+  "filenameRegex": "^[a-zA-Z0-9_.-]*$"
 }

@@ -118,7 +118,7 @@ describe('DashboardComponent', () => {
         app: 'app3',
       },
     ]);
-    expect(ctx.component.disableCommit.value).toBeTruthy();
+    expect(ctx.component.disableCommit.value).toBeFalsy();
 
     ctx.component.toggleApp('app1');
     expect(ctx.component.folders.value).toEqual([
@@ -164,7 +164,7 @@ describe('DashboardComponent', () => {
         app: 'app3',
       },
     ]);
-    expect(ctx.component.disableCommit.value).toBeTruthy();
+    expect(ctx.component.disableCommit.value).toBeFalsy();
 
     ctx.component.toggleAllApps(new Event('click'));
     expect(ctx.component.folders.value).toEqual([

@@ -1,7 +1,9 @@
 <div class="commit-dialog">
     <form (ngSubmit)="commit()">
       <mat-form-field class="form-field">
-          <textarea matInput placeholder="Commit message" [formControl]="comment"></textarea>
+          <textarea
+            matTextareaAutosize matAutosizeMaxRows="6" matAutosizeMinRows="2"
+            matInput placeholder="Commit message" [formControl]="comment"></textarea>
           <mat-error>*Required</mat-error>
       </mat-form-field>
     

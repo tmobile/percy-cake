@@ -14,6 +14,9 @@ h2 {
         margin-top: 10px;
         .form-field {
             margin-bottom: 15px;
+            textarea {
+                box-sizing: content-box;
+            }
         }
         .toggle-line {
           display: inline;
@@ -46,4 +49,10 @@ h2 {
           text-transform: uppercase;
         }
     }
+}
+
+.no-property-error {
+    line-height: 16px;
+    margin-top: 10px;
+    padding: 10px;
 }

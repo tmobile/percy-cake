@@ -70,7 +70,7 @@ export function reducer(state = initialState, action: BackendActionsUnion): Stat
       return {
         ...state,
         files,
-        applications: action.payload.applications
+        applications: _.orderBy(action.payload.applications)
       };
     }
 

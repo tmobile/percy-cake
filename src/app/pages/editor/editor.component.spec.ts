@@ -269,7 +269,7 @@ describe('EditorComponent', () => {
     ctx.component.canDeactivate();
     assertDialogOpened(ConfirmationDialogComponent, {
       data: {
-        confirmationText: 'There may be unsaved changes. Are you sure you want to navigate?'
+        confirmationText: 'There may be unsaved changes.\nAre you sure you want to navigate away from the page?'
       }
     });
     ctx.dialogStub.output.next(true);

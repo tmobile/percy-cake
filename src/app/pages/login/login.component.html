@@ -11,25 +11,24 @@
 
         <mat-form-field class="form-field">
           <input type="text" placeholder="Username" (input)="onInput($event)" [matAutocomplete]="auto" matInput
-            #autoTrigger="matAutocompleteTrigger" [formControl]="username" (keyup)="inputChange()" />
+            #autoTrigger="matAutocompleteTrigger" [formControl]="username" (keyup)="inputChange('user-pass')" />
           <mat-autocomplete #auto="matAutocomplete">
             <mat-option *ngFor="let name of filteredUsernames | async" [value]="name">
               {{name}}
             </mat-option>
           </mat-autocomplete>
-          <mat-error>*Required</mat-error>
+          <mat-error *ngIf="username.hasError('required')">*Required</mat-error>
         </mat-form-field>
 
         <mat-form-field class="form-field">
-          <input type="password" matInput placeholder="Password" [formControl]="password" (keyup)="inputChange()" />
+          <input type="password" matInput placeholder="Password" [formControl]="password" (keyup)="inputChange('user-pass')" />
           <mat-error *ngIf="password.hasError('required')">*Required</mat-error>
-          <mat-error *ngIf="password.hasError('invalid')">Invalid username or password</mat-error>
         </mat-form-field>
 
         <mat-form-field class="form-field">
           <input type="text" matInput placeholder="Repository URL" [formControl]="repositoryURL" (keyup)="inputChange()" />
           <mat-error *ngIf="repositoryURL.hasError('required')">*Required</mat-error>
-          <mat-error *ngIf="repositoryURL.hasError('pattern')">Invalid URL</mat-error>
+          <mat-error *ngIf="!repositoryURL.hasError('required') && repositoryURL.hasError('pattern')">Invalid URL</mat-error>
           <mat-error *ngIf="repositoryURL.hasError('notFound')">Repository not found</mat-error>
           <mat-error *ngIf="repositoryURL.hasError('forbidden')">You are not allowed to access the repo</mat-error>
         </mat-form-field>
@@ -43,6 +42,7 @@
 
         <!-- login error message -->
         <mat-error *ngIf="loginError">{{loginError}}</mat-error>
+        <mat-error class="user-pass-error" *ngIf="username.hasError('invalid') && password.hasError('invalid')">Invalid username or password</mat-error>
 
         <div>
             <button type="submit" [disabled]="formProcessing| async" mat-raised-button color="primary" class="btn-login">
