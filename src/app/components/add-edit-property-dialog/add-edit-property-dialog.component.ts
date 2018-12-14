@@ -1,10 +1,10 @@
 import { Component, Input, Output, EventEmitter, OnChanges } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { FormControl, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material';
 import { Store } from '@ngrx/store';
 import * as _ from 'lodash';
 
-import { PROPERTY_VALUE_TYPES } from 'config';
+import { PROPERTY_VALUE_TYPES, percyConfig } from 'config';
 import * as appStore from 'store';
 import { TreeNode } from 'models/tree-node';
 import { ConfigProperty } from 'models/config-property';
@@ -47,7 +47,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     private store: Store<appStore.AppState>,
     private dialog: MatDialog) {
 
-    this.key = new FormControl('', [NotEmpty]);
+    this.key = new FormControl('', [NotEmpty, Validators.pattern(percyConfig.propertyNameRegex)]);
     this.valueType = new FormControl('', [NotEmpty]);
     this.value = new FormControl('', [NotEmpty]);
     this.comment = new FormControl('');
@@ -253,12 +253,14 @@ export class AddEditPropertyDialogComponent implements OnChanges {
   onSubmit() {
     this.formDirty = true;
 
+    //  trim key and comment irrespective of the auto trim option
+    this.key.setValue(_.trim(this.key.value));
+    this.comment.setValue(_.trim(this.comment.value));
+
     if (this.autoTrim) {
-      this.key.setValue(_.trim(this.key.value));
       if (this.valueType.value === PROPERTY_VALUE_TYPES.STRING) {
         this.value.setValue(_.trim(this.value.value));
       }
-      this.comment.setValue(_.trim(this.comment.value));
     }
 
     // check form validity

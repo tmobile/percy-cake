@@ -6,11 +6,13 @@
   <div class="table-header-row">
     <h2>Files</h2>
 
-    <label class="apps-label">Applications:</label>
-    <mat-select class="apps-selector" [value]="selectedApp|async" (selectionChange)="onSelectApp($event)">
+    <label class="apps-label">Application:</label>
+    <mat-form-field>
+      <mat-select class="apps-selector" [value]="selectedApp|async" (selectionChange)="onSelectApp($event)">
         <mat-option value="">Show All</mat-option>
         <mat-option *ngFor="let app of applications|async" [value]="app">{{app}}</mat-option>
-    </mat-select>
+      </mat-select>
+    </mat-form-field>
 
     <button type="button" mat-raised-button [disabled]="disableCommit|async" color="primary" class="btn-commit-changes" (click)="commitChanges()">
       Commit Changes

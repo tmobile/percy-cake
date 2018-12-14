@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, HostListener, ViewChild } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { FormControl, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatDialog, MatInput } from '@angular/material';
 import { of } from 'rxjs';
@@ -14,7 +14,7 @@ import {
   PageLoad, ConfigurationChange,
 } from 'store/actions/editor.actions';
 
-import { appPercyConfig } from 'config';
+import { appPercyConfig, percyConfig } from 'config';
 
 import { TreeNode } from 'models/tree-node';
 import { ConfigProperty } from 'models/config-property';
@@ -35,7 +35,7 @@ import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.co
 })
 export class EditorComponent implements OnInit, OnDestroy {
   appName = '';
-  filename = new FormControl('', [NotEmpty]);
+  filename = new FormControl('', [NotEmpty, Validators.pattern(percyConfig.filenameRegex)]);
 
   environments = this.store.pipe(select(appStore.getEnvironments));
   configFile = this.store.pipe(select(appStore.getConfigFile));
@@ -162,7 +162,7 @@ export class EditorComponent implements OnInit, OnDestroy {
     if (this.isPageDirty) {
       const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
         data: {
-          confirmationText: 'There may be unsaved changes. Are you sure you want to navigate?'
+          confirmationText: 'There may be unsaved changes.\nAre you sure you want to navigate away from the page?'
         }
       });
       return dialogRef.afterClosed().pipe(map(response => response));

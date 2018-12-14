@@ -7,8 +7,7 @@
     width: 300px;
 
     textarea {
-      height: 50px;
-      max-height: 300px;
+      box-sizing: content-box;
     }
   }
 

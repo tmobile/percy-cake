@@ -19,6 +19,9 @@ button {
           opacity: 0 !important;  // hide overlay for program focused 
       }
   }
+  &.mat-button:hover .mat-button-focus-overlay {
+    opacity: 0.08;
+  }
 }
 
 // override some material design button styles

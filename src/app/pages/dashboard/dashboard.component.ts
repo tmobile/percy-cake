@@ -64,11 +64,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     folders$.subscribe(this.folders);
 
-    folders$.subscribe((files) => {
-      const modified = files.filter((f) => f.appFile && f.appFile.modified);
-      this.disableCommit.next(!modified.length);
-    });
-
     this.foldersSubscription = combineLatest(this.store.pipe(select(appStore.getAllFiles)),
       this.store.pipe(select(appStore.dashboardState))).pipe(
         map(([grouped, dashboardState]) => {
@@ -76,12 +71,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
           const apps = _.keys(grouped);
 
           const result = [];
+          let modified = [];
 
           _.orderBy(apps, [], [dashboardState.tableSort.applicationName]).forEach(app => {
             if (dashboardState.selectedApp && dashboardState.selectedApp !== app) {
               return;
             }
+
             const appFiles = _.orderBy(grouped[app], ['fileName'], [dashboardState.tableSort.fileName]);
+
+            modified = _.concat(modified, appFiles.filter((f) => f.modified));
+
             result.push({
               app
             });
@@ -94,6 +94,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
               });
             }
           });
+
+          this.disableCommit.next(!modified.length);
           return result;
         })
       ).subscribe(folders$);

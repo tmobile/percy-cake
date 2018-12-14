@@ -79,8 +79,18 @@ a {
 }
 .mat-select-panel {
   max-height: 296px !important;
+  max-width: 320px;
+  .mat-option-text {
+    flex-shrink: 1;
+  }
 }
-
+.mat-select.mat-select-disabled .mat-select-arrow-wrapper {
+  opacity: 0;
+}
+mat-tooltip-component .mat-tooltip {
+  white-space: pre-line;
+  margin: 8px;
+}
 .material-icons {
   font-family: 'Material Icons';
   font-weight: normal;

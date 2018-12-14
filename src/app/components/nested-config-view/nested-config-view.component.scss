@@ -58,20 +58,6 @@
             align-items: center;
             flex: 1;
             cursor: pointer;
-
-            .mat-tooltip-panel {
-              display: none;
-              .mat-tooltip {
-                color: #fff;
-                border-radius: 4px;
-                margin: 14px;
-                max-width: 250px;
-                padding-left: 8px;
-                padding-right: 8px;
-                overflow: hidden;
-                text-overflow: ellipsis;
-              }
-            }
           }
           .context-menu-trigger {
             position: absolute;
@@ -88,7 +74,7 @@
               font-weight: 700;
               line-height: 1.2;
               cursor: pointer;
-              max-width:200px;
+              max-width: 250px;
           }
           .value {
               word-break: break-all;

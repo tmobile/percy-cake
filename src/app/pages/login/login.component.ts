@@ -16,7 +16,7 @@ import * as AuthActions from 'store/actions/auth.actions';
 import { MaintenanceService } from 'services/maintenance.service';
 import { NotEmpty } from 'services/util.service';
 
-const urlFormat = /^(http[s]?:\/\/){0,1}(www\.){0,1}[a-zA-Z0-9\.\-]+\.[a-zA-Z]{2,5}[\.]{0,1}/;
+const urlFormat = /^\s*(http[s]?:\/\/){0,1}(www\.){0,1}[a-zA-Z0-9\.\-]+\.[a-zA-Z]{2,5}[\.]{0,1}/;
 
 /*
   Login page
@@ -92,7 +92,9 @@ export class LoginComponent implements OnInit {
 
       // Show the error in form field
       if (le['statusCode'] === 401) {
-        return this.password.setErrors({ invalid: true });
+        this.password.setErrors({ invalid: true });
+        return this.username.setErrors({ invalid: true });
+        return;
       } else if (le['statusCode'] === 403) {
         return this.repositoryURL.setErrors({ forbidden: true });
       } else if (le.message === 'Repository not found') {
@@ -109,6 +111,11 @@ export class LoginComponent implements OnInit {
    * login if the form is valid
    */
   login() {
+    // trim fields
+    this.username.setValue(_.trim(this.username.value));
+    this.repositoryURL.setValue(_.trim(this.repositoryURL.value));
+    this.branchName.setValue(_.trim(this.branchName.value));
+
     if (this.username.valid && this.password.valid && this.repositoryURL.valid && this.branchName.valid) {
       if (this.lockedBranches && this.lockedBranches.indexOf(this.branchName.value) > -1) {
         this.branchName.setErrors({ locked: true });
@@ -126,8 +133,18 @@ export class LoginComponent implements OnInit {
   /*
    * when user types in an input field remove error messages
    */
-  inputChange() {
+  inputChange(field?: string) {
     this.loginError = null;
+
+    if (field === 'user-pass') {
+      if (_.trim(this.username.value) !== '') {
+        this.username.setErrors(null);
+      }
+
+      if (this.password.value !== '') {
+        this.password.setErrors(null);
+      }
+    }
   }
 
   /**

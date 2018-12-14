@@ -12,9 +12,10 @@
           <!-- filename input -->
           <mat-form-field class="filename" [floatLabel]="'always'">
             <label>{{appName}}/</label>
-            <input type="text" #fileNameInput="matInput" matInput maxlength="30" placeholder="Filename" [formControl]="filename" (input)="fileNameChange()"/>
+            <input type="text" #fileNameInput="matInput" matInput maxlength="50" placeholder="File Name" [formControl]="filename" (input)="fileNameChange()"/>
             <mat-error *ngIf="filename.hasError('required')">*Required</mat-error>
-            <mat-error *ngIf="filename.hasError('alreadyExists')">*File name arealdy exists</mat-error>
+            <mat-error *ngIf="filename.hasError('alreadyExists')">*The file name arealdy exists</mat-error>
+            <mat-error *ngIf="filename.hasError('pattern')">The file name should only contain these characters: "0-9a-zA-Z-_."</mat-error>
           </mat-form-field>
           <!-- property tree -->
           <app-nested-config-view #nestedConfig [configuration]="configuration | async" [environments]="environments | async"
@@ -104,7 +105,7 @@
                     <div class="mat-form-field-infix">
                       <mat-label class="comment"><pre>{{selectedNode.getCommentStr()}}</pre></mat-label>
                       <span class="mat-form-field-label-wrapper">
-                        <label class="mat-form-field-label"> Comment</label>
+                        <label class="mat-form-field-label">Comments</label>
                       </span>
                     </div>
                   </div>
