@@ -58,20 +58,6 @@ export class AddEditPropertyDialogComponent implements OnChanges {
    */
   ngOnChanges() {
 
-    this.key.reset();
-    this.valueType.reset();
-    this.value.reset();
-    this.comment.reset();
-
-    this.key.enable();
-    this.valueType.enable();
-    this.value.enable();
-    this.comment.enable();
-
-    this.duplicateDefault = false;
-    this.autoTrim = false;
-    this.inheritsOptions = null;
-
     const { editMode, node } = this.data;
 
     if (editMode) {

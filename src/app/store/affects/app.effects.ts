@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material';
-import { of } from 'rxjs';
+import { of, Observable } from 'rxjs';
 import { map, tap, exhaustMap } from 'rxjs/operators';
 import { Actions, Effect, ofType } from '@ngrx/effects';
 
@@ -35,12 +35,15 @@ export class AppEffects {
    * alert closed effect
    */
   @Effect()
-  alertClosed$ = this.actions$.pipe(
+  alertClosed$: Observable<Logout | Navigate> = this.actions$.pipe(
     ofType<AlertClosed>(CommonActionTypes.AlertClosed),
     map(action => action.payload),
     exhaustMap(data => {
       if (data.alertType === 'logout') {
         return of(new Logout());
+      }
+      if (data.alertType === 'go-to-dashboard') {
+        return of(new Navigate(['/dashboard']));
       }
       return of();
     })

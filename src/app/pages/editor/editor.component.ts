@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatDialog, MatInput } from '@angular/material';
@@ -89,6 +89,7 @@ export class EditorComponent implements OnInit, OnDestroy {
     private store: Store<appStore.AppState>,
     private dialog: MatDialog,
     private utilService: UtilService,
+    private ref: ChangeDetectorRef,
   ) { }
 
   /**
@@ -293,6 +294,7 @@ export class EditorComponent implements OnInit, OnDestroy {
    */
   onAddEditProperty(property: ConfigProperty) {
     this.reset();
+    this.ref.detectChanges();
     this.currentConfigProperty = property;
   }
 

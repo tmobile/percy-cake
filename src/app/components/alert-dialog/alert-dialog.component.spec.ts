@@ -1,6 +1,7 @@
 import { Setup, TestContext } from 'test/test-helper';
 
 import { AlertDialogComponent } from './alert-dialog.component';
+import { AlertClosed } from 'store/actions/common.actions';
 
 describe('AlertDialogComponent', () => {
 
@@ -23,9 +24,22 @@ describe('AlertDialogComponent', () => {
     };
     ctx.component.data = data;
 
-    ctx.component.afterClosed();
+    ctx.store.next(new AlertClosed(data));
 
     expect(ctx.routerStub.value).toEqual(['/login']);
+  });
+
+  it('should go to dashboard', async () => {
+    // Init component
+    const data = {
+      message: 'Logout message',
+      alertType: 'go-to-dashboard',
+    };
+    ctx.component.data = data;
+
+    ctx.store.next(new AlertClosed(data));
+
+    expect(ctx.routerStub.value).toEqual(['/dashboard']);
   });
 
   it('should not trigger logout', async () => {
@@ -36,7 +50,7 @@ describe('AlertDialogComponent', () => {
     };
     ctx.component.data = data;
 
-    ctx.component.afterClosed();
+    ctx.store.next(new AlertClosed(data));
 
     expect(ctx.routerStub.value).toBeUndefined();
   });

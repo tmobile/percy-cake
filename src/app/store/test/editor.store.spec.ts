@@ -122,7 +122,7 @@ describe('Editor store action/effect/reducer', () => {
     assertDialogOpened(AlertDialogComponent, {
       data: {
         message: 'Mock error',
-        alertType: 'error'
+        alertType: 'go-to-dashboard'
       }
     });
   });
