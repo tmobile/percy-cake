@@ -186,8 +186,8 @@ describe('AddEditPropertyDialogComponent', () => {
 
     expect(ctx.component.key.value).toEqual(`[${data.node.children.length}]`);
     expect(ctx.component.valueType.value).toEqual(data.node.getArrayItemType());
-    expect(ctx.component.value.value).toBeNull();
-    expect(ctx.component.comment.value).toBeNull();
+    expect(ctx.component.value.value).toEqual('');
+    expect(ctx.component.comment.value).toEqual('');
 
     expect(ctx.component.key.disabled).toBeTruthy();
     expect(ctx.component.valueType.disabled).toBeTruthy();
@@ -204,10 +204,10 @@ describe('AddEditPropertyDialogComponent', () => {
     ctx.component.data = data;
     ctx.component.ngOnChanges();
 
-    expect(ctx.component.key.value).toBeNull();
-    expect(ctx.component.valueType.value).toBeNull();
-    expect(ctx.component.value.value).toBeNull();
-    expect(ctx.component.comment.value).toBeNull();
+    expect(ctx.component.key.value).toEqual('');
+    expect(ctx.component.valueType.value).toEqual('');
+    expect(ctx.component.value.value).toEqual('');
+    expect(ctx.component.comment.value).toEqual('');
 
     expect(ctx.component.key.disabled).toBeFalsy();
     expect(ctx.component.valueType.disabled).toBeFalsy();
@@ -225,10 +225,10 @@ describe('AddEditPropertyDialogComponent', () => {
     ctx.component.data = data;
     ctx.component.ngOnChanges();
 
-    expect(ctx.component.key.value).toBeNull();
+    expect(ctx.component.key.value).toEqual('');
     expect(ctx.component.valueType.value).toEqual('object');
-    expect(ctx.component.value.value).toBeNull();
-    expect(ctx.component.comment.value).toBeNull();
+    expect(ctx.component.value.value).toEqual('');
+    expect(ctx.component.comment.value).toEqual('');
 
     expect(ctx.component.key.disabled).toBeFalsy();
     expect(ctx.component.valueType.disabled).toBeTruthy();
@@ -327,10 +327,10 @@ describe('AddEditPropertyDialogComponent', () => {
     ctx.component.data = data;
     ctx.component.ngOnChanges();
 
-    expect(ctx.component.key.value).toBeNull();
-    expect(ctx.component.valueType.value).toBeNull();
-    expect(ctx.component.value.value).toBeNull();
-    expect(ctx.component.comment.value).toBeNull();
+    expect(ctx.component.key.value).toEqual('');
+    expect(ctx.component.valueType.value).toEqual('');
+    expect(ctx.component.value.value).toEqual('');
+    expect(ctx.component.comment.value).toEqual('');
 
     expect(ctx.component.key.disabled).toBeFalsy();
     expect(ctx.component.valueType.disabled).toBeTruthy();
@@ -356,10 +356,10 @@ describe('AddEditPropertyDialogComponent', () => {
     ctx.component.data = data;
     ctx.component.ngOnChanges();
 
-    expect(ctx.component.key.value).toBeNull();
-    expect(ctx.component.valueType.value).toBeNull();
-    expect(ctx.component.value.value).toBeNull();
-    expect(ctx.component.comment.value).toBeNull();
+    expect(ctx.component.key.value).toEqual('');
+    expect(ctx.component.valueType.value).toEqual('');
+    expect(ctx.component.value.value).toEqual('');
+    expect(ctx.component.comment.value).toEqual('');
 
     expect(ctx.component.key.disabled).toBeFalsy();
     expect(ctx.component.valueType.disabled).toBeTruthy();
@@ -387,10 +387,10 @@ describe('AddEditPropertyDialogComponent', () => {
     ctx.component.data = data;
     ctx.component.ngOnChanges();
 
-    expect(ctx.component.key.value).toBeNull();
-    expect(ctx.component.valueType.value).toBeNull();
-    expect(ctx.component.value.value).toBeNull();
-    expect(ctx.component.comment.value).toBeNull();
+    expect(ctx.component.key.value).toEqual('');
+    expect(ctx.component.valueType.value).toEqual('');
+    expect(ctx.component.value.value).toEqual('');
+    expect(ctx.component.comment.value).toEqual('');
 
     expect(ctx.component.key.disabled).toBeFalsy();
     expect(ctx.component.valueType.disabled).toBeTruthy();

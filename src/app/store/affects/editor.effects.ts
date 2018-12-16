@@ -9,7 +9,7 @@ import { appPercyConfig } from 'config';
 import { ConfigFile, Configuration } from 'models/config-file';
 
 import * as appStore from '..';
-import { APIError } from '../actions/common.actions';
+import { Alert } from '../actions/common.actions';
 import {
   EditorActionTypes,
   PageLoad,
@@ -92,6 +92,9 @@ export class EditorEffects {
   @Effect()
   pageLoadFailure$ = this.actions$.pipe(
     ofType<PageLoadFailure>(EditorActionTypes.PageLoadFailure),
-    map((action) => new APIError(action.payload))
+    map((action) => new Alert({
+        message: action.payload.message,
+        alertType: 'go-to-dashboard'
+      }))
   );
 }

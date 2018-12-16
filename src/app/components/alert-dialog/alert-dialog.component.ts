@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import * as appStore from 'store';
 import { Store } from '@ngrx/store';
@@ -12,7 +12,7 @@ import { AlertClosed } from 'store/actions/common.actions';
   templateUrl: './alert-dialog.component.html',
   styleUrls: ['./alert-dialog.component.scss']
 })
-export class AlertDialogComponent {
+export class AlertDialogComponent implements OnInit {
 
   /**
    * initializes the component
@@ -24,10 +24,7 @@ export class AlertDialogComponent {
     private store: Store<appStore.AppState>,
     @Inject(MAT_DIALOG_DATA) public data) { }
 
-  /**
-   * if there is any action dependent to handle
-   */
-  afterClosed() {
-    this.store.dispatch(new AlertClosed(this.data));
+  ngOnInit() {
+    this.dialogRef.afterClosed().subscribe(() => this.store.dispatch(new AlertClosed(this.data)));
   }
 }
