@@ -243,3 +243,17 @@ In this step supports config the nginx port, you can refer to [docker/docker-com
 
 
 Assume `NGINX_PORT` is configured as 8080, then you can visit http://localhost:8080
+
+
+
+## Run VSCode Extension
+
+```bash
+# At first build the vscode extenstion (the built files are at dist/vscode)
+npm i
+npm run build:vs
+```
+
+
+
+Then open the project in VSCode, Click "Debug -> Start Debugging", a new VSCode window will be opened with the extension activated.

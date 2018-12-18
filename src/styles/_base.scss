@@ -117,7 +117,8 @@ code.hljs {
   color: chocolate;
 }
 
-.vscode-theme {
+body.vscode-theme {
+  padding: 0;
   background-color: var(--vscode-editor-background);
   color: var(--vscode-editor-foreground);
 
@@ -153,5 +154,14 @@ code.hljs {
 
   input, textarea {
     outline-style: none !important;
+  }
+
+  app-editor {
+    .col-container .col-default-env {
+      margin-right: 0 !important;
+    }
+    .col-container .col-other-envs {
+      padding-left: 0 !important;
+    }
   }
 }

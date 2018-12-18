@@ -41,11 +41,15 @@
       {
         "command": "vscode-percy-editor.edit",
         "title": "Percy: edit config file",
-        "category": "Percy editor"
+        "category": "Percy editor",
+        "icon": {
+          "light": "./dist/vscode/favicon.png",
+          "dark": "./dist/vscode/favicon.png"
+        }
       },
       {
         "command": "vscode-percy-editor.editside",
-        "title": "Percy: edit config file",
+        "title": "Percy: edit config file to side",
         "category": "Percy editor",
         "icon": {
           "light": "./dist/vscode/favicon.png",
@@ -86,14 +90,14 @@
       "editor/context": [
         {
           "when": "editorLangId == yaml",
-          "command": "vscode-percy-editor.editside",
+          "command": "vscode-percy-editor.edit",
           "group": "0_percy"
         }
       ],
       "editor/title": [
         {
           "when": "editorLangId == yaml",
-          "command": "vscode-percy-editor.editside",
+          "command": "vscode-percy-editor.edit",
           "group": "navigation"
         }
       ]
