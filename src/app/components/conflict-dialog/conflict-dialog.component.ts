@@ -4,7 +4,7 @@ import { Store } from '@ngrx/store';
 import * as _ from 'lodash';
 
 import * as appStore from 'store';
-import { UtilService } from 'services/util.service';
+import { YamlService } from 'services/yaml.service';
 import { CommitChanges } from 'store/actions/backend.actions';
 import { ConfigFile } from 'models/config-file';
 
@@ -26,7 +26,7 @@ export class ConflictDialogComponent implements OnInit {
    * @param data the injection token that can be used to access the data that was passed in to a dialog
    */
   constructor(public dialogRef: MatDialogRef<ConflictDialogComponent>,
-    private utilService: UtilService,
+    private yamlService: YamlService,
     private store: Store<appStore.AppState>,
     @Inject(MAT_DIALOG_DATA) public data) {
     dialogRef.disableClose = true;
@@ -34,11 +34,11 @@ export class ConflictDialogComponent implements OnInit {
 
   ngOnInit() {
     this.data.conflictFiles.forEach(file => {
-      file.repoCode = this.utilService.convertTreeToYaml(file.originalConfig);
+      file.repoCode = this.yamlService.convertTreeToYaml(file.originalConfig);
 
       const draftFile: any = _.find(this.data.draftFiles, _.pick(file, ['fileName', 'applicationName']));
       file.draftConfig = draftFile.draftConfig;
-      file.draftCode = this.utilService.convertTreeToYaml(file.draftConfig);
+      file.draftCode = this.yamlService.convertTreeToYaml(file.draftConfig);
     });
   }
 

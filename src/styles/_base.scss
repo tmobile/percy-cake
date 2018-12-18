@@ -116,3 +116,42 @@ code.hljs {
   font-weight: bold;
   color: chocolate;
 }
+
+.vscode-theme {
+  background-color: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
+
+  .mat-menu-panel, .mat-select-panel {
+    background-color: var(--vscode-dropdown-background) !important;
+  }
+  .mat-option {
+    color: inherit;
+  }
+
+  .mat-dialog-container {
+    color: inherit !important;
+    background-color: var(--vscode-dropdown-background) !important;
+  }
+
+  .mat-card, .mat-tree, .property-form-wrapper, .preview .property, code.hljs, button:disabled {
+    background-color: var(--vscode-editorWidget-background) !important
+  }
+
+  .mat-select-value, .mat-card, .mat-tree, .mat-tree-node, .mat-input-element, .mat-nested-tree-node, .mat-form-field-label,
+  .property-form-wrapper, .preview .property {
+    color: inherit !important;
+  }
+
+  code.hljs {
+    color: var(--vscode-textPreformat-foreground);
+    font-weight: bold;
+  }
+
+  .mat-input-element:disabled, .mat-select-disabled .mat-select-value, button:disabled {
+    color: var(--vscode-input-placeholderForeground) !important;
+  }
+
+  input, textarea {
+    outline-style: none !important;
+  }
+}

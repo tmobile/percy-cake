@@ -3,7 +3,7 @@ import { Directive, NgZone, HostBinding } from '@angular/core';
 import { Highlight, HighlightJS } from 'ngx-highlightjs';
 import * as cheerio from 'cheerio';
 
-import { UtilService } from 'services/util.service';
+import { YamlService } from 'services/yaml.service';
 
 /**
  * Extend the Highlight directive to color the variable reference specially.
@@ -20,9 +20,9 @@ export class HighlightDirective extends Highlight {
    * Construct the component.
    * @param hljs The HighlightJS service
    * @param zone NgZone
-   * @param utilService the util service
+   * @param yamlService the util service
    */
-  constructor(hljs: HighlightJS, zone: NgZone, utilService: UtilService) {
+  constructor(hljs: HighlightJS, zone: NgZone, yamlService: YamlService) {
     super(hljs, zone);
 
     this.highlighted.subscribe((res) => {
@@ -40,7 +40,7 @@ export class HighlightDirective extends Highlight {
         // Highlight the color the variable reference
         const spanNode = $(span);
         const text = spanNode.text();
-        const newSpan = utilService.highlightVariable(text, spanNode);
+        const newSpan = yamlService.highlightVariable(text, spanNode);
         if (newSpan !== spanNode) {
           spanNode.replaceWith(newSpan);
         }

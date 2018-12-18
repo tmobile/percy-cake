@@ -10,7 +10,7 @@ import { TreeNode } from 'models/tree-node';
 import { ConfigProperty } from 'models/config-property';
 import { Alert } from 'store/actions/common.actions';
 import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
-import { NotEmpty } from 'services/util.service';
+import { NotEmpty } from 'services/validators';
 
 /*
   add or edit new property in the environment configuration

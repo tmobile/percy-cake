@@ -3,7 +3,7 @@
 .editor-page {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 80px);
+    height: 100vh;
     padding: 10px 50px;
 
     app-editor {

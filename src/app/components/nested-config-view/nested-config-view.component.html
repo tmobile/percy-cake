@@ -45,7 +45,7 @@
         <div class="underline" (contextmenu)="openMenu($event, menuTrigger)"
             (click)="showDetail(node)" (dblclick)="treeControl.isExpanded(node) ? treeControl.collapse(node): treeControl.expand(node)">
             <div [matTooltip]="node.getCommentStr()" matTooltipPosition="above" class="key" >{{node.key}} :</div>
-            <div  [matTooltip]="node.getCommentStr()" matTooltipPosition="above" *ngIf="node.isLeaf()" class="value" [innerHTML]="utilService.highlightNodeVariable(node)"></div>
+            <div  [matTooltip]="node.getCommentStr()" matTooltipPosition="above" *ngIf="node.isLeaf()" class="value" [innerHTML]="yamlService.highlightNodeVariable(node)"></div>
             <button mat-icon-button #menuButton class="btn-action" (click)="$event.stopPropagation()" (contextmenu)="buttonOpenMenu($event, menuButton)" [matMenuTriggerFor]="menu">...</button>
         </div>
 

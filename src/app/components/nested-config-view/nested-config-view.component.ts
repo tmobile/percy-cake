@@ -10,7 +10,7 @@ import { TreeNode } from 'models/tree-node';
 import { ConfigProperty } from 'models/config-property';
 
 import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
-import { UtilService } from 'services/util.service';
+import { YamlService } from 'services/yaml.service';
 
 /**
  *  Tree with nested nodes
@@ -43,9 +43,9 @@ export class NestedConfigViewComponent implements OnChanges {
   /**
    * initializes the component
    * @param dialog the material dialog instance
-   * @param utilService the util service
+   * @param yamlService the yaml service
    */
-  constructor(private dialog: MatDialog, private utilService: UtilService) {
+  constructor(private dialog: MatDialog, private yamlService: YamlService) {
     const _getChildren = (node: TreeNode) => node.children;
     this.defaultTreeControl = new NestedTreeControl<TreeNode>(_getChildren);
     this.defaultDataSource = new MatTreeNestedDataSource();
@@ -62,6 +62,7 @@ export class NestedConfigViewComponent implements OnChanges {
     if (!this.defaultDataSource.data
       || !this.defaultDataSource.data.length
       || !_.isEqual(this.defaultDataSource.data[0], defaultTree)) {
+      this.firstInit = true;
       this.defaultDataSource.data = [defaultTree];
     }
 
@@ -70,6 +71,7 @@ export class NestedConfigViewComponent implements OnChanges {
     if (!this.envDataSource.data
       || !this.envDataSource.data.length
       || !_.isEqual(this.envDataSource.data[0], environmentsTree)) {
+      this.firstInit = true;
       this.envDataSource.data = [environmentsTree];
     }
 
@@ -228,12 +230,12 @@ export class NestedConfigViewComponent implements OnChanges {
       if (node.valueType !== PROPERTY_VALUE_TYPES.STRING) {
         return;
       }
-      const regExp = new RegExp(this.utilService.escapeRegExp(this.utilService.constructVariable(oldName)), 'g');
+      const regExp = new RegExp(this.yamlService.escapeRegExp(this.yamlService.constructVariable(oldName)), 'g');
       let regExpResult;
       let retVal: string = node.value;
       while (regExpResult = regExp.exec(_.defaultTo(node.value, ''))) {
         const fullMatch = regExpResult[0];
-        retVal = retVal.replace(fullMatch, this.utilService.constructVariable(newName));
+        retVal = retVal.replace(fullMatch, this.yamlService.constructVariable(newName));
       }
       node.value = retVal;
     } else {
@@ -413,13 +415,5 @@ export class NestedConfigViewComponent implements OnChanges {
         action(found);
       }
     });
-  }
-
-  /**
-   * convert node comment array to a string with line breaks
-   * @param {[type]} node
-   */
-  nodeCommentString(node) {
-    return node.comment ? node.comment.join('\n') : '';
   }
 }
