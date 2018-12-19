@@ -7,131 +7,16 @@
     "npm": "6.4.1",
     "vscode": "^1.26.0"
   },
-  "main": "./dist/vscode/src/vscode/extension",
   "scripts": {
     "ng": "ng",
     "postinstall": "node ./node_modules/vscode/bin/install",
-    "vscode:prepublish": "npm run build:vs",
     "start": "cors-proxy stop && cors-proxy start -d -p 9999 && ng serve --host 0.0.0.0",
     "build": "ng build",
     "build:prod": "cross-env NODE_ENV=prod ng build --prod --output-path=./dist/build",
-    "build:vs": "cross-env NODE_ENV=prod ng build --prod --main=src/vscode/vsapp.ts --output-path=./dist/vscode && tsc -p ./tsconfig-vs.json",
+    "build:vs": "cross-env NODE_ENV=prod ng build --prod --main=src/vscode/vsapp.ts --output-path=./vscode/dist && tsc -p ./vscode/tsconfig.json",
     "test": "cross-env NODE_ENV=test ng test",
     "lint": "ng lint",
     "e2e": "ng e2e"
-  },
-  "activationEvents": [
-    "onCommand:vscode-percy-editor.new",
-    "onCommand:vscode-percy-editor.newenv",
-    "onCommand:vscode-percy-editor.edit",
-    "onCommand:vscode-percy-editor.editside"
-  ],
-  "contributes": {
-    "commands": [
-      {
-        "command": "vscode-percy-editor.new",
-        "title": "Percy: create new config file",
-        "category": "Percy editor"
-      },
-      {
-        "command": "vscode-percy-editor.newenv",
-        "title": "Percy: create new environments file",
-        "category": "Percy editor"
-      },
-      {
-        "command": "vscode-percy-editor.edit",
-        "title": "Percy: edit config file",
-        "category": "Percy editor",
-        "icon": {
-          "light": "./dist/vscode/favicon.png",
-          "dark": "./dist/vscode/favicon.png"
-        }
-      },
-      {
-        "command": "vscode-percy-editor.editside",
-        "title": "Percy: edit config file to side",
-        "category": "Percy editor",
-        "icon": {
-          "light": "./dist/vscode/favicon.png",
-          "dark": "./dist/vscode/favicon.png"
-        }
-      }
-    ],
-    "menus": {
-      "commandPalette": [
-        {
-          "when": "editorLangId == yaml",
-          "command": "vscode-percy-editor.edit",
-          "group": "0_percy"
-        },
-        {
-          "when": "editorLangId == yaml",
-          "command": "vscode-percy-editor.editside",
-          "group": "0_percy"
-        }
-      ],
-      "explorer/context": [
-        {
-          "when": "explorerResourceIsFolder",
-          "command": "vscode-percy-editor.new",
-          "group": "0_percy"
-        },
-        {
-          "when": "explorerResourceIsFolder",
-          "command": "vscode-percy-editor.newenv",
-          "group": "0_percy"
-        },
-        {
-          "when": "!explorerResourceIsFolder && resourceLangId == yaml",
-          "command": "vscode-percy-editor.edit",
-          "group": "0_percy"
-        }
-      ],
-      "editor/context": [
-        {
-          "when": "editorLangId == yaml",
-          "command": "vscode-percy-editor.edit",
-          "group": "0_percy"
-        }
-      ],
-      "editor/title": [
-        {
-          "when": "editorLangId == yaml",
-          "command": "vscode-percy-editor.edit",
-          "group": "navigation"
-        }
-      ]
-    },
-    "configuration": {
-      "title": "Percy Editor",
-      "properties": {
-        "vscode-percy-editor.environmentsFile": {
-          "type": "string",
-          "default": "environments.yaml",
-          "description": "Environments file name"
-        },
-        "vscode-percy-editor.variablePrefix": {
-          "type": "string",
-          "default": "_{",
-          "description": "Variable prefix"
-        },
-        "vscode-percy-editor.variableSuffix": {
-          "type": "string",
-          "default": "}_",
-          "description": "Variable suffix"
-        },
-        "vscode-percy-editor.filenameRegex": {
-          "type": "string",
-          "default": "^[a-zA-Z0-9_.-]*$",
-          "description": "File name regex validator"
-        },
-        "vscode-percy-editor.propertyNameRegex": {
-          "type": "string",
-          "default": "^[a-zA-Z0-9$_.-]*$",
-          "description": "Property name regex validator"
-        }
-      }
-    }
   },
   "dependencies": {
     "@angular/animations": "^7.1.1",
@@ -210,6 +95,7 @@
     "tsconfig-paths": "^3.7.0",
     "tslint": "~5.11.0",
     "typescript": "~3.1.6",
+    "vsce": "^1.54.0",
     "vscode": "^1.1.26"
   }
 }

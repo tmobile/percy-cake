@@ -20,11 +20,11 @@ class PercyEditorPanel {
       enableScripts: true,
       retainContextWhenHidden: true,
       localResourceRoots: [
-        vscode.Uri.file(path.join(extensionPath, 'dist/vscode'))
+        vscode.Uri.file(path.join(extensionPath, 'dist'))
       ],
     });
     this._panel.webview.html = this.getHtmlForWebview(extensionPath);
-    this._panel.iconPath = vscode.Uri.file(path.join(extensionPath, 'dist/vscode/favicon.png'));
+    this._panel.iconPath = vscode.Uri.file(path.join(extensionPath, 'dist/favicon.png'));
 
     this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
 
@@ -135,7 +135,7 @@ class PercyEditorPanel {
   }
 
   private getHtmlForWebview(extensionPath: string): string {
-    const scriptPathOnDisk = vscode.Uri.file(path.join(extensionPath, 'dist/vscode/percy.bundle.min.js'));
+    const scriptPathOnDisk = vscode.Uri.file(path.join(extensionPath, 'dist/percy.bundle.min.js'));
     const scriptUri = scriptPathOnDisk.with({ scheme: 'vscode-resource' });
 
     return `

@@ -1,0 +1,126 @@
+{
+  "name": "percy-editor-extension",
+  "version": "0.0.0",
+  "engines": {
+    "node": "10",
+    "npm": "6.4.1",
+    "vscode": "^1.26.0"
+  },
+  "repository": "https://gitlab.com/leviastan/yaml-editor/tree/vscode",
+  "publisher": "percy",
+  "icon": "dist/favicon.png",
+  "main": "dist/src/vscode/extension",
+  "activationEvents": [
+    "onCommand:vscode-percy-editor.new",
+    "onCommand:vscode-percy-editor.newenv",
+    "onCommand:vscode-percy-editor.edit",
+    "onCommand:vscode-percy-editor.editside"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "vscode-percy-editor.new",
+        "title": "Percy: create new config file",
+        "category": "Percy editor"
+      },
+      {
+        "command": "vscode-percy-editor.newenv",
+        "title": "Percy: create new environments file",
+        "category": "Percy editor"
+      },
+      {
+        "command": "vscode-percy-editor.edit",
+        "title": "Percy: edit config file",
+        "category": "Percy editor",
+        "icon": {
+          "light": "dist/favicon.png",
+          "dark": "dist/favicon.png"
+        }
+      },
+      {
+        "command": "vscode-percy-editor.editside",
+        "title": "Percy: edit config file to side",
+        "category": "Percy editor",
+        "icon": {
+          "light": "dist/favicon.png",
+          "dark": "dist/favicon.png"
+        }
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "when": "editorLangId == yaml",
+          "command": "vscode-percy-editor.edit",
+          "group": "0_percy"
+        },
+        {
+          "when": "editorLangId == yaml",
+          "command": "vscode-percy-editor.editside",
+          "group": "0_percy"
+        }
+      ],
+      "explorer/context": [
+        {
+          "when": "explorerResourceIsFolder",
+          "command": "vscode-percy-editor.new",
+          "group": "0_percy"
+        },
+        {
+          "when": "explorerResourceIsFolder",
+          "command": "vscode-percy-editor.newenv",
+          "group": "0_percy"
+        },
+        {
+          "when": "!explorerResourceIsFolder && resourceLangId == yaml",
+          "command": "vscode-percy-editor.edit",
+          "group": "0_percy"
+        }
+      ],
+      "editor/context": [
+        {
+          "when": "editorLangId == yaml",
+          "command": "vscode-percy-editor.edit",
+          "group": "0_percy"
+        }
+      ],
+      "editor/title": [
+        {
+          "when": "editorLangId == yaml",
+          "command": "vscode-percy-editor.edit",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Percy Editor",
+      "properties": {
+        "vscode-percy-editor.environmentsFile": {
+          "type": "string",
+          "default": "environments.yaml",
+          "description": "Environments file name"
+        },
+        "vscode-percy-editor.variablePrefix": {
+          "type": "string",
+          "default": "_{",
+          "description": "Variable prefix"
+        },
+        "vscode-percy-editor.variableSuffix": {
+          "type": "string",
+          "default": "}_",
+          "description": "Variable suffix"
+        },
+        "vscode-percy-editor.filenameRegex": {
+          "type": "string",
+          "default": "^[a-zA-Z0-9_.-]*$",
+          "description": "File name regex validator"
+        },
+        "vscode-percy-editor.propertyNameRegex": {
+          "type": "string",
+          "default": "^[a-zA-Z0-9$_.-]*$",
+          "description": "Property name regex validator"
+        }
+      }
+    }
+  }
+}

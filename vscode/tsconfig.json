@@ -1,13 +1,13 @@
 {
   "compilerOptions": {
+    "rootDir": "../",
+    "outDir": "./dist",
     "module": "commonjs",
     "target": "es6",
-    "outDir": "dist/vscode",
     "lib": [
       "es6"
     ],
     "sourceMap": true,
-    "rootDir": ".",
     "noUnusedLocals": true,
     "noImplicitThis": true,
     "noImplicitReturns": true,
@@ -15,7 +15,7 @@
     "noUnusedParameters": true
   },
   "include": [
-    "src/vscode/extension.ts"
+    "../src/vscode/extension.ts"
   ],
   "exclude": [
     "node_modules",

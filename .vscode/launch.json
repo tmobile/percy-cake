@@ -10,10 +10,10 @@
         "request": "launch",
         "runtimeExecutable": "${execPath}",
         "args": [
-            "--extensionDevelopmentPath=${workspaceFolder}"
+            "--extensionDevelopmentPath=${workspaceFolder}/vscode"
         ],
         "outFiles": [
-            "${workspaceFolder}/dist/vscode/**/*.js"
+            "${workspaceFolder}/vscode/dist/src/**/*.js"
         ],
     }
   ]

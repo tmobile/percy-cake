@@ -2,6 +2,8 @@
 
 # compiled output
 /dist
+/vscode/dist
+/vscode/*.vsix
 /tmp
 /out-tsc
 

@@ -249,11 +249,15 @@ Assume `NGINX_PORT` is configured as 8080, then you can visit http://localhost:8
 ## Run VSCode Extension
 
 ```bash
-# At first build the vscode extenstion (the built files are at dist/vscode)
-npm i
-npm run build:vs
+# At first build & package the vscode extenstion
+./vscode/build.sh
+
+# The extension will be packaged at ./vscode/percy-editor-extension-0.0.0.vsix
 ```
 
 
 
-Then open the project in VSCode, Click "Debug -> Start Debugging", a new VSCode window will be opened with the extension activated.
+After build, you can either:
+
+- Open the project in VSCode, Click "Debug -> Start Debugging", a new VSCode window will be opened with the extension activated.
+- Or install the extension in VScode: `code --install-extension ./vscode/percy-editor-extension-0.0.0.vsix`
