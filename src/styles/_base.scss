@@ -131,6 +131,12 @@ body.vscode-theme {
   color: var(--vscode-editor-foreground);
 
   &.vscode-dark {
+    .gutter-horizontal::before {
+      border-left-color: grey;
+    }
+    .gutter-vertical::before {
+      border-top-color: grey;
+    }
     code.hljs {
       .hljs-string { color: #ce9178; } // string value
     }
@@ -139,7 +145,7 @@ body.vscode-theme {
   .mat-menu-panel, .mat-select-panel {
     background-color: var(--vscode-dropdown-background) !important;
   }
-  .mat-option {
+  .mat-option, .mat-option.mat-active {
     color: inherit;
   }
 
