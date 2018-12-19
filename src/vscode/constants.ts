@@ -12,7 +12,8 @@ export const COMMANDS = {
   NEW: `${EXTENSION_NAME}.new`,
   NEW_ENV: `${EXTENSION_NAME}.newenv`,
   EDIT: `${EXTENSION_NAME}.edit`,
-  EDIT_SIDE: `${EXTENSION_NAME}.editside`
+  EDIT_SIDE: `${EXTENSION_NAME}.editside`,
+  SHOW_SOURCE: `${EXTENSION_NAME}.showsource`
 };
 
 export const CONFIG = {

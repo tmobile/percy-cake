@@ -5,11 +5,10 @@ import * as vscode from 'vscode';
 import { MESSAGE_TYPES, EXTENSION_NAME, COMMANDS, CONFIG } from './constants';
 
 class PercyEditorPanel {
-  private static currentPanel: PercyEditorPanel | undefined;
+  public static currentPanel: PercyEditorPanel | undefined;
 
   private readonly _panel: vscode.WebviewPanel;
   private _disposables: vscode.Disposable[] = [];
-  private _currentEditor: vscode.TextEditor;
   private _uri: vscode.Uri;
   private _editMode: boolean;
   private _envFileMode: boolean;
@@ -33,8 +32,12 @@ class PercyEditorPanel {
         this._inited = true;
         this.onActive();
       } else if (message.type === MESSAGE_TYPES.SAVE) {
-        const filePath = this._editMode ? this.getFilePath() : `${this.getFilePath()}/${message.fileName}`;
+        const filePath = this._editMode ? this._uri.fsPath : `${this._uri.fsPath}/${message.fileName}`;
         fs.writeFileSync(filePath, message.content);
+        if (!this._editMode) {
+          this._editMode = false;
+          this._uri = vscode.Uri.file(filePath);
+        }
         this._panel.webview.postMessage({
           type: MESSAGE_TYPES.SAVED
         });
@@ -42,6 +45,11 @@ class PercyEditorPanel {
         this._panel.dispose();
       }
     });
+
+    this._panel.onDidChangeViewState((e) => {
+      this.setPercyEditorFocused(e.webviewPanel.active);
+    });
+
   }
 
   public static CreateOrShow(extensionPath: string, uri: vscode.Uri, editMode: boolean, envFileMode: boolean, column?: vscode.ViewColumn) {
@@ -52,26 +60,25 @@ class PercyEditorPanel {
       PercyEditorPanel.currentPanel = new PercyEditorPanel(extensionPath, column || vscode.ViewColumn.One);
     }
 
-    PercyEditorPanel.currentPanel._currentEditor = vscode.window.activeTextEditor;
     PercyEditorPanel.currentPanel._uri = uri;
+    if (!uri) {
+      PercyEditorPanel.currentPanel._uri = vscode.window.activeTextEditor.document.uri;
+    }
     PercyEditorPanel.currentPanel._editMode = editMode;
     PercyEditorPanel.currentPanel._envFileMode = envFileMode;
+    PercyEditorPanel.currentPanel.setPercyEditorFocused(true);
     PercyEditorPanel.currentPanel.onActive();
   }
 
-  private getFilePath() {
-    if (this._uri) {
-      return this._uri.fsPath;
-    }
-    return this._currentEditor.document.uri.fsPath;
-  }
-
   private onActive() {
+    const filePath = this._uri.fsPath;
+
+    PercyEditorPanel.currentPanel._panel.title = path.basename(filePath);
+
     if (!this._inited) {
       return;
     }
 
-    const filePath = this.getFilePath();
     const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(EXTENSION_NAME);
 
     const message: any = {
@@ -156,10 +163,15 @@ class PercyEditorPanel {
       `;
   }
 
-  public dispose(): void {
+  private setPercyEditorFocused(value: boolean) {
+    vscode.commands.executeCommand('setContext', 'PercyEditorFocused', value);
+  }
+
+  public dispose() {
     PercyEditorPanel.currentPanel = undefined;
 
     this._panel.dispose();
+    this.setPercyEditorFocused(false);
 
     while (this._disposables.length) {
       const x = this._disposables.pop();
@@ -167,6 +179,11 @@ class PercyEditorPanel {
         x.dispose();
       }
     }
+  }
+
+  public showSource() {
+    vscode.workspace.openTextDocument(this._uri)
+      .then(document => vscode.window.showTextDocument(document));
   }
 }
 
@@ -214,4 +231,10 @@ export function activate(context: vscode.ExtensionContext): void {
   });
 
   context.subscriptions.push(newEnvCommand);
+
+  const showSourceCommand = vscode.commands.registerCommand(COMMANDS.SHOW_SOURCE, () => {
+    PercyEditorPanel.currentPanel.showSource();
+  });
+
+  context.subscriptions.push(showSourceCommand);
 }
