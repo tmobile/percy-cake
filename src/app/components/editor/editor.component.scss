@@ -56,7 +56,8 @@
           min-height: 1px;
           pre {
               flex: 1;
-              display: flex;
+              display: grid;
+              display: -ms-grid;
               min-height: 1px;
               .hljs {
                   flex: 1;
