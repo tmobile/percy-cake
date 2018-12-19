@@ -131,7 +131,7 @@ class PercyEditorPanel {
       while (true) {
         const rcpath = path.resolve(percyrcdir, '.percyrc');
         if (fs.existsSync(rcpath)) {
-          Object.assign(message.appPercyConfig, JSON.parse(fs.readFileSync(rcpath, 'utf8')));
+          message.appPercyConfig = Object.assign(JSON.parse(fs.readFileSync(rcpath, 'utf8')), message.appPercyConfig);
         }
         if (roots.indexOf(percyrcdir) > -1) {
           break;
