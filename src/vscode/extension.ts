@@ -84,7 +84,11 @@ class PercyEditorPanel {
     const message: any = {
       type: MESSAGE_TYPES.ACTIVATE,
       editMode: this._editMode,
-      percyConfig: { ...config },
+      percyConfig: {
+        ...config,
+        filenameRegex: '^[a-zA-Z0-9_.-]*$',
+        propertyNameRegex: '^[a-zA-Z0-9$_.-]*$'
+      },
     };
 
     const envFileName: string = config.get(CONFIG.ENVIRONMENTS_FILE);

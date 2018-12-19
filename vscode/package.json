@@ -124,16 +124,6 @@
           "type": "string",
           "default": "}_",
           "description": "Variable suffix"
-        },
-        "vscode-percy-editor.filenameRegex": {
-          "type": "string",
-          "default": "^[a-zA-Z0-9_.-]*$",
-          "description": "File name regex validator"
-        },
-        "vscode-percy-editor.propertyNameRegex": {
-          "type": "string",
-          "default": "^[a-zA-Z0-9$_.-]*$",
-          "description": "Property name regex validator"
         }
       }
     }
