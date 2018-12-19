@@ -35,8 +35,9 @@ class PercyEditorPanel {
         const filePath = this._editMode ? this._uri.fsPath : `${this._uri.fsPath}/${message.fileName}`;
         fs.writeFileSync(filePath, message.content);
         if (!this._editMode) {
-          this._editMode = false;
+          this._editMode = true;
           this._uri = vscode.Uri.file(filePath);
+          PercyEditorPanel.currentPanel._panel.title = path.basename(filePath);
         }
         this._panel.webview.postMessage({
           type: MESSAGE_TYPES.SAVED
@@ -73,7 +74,7 @@ class PercyEditorPanel {
   private onActive() {
     const filePath = this._uri.fsPath;
 
-    PercyEditorPanel.currentPanel._panel.title = path.basename(filePath);
+    PercyEditorPanel.currentPanel._panel.title = this._editMode ? path.basename(filePath) : 'Untitled';
 
     if (!this._inited) {
       return;
