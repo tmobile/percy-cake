@@ -15,7 +15,8 @@
     "onCommand:vscode-percy-editor.newenv",
     "onCommand:vscode-percy-editor.edit",
     "onCommand:vscode-percy-editor.editside",
-    "onCommand:vscode-percy-editor.showsource"
+    "onCommand:vscode-percy-editor.showSource",
+    "onCommand:vscode-percy-editor.saveConfig"
   ],
   "contributes": {
     "commands": [
@@ -48,13 +49,21 @@
         }
       },
       {
-        "command": "vscode-percy-editor.showsource",
+        "command": "vscode-percy-editor.showSource",
         "title": "Percy: show yaml source",
         "category": "Percy editor",
         "icon": {
           "light": "media/ViewSource_light.svg",
           "dark": "media/ViewSource_dark.svg"
         }
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "vscode-percy-editor.saveConfig",
+        "key": "ctrl+s",
+        "mac": "cmd+s",
+        "when": "PercyEditorFocused"
       }
     ],
     "menus": {
@@ -102,7 +111,7 @@
         },
         {
           "when": "PercyEditorFocused",
-          "command": "vscode-percy-editor.showsource",
+          "command": "vscode-percy-editor.showSource",
           "group": "navigation"
         }
       ]

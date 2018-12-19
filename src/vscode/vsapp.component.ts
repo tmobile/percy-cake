@@ -78,6 +78,13 @@ export class VSAppComponent implements OnInit {
   onMessage($event: any) {
     const message = $event.data; // The JSON data our extension sent
 
+    if (message.type === MESSAGE_TYPES.SAVE) {
+      if (this.isPageDirty) {
+        this.saveConfig();
+      }
+      return;
+    }
+
     if (message.type === MESSAGE_TYPES.SAVED) {
       this.editMode = true;
       this.isPageDirty = false;

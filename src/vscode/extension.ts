@@ -185,6 +185,12 @@ class PercyEditorPanel {
     }
   }
 
+  public saveConfig() {
+    this._panel.webview.postMessage({
+      type: MESSAGE_TYPES.SAVE
+    });
+  }
+
   public showSource() {
     vscode.workspace.openTextDocument(this._uri)
       .then(document => vscode.window.showTextDocument(document));
@@ -241,4 +247,10 @@ export function activate(context: vscode.ExtensionContext): void {
   });
 
   context.subscriptions.push(showSourceCommand);
+
+  const saveConfigCommand = vscode.commands.registerCommand(COMMANDS.SAVE_CONFIG, () => {
+    PercyEditorPanel.currentPanel.saveConfig();
+  });
+
+  context.subscriptions.push(saveConfigCommand);
 }
