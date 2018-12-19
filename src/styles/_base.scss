@@ -111,6 +111,14 @@ mat-tooltip-component .mat-tooltip {
 }
 code.hljs {
   line-height: 18px;
+  
+  .hljs-string { color: #a31515; } // string value
+  .hljs-literal { color: #569cd6; } // boolean value
+  .hljs-number { color: #569cd6; } // int value
+  .hljs-comment { color: #008000; } // comment
+  .hljs-type { color: #9872a2; } // type
+  .hljs-attr { color: #6089b4; } // key
+  .hljs-bullet { color: #6089b4; } // array bullet
 }
 .yaml-var {
   font-weight: bold;
@@ -121,6 +129,12 @@ body.vscode-theme {
   padding: 0;
   background-color: var(--vscode-editor-background);
   color: var(--vscode-editor-foreground);
+
+  &.vscode-dark {
+    code.hljs {
+      .hljs-string { color: #ce9178; } // string value
+    }
+  }
 
   .mat-menu-panel, .mat-select-panel {
     background-color: var(--vscode-dropdown-background) !important;
@@ -141,11 +155,6 @@ body.vscode-theme {
   .mat-select-value, .mat-card, .mat-tree, .mat-tree-node, .mat-input-element, .mat-nested-tree-node, .mat-form-field-label,
   .property-form-wrapper, .preview .property {
     color: inherit !important;
-  }
-
-  code.hljs {
-    color: var(--vscode-textPreformat-foreground);
-    font-weight: bold;
   }
 
   .mat-input-element:disabled, .mat-select-disabled .mat-select-value, button:disabled {
