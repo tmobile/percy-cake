@@ -250,9 +250,9 @@ Assume `NGINX_PORT` is configured as 8080, then you can visit http://localhost:8
 
 In general, the VSCode extension of Percy editor is also an Angular app running in [VSCode webview](https://code.visualstudio.com/docs/extensions/webview).
 
-1. Module and Component are core concepts of angular, so we abstract the common ui part of editor component, making it reusable in both webaap and VSCode extension app.
+1. Module and Component are core concepts of angular, so we abstract the common ui part of [editor component](src/app/components/editor), making it reusable in both webapp and VSCode extension app.
 2. The vscode extension app does not need some functionalities (like route, browser fs, localstorage, pages components, most ngrx effects. These functionalities may not even be supported in vscode webview). So we have done necessary code refactor to make the vscode extension app can get rid of those unneeded and only import needed dependency modules.
-3. So as point 2 implied, the webapp and vscode extension app use different dependency modules, how to build and bundle them separately? Fortunately “ng build” command allows to pass main entrypoint as “--main” parameter, this makes it possible to build/bundle multiple apps differently:
+3. So as point 2 implied, the webapp and vscode extension app use different dependency modules, to build and bundle them separately we pass their main entrypoints as “--main” parameter to “ng build” command:
    - Webapp main entrypoint: [src/webapp/webapp.ts](src/webapp/webapp.ts)  =>  [src/webapp/app.module.ts](src/webapp/app.module.ts)
    - VSCode main entrypoint: [src/vscode/vsapp.ts](src/vscode/vsapp.ts)  =>  [src/vscode/vsapp.module.ts](src/vscode/vsapp.module.ts)
 
