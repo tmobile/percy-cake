@@ -178,6 +178,10 @@ body.vscode-theme {
   app-editor {
     .col-container .col-default-env {
       margin-right: 0 !important;
+
+      .filename {
+        display: none;
+      }
     }
     .col-container .col-other-envs {
       padding-left: 0 !important;

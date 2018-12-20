@@ -48,7 +48,7 @@
                   "with": "src/percy.conf.prod.json"
                 }
               ],
-              "optimization": true,
+              "optimization": false,
               "outputHashing": "all",
               "sourceMap": false,
               "extractCss": false,

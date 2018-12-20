@@ -10,8 +10,6 @@ class PercyEditorPanel {
   private readonly _panel: vscode.WebviewPanel;
   private _disposables: vscode.Disposable[] = [];
   private _uri: vscode.Uri;
-  private _editMode: boolean;
-  private _envFileMode: boolean;
   private _inited: boolean;
 
   private constructor(extensionPath: string, column: vscode.ViewColumn) {
@@ -32,13 +30,8 @@ class PercyEditorPanel {
         this._inited = true;
         this.onActive();
       } else if (message.type === MESSAGE_TYPES.SAVE) {
-        const filePath = this._editMode ? this._uri.fsPath : `${this._uri.fsPath}/${message.fileName}`;
+        const filePath = this._uri.fsPath;
         fs.writeFileSync(filePath, message.content);
-        if (!this._editMode) {
-          this._editMode = true;
-          this._uri = vscode.Uri.file(filePath);
-          PercyEditorPanel.currentPanel._panel.title = path.basename(filePath);
-        }
         this._panel.webview.postMessage({
           type: MESSAGE_TYPES.SAVED
         });
@@ -53,7 +46,7 @@ class PercyEditorPanel {
 
   }
 
-  public static CreateOrShow(extensionPath: string, uri: vscode.Uri, editMode: boolean, envFileMode: boolean, column?: vscode.ViewColumn) {
+  public static CreateOrShow(extensionPath: string, uri: vscode.Uri, column?: vscode.ViewColumn) {
 
     if (PercyEditorPanel.currentPanel) {
       PercyEditorPanel.currentPanel._panel.reveal(PercyEditorPanel.currentPanel._panel.viewColumn);
@@ -65,8 +58,6 @@ class PercyEditorPanel {
     if (!uri) {
       PercyEditorPanel.currentPanel._uri = vscode.window.activeTextEditor.document.uri;
     }
-    PercyEditorPanel.currentPanel._editMode = editMode;
-    PercyEditorPanel.currentPanel._envFileMode = envFileMode;
     PercyEditorPanel.currentPanel.setPercyEditorFocused(true);
     PercyEditorPanel.currentPanel.onActive();
   }
@@ -74,56 +65,39 @@ class PercyEditorPanel {
   private onActive() {
     const filePath = this._uri.fsPath;
 
-    PercyEditorPanel.currentPanel._panel.title = this._editMode ? path.basename(filePath) : 'Untitled';
+    PercyEditorPanel.currentPanel._panel.title = path.basename(filePath);
 
     if (!this._inited) {
       return;
     }
 
     const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(EXTENSION_NAME);
+    const envFileName = getEnvFileName();
+    const editMode = fs.existsSync(filePath);
+    const dir = path.dirname(filePath);
 
     const message: any = {
       type: MESSAGE_TYPES.ACTIVATE,
-      editMode: this._editMode,
+      editMode,
+      appName: vscode.workspace.asRelativePath(dir),
+      fileName: path.basename(filePath),
       percyConfig: {
         ...config,
-        filenameRegex: '^[a-zA-Z0-9_.-]*$',
-        propertyNameRegex: '^[a-zA-Z0-9$_.-]*$'
+        filenameRegex: CONFIG.FILE_NAME_REGEX,
+        propertyNameRegex: CONFIG.PROPERTY_NAME_REGEX
       },
     };
 
-    const envFileName: string = config.get(CONFIG.ENVIRONMENTS_FILE);
-    let dir;
-    if (this._editMode) {
-      dir = path.dirname(filePath);
-      message.fileName = path.basename(filePath);
-      message.envFileMode = message.fileName === envFileName;
-      message.fileContent = fs.readFileSync(filePath, 'utf8');
-    } else {
-      dir = filePath;
-      message.fileName = this._envFileMode ? envFileName : null;
-      message.envFileMode = this._envFileMode;
-    }
+    message.envFileMode = message.fileName === envFileName;
 
-    message.appName = vscode.workspace.asRelativePath(dir);
+    if (editMode) {
+      message.fileContent = fs.readFileSync(filePath, 'utf8');
+    }
 
     const envFilePath = path.resolve(dir, envFileName);
     if (fs.existsSync(envFilePath)) {
       message.envFileContent = fs.readFileSync(envFilePath, 'utf8');
     }
-
-    message.files = [];
-    fs.readdirSync(dir).forEach(file => {
-      if (fs.statSync(path.resolve(dir, file)).isFile()) {
-        const ext = path.extname(file).toLowerCase();
-        if (ext === '.yaml' || ext === '.yml') {
-          message.files.push({
-            applicationName: message.appName,
-            fileName: file
-          });
-        }
-      }
-    });
 
     message.appPercyConfig = {};
     try {
@@ -198,14 +172,27 @@ class PercyEditorPanel {
   }
 }
 
+function getEnvFileName(): string {
+  const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(EXTENSION_NAME);
+  return config.get(CONFIG.ENVIRONMENTS_FILE);
+}
+
+function normalizeFilename(fileName: string) {
+  if (!fileName) {
+    return '';
+  }
+  fileName = fileName.trim();
+  return fileName.match(/\.[y|Y][a|A]?[m|M][l|L]$/) ? fileName : fileName + '.yaml';
+}
+
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext): void {
 
+  // Edit file
   const editCommand = vscode.commands.registerCommand(COMMANDS.EDIT, (uri: vscode.Uri) => {
-    PercyEditorPanel.CreateOrShow(context.extensionPath, uri, true, false);
+    PercyEditorPanel.CreateOrShow(context.extensionPath, uri);
   });
-
   context.subscriptions.push(editCommand);
 
   const editSideCommand = vscode.commands.registerCommand(COMMANDS.EDIT_SIDE, (uri: vscode.Uri) => {
@@ -226,32 +213,76 @@ export function activate(context: vscode.ExtensionContext): void {
       }
     }
 
-    PercyEditorPanel.CreateOrShow(context.extensionPath, uri, true, false, column);
+    PercyEditorPanel.CreateOrShow(context.extensionPath, uri, column);
   });
-
   context.subscriptions.push(editSideCommand);
 
+  // Create new file
   const newCommand = vscode.commands.registerCommand(COMMANDS.NEW, (uri: vscode.Uri) => {
-    PercyEditorPanel.CreateOrShow(context.extensionPath, uri, false, false);
-  });
+    if (!uri) {
+      return;
+    }
 
+    vscode.window.showInputBox({
+      prompt: 'Enter file name',
+      placeHolder: 'file.yaml',
+      validateInput: (value) => {
+        if (!new RegExp(CONFIG.FILE_NAME_REGEX).test(value)) {
+          return 'The file name should only contain these characters: "0-9a-zA-Z-_."';
+        }
+
+        value = normalizeFilename(value);
+
+        let fileExists = false;
+        fs.readdirSync(uri.fsPath).forEach(file => {
+          if (file === value) {
+            fileExists = true;
+          }
+        });
+
+        if (fileExists) {
+          return `${vscode.workspace.asRelativePath(`${uri.fsPath}${path.sep}${value}`)} already exists`;
+        }
+        return null;
+      }
+    }).then(fileName => {
+      if (fileName) {
+        PercyEditorPanel.CreateOrShow(context.extensionPath, vscode.Uri.file(path.join(uri.fsPath, normalizeFilename(fileName))));
+      }
+    });
+  });
   context.subscriptions.push(newCommand);
 
+  // Create new env file
   const newEnvCommand = vscode.commands.registerCommand(COMMANDS.NEW_ENV, (uri: vscode.Uri) => {
-    PercyEditorPanel.CreateOrShow(context.extensionPath, uri, false, true);
-  });
+    if (!uri) {
+      return;
+    }
+    const envFileName = getEnvFileName();
 
+    let envFileExists = false;
+    fs.readdirSync(uri.fsPath).forEach(file => {
+      if (file === envFileName) {
+        envFileExists = true;
+      }
+    });
+    if (envFileExists) {
+      vscode.window.showWarningMessage(`${vscode.workspace.asRelativePath(`${uri.fsPath}${path.sep}${envFileName}`)} already exists`);
+      return;
+    }
+    PercyEditorPanel.CreateOrShow(context.extensionPath, vscode.Uri.file(path.join(uri.fsPath, envFileName)));
+  });
   context.subscriptions.push(newEnvCommand);
 
+  // Show source
   const showSourceCommand = vscode.commands.registerCommand(COMMANDS.SHOW_SOURCE, () => {
     PercyEditorPanel.currentPanel.showSource();
   });
-
   context.subscriptions.push(showSourceCommand);
 
+  // Save config
   const saveConfigCommand = vscode.commands.registerCommand(COMMANDS.SAVE_CONFIG, () => {
     PercyEditorPanel.currentPanel.saveConfig();
   });
-
   context.subscriptions.push(saveConfigCommand);
 }

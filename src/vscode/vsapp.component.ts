@@ -9,7 +9,7 @@ import { ConfigFile, Configuration } from 'models/config-file';
 
 import * as appStore from 'store';
 import { PageLoad } from 'store/actions/editor.actions';
-import { LoadFilesSuccess, GetFileContentSuccess, SaveDraftSuccess } from 'store/actions/backend.actions';
+import { GetFileContentSuccess, SaveDraftSuccess } from 'store/actions/backend.actions';
 import { YamlService } from 'services/yaml.service';
 
 import { EditorComponent } from 'components/editor/editor.component';
@@ -121,8 +121,6 @@ export class VSAppComponent implements OnInit {
       const envConfig = this.parseYaml(message.envFileContent, `${this.appName}/${percyConfig.environmentsFile}`);
       this.environments = _.map(_.get(envConfig.environments, 'children', <TreeNode[]>[]), child => child.key);
     }
-
-    this.store.dispatch(new LoadFilesSuccess({ applications: [this.appName], files: message.files }));
 
     const file: ConfigFile = {
       fileName: this.fileName,

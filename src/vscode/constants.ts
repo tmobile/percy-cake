@@ -18,5 +18,7 @@ export const COMMANDS = {
 };
 
 export const CONFIG = {
+  FILE_NAME_REGEX: '^[a-zA-Z0-9_.-]*$',
+  PROPERTY_NAME_REGEX: '^[a-zA-Z0-9$_.-]*$',
   ENVIRONMENTS_FILE: 'environmentsFile',
 };
