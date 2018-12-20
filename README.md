@@ -256,7 +256,7 @@ In general, the VSCode extension of Percy editor is also an Angular app running 
    - Webapp main entrypoint: [src/webapp/webapp.ts](src/webapp/webapp.ts)  =>  [src/webapp/app.module.ts](src/webapp/app.module.ts)
    - VSCode main entrypoint: [src/vscode/vsapp.ts](src/vscode/vsapp.ts)  =>  [src/vscode/vsapp.module.ts](src/vscode/vsapp.module.ts)
 
-4. The communication between vscode extension and its webview content is done by the official way using message post.
+4. The communication between vscode extension and its webview content is done by the official way using [message post](https://code.visualstudio.com/docs/extensions/webview#_passing-messages-from-an-extension-to-a-webview).
 
 ## Run VSCode Extension
 
