@@ -134,7 +134,11 @@ export class YamlService {
 
       const children: TreeNode[] = [];
       _.each(valueNode.value, (subValueNode, idx) => {
-        children.push(this.walkYamlNode({ value: `[${idx}]` }, subValueNode, lines, simpleArray));
+        const _keyNode: any = { value: `[${idx}]` };
+        if (subValueNode.id === 'mapping') {
+          _keyNode.end_mark = subValueNode.start_mark;
+        }
+        children.push(this.walkYamlNode(_keyNode, subValueNode, lines, simpleArray));
       });
 
       if (!simpleArray) {
@@ -144,10 +148,6 @@ export class YamlService {
       } else {
         let itemType;
         children.forEach((item) => {
-          if (!item.isLeaf()) {
-            console.warn(`Only support array of simple type, but got: ${item.valueType}`);
-            return;
-          }
           if (!itemType) {
             itemType = item.valueType;
           } else if (itemType !== item.valueType) {
@@ -167,6 +167,9 @@ export class YamlService {
             break;
           case PROPERTY_VALUE_TYPES.NUMBER:
             result.valueType = PROPERTY_VALUE_TYPES.NUMBER_ARRAY;
+            break;
+          case PROPERTY_VALUE_TYPES.OBJECT:
+            result.valueType = PROPERTY_VALUE_TYPES.OBJECT_ARRAY;
             break;
         }
       }
@@ -284,9 +287,7 @@ export class YamlService {
         } else {
           type = this.typeMapReverse[type];
         }
-        if (!treeNode.isArray() || type !== 'map') {
-          result += ' !!' + type;
-        }
+        result += ' !!' + type;
       }
 
       if (!child.isLeaf()) {
@@ -300,7 +301,7 @@ export class YamlService {
         }
         // Recursively walk the children nodes
         const nestResult = this.walkTreeNode(child, indent + '  ');
-        result += treeNode.isArray() && !child.isArray() ? ' ' + _.trimStart(nestResult) : '\n' + nestResult;
+        result += '\n' + nestResult;
       } else {
         let value = child.value;
 

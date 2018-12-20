@@ -54,12 +54,13 @@ export class TreeNode {
 
   /**
    * Check if this node represetns an array node.
-   * @returns true if this node's type is string[]/boolean[]/number[]/array, false otherwise
+   * @returns true if this node's type is string[]/boolean[]/number[]/object[]/array, false otherwise
    */
   isArray() {
     return this.valueType === PROPERTY_VALUE_TYPES.STRING_ARRAY
       || this.valueType === PROPERTY_VALUE_TYPES.BOOLEAN_ARRAY
       || this.valueType === PROPERTY_VALUE_TYPES.NUMBER_ARRAY
+      || this.valueType === PROPERTY_VALUE_TYPES.OBJECT_ARRAY
       || this.valueType === 'array';
   }
 
@@ -75,6 +76,8 @@ export class TreeNode {
         return PROPERTY_VALUE_TYPES.BOOLEAN;
       case PROPERTY_VALUE_TYPES.NUMBER_ARRAY:
         return PROPERTY_VALUE_TYPES.NUMBER;
+      case PROPERTY_VALUE_TYPES.OBJECT_ARRAY:
+        return PROPERTY_VALUE_TYPES.OBJECT;
     }
   }
 

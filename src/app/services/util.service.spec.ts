@@ -43,10 +43,13 @@ default: !!map  # all known properties are defined in the default block.
     #
 environments: !!map  # specific environments can override the default values 1 property at a time
   qat: !!map  # qat team validates all compiled artifacts in separate test environment with their own data service.
-    qat-items: !!seq
-      - item1A: !!int 8800
+    qat-items: !!seq  # array of maps
+      - !!map  # map in array comment
+        # map in array comment line2
+        item1A: !!int 8800
         item1B: !!float -12.3
-      - item2A: !!str "value2A"  #### value2A comment #####
+      - !!map
+        item2A: !!str "value2A"  #### value2A comment #####
         item2B: !!str "value2B"  # value2B comment
     host: !!str "{{api.host}}.mobilex.com"
     dataService: !!str "pd03.mobilex.com/data"  # 'qat dataService'
@@ -137,11 +140,10 @@ environments: !!map  # specific environments can override the default values 1 p
     expect(tree.findChild(['environments', 'staging', 'staging-items3']).children.length).toEqual(3);
   });
 
-  it('should ignore array item which are not simple type', () => {
+  it('should ignore array item which is not same type', () => {
 
     const tree: TreeNode = utilService.convertYamlToTree(sampleYaml, true);
 
-    expect(tree.findChild(['environments', 'qat', 'qat-items']).children.length).toEqual(0);
     expect(tree.findChild(['environments', 'dev', 'dev-items']).children.length).toEqual(1);
   });
 
