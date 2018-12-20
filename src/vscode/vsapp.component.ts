@@ -88,7 +88,7 @@ export class VSAppComponent implements OnInit {
     if (message.type === MESSAGE_TYPES.SAVED) {
       this.editMode = true;
       this.isPageDirty = false;
-      this.fileName = this.fileSaving.fileName;
+      this.fileName = this.fileSaving.fileName = message.newFileName;
       this.store.dispatch(new PageLoad({ ...this.fileSaving, editMode: this.editMode }));
       this.store.dispatch(new SaveDraftSuccess(this.fileSaving));
       this.fileSaving = null;
@@ -176,12 +176,12 @@ export class VSAppComponent implements OnInit {
       const editorState = result.editorState;
 
       this.fileSaving = { ...editorState.configFile };
-      this.fileSaving.fileName = this.editor.getFileName();
       this.fileSaving.draftConfig = editorState.configuration;
 
       vscode.postMessage({
         type: MESSAGE_TYPES.SAVE,
-        fileName: this.fileSaving.fileName,
+        editMode: this.editMode,
+        envFileMode: this.envFileMode,
         content: this.yamlService.convertTreeToYaml(editorState.configuration)
       });
     });
