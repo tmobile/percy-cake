@@ -16,6 +16,7 @@ import { EditorComponent } from 'components/editor/editor.component';
 import { AlertDialogComponent } from 'components/alert-dialog/alert-dialog.component';
 
 import { MESSAGE_TYPES } from './constants';
+import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
 
 declare var acquireVsCodeApi;
 const vscode = acquireVsCodeApi();
@@ -79,6 +80,13 @@ export class VSAppComponent implements OnInit {
   onMessage($event: any) {
     const message = $event.data; // The JSON data our extension sent
 
+    // Close dialog if any
+    if (this.invalidYamlAlert) {
+      this.invalidYamlAlert.close(true);
+    }
+    this.dialog.closeAll();
+
+    // Handle save config event
     if (message.type === MESSAGE_TYPES.SAVE) {
       if (this.isPageDirty) {
         this.saveConfig();
@@ -86,6 +94,7 @@ export class VSAppComponent implements OnInit {
       return;
     }
 
+    // Handle saved event
     if (message.type === MESSAGE_TYPES.SAVED) {
       this.editMode = true;
       this.isPageDirty = false;
@@ -97,13 +106,32 @@ export class VSAppComponent implements OnInit {
       return;
     }
 
-    if (message.type !== MESSAGE_TYPES.ACTIVATE) {
+    // Handle file changed event
+    if (message.type === MESSAGE_TYPES.FILE_CHANGED) {
+      if (this.editMode && message.fileContent !== this.fileContent) {
+        this.fileContent = message.fileContent;
+
+        if (!this.isPageDirty) {
+          this.reset();
+        } else {
+          const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+            data: {
+              confirmationText: 'File is changed externally.\nDo you want to reload the file?'
+            }
+          });
+          dialogRef.afterClosed().subscribe(res => {
+            if (res) {
+              this.reset();
+            }
+          });
+        }
+      }
       return;
     }
-    console.log(message);
 
-    if (this.invalidYamlAlert) {
-      this.invalidYamlAlert.close(true);
+    // Handle render event
+    if (message.type !== MESSAGE_TYPES.RENDER) {
+      return;
     }
 
     this.appName = message.appName;
@@ -129,7 +157,7 @@ export class VSAppComponent implements OnInit {
   }
 
   /**
-   * Reset edit.
+   * Reset editor.
    */
   reset() {
     this.isPageDirty = !this.editMode;
@@ -168,7 +196,7 @@ export class VSAppComponent implements OnInit {
       });
       this.invalidYamlAlert.afterClosed().subscribe(res => {
         if (!res) {
-          this.doClose();
+          this.close();
         }
         this.invalidYamlAlert = null;
       });
@@ -200,9 +228,9 @@ export class VSAppComponent implements OnInit {
   }
 
   /**
-   * Do close the webview panel.
+   * Close the webview panel.
    */
-  private doClose() {
+  private close() {
     vscode.postMessage({
       type: MESSAGE_TYPES.CLOSE
     });

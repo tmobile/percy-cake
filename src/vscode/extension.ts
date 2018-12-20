@@ -4,15 +4,61 @@ import * as vscode from 'vscode';
 
 import { MESSAGE_TYPES, EXTENSION_NAME, COMMANDS, CONFIG } from './constants';
 
+/**
+ * The editor panel, it conatins a webview.
+ */
 class PercyEditorPanel {
+
+  // There is only one editor panel instance
   public static currentPanel: PercyEditorPanel | undefined;
 
+  // The webview panel
   private readonly _panel: vscode.WebviewPanel;
-  private _disposables: vscode.Disposable[] = [];
+
+  // The disposables
+  private readonly _disposables: vscode.Disposable[] = [];
+
+  // The file uri
   private _uri: vscode.Uri;
-  private _inited: boolean;
+
+  // The edit mode flag
+  private _editMode: boolean;
+
+  // The event handlers registered flag
+  private _eventRegistered: boolean;
+
+  // The webview inited flag
   private _webViewInited: boolean;
 
+  // The file water
+  private fileWatcher: vscode.FileSystemWatcher;
+
+  // The changed file uri
+  private changedFileUri: vscode.Uri;
+
+  /**
+   * Create or show the editor panel.
+   * @param extensionPath the path to this extension
+   * @param uri the uri of file
+   * @param editMode the edit mode
+   * @param column the column to show the panel
+   */
+  public static CreateOrShow(extensionPath: string, uri: vscode.Uri, editMode: boolean, column?: vscode.ViewColumn) {
+
+    if (!PercyEditorPanel.currentPanel) {
+      // Create if not exists
+      PercyEditorPanel.currentPanel = new PercyEditorPanel(extensionPath, column || vscode.ViewColumn.One);
+    }
+
+    // Show editor panel
+    PercyEditorPanel.currentPanel.show(uri || vscode.window.activeTextEditor.document.uri, editMode);
+  }
+
+  /**
+   * Create a new editor panel.
+   * @param extensionPath the path to this extension
+   * @param column the column to show the panel
+   */
   private constructor(extensionPath: string, column: vscode.ViewColumn) {
     this._panel = vscode.window.createWebviewPanel('percyEditor', 'Percy editor', column, {
       enableScripts: true,
@@ -22,40 +68,85 @@ class PercyEditorPanel {
       ],
     });
     this._panel.iconPath = vscode.Uri.file(path.join(extensionPath, 'dist/favicon.png'));
-    this._panel.webview.html = this.getHtmlForWebview(extensionPath);
+    this._panel.webview.html = getHtmlForWebview(extensionPath);
   }
 
-  public static CreateOrShow(extensionPath: string, uri: vscode.Uri, editMode: boolean, column?: vscode.ViewColumn) {
-
-    if (PercyEditorPanel.currentPanel) {
-      PercyEditorPanel.currentPanel._panel.reveal(PercyEditorPanel.currentPanel._panel.viewColumn);
-    } else {
-      PercyEditorPanel.currentPanel = new PercyEditorPanel(extensionPath, column || vscode.ViewColumn.One);
-    }
-
-    PercyEditorPanel.currentPanel.init(editMode, uri || vscode.window.activeTextEditor.document.uri);
-  }
-
-  init(editMode: boolean, uri: vscode.Uri) {
+  /**
+   * Show the panel.
+   * @param uri the uri of file
+   * @param editMode the edit mode
+   */
+  show(uri: vscode.Uri, editMode: boolean) {
     this._uri = uri;
-    this.setPercyEditorFocused(true);
-    this.onActive(editMode);
+    this._editMode = editMode;
 
-    if (this._inited) {
+    this.registerEventHandlers();
+
+    this._panel.reveal(this._panel.viewColumn);
+
+    this.renderWebview();
+
+    setPercyEditorFocused(true);
+  }
+
+  /**
+   * Register event handlers.
+   */
+  private registerEventHandlers() {
+
+    // Handle file change event
+    if (this.fileWatcher) {
+      this.fileWatcher.dispose();
+    }
+    this.changedFileUri = null;
+    this.fileWatcher = vscode.workspace.createFileSystemWatcher(this._uri.fsPath, false, false, true);
+    const fileChangeHandler = (uri: vscode.Uri) => {
+      if (this._editMode && uri.fsPath === this._uri.fsPath) {
+        if (this._panel.visible) {
+          // Can only send message to visible panel
+          this._panel.webview.postMessage({
+            type: MESSAGE_TYPES.FILE_CHANGED,
+            fileContent: fs.readFileSync(this._uri.fsPath, 'utf8')
+          });
+          this.changedFileUri = null;
+        } else {
+          this.changedFileUri = uri;
+        }
+      }
+    };
+    this.fileWatcher.onDidCreate(fileChangeHandler);
+    this.fileWatcher.onDidChange(fileChangeHandler);
+
+    if (this._eventRegistered) {
+      // Following event handlers only need be registered once
       return;
     }
 
-    this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
-    this._panel.onDidChangeViewState((e) => {
-      this.setPercyEditorFocused(e.webviewPanel.active);
-    }, null, this._disposables);
+    // Handle panel dispose event
+    this._panel.onDidDispose(() => this.dispose(), this, this._disposables);
 
+    // Handle panel view state event
+    this._panel.onDidChangeViewState((e) => {
+      setPercyEditorFocused(e.webviewPanel.active);
+      if (e.webviewPanel.active && this.changedFileUri && this.changedFileUri.fsPath === this._uri.fsPath) {
+        this._panel.webview.postMessage({
+          type: MESSAGE_TYPES.FILE_CHANGED,
+          fileContent: fs.readFileSync(this._uri.fsPath, 'utf8')
+        });
+        this.changedFileUri = null;
+      }
+    }, this, this._disposables);
+
+    // Handle message posted from webview
     this._panel.webview.onDidReceiveMessage(message => {
       if (message.type === MESSAGE_TYPES.INIT) {
+        // Webview inited, render it
         this._webViewInited = true;
-        this.onActive(editMode);
+        this.renderWebview();
       } else if (message.type === MESSAGE_TYPES.SAVE) {
+        // Hanlde save event
         if (!message.editMode && !message.envFileMode) {
+          // Save a new file
           vscode.window.showSaveDialog({ defaultUri: this._uri }).then((newFile) => {
             let newFileName = path.basename(newFile.fsPath);
 
@@ -67,14 +158,15 @@ class PercyEditorPanel {
               const newUri = vscode.Uri.file(path.join(path.dirname(newFile.fsPath), newFileName));
               fs.writeFileSync(newUri.fsPath, message.fileContent);
 
-              this._uri = newUri;
-              PercyEditorPanel.currentPanel._panel.title = newFileName;
-
               this._panel.webview.postMessage({
                 type: MESSAGE_TYPES.SAVED,
                 fileContent: message.fileContent,
                 newFileName
               });
+
+              this._uri = newUri;
+              this._editMode = true;
+              PercyEditorPanel.currentPanel._panel.title = newFileName;
             }
           });
         } else {
@@ -85,33 +177,41 @@ class PercyEditorPanel {
             fileContent: message.fileContent,
             newFileName: path.basename(filePath)
           });
+          this._editMode = true;
         }
       } else if (message.type === MESSAGE_TYPES.CLOSE) {
+        // Hanlde close event
         this._panel.dispose();
       }
-    }, null, this._disposables);
+    }, this, this._disposables);
 
-    this._inited = true;
+    this._eventRegistered = true;
   }
 
-  private onActive(editMode: boolean) {
+  /**
+   * Render the webview.
+   */
+  private renderWebview() {
     const filePath = this._uri.fsPath;
+    const dir = path.dirname(filePath);
+    const fileName = path.basename(filePath);
 
-    PercyEditorPanel.currentPanel._panel.title = path.basename(filePath);
+    PercyEditorPanel.currentPanel._panel.title = fileName;
 
+    // Only render after inited
     if (!this._webViewInited) {
       return;
     }
 
     const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(EXTENSION_NAME);
     const envFileName = getEnvFileName();
-    const dir = path.dirname(filePath);
 
     const message: any = {
-      type: MESSAGE_TYPES.ACTIVATE,
-      editMode,
+      type: MESSAGE_TYPES.RENDER,
+      editMode: this._editMode,
+      envFileMode: fileName === envFileName,
       appName: vscode.workspace.asRelativePath(dir),
-      fileName: path.basename(filePath),
+      fileName,
       percyConfig: {
         ...config,
         filenameRegex: CONFIG.FILE_NAME_REGEX,
@@ -119,17 +219,18 @@ class PercyEditorPanel {
       },
     };
 
-    message.envFileMode = message.fileName === envFileName;
-
-    if (editMode) {
+    // Load file content
+    if (this._editMode) {
       message.fileContent = fs.readFileSync(filePath, 'utf8');
     }
 
+    // Load env file content
     const envFilePath = path.resolve(dir, envFileName);
     if (fs.existsSync(envFilePath)) {
       message.envFileContent = fs.readFileSync(envFilePath, 'utf8');
     }
 
+    // Load specific percy config
     message.appPercyConfig = {};
     try {
       const roots = vscode.workspace.workspaceFolders.map(folder => folder.uri.fsPath);
@@ -151,11 +252,60 @@ class PercyEditorPanel {
     this._panel.webview.postMessage(message);
   }
 
-  private getHtmlForWebview(extensionPath: string): string {
-    const scriptPathOnDisk = vscode.Uri.file(path.join(extensionPath, 'dist/percy.bundle.min.js'));
-    const scriptUri = scriptPathOnDisk.with({ scheme: 'vscode-resource' });
+  /**
+   * Save config.
+   */
+  public saveConfig() {
+    this._panel.webview.postMessage({
+      type: MESSAGE_TYPES.SAVE
+    });
+  }
 
-    return `
+  /**
+   * Show source.
+   */
+  public showSource() {
+    vscode.workspace.openTextDocument(this._uri)
+      .then(document => vscode.window.showTextDocument(document));
+  }
+
+  /**
+   * Close this panel.
+   */
+  public dispose() {
+    PercyEditorPanel.currentPanel = undefined;
+
+    this._panel.dispose();
+    this.fileWatcher.dispose();
+    setPercyEditorFocused(false);
+
+    while (this._disposables.length) {
+      const x = this._disposables.pop();
+      if (x) {
+        x.dispose();
+      }
+    }
+  }
+}
+
+/**
+ * Set whether this editor panel is focused.
+ * @param value indicates whether this editor panel is focused.
+ */
+function setPercyEditorFocused(value: boolean) {
+  vscode.commands.executeCommand('setContext', 'PercyEditorFocused', value);
+}
+
+/**
+ * Get html for webview.
+ * @param extensionPath the path to this extension.
+ * @return html for webview
+ */
+function getHtmlForWebview(extensionPath: string): string {
+  const scriptPathOnDisk = vscode.Uri.file(path.join(extensionPath, 'dist/percy.bundle.min.js'));
+  const scriptUri = scriptPathOnDisk.with({ scheme: 'vscode-resource' });
+
+  return `
     <!doctype html>
     <html lang="en">
       <head>
@@ -171,44 +321,23 @@ class PercyEditorPanel {
       </body>
     </html>
       `;
-  }
-
-  private setPercyEditorFocused(value: boolean) {
-    vscode.commands.executeCommand('setContext', 'PercyEditorFocused', value);
-  }
-
-  public dispose() {
-    PercyEditorPanel.currentPanel = undefined;
-
-    this._panel.dispose();
-    this.setPercyEditorFocused(false);
-
-    while (this._disposables.length) {
-      const x = this._disposables.pop();
-      if (x) {
-        x.dispose();
-      }
-    }
-  }
-
-  public saveConfig() {
-    this._panel.webview.postMessage({
-      type: MESSAGE_TYPES.SAVE
-    });
-  }
-
-  public showSource() {
-    vscode.workspace.openTextDocument(this._uri)
-      .then(document => vscode.window.showTextDocument(document));
-  }
 }
 
+/**
+ * Get env file name from config.
+ * @return env file name
+ */
 function getEnvFileName(): string {
   const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(EXTENSION_NAME);
   return config.get(CONFIG.ENVIRONMENTS_FILE);
 }
 
-function normalizeFilename(fileName: string) {
+/**
+ * Normalize file name.
+ * @param fileName the file name to normalize
+ * @return normalized file name
+ */
+function normalizeFilename(fileName: string): string {
   if (!fileName) {
     return '';
   }
@@ -216,9 +345,11 @@ function normalizeFilename(fileName: string) {
   return fileName.match(/\.[y|Y][a|A]?[m|M][l|L]$/) ? fileName : fileName + '.yaml';
 }
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext): void {
+/**
+ * Activate this extension. Register all the commands this extension supports.
+ * @param context the extension context
+ */
+export function activate(context: vscode.ExtensionContext) {
 
   // Edit file
   const editCommand = vscode.commands.registerCommand(COMMANDS.EDIT, (uri: vscode.Uri) => {
@@ -226,6 +357,7 @@ export function activate(context: vscode.ExtensionContext): void {
   });
   context.subscriptions.push(editCommand);
 
+  // Edit file to side
   const editSideCommand = vscode.commands.registerCommand(COMMANDS.EDIT_SIDE, (uri: vscode.Uri) => {
     const active = vscode.window.activeTextEditor;
     let column;

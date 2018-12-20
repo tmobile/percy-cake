@@ -1,9 +1,10 @@
 export const MESSAGE_TYPES = {
   INIT: 'PercyEditorInit',
-  ACTIVATE: 'PercyEditorActivate',
+  RENDER: 'PercyEditorRender',
   SAVE: 'PercyEditorSave',
   SAVED: 'PercyEditorSaved',
-  CLOSE: 'PercyEditorClose'
+  CLOSE: 'PercyEditorClose',
+  FILE_CHANGED: 'PercyEditorFileChanged'
 };
 
 export const EXTENSION_NAME = 'vscode-percy-editor';
