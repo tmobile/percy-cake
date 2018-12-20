@@ -65,22 +65,24 @@ class PercyEditorPanel {
               newFileName = normalizeFilename(newFileName);
 
               const newUri = vscode.Uri.file(path.join(path.dirname(newFile.fsPath), newFileName));
-              fs.writeFileSync(newUri.fsPath, message.content);
+              fs.writeFileSync(newUri.fsPath, message.fileContent);
 
               this._uri = newUri;
               PercyEditorPanel.currentPanel._panel.title = newFileName;
 
               this._panel.webview.postMessage({
                 type: MESSAGE_TYPES.SAVED,
+                fileContent: message.fileContent,
                 newFileName
               });
             }
           });
         } else {
           const filePath = this._uri.fsPath;
-          fs.writeFileSync(filePath, message.content);
+          fs.writeFileSync(filePath, message.fileContent);
           this._panel.webview.postMessage({
             type: MESSAGE_TYPES.SAVED,
+            fileContent: message.fileContent,
             newFileName: path.basename(filePath)
           });
         }

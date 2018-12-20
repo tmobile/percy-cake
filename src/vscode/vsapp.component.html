@@ -7,8 +7,8 @@
 
     <ng-template #buttonsTemplate>
       <div class="buttons-row">
-        <button type="button" mat-button color="primary" class="btn-cancel" (click)="cancel()">
-          Cancel
+        <button type="button" mat-button color="primary" class="btn-cancel" (click)="reset()">
+          Reset
         </button>
 
         <button type="button" mat-raised-button color="primary" [disabled]="isSaving || !isPageDirty" class="btn-save"

@@ -77,14 +77,14 @@ export class NestedConfigViewComponent implements OnChanges {
 
     if (this.firstInit) {
       this.firstInit = false;
-      this.toggle(this.defaultTreeControl, this.defaultDataSource.data[0], true);
-      this.toggle(this.envTreeControl, this.envDataSource.data[0], true);
+      this.toggle(this.defaultTreeControl, this.defaultDataSource.data[0], true, true);
+      this.toggle(this.envTreeControl, this.envDataSource.data[0], true, true);
     }
   }
 
-  toggle(treeControl, node, toggleAll?: boolean) {
+  toggle(treeControl, node, toggleAll?: boolean, expand?: boolean) {
     const expanded = treeControl.isExpanded(node);
-    if (expanded) {
+    if (expanded && !expand) {
       if (toggleAll) {
         treeControl.collapseDescendants(node);
       } else {

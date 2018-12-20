@@ -14,7 +14,6 @@ import { YamlService } from 'services/yaml.service';
 
 import { EditorComponent } from 'components/editor/editor.component';
 import { AlertDialogComponent } from 'components/alert-dialog/alert-dialog.component';
-import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
 
 import { MESSAGE_TYPES } from './constants';
 
@@ -44,6 +43,8 @@ export class VSAppComponent implements OnInit {
   @ViewChild('editor') editor: EditorComponent;
 
   invalidYamlAlert: MatDialogRef<AlertDialogComponent>;
+
+  fileContent: string;
 
   /**
    * creates the component
@@ -88,6 +89,7 @@ export class VSAppComponent implements OnInit {
     if (message.type === MESSAGE_TYPES.SAVED) {
       this.editMode = true;
       this.isPageDirty = false;
+      this.fileContent = message.fileContent;
       this.fileName = this.fileSaving.fileName = message.newFileName;
       this.store.dispatch(new PageLoad({ ...this.fileSaving, editMode: this.editMode }));
       this.store.dispatch(new SaveDraftSuccess(this.fileSaving));
@@ -108,7 +110,6 @@ export class VSAppComponent implements OnInit {
     this.fileName = message.fileName;
     this.editMode = message.editMode;
     this.envFileMode = message.envFileMode;
-    this.isPageDirty = !this.editMode;
 
     _.assign(percyConfig, message.percyConfig);
 
@@ -122,6 +123,17 @@ export class VSAppComponent implements OnInit {
       this.environments = _.map(_.get(envConfig.environments, 'children', <TreeNode[]>[]), child => child.key);
     }
 
+    this.fileContent = message.fileContent;
+
+    this.reset();
+  }
+
+  /**
+   * Reset edit.
+   */
+  reset() {
+    this.isPageDirty = !this.editMode;
+
     const file: ConfigFile = {
       fileName: this.fileName,
       applicationName: this.appName
@@ -129,13 +141,13 @@ export class VSAppComponent implements OnInit {
 
     this.store.dispatch(new PageLoad({ ...file, editMode: this.editMode }));
 
-    if (!message.fileContent) {
+    if (!this.fileContent) {
       // Add new file, set an initial config
       file.modified = true;
       file.draftConfig = new Configuration();
       this.store.dispatch(new GetFileContentSuccess({ file, newlyCreated: true }));
     } else {
-      file.originalConfig = this.parseYaml(message.fileContent, `${this.appName}/${this.fileName}`);
+      file.originalConfig = this.parseYaml(this.fileContent, `${this.appName}/${this.fileName}`);
       this.store.dispatch(new GetFileContentSuccess({ file }));
     }
   }
@@ -156,7 +168,7 @@ export class VSAppComponent implements OnInit {
       });
       this.invalidYamlAlert.afterClosed().subscribe(res => {
         if (!res) {
-          this.doCancel();
+          this.doClose();
         }
         this.invalidYamlAlert = null;
       });
@@ -182,35 +194,15 @@ export class VSAppComponent implements OnInit {
         type: MESSAGE_TYPES.SAVE,
         editMode: this.editMode,
         envFileMode: this.envFileMode,
-        content: this.yamlService.convertTreeToYaml(editorState.configuration)
+        fileContent: this.yamlService.convertTreeToYaml(editorState.configuration)
       });
     });
   }
 
   /**
-   * Cancel edit.
+   * Do close the webview panel.
    */
-  cancel() {
-    if (this.isPageDirty) {
-      const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
-        data: {
-          confirmationText: 'There may be unsaved changes.\nAre you sure you want to navigate away from the page?'
-        }
-      });
-      dialogRef.afterClosed().subscribe(res => {
-        if (res) {
-          this.doCancel();
-        }
-      });
-    } else {
-      this.doCancel();
-    }
-  }
-
-  /**
-   * Do cancel, will close the webview panel.
-   */
-  private doCancel() {
+  private doClose() {
     vscode.postMessage({
       type: MESSAGE_TYPES.CLOSE
     });
