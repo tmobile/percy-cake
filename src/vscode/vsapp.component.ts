@@ -14,9 +14,9 @@ import { YamlService } from 'services/yaml.service';
 
 import { EditorComponent } from 'components/editor/editor.component';
 import { AlertDialogComponent } from 'components/alert-dialog/alert-dialog.component';
+import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
 
 import { MESSAGE_TYPES } from './constants';
-import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
 
 declare var acquireVsCodeApi;
 const vscode = acquireVsCodeApi();

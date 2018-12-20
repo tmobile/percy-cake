@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 import { MESSAGE_TYPES, EXTENSION_NAME, COMMANDS, CONFIG } from './constants';
 
 /**
- * The editor panel, it conatins a webview.
+ * The editor panel, it contains a webview running the angular app specially bundled for vscode.
  */
 class PercyEditorPanel {
 
