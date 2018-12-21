@@ -7,11 +7,11 @@
 
     <ng-template #buttonsTemplate>
       <div class="buttons-row">
-        <button type="button" mat-button color="primary" class="btn-cancel" (click)="reset()">
+        <button type="button" mat-button color="primary" [disabled]="fileSaving || !isPageDirty" class="btn-cancel" (click)="reset()">
           Reset
         </button>
 
-        <button type="button" mat-raised-button color="primary" [disabled]="isSaving || !isPageDirty" class="btn-save"
+        <button type="button" mat-raised-button color="primary" [disabled]="fileSaving || !isPageDirty" class="btn-save"
           (click)="saveConfig()">
           Save
         </button>
