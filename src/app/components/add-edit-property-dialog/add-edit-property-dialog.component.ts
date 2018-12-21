@@ -36,7 +36,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
   inheritsOptions: string[];
 
   duplicateDefault = false;
-  autoTrim = false;
+  autoTrim = true;
 
   /**
    * constructs the component
