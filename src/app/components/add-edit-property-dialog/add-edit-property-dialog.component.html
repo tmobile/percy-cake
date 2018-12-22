@@ -76,6 +76,9 @@
       <ng-container *ngIf="!data.node.isDefaultNode() && key.value !== 'inherits' && (!data.editMode || data.node.getLevel() > 0)">
           <mat-slide-toggle color="primary" [checked]="duplicateDefault" (change)="useDefault($event)">Duplicate default properties</mat-slide-toggle>
       </ng-container>
+      <ng-container *ngIf="data.node.isDefaultNode() && isNonFirstObjectInArray()">
+          <mat-slide-toggle color="primary" [checked]="duplicateFirstSibling" (change)="useFirstSibling($event)">Duplicate first sibling properties</mat-slide-toggle>
+      </ng-container>
     </div>
 
     <div class="buttons-row">

@@ -503,6 +503,7 @@ export class YamlService {
     }
 
     if (target.valueType === PROPERTY_VALUE_TYPES.STRING_ARRAY
+      || target.valueType === PROPERTY_VALUE_TYPES.OBJECT_ARRAY
       || target.valueType === 'array') {
       _.each(target.children, (child) => {
         this.substitute(child, tokens, depth++);

@@ -36,6 +36,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
   inheritsOptions: string[];
 
   duplicateDefault = false;
+  duplicateFirstSibling = false;
   autoTrim = true;
 
   /**
@@ -128,6 +129,17 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     const node: TreeNode = this.data.node;
 
     return (this.data.editMode && node.parent && node.parent.isArray()) || (!this.data.editMode && node.isArray());
+  }
+
+  /**
+   * Determine if user is editing a non-first object item within array.
+   * @returns true if user is editing a non-first object item within array, false otherwise
+   */
+  isNonFirstObjectInArray() {
+    const node: TreeNode = this.data.node;
+
+    return (this.data.editMode && node.isObjectInArray() && node.parent.children.indexOf(node) > 0)
+      || (!this.data.editMode && node.valueType === PROPERTY_VALUE_TYPES.OBJECT_ARRAY && node.children.length > 0);
   }
 
   /**
@@ -226,6 +238,19 @@ export class AddEditPropertyDialogComponent implements OnChanges {
   }
 
   /**
+   * Checks to copy properties from first sibling object item in array.
+   * @param $event user's check event
+   */
+  useFirstSibling($event) {
+    this.duplicateFirstSibling = $event && $event.checked;
+    if (this.duplicateFirstSibling) {
+      this.comment.disable();
+    } else {
+      this.comment.enable();
+    }
+  }
+
+  /**
    * Checks to auto trim string value.
    * @param $event user's check event
    */
@@ -319,7 +344,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
    */
   private doSubmit() {
 
-    if (!this.duplicateDefault) {
+    if (!this.duplicateDefault && !this.duplicateFirstSibling) {
       const node = new TreeNode(this.key.value, this.valueType.value);
 
       if (node.isLeaf()) {
@@ -337,7 +362,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
       }
 
       this.saveProperty.emit(node);
-    } else {
+    } else if (this.duplicateDefault) {
       // Build key hierarchy
       const keyHierarchy = [];
       let node = this.data.node;
@@ -358,15 +383,31 @@ export class AddEditPropertyDialogComponent implements OnChanges {
       }
 
       // Clone default node
-      const parent = defaultTree.parent;
-      defaultTree.parent = undefined;
-      const result = _.cloneDeep(defaultTree);
-      defaultTree.parent = parent;
-
+      const result = this.cloneWithoutParent(defaultTree);
       result.key = this.key.value;
 
       this.saveProperty.emit(result);
+    } else {
+      const firstSibling = this.data.editMode ? this.data.node.parent.children[0] : this.data.node.children[0];
+
+      const result = this.cloneWithoutParent(firstSibling);
+      result.key = this.key.value;
+      this.saveProperty.emit(result);
     }
+  }
+
+  /**
+   * Clone tree node without parent relationship.
+   * @param node the node to clone
+   * @return cloned node
+   */
+  private cloneWithoutParent(node: TreeNode) {
+
+    const parent = node.parent;
+    node.parent = undefined;
+    const result = _.cloneDeep(node);
+    node.parent = parent;
+    return result;
   }
 
   /**

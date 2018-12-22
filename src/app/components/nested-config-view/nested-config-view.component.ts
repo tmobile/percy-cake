@@ -154,7 +154,7 @@ export class NestedConfigViewComponent implements OnChanges {
       const keyHierarchy: string[] = [];
       let parentNode = node;
       while (parentNode && parentNode.getLevel() > 1) {
-        if (parentNode.valueType === PROPERTY_VALUE_TYPES.OBJECT && parentNode.parent && parentNode.parent.isArray()) {
+        if (parentNode.isObjectInArray()) {
           // object in array, use first child
           keyHierarchy.unshift('[0]');
         } else {
@@ -384,6 +384,11 @@ export class NestedConfigViewComponent implements OnChanges {
     if (parent.isDefaultNode()) {
       this.alignEnvironmentProperties(node, envNode => {
         _.remove(envNode.parent.children, item => item.key === node.key);
+        if (envNode.parent.isArray()) {
+          envNode.parent.children.forEach((element, idx) => {
+            element.key = `[${idx}]`;
+          });
+        }
       });
     }
   }

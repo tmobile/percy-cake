@@ -53,6 +53,14 @@ export class TreeNode {
   }
 
   /**
+   * Check if this node represetns an object item in array.
+   * @returns true if this represetns an object item in array, false otherwise
+   */
+  isObjectInArray() {
+    return this.valueType === PROPERTY_VALUE_TYPES.OBJECT && this.parent && this.parent.isArray();
+  }
+
+  /**
    * Check if this node represetns an array node.
    * @returns true if this node's type is string[]/boolean[]/number[]/object[]/array, false otherwise
    */

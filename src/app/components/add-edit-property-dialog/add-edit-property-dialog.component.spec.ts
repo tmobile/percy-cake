@@ -808,6 +808,67 @@ describe('AddEditPropertyDialogComponent', () => {
     result.comment = ctx.component.comment.value.trim().split('\n');
   });
 
+  it('add object in array with duplicate first sibling, should submit changes with first sibling properties', () => {
+
+    const defaultTree = new TreeNode('default');
+    defaultTree.addChild(new TreeNode('objarr', PROPERTY_VALUE_TYPES.OBJECT_ARRAY));
+    defaultTree.findChild(['objarr']).addChild(new TreeNode('[0]'));
+    defaultTree.findChild(['objarr', '[0]']).addChild(new TreeNode('bool', PROPERTY_VALUE_TYPES.BOOLEAN, true));
+
+    const data = {
+      editMode: false,
+      node: defaultTree.findChild(['objarr']),
+      keyOptions: [],
+      defaultTree,
+    };
+
+    ctx.component.data = data;
+    ctx.component.ngOnChanges();
+    expect(ctx.component.isNonFirstObjectInArray()).toBeTruthy();
+
+    ctx.component.useFirstSibling({ checked: false });
+    ctx.component.useFirstSibling({ checked: true });
+    ctx.component.onSubmit();
+
+    const firstSibling = defaultTree.findChild(['objarr', '[0]']);
+    firstSibling.parent = undefined;
+    const result = _.cloneDeep(firstSibling);
+    result.key = '[1]';
+
+    expect(ctx.observables.saveProperty.value).toEqual(result);
+  });
+
+  it('edit object in array with duplicate first sibling, should submit changes with first sibling properties', () => {
+
+    const defaultTree = new TreeNode('default');
+    defaultTree.addChild(new TreeNode('objarr', PROPERTY_VALUE_TYPES.OBJECT_ARRAY));
+    defaultTree.findChild(['objarr']).addChild(new TreeNode('[0]'));
+    defaultTree.findChild(['objarr', '[0]']).addChild(new TreeNode('bool', PROPERTY_VALUE_TYPES.BOOLEAN, true));
+    defaultTree.findChild(['objarr']).addChild(new TreeNode('[1]'));
+    defaultTree.findChild(['objarr', '[1]']).addChild(new TreeNode('bool', PROPERTY_VALUE_TYPES.BOOLEAN, false));
+
+    const data = {
+      editMode: true,
+      node: defaultTree.findChild(['objarr', '[1]']),
+      keyOptions: [],
+      defaultTree,
+    };
+
+    ctx.component.data = data;
+    ctx.component.ngOnChanges();
+    expect(ctx.component.isNonFirstObjectInArray()).toBeTruthy();
+
+    ctx.component.useFirstSibling({ checked: true });
+    ctx.component.onSubmit();
+
+    const firstSibling = defaultTree.findChild(['objarr', '[0]']);
+    firstSibling.parent = undefined;
+    const result = _.cloneDeep(firstSibling);
+    result.key = '[1]';
+
+    expect(ctx.observables.saveProperty.value).toEqual(result);
+  });
+
   it('add environment in environments tree with duplicate default, should submit changes with default values', () => {
 
     const defaultTree = new TreeNode('default');
