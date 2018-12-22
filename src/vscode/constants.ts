@@ -4,6 +4,7 @@ export const MESSAGE_TYPES = {
   SAVE: 'PercyEditorSave',
   SAVED: 'PercyEditorSaved',
   CLOSE: 'PercyEditorClose',
+  FILE_DIRTY: 'PercyEditorFileDirty',
   FILE_CHANGED: 'PercyEditorFileChanged'
 };
 

@@ -177,8 +177,15 @@ class PercyEditorPanel {
             fileContent: message.fileContent,
             newFileName: path.basename(filePath)
           });
+
           this._editMode = true;
+          PercyEditorPanel.currentPanel._panel.title = path.basename(filePath);
         }
+      } else if (message.type === MESSAGE_TYPES.FILE_DIRTY) {
+        // Hanlde file dirty event
+        const filePath = this._uri.fsPath;
+        const fileName = path.basename(filePath);
+        PercyEditorPanel.currentPanel._panel.title = message.dirty ? '*' + fileName : fileName;
       } else if (message.type === MESSAGE_TYPES.CLOSE) {
         // Hanlde close event
         this._panel.dispose();
@@ -196,7 +203,7 @@ class PercyEditorPanel {
     const dir = path.dirname(filePath);
     const fileName = path.basename(filePath);
 
-    PercyEditorPanel.currentPanel._panel.title = fileName;
+    PercyEditorPanel.currentPanel._panel.title = !this._editMode ? '*' + fileName : fileName;
 
     // Only render after inited
     if (!this._webViewInited) {

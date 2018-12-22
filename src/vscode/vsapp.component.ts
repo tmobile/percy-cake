@@ -1,5 +1,7 @@
+import * as path from 'path';
+
 import { Component, ViewChild, HostListener, OnInit } from '@angular/core';
-import { MatDialog, MatDialogRef } from '@angular/material';
+import { MatDialog } from '@angular/material';
 import { Store, select } from '@ngrx/store';
 import * as _ from 'lodash';
 
@@ -43,8 +45,6 @@ export class VSAppComponent implements OnInit {
 
   @ViewChild('editor') editor: EditorComponent;
 
-  invalidYamlAlert: MatDialogRef<AlertDialogComponent>;
-
   fileContent: string;
 
   /**
@@ -64,6 +64,13 @@ export class VSAppComponent implements OnInit {
    */
   ngOnInit() {
     this.isPageDirty$.subscribe(res => {
+      if (this.isPageDirty !== res) {
+        vscode.postMessage({
+          type: MESSAGE_TYPES.FILE_DIRTY,
+          dirty: res
+        });
+      }
+
       this.isPageDirty = res;
     });
 
@@ -81,9 +88,6 @@ export class VSAppComponent implements OnInit {
     const message = $event.data; // The JSON data our extension sent
 
     // Close dialog if any
-    if (this.invalidYamlAlert) {
-      this.invalidYamlAlert.close(true);
-    }
     this.dialog.closeAll();
 
     // Handle save config event
@@ -111,20 +115,16 @@ export class VSAppComponent implements OnInit {
       if (this.editMode && message.fileContent !== this.fileContent) {
         this.fileContent = message.fileContent;
 
-        if (!this.isPageDirty) {
-          this.reset();
-        } else {
-          const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
-            data: {
-              confirmationText: 'File is changed externally.\nDo you want to reload the file?'
-            }
-          });
-          dialogRef.afterClosed().subscribe(res => {
-            if (res) {
-              this.reset();
-            }
-          });
-        }
+        const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+          data: {
+            confirmationText: 'File is changed externally.\nDo you want to reload the file?'
+          }
+        });
+        dialogRef.afterClosed().subscribe(res => {
+          if (res) {
+            this.reset();
+          }
+        });
       }
       return;
     }
@@ -147,20 +147,28 @@ export class VSAppComponent implements OnInit {
 
     this.environments = [];
     if (message.envFileContent) {
-      const envConfig = this.parseYaml(message.envFileContent, `${this.appName}/${percyConfig.environmentsFile}`);
+      const envConfig = this.parseYaml(message.envFileContent, `${this.appName}${path.sep}${percyConfig.environmentsFile}`);
       this.environments = _.map(_.get(envConfig.environments, 'children', <TreeNode[]>[]), child => child.key);
     }
 
     this.fileContent = message.fileContent;
 
-    this.reset();
+    this.reset(true);
   }
 
   /**
    * Reset editor.
    */
-  reset() {
+  reset(forRender?: boolean) {
     this.isPageDirty = !this.editMode;
+
+    if (!forRender) {
+      // User reset action
+      vscode.postMessage({
+        type: MESSAGE_TYPES.FILE_DIRTY,
+        dirty: this.isPageDirty
+      });
+    }
 
     const file: ConfigFile = {
       fileName: this.fileName,
@@ -175,7 +183,7 @@ export class VSAppComponent implements OnInit {
       file.draftConfig = new Configuration();
       this.store.dispatch(new GetFileContentSuccess({ file, newlyCreated: true }));
     } else {
-      file.originalConfig = this.parseYaml(this.fileContent, `${this.appName}/${this.fileName}`);
+      file.originalConfig = this.parseYaml(this.fileContent, `${this.appName}${path.sep}${this.fileName}`);
       this.store.dispatch(new GetFileContentSuccess({ file }));
     }
   }
@@ -189,16 +197,15 @@ export class VSAppComponent implements OnInit {
     try {
       return this.yamlService.parseYamlConfig(content);
     } catch (err) {
-      this.invalidYamlAlert = this.dialog.open(AlertDialogComponent, {
+      const invalidYamlAlert = this.dialog.open(AlertDialogComponent, {
         data: {
           message: `Invalid yaml at ${filePath}`
         }
       });
-      this.invalidYamlAlert.afterClosed().subscribe(res => {
-        if (!res) {
+      invalidYamlAlert.afterClosed().subscribe(res => {
+        if (res) {
           this.close();
         }
-        this.invalidYamlAlert = null;
       });
       throw err;
     }
