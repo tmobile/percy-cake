@@ -73,7 +73,7 @@
 
     <div class="form-field toggle-line">
       <mat-slide-toggle color="primary" [checked]="autoTrim" (change)="useAutoTrim($event)">Auto trim</mat-slide-toggle>
-      <ng-container *ngIf="!data.node.isDefaultNode() && key.value !== 'inherits' && (!data.editMode || data.node.getLevel() > 0)">
+      <ng-container *ngIf="canDuplicateDefault()">
           <mat-slide-toggle color="primary" [checked]="duplicateDefault" (change)="useDefault($event)">Duplicate default properties</mat-slide-toggle>
       </ng-container>
       <ng-container *ngIf="data.node.isDefaultNode() && isNonFirstObjectInArray()">

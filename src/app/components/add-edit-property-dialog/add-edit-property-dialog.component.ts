@@ -363,37 +363,65 @@ export class AddEditPropertyDialogComponent implements OnChanges {
 
       this.saveProperty.emit(node);
     } else if (this.duplicateDefault) {
-      // Build key hierarchy
-      const keyHierarchy = [];
-      let node = this.data.node;
-      while (node && node.getLevel() > 1) {
-        keyHierarchy.unshift(node.key);
-        node = node.parent;
-      }
-
-      const keyValue = this.key.value;
-      if (!this.data.editMode && this.data.node.getLevel() >= 1) {
-        keyHierarchy.push(keyValue);
-      }
-
-      // Find the respective defalut node
-      let defaultTree = this.data.defaultTree;
-      for (let i = 0; i < keyHierarchy.length; i++) {
-        defaultTree = _.find(defaultTree.children, child => child.key === keyHierarchy[i]);
-      }
-
       // Clone default node
-      const result = this.cloneWithoutParent(defaultTree);
+      const defaultNode = this.getDefaultNodeToDuplicate();
+      const result = this.cloneWithoutParent(defaultNode);
       result.key = this.key.value;
 
       this.saveProperty.emit(result);
     } else {
+      // Clone first sibling
       const firstSibling = this.data.editMode ? this.data.node.parent.children[0] : this.data.node.children[0];
-
       const result = this.cloneWithoutParent(firstSibling);
       result.key = this.key.value;
+
       this.saveProperty.emit(result);
     }
+  }
+
+  /**
+   * Get default node to duplicate.
+   * @return default node to duplicate
+   */
+  private getDefaultNodeToDuplicate() {
+
+    // Build key hierarchy
+    const keyHierarchy = [];
+    let node = this.data.node;
+    while (node && node.getLevel() > 1) {
+      if (node.isObjectInArray()) {
+        // object in array, use first child
+        keyHierarchy.unshift('[0]');
+      } else {
+        keyHierarchy.unshift(node.key);
+      }
+      node = node.parent;
+    }
+
+    const keyValue = this.key.value;
+    if (!this.data.editMode && this.data.node.getLevel() >= 1) {
+      if (this.isNonFirstObjectInArray()) {
+        keyHierarchy.push('[0]');
+      } else {
+        keyHierarchy.push(keyValue);
+      }
+    }
+
+    // Find the respective defalut node
+    let defaultNode = this.data.defaultTree;
+    for (let i = 0; i < keyHierarchy.length; i++) {
+      defaultNode = _.find(defaultNode.children, child => child.key === keyHierarchy[i]);
+    }
+    return defaultNode;
+  }
+
+  /**
+   * Check whether can duplicate default.
+   * @return true if can duplicate default, false otherwise
+   */
+  canDuplicateDefault() {
+    return !this.data.node.isDefaultNode() && this.key.value !== 'inherits' && (!this.data.editMode || this.data.node.getLevel() > 0)
+      && !!this.getDefaultNodeToDuplicate();
   }
 
   /**
