@@ -8,16 +8,15 @@ cd "$SCRIPT_DIR/.."
 
 npm i
 
-npm run build:prod -- --main=src/vscode/vsapp.ts --output-path=./vscode/dist
+npm run build:prod -- --output-path=./electron/dist 
 
-# Package extension
+# Package electron app
 cd "$SCRIPT_DIR"
 
 ../node_modules/.bin/tsc -p .
 
-rm -f dist/index.html
-rm -f dist/percy.conf.json
+node conf.js
 
 npm i
 
-./node_modules/.bin/vsce package
+./node_modules/.bin/electron-builder -mwl

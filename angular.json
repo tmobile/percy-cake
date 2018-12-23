@@ -48,6 +48,7 @@
                   "with": "src/percy.conf.prod.json"
                 }
               ],
+              "outputPath": "dist/build",
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": false,

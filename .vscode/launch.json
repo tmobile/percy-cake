@@ -13,7 +13,7 @@
             "--extensionDevelopmentPath=${workspaceFolder}/vscode"
         ],
         "outFiles": [
-            "${workspaceFolder}/vscode/dist/src/**/*.js"
+            "${workspaceFolder}/vscode/dist/*.js"
         ],
     }
   ]

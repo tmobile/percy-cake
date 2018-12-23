@@ -34,7 +34,7 @@ export class UtilService extends YamlService {
    */
   async initConfig() {
     if (_.isEmpty(percyConfig)) {
-      const config = await this.http.get('/percy.conf.json').toPromise();
+      const config = await this.http.get('percy.conf.json').toPromise();
       _.assign(percyConfig, config);
     }
   }

@@ -8,8 +8,15 @@
   },
   "repository": "https://gitlab.com/leviastan/yaml-editor/tree/vscode",
   "publisher": "percy",
-  "icon": "dist/favicon.png",
-  "main": "dist/src/vscode/extension",
+  "icon": "media/appicon.128x128.png",
+  "main": "dist/extension",
+  "scripts": {
+    "postinstall": "node ./node_modules/vscode/bin/install"
+  },
+  "devDependencies": {
+    "vsce": "^1.54.0",
+    "vscode": "^1.1.26"
+  },
   "activationEvents": [
     "onCommand:vscode-percy-editor.new",
     "onCommand:vscode-percy-editor.newenv",
