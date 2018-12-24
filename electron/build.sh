@@ -13,10 +13,10 @@ npm run build:prod -- --output-path=./electron/dist
 # Package electron app
 cd "$SCRIPT_DIR"
 
+npm i
+
 ../node_modules/.bin/tsc -p .
 
 node conf.js
-
-npm i
 
 ./node_modules/.bin/electron-builder -mwl

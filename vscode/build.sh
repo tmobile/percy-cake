@@ -13,11 +13,11 @@ npm run build:prod -- --main=src/vscode/vsapp.ts --output-path=./vscode/dist
 # Package extension
 cd "$SCRIPT_DIR"
 
+npm i
+
 ../node_modules/.bin/tsc -p .
 
 rm -f dist/index.html
 rm -f dist/percy.conf.json
-
-npm i
 
 ./node_modules/.bin/vsce package
