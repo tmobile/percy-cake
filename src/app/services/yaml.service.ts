@@ -8,8 +8,8 @@ import { TreeNode } from 'models/tree-node';
 import { Configuration } from 'models/config-file';
 import { Injectable } from '@angular/core';
 
-@Injectable({ providedIn: 'root' })
-export class YamlService {
+
+class YamlParser {
 
   // mapping of type from YAML to JSON
   private typeMap = {
@@ -22,31 +22,234 @@ export class YamlService {
     null: 'string',
   };
 
-  // mapping of type from JSON to YAML
-  private typeMapReverse = {
-    string: 'str',
-    number: 'float',
-    object: 'map',
-    boolean: 'bool',
-    array: 'seq',
-  };
+  // The cursor of events
+  private cursor = 0;
+
+  // The events from yaml-js parsing
+  private events: any[];
+
+  // The lines
+  private lines: string[];
+
+  // The anchors
+  private anchors: { [key: string]: TreeNode } = {};
+
+  // Root indicator
+  private root = true;
+
+  // The flag indicates whether only supports simple array which has same item type
+  private simpleArray = true;
 
   /**
-   * Extract yaml comment.
-   * @param comment The comment to extract
-   * @returns extracted comment or undefined if it is not a comment
+   * Constructor.
    */
-  private extractYamlComment(comment: string) {
-    const trimmed = _.trim(comment);
-    const idx = _.indexOf(trimmed, '#');
-    if (!trimmed || idx === -1) {
-      // Does not contain '#', it's not a comment, return undefined
-      return;
+  constructor() {
+  }
+
+  /**
+   * Get event and forward cursor to next.
+   * @param forward Flag indicates whether to forward cursor
+   */
+  private getEvent(forward: boolean = true) {
+    const result = this.events[this.cursor];
+    if (forward) {
+      this.cursor++;
     }
-    if (trimmed[idx + 1] === '#') {
-      return _.trim(trimmed.substring(idx));
+    return result;
+  }
+
+  /**
+   * Peek event without forwarding cursor.
+   */
+  private peekEvent() {
+    return this.getEvent(false);
+  }
+
+  /**
+   * Parse yaml.
+   * @param yaml The yaml string
+   * @param simpleArray The flag indicates whether only supports simple array
+   * @returns TreeNode parsed.
+   */
+  public parse(yaml: string, simpleArray: boolean = true) {
+    this.events = yamlJS.parse(yaml);
+    this.lines = yaml.split(/\r?\n/);
+    this.cursor = 0;
+    this.anchors = {};
+    this.root = true;
+    this.simpleArray = simpleArray;
+
+    // Skip StreamStartEvent and DocumentStartEvent
+    this.getEvent();
+    this.getEvent();
+
+    return this.parseEvent();
+  }
+
+  /**
+   * Parse event.
+   * @returns TreeNode parsed.
+   */
+  private parseEvent() {
+
+    const event = this.peekEvent();
+    if (event.constructor.name === 'AliasEvent') {
+      return this.parseAliasEvent();
     }
-    return _.trim(trimmed.substring(idx + 1));
+
+    let result: TreeNode;
+    if (event.constructor.name === 'ScalarEvent') {
+      result = this.parseScalarEvent();
+    } else if (event.constructor.name === 'SequenceStartEvent') {
+      result = this.parseSequenceEvent();
+    } else if (event.constructor.name === 'MappingStartEvent') {
+      result = this.parseMappingEvent();
+    }
+
+    const anchor = event.anchor;
+    if (anchor) {
+      if (this.anchors[anchor]) {
+        throw new Error(`Found duplicate anchor: ${anchor}`);
+      }
+      result.anchor = anchor;
+      this.anchors[anchor] = result;
+    }
+
+    return result;
+  }
+
+  /**
+   * Parse alias event.
+   * @returns TreeNode parsed.
+   */
+  private parseAliasEvent() {
+    const event = this.getEvent();
+
+    const anchor = event.anchor;
+    const anchorNode = this.anchors[anchor];
+    if (!anchorNode) {
+      throw new Error(`Found undefined anchor: ${anchor}`);
+    }
+
+    const result = new TreeNode('', anchorNode.valueType);
+    result.aliases = [anchor];
+    this.parseComment(result, event.start_mark);
+    return result;
+  }
+
+  /**
+   * Parse mapping event.
+   * @returns TreeNode parsed.
+   */
+  private parseMappingEvent() {
+    const result = new TreeNode('');
+    let event = this.getEvent();
+    this.parseComment(result, event.start_mark);
+
+    while (event.constructor.name !== 'MappingEndEvent') {
+      const keyNode = this.parseScalarEvent(false);
+      const valueNode = this.parseEvent();
+
+      valueNode.key = keyNode.value;
+
+      if (valueNode.key === '<<' && valueNode.aliases) {
+        result.aliases = result.aliases || [];
+        result.aliases.push(...valueNode.aliases);
+      } else {
+        result.addChild(valueNode);
+      }
+
+      event = this.peekEvent();
+    }
+    this.getEvent();
+
+    return result;
+  }
+
+  /**
+   * Parse sequence event.
+   * @returns TreeNode parsed.
+   */
+  private parseSequenceEvent() {
+    const result = new TreeNode('', 'array');
+    let event = this.getEvent();
+    this.parseComment(result, event.start_mark);
+
+    let idx = 0;
+    let itemType: string;
+
+    while (event.constructor.name !== 'SequenceEndEvent') {
+      const child = this.parseEvent();
+      child.key = `[${idx++}]`;
+
+      if (!this.simpleArray) {
+        result.addChild(child);
+      } else {
+        const valueType = child.valueType;
+
+        if (!itemType) {
+          itemType = valueType;
+        }
+
+        if (itemType !== valueType) {
+          console.warn(`Only support array of items with same type, ${itemType} already detected, and got: ${valueType}`);
+        } else {
+          result.addChild(child);
+        }
+      }
+
+      event = this.peekEvent();
+    }
+
+    if (this.simpleArray) {
+      switch (itemType) {
+        case PROPERTY_VALUE_TYPES.STRING:
+          result.valueType = PROPERTY_VALUE_TYPES.STRING_ARRAY;
+          break;
+        case PROPERTY_VALUE_TYPES.BOOLEAN:
+          result.valueType = PROPERTY_VALUE_TYPES.BOOLEAN_ARRAY;
+          break;
+        case PROPERTY_VALUE_TYPES.NUMBER:
+          result.valueType = PROPERTY_VALUE_TYPES.NUMBER_ARRAY;
+          break;
+        case PROPERTY_VALUE_TYPES.OBJECT:
+          result.valueType = PROPERTY_VALUE_TYPES.OBJECT_ARRAY;
+          break;
+      }
+    }
+
+    this.getEvent();
+    return result;
+  }
+
+  /**
+   * Parse scalar event.
+   * @param parseComment Flag indicates whether to parse comment
+   * @returns TreeNode parsed.
+   */
+  private parseScalarEvent(parseComment: boolean = true) {
+    const event = this.getEvent();
+    const type = this.extractYamlDataType(event.tag) || 'string';
+    const result = new TreeNode('', type);
+
+    // Parse number if possible
+    if (result.valueType === 'number') {
+      result.value = _.toNumber(event.value);
+    } else if (result.valueType === 'boolean') {
+      result.value = JSON.parse(event.value);
+    } else if (result.valueType === 'string') {
+      result.value = event.value;
+    }
+
+    if (result.valueType === 'array') {
+      // This happens for an empty array
+      result.valueType = 'string[]';
+    }
+
+    if (parseComment) {
+      this.parseComment(result, event.end_mark);
+    }
+    return result;
   }
 
   /**
@@ -65,28 +268,52 @@ export class YamlService {
   }
 
   /**
+   * Parse comment, will take care root comment.
+   * @param node The TreeNode to set comment
+   * @param startMark The start mark
+   */
+  private parseComment(node: TreeNode, startMark: any) {
+    if (this.root) {
+      // Parse root comment
+      let rootComments;
+      for (let i = 0; i < startMark.line; i++) {
+        const match = this.lines[i].match(/^(\s)*(#.*)/);
+        if ((match && match[2]) || _.isEmpty(this.lines[i])) {
+          // For root comment, keep it as is
+          rootComments = rootComments || [];
+          rootComments.push(this.lines[i]);
+        }
+      }
+      node.comment = rootComments;
+
+      this.root = false;
+    } else {
+      node.comment = this.parseYamlCommentLines(startMark);
+    }
+  }
+
+  /**
    * Parse yaml comments from multiple lines.
    * @param startMark The start mark
-   * @param lines The split lines of yaml file
    * @returns parsed comments or undefined if there is not any
    */
-  private parseYamlCommentLines(startMark, lines: string[]) {
+  private parseYamlCommentLines(startMark) {
 
     const comments = [];
 
     let lineNum = startMark.line;
-    const startLine = lines[lineNum];
+    const startLine = this.lines[lineNum];
     const inlineComment = this.extractYamlComment(startLine.substring(startMark.column + 1));
     if (_.isString(inlineComment)) {
       comments.push(inlineComment);
     }
 
-    while (lineNum < lines.length - 1) {
+    while (lineNum < this.lines.length - 1) {
       ++lineNum;
-      if (_.isEmpty(_.trim(lines[lineNum]))) {
+      if (_.isEmpty(_.trim(this.lines[lineNum]))) {
         continue;
       }
-      const match = lines[lineNum].match(/^(\s)*(#.*)/);
+      const match = this.lines[lineNum].match(/^(\s)*(#.*)/);
       if (match && match[2]) {
         const lineComment = this.extractYamlComment(match[2]);
         comments.push(lineComment);
@@ -99,142 +326,68 @@ export class YamlService {
   }
 
   /**
-   * Walk yaml tree, parse comments, construct TreeNode object.
-   * @param keyNode The yaml key node
-   * @param valueNode The yaml value node
-   * @param lines The split lines of yaml file
-   * @param simpleArray The flag indicates whether only supports simple array
-   * @returns TreeNode object constructed from yaml tree
+   * Extract yaml comment.
+   * @param comment The comment to extract
+   * @returns extracted comment or undefined if it is not a comment
    */
-  private walkYamlNode(keyNode, valueNode, lines: string[], simpleArray: boolean) {
-    const type = this.extractYamlDataType(valueNode.tag);
-    if (type === 'object') {
-      // Mapping node, represents an object
-      const result = new TreeNode(keyNode ? keyNode.value : '', type);
-
-      _.each(valueNode.value, ([subKeyNode, subValueNode]) => {
-        // Recursively walk the value node
-        result.addChild(this.walkYamlNode(subKeyNode, subValueNode, lines, simpleArray));
-      });
-
-      // This will parse inline comment and after multiple lines comments like:
-      // key:  # some inline comment...
-      //   # multiple line 1
-      //   # multiple line 2
-      if (keyNode && keyNode.end_mark) {
-        result.comment = this.parseYamlCommentLines(keyNode.end_mark, lines);
-      }
-
-      return result;
-    } else if (type === 'array') {
-      // Sequence node, represents an array
-      const result = new TreeNode(keyNode ? keyNode.value : '', type);
-
-      result.comment = this.parseYamlCommentLines(valueNode.start_mark, lines);
-
-      const children: TreeNode[] = [];
-      _.each(valueNode.value, (subValueNode, idx) => {
-        const _keyNode: any = { value: `[${idx}]` };
-        if (subValueNode.id === 'mapping') {
-          _keyNode.end_mark = subValueNode.start_mark;
-        }
-        children.push(this.walkYamlNode(_keyNode, subValueNode, lines, simpleArray));
-      });
-
-      if (!simpleArray) {
-        children.forEach((item) => {
-          result.addChild(item);
-        });
-      } else {
-        let itemType;
-        children.forEach((item) => {
-          if (!itemType) {
-            itemType = item.valueType;
-          } else if (itemType !== item.valueType) {
-            console.warn(`Only support array of items with same type, ${itemType} already detected, and got: ${item.valueType}`);
-            return;
-          }
-          result.addChild(item);
-        });
-
-        itemType = itemType || PROPERTY_VALUE_TYPES.STRING;
-        switch (itemType) {
-          case PROPERTY_VALUE_TYPES.STRING:
-            result.valueType = PROPERTY_VALUE_TYPES.STRING_ARRAY;
-            break;
-          case PROPERTY_VALUE_TYPES.BOOLEAN:
-            result.valueType = PROPERTY_VALUE_TYPES.BOOLEAN_ARRAY;
-            break;
-          case PROPERTY_VALUE_TYPES.NUMBER:
-            result.valueType = PROPERTY_VALUE_TYPES.NUMBER_ARRAY;
-            break;
-          case PROPERTY_VALUE_TYPES.OBJECT:
-            result.valueType = PROPERTY_VALUE_TYPES.OBJECT_ARRAY;
-            break;
-        }
-      }
-
-      return result;
-    } else {
-      // Scalar node, represents a string/number..
-      const result = new TreeNode(keyNode ? keyNode.value : '', type);
-
-      // This will parse inline comment like:
-      // key: value  # some inline comment...
-      result.comment = this.parseYamlCommentLines(valueNode.end_mark, lines);
-
-      // Parse number if possible
-      if (result.valueType === 'number') {
-        result.value = _.toNumber(valueNode.value);
-      } else if (result.valueType === 'boolean') {
-        result.value = JSON.parse(valueNode.value);
-      } else {
-        result.value = valueNode.value;
-      }
-
-      return result;
+  private extractYamlComment(comment: string) {
+    const trimmed = _.trim(comment);
+    const idx = _.indexOf(trimmed, '#');
+    if (!trimmed || idx === -1) {
+      // Does not contain '#', it's not a comment, return undefined
+      return;
     }
+    if (trimmed[idx + 1] === '#') {
+      return _.trim(trimmed.substring(idx));
+    }
+    return _.trim(trimmed.substring(idx + 1));
   }
+}
+
+class YamlRender {
+
+  // mapping of type from JSON to YAML
+  private typeMapReverse = {
+    string: 'str',
+    number: 'float',
+    object: 'map',
+    boolean: 'bool',
+    array: 'seq',
+  };
 
   /**
-   * Convert yaml to TreeNode object.
-   * @param yaml The yaml string
-   * @param simpleArray The flag indicates whether only supports simple array
-   * @returns TreeNode object
+   * Convert TreeNode object to yaml format.
+   * @param tree The TreeNode object
+   * @returns Yaml format string
    */
-  convertYamlToTree(yaml: string, simpleArray: boolean = true) {
-    const yamlNode = yamlJS.compose(yaml);
-    const lines = yaml.split(/\r?\n/);
+  render(tree: TreeNode) {
+    if (_.isEmpty(tree.children)) {
+      return tree.isArray() ? '[]' : '{}';
+    }
 
-    // Parse root comments
-    let rootComments;
-    if (yamlNode) {
-      for (let i = 0; i < yamlNode.start_mark.line; i++) {
-        const match = lines[i].match(/^(\s)*(#.*)/);
-        if ((match && match[2]) || _.isEmpty(lines[i])) {
-          // For root comment, keep it as is
-          rootComments = rootComments || [];
-          rootComments.push(lines[i]);
+    let result = '';
+
+    if (tree.comment) {
+      // Add root comments
+      _.each(tree.comment, (comment) => {
+        if (/^(\s)*(#.*)/.test(comment) || _.isEmpty(comment)) {
+          result += comment + '\n';
         }
-      }
+      });
     }
 
-    // Walk yaml tree
-    const result = !yamlNode ? null : this.walkYamlNode(null, yamlNode, lines, simpleArray);
-    if (result) {
-      result.comment = rootComments;
+    result += this.walkTreeNode(tree);
+    result = _.trim(result);
+
+    console.log(result);
+    try {
+      // Validate against safe schema
+      jsYaml.safeLoad(result, { strict: true });
+    } catch (err) {
+      throw err;
     }
+
     return result;
-  }
-
-  /**
-   * Parse yaml to Configuration object.
-   * @param yaml The yaml string
-   * @param simpleArray The flag indicates whether only supports simple array
-   * @returns Configuration object
-   */
-  parseYamlConfig(yaml: string, simpleArray: boolean = true) {
-    return Configuration.fromTreeNode(this.convertYamlToTree(yaml, simpleArray));
   }
 
   /**
@@ -254,6 +407,23 @@ export class YamlService {
     }
 
     return `  # ${comment}`;
+  }
+
+  /**
+   * Render comments.
+   * @param comments Multiple lines of comments
+   * @param result The render result
+   * @param indent The indent spaces
+   * @returns render result
+   */
+  private renderComments(comments: string[], result: string, indent: string) {
+
+    result += this.renderYamlComment(comments[0]);
+
+    for (let i = 1; i < comments.length; i++) {
+      result += '\n' + indent + this.renderYamlComment(comments[i]);
+    }
+    return result;
   }
 
   /**
@@ -279,6 +449,18 @@ export class YamlService {
       const hasComment = child.comment && child.comment.length > 0;
 
       let type = child.valueType;
+
+      if (child.aliases && child.valueType !== PROPERTY_VALUE_TYPES.OBJECT) {
+        result += ` *${child.aliases[0]}`;
+
+        if (hasComment) {
+          result = this.renderComments(comment, result, indent);
+        }
+
+        result += '\n';
+        return;
+      }
+
       if (child.isArray()) {
         result += ' !!seq';
       } else {
@@ -290,15 +472,23 @@ export class YamlService {
         result += ' !!' + type;
       }
 
+      if (child.anchor) {
+        result += ' &' + child.anchor;
+      }
+
       if (!child.isLeaf()) {
+
         // Append inline comment and multiple lines comments
         if (hasComment) {
-          result += this.renderYamlComment(comment[0]);
-
-          for (let i = 1; i < comment.length; i++) {
-            result += '\n' + indent + this.renderYamlComment(comment[i]);
-          }
+          result = this.renderComments(comment, result, indent);
         }
+
+        if (child.aliases && child.valueType === PROPERTY_VALUE_TYPES.OBJECT) {
+          child.aliases.forEach(alias => {
+            result += '\n' + indent + '  <<: *' + alias;
+          });
+        }
+
         // Recursively walk the children nodes
         const nestResult = this.walkTreeNode(child, indent + '  ');
         result += '\n' + nestResult;
@@ -313,18 +503,40 @@ export class YamlService {
         } else {
           result += ' ' + value;
         }
-        if (hasComment) {
-          result += this.renderYamlComment(comment[0]);
 
-          for (let i = 1; i < comment.length; i++) {
-            result += '\n' + indent + this.renderYamlComment(comment[i]);
-          }
+        if (hasComment) {
+          result = this.renderComments(comment, result, indent);
         }
+
         result += '\n';
       }
     });
 
     return result;
+  }
+}
+
+@Injectable({ providedIn: 'root' })
+export class YamlService {
+
+  /**
+   * Convert yaml to TreeNode object.
+   * @param yaml The yaml string
+   * @param simpleArray The flag indicates whether only supports simple array
+   * @returns TreeNode object
+   */
+  convertYamlToTree(yaml: string, simpleArray: boolean = true) {
+    return new YamlParser().parse(yaml, simpleArray);
+  }
+
+  /**
+   * Parse yaml to Configuration object.
+   * @param yaml The yaml string
+   * @param simpleArray The flag indicates whether only supports simple array
+   * @returns Configuration object
+   */
+  parseYamlConfig(yaml: string, simpleArray: boolean = true) {
+    return Configuration.fromTreeNode(this.convertYamlToTree(yaml, simpleArray));
   }
 
   /**
@@ -333,32 +545,7 @@ export class YamlService {
    * @returns Yaml format string
    */
   convertTreeToYaml(tree: TreeNode) {
-    if (_.isEmpty(tree.children)) {
-      return tree.isArray() ? '[]' : '{}';
-    }
-
-    let result = '';
-
-    if (tree.comment) {
-      // Add root comments
-      _.each(tree.comment, (comment) => {
-        if (/^(\s)*(#.*)/.test(comment) || _.isEmpty(comment)) {
-          result += comment + '\n';
-        }
-      });
-    }
-
-    result += this.walkTreeNode(tree);
-    result = _.trim(result);
-
-    try {
-      // Validate against safe schema
-      jsYaml.safeLoad(result, { strict: true });
-    } catch (err) {
-      throw err;
-    }
-
-    return result;
+    return new YamlRender().render(tree);
   }
 
   /**

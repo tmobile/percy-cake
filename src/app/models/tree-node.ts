@@ -10,6 +10,9 @@ export class TreeNode {
   children: TreeNode[] = undefined;
   parent: TreeNode = undefined;
 
+  anchor: string;
+  aliases: string[];
+
   /**
    * Creates a new tree node.
    * @param key the key of node
@@ -32,6 +35,41 @@ export class TreeNode {
     return type === PROPERTY_VALUE_TYPES.STRING
       || type === PROPERTY_VALUE_TYPES.BOOLEAN
       || type === PROPERTY_VALUE_TYPES.NUMBER;
+  }
+
+  hasAncestor(node: TreeNode) {
+    let parent = this.parent;
+    while (parent) {
+      if (parent === node) {
+        return true;
+      }
+      parent = parent.parent;
+    }
+    return false;
+  }
+
+  private doGetAliasOptions(node: TreeNode, result: any) {
+    if (node.anchor && node.valueType === this.valueType && !this.hasAncestor(node)) {
+      result.aliases.push(node.anchor);
+    }
+
+    if (node.children) {
+      for (const child of node.children) {
+        if (child === this) {
+          result.finished = true;
+        }
+        if (result.finished) {
+          break;
+        }
+        this.doGetAliasOptions(child, result);
+      }
+    }
+  }
+
+  getAliasOptions(root: TreeNode) {
+    const result = { aliases: [], finished: false };
+    this.doGetAliasOptions(root, result);
+    return result.aliases;
   }
 
   /**

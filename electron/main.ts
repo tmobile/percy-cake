@@ -84,7 +84,6 @@ function createWindow() {
     defaultHeight: workAreaSize.height
   });
 
-
   const delayShow = process.platform === 'win32' && mainWindowState.isMaximized;
 
   // Create the window using the state information
@@ -104,7 +103,7 @@ function createWindow() {
   mainWindowState.manage(win);
 
   win.loadURL(url.format({
-    pathname: path.join(__dirname, 'index.html'),
+    pathname: path.resolve(app.getAppPath(), 'dist/index.html'),
     protocol: 'file:',
     slashes: true
   }));

@@ -5,7 +5,7 @@
     "output": "release"
   },
   "artifactName": "${productName}-${os}-${arch}.${ext}",
-  "asar": false,
+  "asar": true,
   "files": [
     "dist/*",
     "media/*",
