@@ -93,16 +93,16 @@ class YamlParser {
   private parseEvent() {
 
     const event = this.peekEvent();
-    if (event.constructor.name === 'AliasEvent') {
+    if (event instanceof yamlJS.events.AliasEvent) {
       return this.parseAliasEvent();
     }
 
     let result: TreeNode;
-    if (event.constructor.name === 'ScalarEvent') {
+    if (event instanceof yamlJS.events.ScalarEvent) {
       result = this.parseScalarEvent();
-    } else if (event.constructor.name === 'SequenceStartEvent') {
+    } else if (event instanceof yamlJS.events.SequenceStartEvent) {
       result = this.parseSequenceEvent();
-    } else if (event.constructor.name === 'MappingStartEvent') {
+    } else if (event instanceof yamlJS.events.MappingStartEvent) {
       result = this.parseMappingEvent();
     }
 
@@ -146,7 +146,7 @@ class YamlParser {
     let event = this.getEvent();
     this.parseComment(result, event.start_mark);
 
-    while (event.constructor.name !== 'MappingEndEvent') {
+    while (!(event instanceof yamlJS.events.MappingEndEvent)) {
       const keyNode = this.parseScalarEvent(false);
       const valueNode = this.parseEvent();
 
@@ -178,7 +178,7 @@ class YamlParser {
     let idx = 0;
     let itemType: string;
 
-    while (event.constructor.name !== 'SequenceEndEvent') {
+    while (!(event instanceof yamlJS.events.SequenceEndEvent)) {
       const child = this.parseEvent();
       child.key = `[${idx++}]`;
 
@@ -379,7 +379,6 @@ class YamlRender {
     result += this.walkTreeNode(tree);
     result = _.trim(result);
 
-    console.log(result);
     try {
       // Validate against safe schema
       jsYaml.safeLoad(result, { strict: true });
