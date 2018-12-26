@@ -249,6 +249,20 @@ export class NestedConfigViewComponent implements OnChanges {
   }
 
   /**
+   * When anchor name changes, rename any referenced alias.
+   * @param node the TreeNode
+   * @param oldName old name of anchor
+   * @param newName new name of anchor
+   */
+  private renameAlias(node: TreeNode, oldName: string, newName: string) {
+    if (node.aliases && node.aliases.indexOf(oldName) > -1) {
+      node.aliases = _.filter(node.aliases, alias => alias !== oldName);
+      node.aliases.push(newName);
+    }
+    _.each(node.children, child => this.renameAlias(child, oldName, newName));
+  }
+
+  /**
    * Do save property
    * @param node the added/edited node
    */
@@ -261,7 +275,7 @@ export class NestedConfigViewComponent implements OnChanges {
         if (currentNode.valueType !== node.valueType) {
           // if value type changes, delete respective nodes from environments tree
           this.alignEnvironmentProperties(currentNode, envNode => {
-            _.remove(envNode.parent.children, item => item.key === node.key);
+            envNode.parent.removeChildren([node.key]);
           });
           if (currentNode.isArray()) {
             // array type changes
@@ -280,9 +294,15 @@ export class NestedConfigViewComponent implements OnChanges {
         node.valueType = currentNode.valueType;
       }
 
+      if (currentNode.anchor && node.anchor && currentNode.anchor !== node.anchor) {
+        this.renameAlias(this.envDataSource.data[0], currentNode.anchor, node.anchor);
+      }
+
       currentNode.key = node.key;
       currentNode.value = node.value;
       currentNode.valueType = node.valueType;
+      currentNode.anchor = node.anchor;
+      currentNode.aliases = node.aliases;
       currentNode.comment = node.comment;
 
       if (node.isLeaf()) {
@@ -373,22 +393,30 @@ export class NestedConfigViewComponent implements OnChanges {
   private doDeleteProperty(node: TreeNode) {
 
     const parent = node.parent;
-    _.remove(parent.children, item => item.key === node.key);
-    if (parent.isArray()) {
-      parent.children.forEach((element, idx) => {
-        element.key = `[${idx}]`;
-      });
+    parent.removeChildren([node.key]);
+
+    if (node.anchor) {
+      const removeAlias = (envNode: TreeNode) => {
+        const needToRemove = [];
+
+        _.each(envNode.children, envChild => {
+          if (envChild.aliases && envChild.aliases.indexOf(node.anchor) > -1) {
+            needToRemove.push(envChild.key);
+          } else {
+            removeAlias(envChild);
+          }
+        });
+
+        envNode.removeChildren(needToRemove);
+      };
+
+      removeAlias(this.envDataSource.data[0]);
     }
 
     // if deleted node is from default tree, delete respective properties from environments tree
-    if (parent.isDefaultNode()) {
+    if (!parent.isArray() && parent.isDefaultNode()) {
       this.alignEnvironmentProperties(node, envNode => {
-        _.remove(envNode.parent.children, item => item.key === node.key);
-        if (envNode.parent.isArray()) {
-          envNode.parent.children.forEach((element, idx) => {
-            element.key = `[${idx}]`;
-          });
-        }
+        envNode.parent.removeChildren([node.key]);
       });
     }
   }

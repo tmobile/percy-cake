@@ -32,8 +32,11 @@ export class AddEditPropertyDialogComponent implements OnChanges {
   valueType: FormControl;
   value: FormControl;
   comment: FormControl;
+  anchor: FormControl;
+  alias: FormControl;
 
   inheritsOptions: string[];
+  anchorsOptions: string[];
 
   duplicateDefault = false;
   duplicateFirstSibling = false;
@@ -51,6 +54,8 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     this.key = new FormControl('', [NotEmpty, Validators.pattern(percyConfig.propertyNameRegex)]);
     this.valueType = new FormControl('', [NotEmpty]);
     this.value = new FormControl('', [NotEmpty]);
+    this.alias = new FormControl('', [NotEmpty]);
+    this.anchor = new FormControl('', [NotEmpty, Validators.pattern('^[a-zA-Z0-9_-]*$')]);
     this.comment = new FormControl('');
   }
 
@@ -72,6 +77,15 @@ export class AddEditPropertyDialogComponent implements OnChanges {
         this.value.setValue(_.toString(node.value));
       }
 
+      if (this.showAnchor()) {
+        this.anchor.setValue(node.anchor);
+      }
+      if (this.showAlias()) {
+        if (node.aliases && node.aliases.length) {
+          this.alias.setValue(node.aliases[0]);
+        }
+      }
+
       this.comment.setValue(_.toString(node.getCommentStr()));
     } else {
       if (node.isArray()) {
@@ -90,6 +104,12 @@ export class AddEditPropertyDialogComponent implements OnChanges {
 
     if (this.valueTypeDisabled()) {
       this.valueType.disable();
+    }
+
+    if (this.showAnchor() && !this.anchor.value) {
+      // Set default anchor
+      const nodePaths = editMode ? node.getPathsWithoutRoot().join('-') : `${node.getPathsWithoutRoot().join('-')}-${node.children.length}`;
+      this.anchor.setValue(nodePaths.replace(/\[/g, '').replace(/\]/g, '').replace(/$/g, '').replace(/\./g, ''));
     }
   }
 
@@ -148,6 +168,54 @@ export class AddEditPropertyDialogComponent implements OnChanges {
    */
   isEditRootNode() {
     return this.data.editMode && !this.data.node.parent;
+  }
+
+  /**
+   * Determine if the anchor should be shown.
+   * Currently only support YAML anchor in object Array elements.
+   *
+   * @returns true if anchor should be shown, false otherwise
+   */
+  showAnchor() {
+    const node = this.data.node;
+    const result = node.isDefaultNode() &&
+      ((this.data.editMode && node.isObjectInArray()) || (!this.data.editMode && node.valueType === PROPERTY_VALUE_TYPES.OBJECT_ARRAY));
+
+    return result;
+  }
+
+  /**
+   * Determine if the alias options should be shown.
+   * Currently only support YAML anchor in object Array elements.
+   *
+   * @returns true if alias options should be shown, false otherwise
+   */
+  showAlias() {
+    let node = this.data.node;
+    const result = !node.isDefaultNode() &&
+      ((this.data.editMode && node.isObjectInArray()) || (!this.data.editMode && node.valueType === PROPERTY_VALUE_TYPES.OBJECT_ARRAY));
+
+    if (result) {
+      if (!this.anchorsOptions) {
+        this.anchorsOptions = [];
+        if (this.data.editMode) {
+          node = node.parent;
+        }
+        const paths = node.getPathsWithoutRoot().slice(1);
+        const relatedNode = this.data.defaultTree.findChild(paths);
+        if (relatedNode) {
+          _.each(relatedNode.children, child => {
+            if (child.anchor) {
+              this.anchorsOptions.push(child.anchor);
+            }
+          });
+        }
+        if (this.anchorsOptions.length) {
+          this.anchorsOptions.unshift('');
+        }
+      }
+    }
+    return result;
   }
 
   /**
@@ -267,6 +335,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     //  trim key and comment irrespective of the auto trim option
     this.key.setValue(_.trim(this.key.value));
     this.comment.setValue(_.trim(this.comment.value));
+    this.anchor.setValue(_.trim(this.anchor.value));
 
     if (this.autoTrim) {
       if (this.valueType.value === PROPERTY_VALUE_TYPES.STRING) {
@@ -278,7 +347,8 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     const formValid =
       (this.key.disabled ? true : this.key.valid) &&
       (this.valueType.disabled ? true : this.valueType.valid) &&
-      (!TreeNode.isLeafType(this.valueType.value) || this.value.disabled ? true : this.value.valid);
+      (!TreeNode.isLeafType(this.valueType.value) || this.value.disabled ? true : this.value.valid) &&
+      (!this.showAnchor() ? true : this.anchor.valid);
 
     if (!formValid) {
       return;
@@ -319,6 +389,21 @@ export class AddEditPropertyDialogComponent implements OnChanges {
       }
     }
 
+    // Validate anchor name is unique
+    if (this.anchor.value) {
+      const existingAnchors = [];
+      if (!this.data.editMode || this.anchor.value !== this.data.node.anchor) {
+        existingAnchors.push(...this.data.defaultTree.getAnchors());
+      }
+      if (existingAnchors.indexOf(this.anchor.value) > -1) {
+        this.store.dispatch(new Alert({
+          message: `Anchor name '${this.anchor.value}' already exists`,
+          alertType: 'error'
+        }));
+        return;
+      }
+    }
+
     if (this.data.editMode && this.valueType.value !== this.data.node.valueType) {
 
       const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
@@ -344,8 +429,10 @@ export class AddEditPropertyDialogComponent implements OnChanges {
    */
   private doSubmit() {
 
+    let node: TreeNode;
+
     if (!this.duplicateDefault && !this.duplicateFirstSibling) {
-      const node = new TreeNode(this.key.value, this.valueType.value);
+      node = new TreeNode(this.key.value, this.valueType.value);
 
       if (node.isLeaf()) {
         if (node.valueType === PROPERTY_VALUE_TYPES.BOOLEAN) {
@@ -361,22 +448,33 @@ export class AddEditPropertyDialogComponent implements OnChanges {
         node.comment = this.comment.value.split('\n');
       }
 
-      this.saveProperty.emit(node);
     } else if (this.duplicateDefault) {
       // Clone default node
-      const defaultNode = this.getDefaultNodeToDuplicate();
-      const result = this.cloneWithoutParent(defaultNode);
-      result.key = this.key.value;
+      let defaultNode: TreeNode;
+      if (this.alias.value) {
+        // Use alias node as default node
+        defaultNode = this.data.defaultTree.findAnchorNode(this.alias.value);
+      } else {
+        defaultNode = this.getDefaultNodeToDuplicate();
+      }
+      node = this.cloneWithoutParent(defaultNode);
 
-      this.saveProperty.emit(result);
+      node.key = this.key.value;
     } else {
       // Clone first sibling
       const firstSibling = this.data.editMode ? this.data.node.parent.children[0] : this.data.node.children[0];
-      const result = this.cloneWithoutParent(firstSibling);
-      result.key = this.key.value;
-
-      this.saveProperty.emit(result);
+      node = this.cloneWithoutParent(firstSibling);
+      node.key = this.key.value;
     }
+
+    if (this.alias.value) {
+      node.aliases = [this.alias.value];
+    }
+    if (this.anchor.value) {
+      node.anchor = this.anchor.value;
+    }
+
+    this.saveProperty.emit(node);
   }
 
   /**
@@ -433,7 +531,12 @@ export class AddEditPropertyDialogComponent implements OnChanges {
 
     const parent = node.parent;
     node.parent = undefined;
-    const result = _.cloneDeep(node);
+    const result = _.cloneDeepWith(node, (_value, key) => {
+      if (key === 'anchor') {
+        // Don't clone anchor since anchor name must be unique
+        return null;
+      }
+    });
     node.parent = parent;
     return result;
   }

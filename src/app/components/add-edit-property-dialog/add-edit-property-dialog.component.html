@@ -4,7 +4,7 @@
 <div class="property-form-wrapper" [ngSwitch]="(data.node.isDefaultNode() || data.keyOptions.length || keyDisabled() || isDefineEnv()) ? 'form' : 'error'">
 
   <form class="property-form" *ngSwitchCase="'form'"
-    (ngSubmit)="onSubmit()">
+  (ngSubmit)="onSubmit()">
     <mat-form-field *ngIf="!data.node.isDefaultNode() && !isDefineEnv()" class="form-field">
       <mat-select placeholder="Name" [formControl]="key"
         (selectionChange)="setValueTypeOption($event.value)">
@@ -64,6 +64,21 @@
       </mat-radio-group>
       <mat-error *ngIf="value.invalid && formDirty">*Required</mat-error>
     </div>
+
+    <mat-form-field *ngIf="showAnchor()" class="form-field">
+      <input maxlength="30" type="text" matInput placeholder="Anchor" [formControl]="anchor" />
+      <mat-error *ngIf="anchor.hasError('required')">*Required anchor</mat-error>
+      <mat-error *ngIf="anchor.hasError('pattern')">The anchor should only contain these characters: "a-zA-Z0-9_-"</mat-error>
+    </mat-form-field>
+
+    <mat-form-field *ngIf="showAlias()" class="form-field">
+      <mat-select placeholder="Alias" [formControl]="alias">
+        <mat-option *ngFor="let option of anchorsOptions" [value]="option">
+          {{option}}
+        </mat-option>
+      </mat-select>
+      <mat-error *ngIf="!anchorsOptions || !anchorsOptions.length">There is no elegible anchor to reference.</mat-error>
+    </mat-form-field>
 
     <mat-form-field class="form-field">
       <textarea
