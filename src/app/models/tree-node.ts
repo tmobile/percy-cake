@@ -37,41 +37,6 @@ export class TreeNode {
       || type === PROPERTY_VALUE_TYPES.NUMBER;
   }
 
-  hasAncestor(node: TreeNode) {
-    let parent = this.parent;
-    while (parent) {
-      if (parent === node) {
-        return true;
-      }
-      parent = parent.parent;
-    }
-    return false;
-  }
-
-  private doGetAliasOptions(node: TreeNode, result: any) {
-    if (node.anchor && node.valueType === this.valueType && !this.hasAncestor(node)) {
-      result.aliases.push(node.anchor);
-    }
-
-    if (node.children) {
-      for (const child of node.children) {
-        if (child === this) {
-          result.finished = true;
-        }
-        if (result.finished) {
-          break;
-        }
-        this.doGetAliasOptions(child, result);
-      }
-    }
-  }
-
-  getAliasOptions(root: TreeNode) {
-    const result = { aliases: [], finished: false };
-    this.doGetAliasOptions(root, result);
-    return result.aliases;
-  }
-
   /**
    * Get anchor names of this node and its decendants.
    * @returns array of anchor names
