@@ -3,8 +3,7 @@
 
 <div class="property-form-wrapper" [ngSwitch]="(data.node.isDefaultNode() || data.keyOptions.length || keyDisabled() || isDefineEnv()) ? 'form' : 'error'">
 
-  <form class="property-form" *ngSwitchCase="'form'"
-  (ngSubmit)="onSubmit()">
+  <form class="property-form" *ngSwitchCase="'form'" (ngSubmit)="onSubmit()">
     <mat-form-field *ngIf="!data.node.isDefaultNode() && !isDefineEnv()" class="form-field">
       <mat-select placeholder="Name" [formControl]="key"
         (selectionChange)="setValueTypeOption($event.value)">
