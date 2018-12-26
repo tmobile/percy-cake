@@ -24,7 +24,7 @@ describe('UtilService', () => {
   });
 
   const sampleYaml =
-`###
+    `###
 # Sample yaml.
 #
 # @author TCSCODER
@@ -43,10 +43,13 @@ default: !!map  # all known properties are defined in the default block.
     #
 environments: !!map  # specific environments can override the default values 1 property at a time
   qat: !!map  # qat team validates all compiled artifacts in separate test environment with their own data service.
-    qat-items: !!seq
-      - item1A: !!int 8800
+    qat-items: !!seq  # array of maps
+      - !!map  # map in array comment
+        # map in array comment line2
+        item1A: !!int 8800
         item1B: !!float -12.3
-      - item2A: !!str "value2A"  #### value2A comment #####
+      - !!map
+        item2A: !!str "value2A"  #### value2A comment #####
         item2B: !!str "value2B"  # value2B comment
     host: !!str "{{api.host}}.mobilex.com"
     dataService: !!str "pd03.mobilex.com/data"  # 'qat dataService'
@@ -86,6 +89,86 @@ environments: !!map  # specific environments can override the default values 1 p
     const yaml2 = utilService.convertTreeToYaml(tree);
 
     expect(yaml2).toEqual(sampleYaml);
+  });
+
+  it('should parse and render anchor and aliase', () => {
+
+    const anchorYaml = `
+foo: !!map
+  <<: !!map &anchor1  # anchor1 comment
+    K1: !!str "One"
+  <<: !!map &anchor2  # anchor2 comment
+    K2: !!str "Two"
+  K3: !!str &scalaAnchor "Three"
+  arr: !!seq &arrAnchor
+    - !!str &itemAnchor "item1"  # item comment line1
+      # item comment line2
+    - !!str "item2"
+  obj: !!map &anchor3
+    <<: *anchor1
+bar: !!map &anchor4
+  K4: !!str "Four"
+  K5: !!str "Five"
+joe: !!map  # comment line1
+  # comment line2
+  <<: *anchor1
+  <<: *anchor2
+  <<: *anchor3
+  K3: *scalaAnchor
+  K4: !!str "I Changed"
+  arr: !!seq
+    - *itemAnchor  # alias item comment line1
+      # alias item comment line2
+  arr2: *arrAnchor  # alias comment line1
+    # alias comment line2
+  oarr: !!seq
+    - !!map  # map in array comment line1
+      # map in array comment line2
+      <<: *anchor2
+    - !!map  # map in array comment line1
+      # map in array comment line2
+      <<: *anchor3
+    - !!map  # map in array comment line1
+      # map in array comment line2
+      <<: *anchor4
+`;
+
+    const tree = utilService.convertYamlToTree(anchorYaml, false);
+
+    const yaml2 = utilService.convertTreeToYaml(tree);
+
+    expect(yaml2).toEqual(anchorYaml.trim());
+
+    expect(tree.findChild(['foo', 'obj']).getAliasOptions(tree)).toEqual(['anchor1', 'anchor2']);
+    expect(tree.findChild(['joe', 'oarr', '[0]']).getAliasOptions(tree)).toEqual(['anchor1', 'anchor2', 'anchor3', 'anchor4']);
+  });
+
+  it('duplicate anchor should fail', () => {
+
+    const anchorYaml = `
+foo: !!map &anchor1
+  <<: !!map &anchor1
+`;
+    try {
+      utilService.convertYamlToTree(anchorYaml, false);
+      fail('duplicate anchor should fail');
+    } catch (err) {
+      expect(err.message).toEqual('Found duplicate anchor: anchor1');
+    }
+  });
+
+  it('undefined anchor should fail', () => {
+
+    const anchorYaml = `
+foo: !!map
+  <<: *NoSuchAnchor
+`;
+    try {
+      utilService.convertYamlToTree(anchorYaml, false);
+      fail('undefined anchor should fail');
+    } catch (err) {
+      expect(err.message).toEqual('Found undefined anchor: NoSuchAnchor');
+    }
   });
 
   it('simple value type should be converted', () => {
@@ -137,11 +220,10 @@ environments: !!map  # specific environments can override the default values 1 p
     expect(tree.findChild(['environments', 'staging', 'staging-items3']).children.length).toEqual(3);
   });
 
-  it('should ignore array item which are not simple type', () => {
+  it('should ignore array item which is not same type', () => {
 
     const tree: TreeNode = utilService.convertYamlToTree(sampleYaml, true);
 
-    expect(tree.findChild(['environments', 'qat', 'qat-items']).children.length).toEqual(0);
     expect(tree.findChild(['environments', 'dev', 'dev-items']).children.length).toEqual(1);
   });
 
@@ -264,7 +346,7 @@ environments: !!map  # specific environments can override the default values 1 p
       new TreeNode('subkey', PROPERTY_VALUE_TYPES.STRING, `${constructVar('key1')}/${constructVar('key3')}`));
 
     expect(utilService.compileYAML('dev', config)).toEqual(
-`key1: !!str "dev-value"  # comment1
+      `key1: !!str "dev-value"  # comment1
 key2: !!int 10  # comment2
 key3: !!bool true
 var3: !!str "dev-value/dev-value/10/true"
@@ -282,7 +364,7 @@ obj: !!map  # obj-comment
   subkey: !!str "dev-value"`);
 
     expect(utilService.compileYAML('qat', config)).toEqual(
-`key1: !!str "dev-value"  # comment1
+      `key1: !!str "dev-value"  # comment1
 key2: !!int 50  # qat-comment2
 key3: !!bool true
 var3: !!str "dev-value/dev-value/50/true"
@@ -301,7 +383,7 @@ obj: !!map  # obj-comment
   subkey: !!str "dev-value"`);
 
     expect(utilService.compileYAML('prod', config)).toEqual(
-`key1: !!str "dev-value"  # comment1
+      `key1: !!str "dev-value"  # comment1
 key2: !!int 50  # qat-comment2
 key3: !!bool false
 var3: !!str "dev-value/dev-value/50/false"

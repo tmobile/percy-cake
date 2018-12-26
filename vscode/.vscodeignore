@@ -1,0 +1,4 @@
+build.sh
+tsconfig.json
+**/*.ts
+**/*.vsix

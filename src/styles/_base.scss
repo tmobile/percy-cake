@@ -78,7 +78,7 @@ a {
   border-left: 1px solid rgba(0, 0, 0, 0.12);
 }
 .mat-select-panel {
-  max-height: 296px !important;
+  max-height: 336px !important;
   max-width: 320px;
   .mat-option-text {
     flex-shrink: 1;
@@ -111,8 +111,80 @@ mat-tooltip-component .mat-tooltip {
 }
 code.hljs {
   line-height: 18px;
+  
+  .hljs-string { color: #a31515; } // string value
+  .hljs-literal { color: #569cd6; } // boolean value
+  .hljs-number { color: #569cd6; } // int value
+  .hljs-comment { color: #008000; } // comment
+  .hljs-type { color: #9872a2; } // type
+  .hljs-attr { color: #6089b4; } // key
+  .hljs-bullet { color: #6089b4; } // array bullet
 }
 .yaml-var {
   font-weight: bold;
   color: chocolate;
+}
+
+body.vscode-theme {
+  padding: 0;
+  background-color: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
+
+  &.vscode-dark {
+    .gutter-horizontal::before {
+      border-left-color: grey;
+    }
+    .gutter-vertical::before {
+      border-top-color: grey;
+    }
+    code.hljs {
+      .hljs-string { color: #ce9178; } // string value
+    }
+  }
+
+  .mat-menu-panel, .mat-select-panel {
+    background-color: var(--vscode-dropdown-background) !important;
+  }
+  .mat-option, .mat-option.mat-active {
+    color: inherit;
+  }
+
+  .mat-dialog-container {
+    color: inherit !important;
+    background-color: var(--vscode-dropdown-background) !important;
+  }
+
+  .mat-card, .mat-tree, .property-form-wrapper, .preview .property, code.hljs, button:disabled {
+    background-color: var(--vscode-editorWidget-background) !important
+  }
+
+  .mat-select-value, .mat-card, .mat-tree, .mat-tree-node, .mat-input-element, .mat-nested-tree-node, .mat-form-field-label,
+  .property-form-wrapper, .preview .property {
+    color: inherit !important;
+  }
+
+  .split-tree-view .nested-config-view .mat-tree-node .underline {
+    border-bottom-color: inherit !important;
+  }
+
+  .mat-input-element:disabled, .mat-select-disabled .mat-select-value, button:disabled {
+    color: var(--vscode-input-placeholderForeground) !important;
+  }
+
+  input, textarea {
+    outline-style: none !important;
+  }
+
+  app-editor {
+    .col-container .col-default-env {
+      margin-right: 0 !important;
+
+      .filename {
+        display: none;
+      }
+    }
+    .col-container .col-other-envs {
+      padding-left: 0 !important;
+    }
+  }
 }

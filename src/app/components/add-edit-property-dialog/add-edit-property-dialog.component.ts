@@ -10,7 +10,7 @@ import { TreeNode } from 'models/tree-node';
 import { ConfigProperty } from 'models/config-property';
 import { Alert } from 'store/actions/common.actions';
 import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
-import { NotEmpty } from 'services/util.service';
+import { NotEmpty } from 'services/validators';
 
 /*
   add or edit new property in the environment configuration
@@ -36,7 +36,8 @@ export class AddEditPropertyDialogComponent implements OnChanges {
   inheritsOptions: string[];
 
   duplicateDefault = false;
-  autoTrim = false;
+  duplicateFirstSibling = false;
+  autoTrim = true;
 
   /**
    * constructs the component
@@ -128,6 +129,17 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     const node: TreeNode = this.data.node;
 
     return (this.data.editMode && node.parent && node.parent.isArray()) || (!this.data.editMode && node.isArray());
+  }
+
+  /**
+   * Determine if user is editing a non-first object item within array.
+   * @returns true if user is editing a non-first object item within array, false otherwise
+   */
+  isNonFirstObjectInArray() {
+    const node: TreeNode = this.data.node;
+
+    return (this.data.editMode && node.isObjectInArray() && node.parent.children.indexOf(node) > 0)
+      || (!this.data.editMode && node.valueType === PROPERTY_VALUE_TYPES.OBJECT_ARRAY && node.children.length > 0);
   }
 
   /**
@@ -226,6 +238,19 @@ export class AddEditPropertyDialogComponent implements OnChanges {
   }
 
   /**
+   * Checks to copy properties from first sibling object item in array.
+   * @param $event user's check event
+   */
+  useFirstSibling($event) {
+    this.duplicateFirstSibling = $event && $event.checked;
+    if (this.duplicateFirstSibling) {
+      this.comment.disable();
+    } else {
+      this.comment.enable();
+    }
+  }
+
+  /**
    * Checks to auto trim string value.
    * @param $event user's check event
    */
@@ -319,7 +344,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
    */
   private doSubmit() {
 
-    if (!this.duplicateDefault) {
+    if (!this.duplicateDefault && !this.duplicateFirstSibling) {
       const node = new TreeNode(this.key.value, this.valueType.value);
 
       if (node.isLeaf()) {
@@ -337,36 +362,80 @@ export class AddEditPropertyDialogComponent implements OnChanges {
       }
 
       this.saveProperty.emit(node);
-    } else {
-      // Build key hierarchy
-      const keyHierarchy = [];
-      let node = this.data.node;
-      while (node && node.getLevel() > 1) {
-        keyHierarchy.unshift(node.key);
-        node = node.parent;
-      }
-
-      const keyValue = this.key.value;
-      if (!this.data.editMode && this.data.node.getLevel() >= 1) {
-        keyHierarchy.push(keyValue);
-      }
-
-      // Find the respective defalut node
-      let defaultTree = this.data.defaultTree;
-      for (let i = 0; i < keyHierarchy.length; i++) {
-        defaultTree = _.find(defaultTree.children, child => child.key === keyHierarchy[i]);
-      }
-
+    } else if (this.duplicateDefault) {
       // Clone default node
-      const parent = defaultTree.parent;
-      defaultTree.parent = undefined;
-      const result = _.cloneDeep(defaultTree);
-      defaultTree.parent = parent;
+      const defaultNode = this.getDefaultNodeToDuplicate();
+      const result = this.cloneWithoutParent(defaultNode);
+      result.key = this.key.value;
 
+      this.saveProperty.emit(result);
+    } else {
+      // Clone first sibling
+      const firstSibling = this.data.editMode ? this.data.node.parent.children[0] : this.data.node.children[0];
+      const result = this.cloneWithoutParent(firstSibling);
       result.key = this.key.value;
 
       this.saveProperty.emit(result);
     }
+  }
+
+  /**
+   * Get default node to duplicate.
+   * @return default node to duplicate
+   */
+  private getDefaultNodeToDuplicate() {
+
+    // Build key hierarchy
+    const keyHierarchy = [];
+    let node = this.data.node;
+    while (node && node.getLevel() > 1) {
+      if (node.isObjectInArray()) {
+        // object in array, use first child
+        keyHierarchy.unshift('[0]');
+      } else {
+        keyHierarchy.unshift(node.key);
+      }
+      node = node.parent;
+    }
+
+    const keyValue = this.key.value;
+    if (!this.data.editMode && this.data.node.getLevel() >= 1) {
+      if (this.isNonFirstObjectInArray()) {
+        keyHierarchy.push('[0]');
+      } else {
+        keyHierarchy.push(keyValue);
+      }
+    }
+
+    // Find the respective defalut node
+    let defaultNode = this.data.defaultTree;
+    for (let i = 0; i < keyHierarchy.length; i++) {
+      defaultNode = _.find(defaultNode.children, child => child.key === keyHierarchy[i]);
+    }
+    return defaultNode;
+  }
+
+  /**
+   * Check whether can duplicate default.
+   * @return true if can duplicate default, false otherwise
+   */
+  canDuplicateDefault() {
+    return !this.data.node.isDefaultNode() && this.key.value !== 'inherits' && (!this.data.editMode || this.data.node.getLevel() > 0)
+      && !!this.getDefaultNodeToDuplicate();
+  }
+
+  /**
+   * Clone tree node without parent relationship.
+   * @param node the node to clone
+   * @return cloned node
+   */
+  private cloneWithoutParent(node: TreeNode) {
+
+    const parent = node.parent;
+    node.parent = undefined;
+    const result = _.cloneDeep(node);
+    node.parent = parent;
+    return result;
   }
 
   /**

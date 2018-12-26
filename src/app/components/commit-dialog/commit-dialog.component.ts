@@ -3,7 +3,7 @@ import { MatDialogRef } from '@angular/material';
 import { FormControl } from '@angular/forms';
 import * as _ from 'lodash';
 
-import { NotEmpty } from 'services/util.service';
+import { NotEmpty } from 'services/validators';
 
 /**
  * The commit dialog component

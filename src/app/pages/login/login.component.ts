@@ -14,7 +14,7 @@ import { percyConfig } from 'config';
 import * as appStore from 'store';
 import * as AuthActions from 'store/actions/auth.actions';
 import { MaintenanceService } from 'services/maintenance.service';
-import { NotEmpty } from 'services/util.service';
+import { NotEmpty } from 'services/validators';
 
 const urlFormat = /^\s*(http[s]?:\/\/){0,1}(www\.){0,1}[a-zA-Z0-9\.\-]+\.[a-zA-Z]{2,5}[\.]{0,1}/;
 

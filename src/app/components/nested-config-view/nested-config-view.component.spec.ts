@@ -26,6 +26,8 @@ describe('NestedConfigViewComponent', () => {
     config.default.addChild(new TreeNode('arr', PROPERTY_VALUE_TYPES.STRING_ARRAY));
     config.default.addChild(new TreeNode('arr2', PROPERTY_VALUE_TYPES.BOOLEAN_ARRAY));
     config.default.addChild(new TreeNode('arr3', PROPERTY_VALUE_TYPES.NUMBER_ARRAY));
+    config.default.findChild(['arr2']).addChild(new TreeNode('item1', PROPERTY_VALUE_TYPES.BOOLEAN, true));
+    config.default.findChild(['arr2']).addChild(new TreeNode('item2', PROPERTY_VALUE_TYPES.BOOLEAN, false));
 
     config.environments.addChild(new TreeNode('dev'));
     config.environments.findChild(['dev']).addChild(new TreeNode('obj'));
@@ -35,6 +37,8 @@ describe('NestedConfigViewComponent', () => {
     config.environments.findChild(['dev']).addChild(new TreeNode('arr3', PROPERTY_VALUE_TYPES.NUMBER_ARRAY));
     config.environments.findChild(['dev', 'arr']).addChild(new TreeNode('item1', PROPERTY_VALUE_TYPES.STRING, 'value1'));
     config.environments.findChild(['dev', 'arr']).addChild(new TreeNode('item2', PROPERTY_VALUE_TYPES.STRING, 'value2'));
+    config.environments.findChild(['dev', 'arr2']).addChild(new TreeNode('item1', PROPERTY_VALUE_TYPES.BOOLEAN, true));
+    config.environments.findChild(['dev', 'arr2']).addChild(new TreeNode('item2', PROPERTY_VALUE_TYPES.BOOLEAN, false));
 
     ctx.component.configuration = config;
     ctx.component.environments = environments;
@@ -453,7 +457,7 @@ describe('NestedConfigViewComponent', () => {
   });
 
   it('should delete array item property', () => {
-    const node = config.environments.findChild(['dev', 'arr']);
+    const node = config.default.findChild(['arr2']);
 
     ctx.component.deleteProperty(node.children[0]);
 
@@ -466,6 +470,10 @@ describe('NestedConfigViewComponent', () => {
 
     expect(node.children.length).toEqual(1);
     expect(node.children[0].key).toEqual('[0]');
+
+    const envnode = config.environments.findChild(['dev', 'arr2']);
+    expect(envnode.children.length).toEqual(1);
+    expect(envnode.children[0].key).toEqual('[0]');
 
     expect(ctx.observables.configurationChange.value).toEqual(config);
   });

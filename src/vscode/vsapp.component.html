@@ -1,0 +1,26 @@
+<!-- configuration editor -->
+<div class="editor-page">
+
+  <app-editor #editor *ngIf="environments && (configuration|async); else loader"
+    [environments]="environments" [configuration]="configuration|async"
+    [appName]="appName" [fileName]="fileName" [editMode]="editMode" [envFileMode]="envFileMode">
+
+    <ng-template #buttonsTemplate>
+      <div class="buttons-row">
+        <button type="button" mat-button color="primary" [disabled]="fileSaving || !isPageDirty" class="btn-cancel" (click)="reset()">
+          Reset
+        </button>
+
+        <button type="button" mat-raised-button color="primary" [disabled]="fileSaving || !isPageDirty" class="btn-save"
+          (click)="saveConfig()">
+          Save
+        </button>
+      </div>
+    </ng-template>
+  </app-editor>
+</div>
+
+<!-- loading indicator -->
+<ng-template #loader>
+  <app-loader></app-loader>
+</ng-template>

@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "module": "commonjs",
+    "sourceMap": true,
+    "noUnusedLocals": true,
+    "noImplicitThis": true,
+    "noImplicitReturns": true,
+    "strictNullChecks": false,
+    "noUnusedParameters": true
+  },
+  "include": [
+    "./main.ts"
+  ],
+  "exclude": [
+    "node_modules",
+  ]
+}

@@ -2,11 +2,15 @@
 
 # compiled output
 /dist
+/vscode/dist
+/vscode/*.vsix
+/electron/dist
+/electron/release
 /tmp
 /out-tsc
 
 # dependencies
-/node_modules
+node_modules
 
 # IDEs and editors
 /.idea
