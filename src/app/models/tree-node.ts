@@ -10,6 +10,9 @@ export class TreeNode {
   children: TreeNode[] = undefined;
   parent: TreeNode = undefined;
 
+  anchor: string;
+  aliases: string[];
+
   /**
    * Creates a new tree node.
    * @param key the key of node
@@ -34,6 +37,41 @@ export class TreeNode {
       || type === PROPERTY_VALUE_TYPES.NUMBER;
   }
 
+  hasAncestor(node: TreeNode) {
+    let parent = this.parent;
+    while (parent) {
+      if (parent === node) {
+        return true;
+      }
+      parent = parent.parent;
+    }
+    return false;
+  }
+
+  private doGetAliasOptions(node: TreeNode, result: any) {
+    if (node.anchor && node.valueType === this.valueType && !this.hasAncestor(node)) {
+      result.aliases.push(node.anchor);
+    }
+
+    if (node.children) {
+      for (const child of node.children) {
+        if (child === this) {
+          result.finished = true;
+        }
+        if (result.finished) {
+          break;
+        }
+        this.doGetAliasOptions(child, result);
+      }
+    }
+  }
+
+  getAliasOptions(root: TreeNode) {
+    const result = { aliases: [], finished: false };
+    this.doGetAliasOptions(root, result);
+    return result.aliases;
+  }
+
   /**
    * Add child.
    * @param child the child to add
@@ -53,13 +91,22 @@ export class TreeNode {
   }
 
   /**
+   * Check if this node represetns an object item in array.
+   * @returns true if this represetns an object item in array, false otherwise
+   */
+  isObjectInArray() {
+    return this.valueType === PROPERTY_VALUE_TYPES.OBJECT && this.parent && this.parent.isArray();
+  }
+
+  /**
    * Check if this node represetns an array node.
-   * @returns true if this node's type is string[]/boolean[]/number[]/array, false otherwise
+   * @returns true if this node's type is string[]/boolean[]/number[]/object[]/array, false otherwise
    */
   isArray() {
     return this.valueType === PROPERTY_VALUE_TYPES.STRING_ARRAY
       || this.valueType === PROPERTY_VALUE_TYPES.BOOLEAN_ARRAY
       || this.valueType === PROPERTY_VALUE_TYPES.NUMBER_ARRAY
+      || this.valueType === PROPERTY_VALUE_TYPES.OBJECT_ARRAY
       || this.valueType === 'array';
   }
 
@@ -75,6 +122,8 @@ export class TreeNode {
         return PROPERTY_VALUE_TYPES.BOOLEAN;
       case PROPERTY_VALUE_TYPES.NUMBER_ARRAY:
         return PROPERTY_VALUE_TYPES.NUMBER;
+      case PROPERTY_VALUE_TYPES.OBJECT_ARRAY:
+        return PROPERTY_VALUE_TYPES.OBJECT;
     }
   }
 

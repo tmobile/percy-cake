@@ -1,6 +1,6 @@
 import { convertToParamMap } from '@angular/router';
 
-import { Setup, assertDialogOpened, TestContext, utilService } from 'test/test-helper';
+import { Setup, assertDialogOpened, TestContext } from 'test/test-helper';
 
 import { PROPERTY_VALUE_TYPES, appPercyConfig } from 'config';
 import { TreeNode } from 'models/tree-node';
@@ -10,14 +10,14 @@ import { Alert } from 'store/actions/common.actions';
 import { PageLoadSuccess, ConfigurationChange } from 'store/actions/editor.actions';
 import { LoadFilesSuccess, GetFileContentSuccess, SaveDraft, CommitChanges } from 'store/actions/backend.actions';
 
-import { AlertDialogComponent } from 'components/alert-dialog/alert-dialog.component';
 import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.component';
 import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
 
-import { EditorComponent } from './editor.component';
+import { EditorPageComponent } from './editor.component';
+import { of } from 'rxjs';
 
-describe('EditorComponent', () => {
-  const setup = Setup(EditorComponent, false);
+describe('EditorPageComponent', () => {
+  const setup = Setup(EditorPageComponent, false);
 
   const file = {
     applicationName: 'app1',
@@ -26,7 +26,7 @@ describe('EditorComponent', () => {
   };
   const applications = ['app1', 'app2', 'app3'];
 
-  let ctx: TestContext<EditorComponent>;
+  let ctx: TestContext<EditorPageComponent>;
   let dispatchSpy: jasmine.Spy;
 
   beforeEach(() => {
@@ -40,11 +40,11 @@ describe('EditorComponent', () => {
     });
   });
 
-  it('should create EditorComponent', () => {
+  it('should create EditorPageComponent', () => {
     expect(ctx.component).toBeTruthy();
   });
 
-  it('should init EditorComponent with edit file mode', () => {
+  it('should init EditorPageComponent with edit file mode', () => {
     ctx.activatedRouteStub.snapshot = {
       data: {
         editMode: true,
@@ -57,8 +57,6 @@ describe('EditorComponent', () => {
     };
     ctx.detectChanges();
 
-    expect(ctx.component.filename.disabled).toBeTruthy();
-
     expect(dispatchSpy.calls.count()).toEqual(1);
 
     const pageLoad = dispatchSpy.calls.argsFor(0)[0].payload;
@@ -66,6 +64,12 @@ describe('EditorComponent', () => {
 
   });
 
+  const newFile = {
+    fileName: null,
+    applicationName: 'app1',
+    draftConfig: new Configuration(),
+    modified: true
+  };
   async function initNewFileMode() {
 
     ctx.activatedRouteStub.snapshot = {
@@ -79,104 +83,62 @@ describe('EditorComponent', () => {
     };
     ctx.detectChanges();
 
-    expect(ctx.component.filename.enabled).toBeTruthy();
-    expect(ctx.component.filename.value).toEqual('');
     expect(dispatchSpy.calls.count()).toEqual(1);
 
     const pageLoad = dispatchSpy.calls.argsFor(0)[0].payload;
     expect(pageLoad).toEqual({ fileName: null, applicationName: file.applicationName, editMode: false });
 
-    const newFile = {
-      file: {
-        fileName: null,
-        applicationName: 'app1',
-        draftConfig: new Configuration(),
-        modified: true
-      },
-      newlyCreated: true
-    };
-
     ctx.store.next(new LoadFilesSuccess({ files: [file], applications }));
     ctx.store.next(new PageLoadSuccess({ environments: ['dev'] }));
-    ctx.store.next(new GetFileContentSuccess(newFile));
+    ctx.store.next(new GetFileContentSuccess({file: newFile, newlyCreated: true}));
 
     ctx.detectChanges();
     await ctx.fixture.whenStable();
   }
 
-  it('should init EditorComponent with new file mode', async () => {
-
-    await initNewFileMode();
-    const focusSpy = spyOn(ctx.component.fileNameInput, 'focus');
-
-    await new Promise((resolve) => {
-      setImmediate(async () => {
-        await expect(focusSpy.calls.count()).toEqual(1);
-        resolve();
-      });
-    });
-
-    ctx.component.filename.setValue('');
-    ctx.component.fileNameChange();
-    expect(ctx.component.filename.valid).toBeFalsy();
-
-    ctx.component.filename.setValue('new.yaml');
-    ctx.component.fileNameChange();
-    expect(ctx.component.filename.valid).toBeTruthy();
-  });
-
-  it('should not change to existing file name', async () => {
+  it('should not save draft if validation failed', async () => {
     await initNewFileMode();
 
-    ctx.component.filename.setValue(file.fileName);
-    ctx.component.fileNameChange();
-    expect(ctx.component.filename.valid).toBeFalsy();
-    expect(ctx.component.filename.hasError('alreadyExists')).toBeTruthy();
-  });
-
-  it('should not save draft if file name is invalid', async () => {
-    await initNewFileMode();
-    const focusSpy = spyOn(ctx.component.fileNameInput, 'focus');
-
-    ctx.component.filename.setValue('');
-    ctx.component.fileNameChange();
-    expect(ctx.component.filename.valid).toBeFalsy();
+    const spy = jasmine.createSpyObj('', ['validate']);
+    spy.validate.and.returnValue(of({ valid: false }));
+    ctx.component.editor = spy;
 
     ctx.component.saveConfig();
 
-    expect(focusSpy.calls.any()).toBeTruthy();
     expect(dispatchSpy.calls.mostRecent().args[0] instanceof SaveDraft).toBeFalsy();
   });
 
-  it('should not save draft if yaml config is invalid', async () => {
-    await initNewFileMode();
+  // it('should not save draft if yaml config is invalid', async () => {
+  //   await initNewFileMode();
 
-    const config = new Configuration();
-    config.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, utilService.constructVariable('key1')));
-    config.environments.addChild(new TreeNode('dev'));
+  //   const config = new Configuration();
+  //   config.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, utilService.constructVariable('key1')));
+  //   config.environments.addChild(new TreeNode('dev'));
 
-    ctx.component.onConfigChange(config);
+  //   ctx.component.editor.onConfigChange(config);
 
-    ctx.component.filename.setValue('test.yaml');
-    ctx.component.saveConfig();
+  //   ctx.component.editor.filename.setValue('test.yaml');
+  //   ctx.component.saveConfig();
 
-    assertDialogOpened(AlertDialogComponent, {
-      data: { message: `YAML validation failed:\nLoop variable reference: key1->key1`, alertType: 'error' },
-    });
-    expect(dispatchSpy.calls.mostRecent().args[0] instanceof SaveDraft).toBeFalsy();
-  });
+  //   assertDialogOpened(AlertDialogComponent, {
+  //     data: { message: `YAML validation failed:\nLoop variable reference: key1->key1`, alertType: 'error' },
+  //   });
+  //   expect(dispatchSpy.calls.mostRecent().args[0] instanceof SaveDraft).toBeFalsy();
+  // });
 
   it('should save draft if file name and yaml config invalid', async () => {
     await initNewFileMode();
 
-    const config = new Configuration();
-    config.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, 'aaa'));
-    config.default.addChild(new TreeNode('key2', PROPERTY_VALUE_TYPES.STRING, 'bbb'));
-    config.environments.addChild(new TreeNode('dev'));
+    const configuration = new Configuration();
+    configuration.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, 'aaa'));
+    configuration.default.addChild(new TreeNode('key2', PROPERTY_VALUE_TYPES.STRING, 'bbb'));
+    configuration.environments.addChild(new TreeNode('dev'));
 
-    ctx.component.onConfigChange(config);
+    const spy = jasmine.createSpyObj('', ['validate', 'getFileName']);
+    spy.validate.and.returnValue(of({ valid: true, editorState: {configuration, configFile: newFile} }));
+    spy.getFileName.and.returnValue('test.yaml');
+    ctx.component.editor = spy;
 
-    ctx.component.filename.setValue('test.yaml');
     ctx.component.saveConfig();
 
     expect(dispatchSpy.calls.mostRecent().args[0].payload).toEqual(
@@ -184,7 +146,7 @@ describe('EditorComponent', () => {
         file: {
           fileName: 'test.yaml',
           applicationName: 'app1',
-          draftConfig: config,
+          draftConfig: configuration,
           modified: true,
         },
         redirect: true
@@ -194,47 +156,47 @@ describe('EditorComponent', () => {
 
   it('should not commit file if file name is invalid', async () => {
     await initNewFileMode();
-    const focusSpy = spyOn(ctx.component.fileNameInput, 'focus');
 
-    ctx.component.filename.setValue('');
-    ctx.component.fileNameChange();
-    expect(ctx.component.filename.valid).toBeFalsy();
+    const spy = jasmine.createSpyObj('', ['validate']);
+    spy.validate.and.returnValue(of({ valid: false }));
+    ctx.component.editor = spy;
 
     ctx.component.commitFile();
 
-    expect(focusSpy.calls.any()).toBeTruthy();
     expect(dispatchSpy.calls.mostRecent().args[0] instanceof CommitChanges).toBeFalsy();
   });
 
-  it('should not commit file if yaml config is invalid', async () => {
-    await initNewFileMode();
+  // it('should not commit file if yaml config is invalid', async () => {
+  //   await initNewFileMode();
 
-    const config = new Configuration();
-    config.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, utilService.constructVariable('key1')));
-    config.environments.addChild(new TreeNode('dev'));
+  //   const config = new Configuration();
+  //   config.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, utilService.constructVariable('key1')));
+  //   config.environments.addChild(new TreeNode('dev'));
 
-    ctx.component.onConfigChange(config);
+  //   ctx.component.editor.onConfigChange(config);
 
-    ctx.component.filename.setValue('test.yaml');
-    ctx.component.saveConfig();
+  //   ctx.component.editor.filename.setValue('test.yaml');
+  //   ctx.component.saveConfig();
 
-    assertDialogOpened(AlertDialogComponent, {
-      data: { message: `YAML validation failed:\nLoop variable reference: key1->key1`, alertType: 'error' },
-    });
-    expect(dispatchSpy.calls.mostRecent().args[0] instanceof CommitChanges).toBeFalsy();
-  });
+  //   assertDialogOpened(AlertDialogComponent, {
+  //     data: { message: `YAML validation failed:\nLoop variable reference: key1->key1`, alertType: 'error' },
+  //   });
+  //   expect(dispatchSpy.calls.mostRecent().args[0] instanceof CommitChanges).toBeFalsy();
+  // });
 
   it('should commit file if file name and yaml config invalid', async () => {
     await initNewFileMode();
 
-    const config = new Configuration();
-    config.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, 'aaa'));
-    config.default.addChild(new TreeNode('key2', PROPERTY_VALUE_TYPES.STRING, 'bbb'));
-    config.environments.addChild(new TreeNode('dev'));
+    const configuration = new Configuration();
+    configuration.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, 'aaa'));
+    configuration.default.addChild(new TreeNode('key2', PROPERTY_VALUE_TYPES.STRING, 'bbb'));
+    configuration.environments.addChild(new TreeNode('dev'));
 
-    ctx.component.onConfigChange(config);
+    const spy = jasmine.createSpyObj('', ['validate', 'getFileName']);
+    spy.validate.and.returnValue(of({ valid: true, editorState: {configuration, configFile: newFile} }));
+    spy.getFileName.and.returnValue('test.yaml');
+    ctx.component.editor = spy;
 
-    ctx.component.filename.setValue('test');
     ctx.component.commitFile();
 
     assertDialogOpened(CommitDialogComponent);
@@ -245,7 +207,7 @@ describe('EditorComponent', () => {
         files: [{
           fileName: 'test.yaml',
           applicationName: 'app1',
-          draftConfig: config,
+          draftConfig: configuration,
           modified: true,
         }],
         message: 'some commit message',
@@ -284,110 +246,5 @@ describe('EditorComponent', () => {
     expect(appPercyConfig).toEqual({});
   });
 
-  it('select a leaf node should work', () => {
-    const node = new TreeNode('key', PROPERTY_VALUE_TYPES.STRING, 'value');
-
-    ctx.component.onNodeSelected(node);
-
-    expect(ctx.component.selectedNode).toEqual(node);
-    expect(ctx.component.showAsCode).toEqual(false);
-    expect(ctx.component.previewCode).toEqual(null);
-    expect(ctx.component.showAsCompiledYAMLEnvironment).toEqual(null);
-    expect(ctx.component.currentConfigProperty).toEqual(null);
-  });
-
-  it('select an object node should work', () => {
-    const node = new TreeNode('obj', PROPERTY_VALUE_TYPES.OBJECT);
-    node.addChild(new TreeNode('key', PROPERTY_VALUE_TYPES.STRING, 'value'));
-
-    ctx.component.onNodeSelected(node);
-
-    expect(ctx.component.selectedNode).toEqual(node);
-    expect(ctx.component.showAsCode).toEqual(true);
-    expect(ctx.component.previewCode).toEqual('obj: !!map\n  key: !!str "value"');
-    expect(ctx.component.showAsCompiledYAMLEnvironment).toEqual(null);
-    expect(ctx.component.currentConfigProperty).toEqual(null);
-  });
-
-  it('add/edit proprty should work', () => {
-    const configProperty: any = {};
-
-    ctx.component.onAddEditProperty(configProperty);
-
-    expect(ctx.component.selectedNode).toEqual(null);
-    expect(ctx.component.showAsCode).toEqual(false);
-    expect(ctx.component.previewCode).toEqual(null);
-    expect(ctx.component.showAsCompiledYAMLEnvironment).toEqual(null);
-    expect(ctx.component.currentConfigProperty).toEqual(configProperty);
-
-    ctx.component.onCancelAddEditProperty();
-
-    expect(ctx.component.selectedNode).toEqual(null);
-    expect(ctx.component.showAsCode).toEqual(false);
-    expect(ctx.component.previewCode).toEqual(null);
-    expect(ctx.component.showAsCompiledYAMLEnvironment).toEqual(null);
-    expect(ctx.component.currentConfigProperty).toEqual(null);
-  });
-
-  it('open edit proprty should work', () => {
-    const spy = jasmine.createSpyObj('', ['openEditPropertyDialog']);
-    ctx.component.nestedConfig = spy;
-
-    const node = new TreeNode('key');
-    ctx.component.openEditPropertyDialog(node);
-
-    expect(spy.openEditPropertyDialog.calls.mostRecent().args[0]).toEqual(node);
-  });
-
-  it('save proprty should work', () => {
-    const spy = jasmine.createSpyObj('', ['saveAddEditProperty']);
-    spy.saveAddEditProperty.and.returnValue(true);
-    ctx.component.nestedConfig = spy;
-
-    const node = new TreeNode('key');
-    ctx.component.onSaveAddEditProperty(node);
-
-    expect(spy.saveAddEditProperty.calls.mostRecent().args[0]).toEqual(node);
-    expect(ctx.component.selectedNode).toEqual(null);
-    expect(ctx.component.showAsCode).toEqual(false);
-    expect(ctx.component.previewCode).toEqual(null);
-    expect(ctx.component.showAsCompiledYAMLEnvironment).toEqual(null);
-    expect(ctx.component.currentConfigProperty).toEqual(null);
-  });
-
-  it('show compiled YAML should work', async () => {
-    await initNewFileMode();
-
-    const config = new Configuration();
-    config.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, 'aaa'));
-    config.default.addChild(new TreeNode('key2', PROPERTY_VALUE_TYPES.STRING, 'bbb'));
-    config.environments.addChild(new TreeNode('dev'));
-
-    ctx.component.onConfigChange(config);
-
-    ctx.component.showCompiledYAML('dev');
-
-    expect(ctx.component.selectedNode).toEqual(null);
-    expect(ctx.component.showAsCode).toEqual(false);
-    expect(ctx.component.previewCode).toEqual('key1: !!str "aaa"\nkey2: !!str "bbb"');
-    expect(ctx.component.showAsCompiledYAMLEnvironment).toEqual('dev');
-    expect(ctx.component.currentConfigProperty).toEqual(null);
-  });
-
-  it('show compiled YAML should alert error if yaml is invalid', async () => {
-    await initNewFileMode();
-
-    const config = new Configuration();
-    config.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, utilService.constructVariable('key1')));
-    config.environments.addChild(new TreeNode('dev'));
-
-    ctx.component.onConfigChange(config);
-
-    ctx.component.showCompiledYAML('dev');
-
-    assertDialogOpened(AlertDialogComponent, {
-      data: { message: 'Loop variable reference: key1->key1', alertType: 'error' },
-    });
-  });
 
 });

@@ -1,0 +1,36 @@
+{
+  "appId": "com.topcoder.percy",
+  "productName": "Percy",
+  "directories": {
+    "output": "release"
+  },
+  "artifactName": "${productName}-${os}-${arch}.${ext}",
+  "asar": true,
+  "files": [
+    "dist/*",
+    "media/*",
+    "node_modules/mkdirp/**/*",
+    "node_modules/jsonfile/**/*",
+    "node_modules/minimist/**/*",
+    "node_modules/graceful-fs/**/*",
+    "node_modules/electron-window-state/**/*"
+  ],
+  "win": {
+    "icon": "media/appicon.512x512.png",
+    "target": [
+      "zip"
+    ]
+  },
+  "mac": {
+    "icon": "media/appicon.512x512.png",
+    "target": [
+      "dmg"
+    ]
+  },
+  "linux": {
+    "icon": "media/appicon.512x512.png",
+    "target": [
+      "zip"
+    ]
+  }
+}

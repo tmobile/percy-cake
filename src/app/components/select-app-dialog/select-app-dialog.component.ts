@@ -6,7 +6,7 @@ import { startWith, debounceTime, distinctUntilChanged, map } from 'rxjs/operato
 
 import * as _ from 'lodash';
 
-import { NotEmpty } from 'services/util.service';
+import { NotEmpty } from 'services/validators';
 
 /**
  * The select app dialog component

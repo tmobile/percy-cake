@@ -8,7 +8,7 @@ import { LayoutComponent } from 'components/layout/layout.component';
 import { InitComponent } from 'components/init/init.component';
 import { LoginComponent } from 'pages/login/login.component';
 import { DashboardComponent } from 'pages/dashboard/dashboard.component';
-import { EditorComponent } from 'pages/editor/editor.component';
+import { EditorPageComponent } from 'pages/editor/editor.component';
 import { CanDeactivateGuard } from 'services/can-deactivate-guard.service';
 
 
@@ -43,7 +43,7 @@ const routes: Routes = [
         children: [
           {
             path: 'newenv/:appName/:fileName',
-            component: EditorComponent,
+            component: EditorPageComponent,
             canDeactivate: [CanDeactivateGuard],
             data: {
               envFileMode: true,
@@ -52,7 +52,7 @@ const routes: Routes = [
           },
           {
             path: 'editenv/:appName/:fileName',
-            component: EditorComponent,
+            component: EditorPageComponent,
             canDeactivate: [CanDeactivateGuard],
             data: {
               envFileMode: true,
@@ -61,7 +61,7 @@ const routes: Routes = [
           },
           {
             path: 'new/:appName',
-            component: EditorComponent,
+            component: EditorPageComponent,
             canDeactivate: [CanDeactivateGuard],
             data: {
               editMode: false
@@ -69,7 +69,7 @@ const routes: Routes = [
           },
           {
             path: 'edit/:appName/:fileName',
-            component: EditorComponent,
+            component: EditorPageComponent,
             canDeactivate: [CanDeactivateGuard],
             data: {
               editMode: true

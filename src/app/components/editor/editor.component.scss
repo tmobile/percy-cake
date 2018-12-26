@@ -1,0 +1,87 @@
+// configuration editor page
+@import "variables";
+
+.col-container {
+  display: flex;
+  flex: 1; // This will make the tree view to fill the vertical space
+  margin-top: 5px;
+  min-height: 1px;
+  .section-heading span {
+      font-weight: 400;
+  }
+  .col-default-env {
+      width: 60%;
+      margin-right: 20px;
+      display: flex;
+      flex-direction: column;
+      .section-heading {
+          margin-bottom: 20px;
+      }
+      .filename {
+        label {
+          color: grey;
+        }
+        input {
+          width: auto;
+          flex: 1;
+        }
+      }
+      app-nested-config-view {
+        flex: 1;
+      }
+  }
+  .col-other-envs {
+      width: 40%;
+      padding-left: 20px;
+      display: flex;
+      flex-direction: column;
+      min-height: 1px;
+      .section-heading {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        margin-bottom: 20px;
+        h3 {
+          flex: 1;
+        }
+        button {
+          text-transform: uppercase;
+        }
+      }
+      .preview {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          overflow-wrap: break-word;
+          min-height: 1px;
+          pre {
+              flex: 1;
+              display: grid;
+              display: -ms-grid;
+              min-height: 1px;
+              .hljs {
+                  flex: 1;
+                  overflow: auto;
+                  padding: 10px;
+                  background-color: $white;
+              }
+          }
+          .property {
+              display: flex;
+              background-color: $white;
+              padding: 10px 10px 0;
+              flex-direction: column;
+              .mat-form-field {
+                  margin-bottom: 15px;
+                  .mat-form-field-infix > * {
+                      flex-shrink: 1;
+                  }
+                  .comment pre {
+                      white-space: pre-wrap;
+                      margin-top: 0;
+                  }
+              }
+          }
+      }
+  }
+}

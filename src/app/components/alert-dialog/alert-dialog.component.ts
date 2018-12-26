@@ -27,4 +27,10 @@ export class AlertDialogComponent implements OnInit {
   ngOnInit() {
     this.dialogRef.afterClosed().subscribe(() => this.store.dispatch(new AlertClosed(this.data)));
   }
+  /**
+   * handles the close action
+   */
+  close() {
+    this.dialogRef.close(this.data);
+  }
 }

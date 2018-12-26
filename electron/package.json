@@ -1,0 +1,17 @@
+{
+  "name": "percy",
+  "productName": "Percy",
+  "description": "Percy Electron App",
+  "version": "0.0.0",
+  "main": "dist/main.js",
+  "scripts": {
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "dependencies": {
+    "electron-window-state": "^5.0.3"
+  },
+  "devDependencies": {
+    "electron": "^3.0.0",
+    "electron-builder": "^20.38.4"
+  }
+}

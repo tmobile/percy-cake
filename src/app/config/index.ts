@@ -10,6 +10,7 @@ export enum PROPERTY_VALUE_TYPES {
   STRING_ARRAY = 'string[]',
   NUMBER_ARRAY = 'number[]',
   BOOLEAN_ARRAY = 'boolean[]',
+  OBJECT_ARRAY = 'object[]',
 }
 
 // The percy config will be loaded at this web app load, see UtilService#initConfig method

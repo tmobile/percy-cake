@@ -142,26 +142,26 @@ There are 3 configuration files:
 - [src/percy.conf.test.json](src/percy.conf.test.json): configuration used in Karma test
 - [src/percy.conf.prod.json](src/percy.conf.prod.json): for production configuration, it will be copied to `dist/build/percy.conf.json` in the production build
 
-| Variable                 | Description                                                  |
-| ------------------------ | ------------------------------------------------------------ |
-| corsProxy                | The cors proxy for isomorphic-git                            |
-| defaultBranchName        | Default branch name shown on login page                      |
-| defaultRepositoryUrl     | Default repository url shown on login page                   |
-| lockedBranches           | Locked branches, you cannot enter these branches on login page   |
-| storeName                | The browser indexeddb store name                             |
-| reposFolder              | The browserfs folder to clone repos into                     |
-| draftFolder              | The browserfs folder to store draft files                    |
-| metaFolder               | The browserfs folder contains metadata file                  |
-| repoMetadataVersion      | The repo metdata version (in case the structrure of repo metadata changes, update this version) |
-| loggedInUsersMetaFile    | The file name which contains logged in user names            |
-| yamlAppsFolder           | The folder name which contains apps' yaml config             |
-| environmentsFile         | The environments file name (JUST file name)                   |
-| pullTimeout              | The git pull timeout, in which case will switch to clone         |
-| loginSessionTimeout      | The login session timeout, like "1m", "2.5 hrs", "2 days". Default to 30m. |
-| encryptKey               | The key used to encrypt security information like password   |
-| encryptSalt              | The salt used to encrypt security information like password  |
-| variablePrefix           | The YAML variable substitute prefix                          |
-| variableSuffix           | The YAML variable substitute suffix                          |
+| Variable              | Description                                                  |
+| --------------------- | ------------------------------------------------------------ |
+| corsProxy             | The cors proxy for isomorphic-git (This config is only used in webapp and irrelevant for Electron app, since Electron app does not need cors proxy server) |
+| defaultBranchName     | Default branch name shown on login page                      |
+| defaultRepositoryUrl  | Default repository url shown on login page                   |
+| lockedBranches        | Locked branches, you cannot enter these branches on login page |
+| storeName             | The browser indexeddb store name                             |
+| reposFolder           | The browserfs folder to clone repos into                     |
+| draftFolder           | The browserfs folder to store draft files                    |
+| metaFolder            | The browserfs folder contains metadata file                  |
+| repoMetadataVersion   | The repo metdata version (in case the structrure of repo metadata changes, update this version) |
+| loggedInUsersMetaFile | The file name which contains logged in user names            |
+| yamlAppsFolder        | The folder name which contains apps' yaml config             |
+| environmentsFile      | The environments file name (JUST file name)                  |
+| pullTimeout           | The git pull timeout, in which case will switch to clone     |
+| loginSessionTimeout   | The login session timeout, like "1m", "2.5 hrs", "2 days". Default to 30m. |
+| encryptKey            | The key used to encrypt security information like password   |
+| encryptSalt           | The salt used to encrypt security information like password  |
+| variablePrefix        | The YAML variable substitute prefix                          |
+| variableSuffix        | The YAML variable substitute suffix                          |
 
 
 The git repository can contain optional `.percyrc` files, which provide repository-specific or application-specific configuration. The following properties are supported now:
@@ -243,3 +243,53 @@ In this step supports config the nginx port, you can refer to [docker/docker-com
 
 
 Assume `NGINX_PORT` is configured as 8080, then you can visit http://localhost:8080
+
+
+
+## How VSCode Extension works
+
+In general, the VSCode extension of Percy editor is also an Angular app running in [VSCode webview](https://code.visualstudio.com/docs/extensions/webview).
+
+1. Module and Component are core concepts of angular, so we abstract the common ui part of [editor component](src/app/components/editor), making it reusable in both webapp and VSCode extension app.
+2. The vscode extension app does not need some functionalities (like route, browser fs, localstorage, pages components, most ngrx effects. These functionalities may not even be supported in vscode webview). So we have done necessary code refactor to make the vscode extension app can get rid of those unneeded and only import needed dependency modules.
+3. So as point 2 implied, the webapp and vscode extension app use different dependency modules, to build and bundle them separately we pass their main entrypoints as “--main” parameter to “ng build” command:
+   - Webapp main entrypoint: [src/webapp/webapp.ts](src/webapp/webapp.ts)  =>  [src/webapp/app.module.ts](src/webapp/app.module.ts)
+   - VSCode main entrypoint: [src/vscode/vsapp.ts](src/vscode/vsapp.ts)  =>  [src/vscode/vsapp.module.ts](src/vscode/vsapp.module.ts)
+
+4. The communication between vscode extension and its webview content is done by the official way using [message post](https://code.visualstudio.com/docs/extensions/webview#_passing-messages-from-an-extension-to-a-webview).
+
+## Run VSCode Extension
+
+```bash
+# At first build & package the vscode extenstion
+./vscode/build.sh
+
+# The extension will be packaged at ./vscode/percy-editor-extension-0.0.0.vsix
+```
+
+
+
+After build, you can either:
+
+- Open the project in VSCode, Click "Debug -> Start Debugging", a new VSCode window will be opened with the extension activated.
+- Or install the extension in VScode: `code --install-extension ./vscode/percy-editor-extension-0.0.0.vsix`
+
+
+
+## How Electron App Works
+
+Electron app has same functionalites as webapp. It actually loads the exactly same built bundle of webapp within Electron environment.
+
+One thing to note is that Electron app does not need cors-proxy server since there is no cors restrict for a desktop app.
+
+## Run Electron App
+
+```bash
+./electron/build.sh
+
+# The app executables will be built at:
+# MacOS: ./electron/release/Percy-mac.dmg
+# Linux: ./electron/release/Percy-linux-x64.zip
+# Windows: ./electron/release/Percy-win-x64.zip
+```
+
