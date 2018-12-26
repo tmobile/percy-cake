@@ -10,8 +10,8 @@ export class TreeNode {
   children: TreeNode[] = undefined;
   parent: TreeNode = undefined;
 
-  anchor: string;
-  aliases: string[];
+  anchor: string = null;
+  aliases: string[] = null;
 
   /**
    * Creates a new tree node.
@@ -37,39 +37,41 @@ export class TreeNode {
       || type === PROPERTY_VALUE_TYPES.NUMBER;
   }
 
-  hasAncestor(node: TreeNode) {
-    let parent = this.parent;
-    while (parent) {
-      if (parent === node) {
-        return true;
-      }
-      parent = parent.parent;
+  /**
+   * Get anchor names of this node and its decendants.
+   * @returns array of anchor names
+   */
+  getAnchors() {
+    const result: string[] = [];
+    if (this.anchor) {
+      result.push(this.anchor);
     }
-    return false;
+    if (this.children) {
+      this.children.forEach(child => {
+        result.push(...child.getAnchors());
+      });
+    }
+    return result;
   }
 
-  private doGetAliasOptions(node: TreeNode, result: any) {
-    if (node.anchor && node.valueType === this.valueType && !this.hasAncestor(node)) {
-      result.aliases.push(node.anchor);
+  /**
+   * Find node of given anchor name.
+   * @param anchor The anchor name
+   * @returns found node
+   */
+  findAnchorNode(anchor: string) {
+    if (this.anchor === anchor) {
+      return this;
     }
 
-    if (node.children) {
-      for (const child of node.children) {
-        if (child === this) {
-          result.finished = true;
+    if (this.children) {
+      for (const child of this.children) {
+        const found = child.findAnchorNode(anchor);
+        if (found) {
+          return found;
         }
-        if (result.finished) {
-          break;
-        }
-        this.doGetAliasOptions(child, result);
       }
     }
-  }
-
-  getAliasOptions(root: TreeNode) {
-    const result = { aliases: [], finished: false };
-    this.doGetAliasOptions(root, result);
-    return result.aliases;
   }
 
   /**
@@ -191,6 +193,21 @@ export class TreeNode {
       }
       return _.find(node.children, (child) => child.key === path);
     }, this);
+  }
+
+  /**
+   * Remove children of given keys.
+   * @param keys The keys of children to remove.
+   */
+  removeChildren(keys: string[]) {
+    if (keys && keys.length && this.children && this.children.length) {
+      _.remove(this.children, item => keys.indexOf(item.key) > -1);
+      if (this.isArray()) {
+        this.children.forEach((element, idx) => {
+          element.key = `[${idx}]`;
+        });
+      }
+    }
   }
 
   /**

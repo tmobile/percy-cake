@@ -139,8 +139,6 @@ joe: !!map  # comment line1
 
     expect(yaml2).toEqual(anchorYaml.trim());
 
-    expect(tree.findChild(['foo', 'obj']).getAliasOptions(tree)).toEqual(['anchor1', 'anchor2']);
-    expect(tree.findChild(['joe', 'oarr', '[0]']).getAliasOptions(tree)).toEqual(['anchor1', 'anchor2', 'anchor3', 'anchor4']);
   });
 
   it('duplicate anchor should fail', () => {
@@ -398,7 +396,7 @@ arr2: !!seq  # dev-arr2-comment
 arr3: !!seq  # arr3-comment
   - !!bool false  # prod-item1-comment
   - !!bool true  # prod-item2-comment
-obj: !!map  # obj-comment
+obj: !!map  # prod-obj-comment
   subkey: !!str "dev-value/false"`);
   });
 

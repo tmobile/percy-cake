@@ -834,6 +834,7 @@ describe('AddEditPropertyDialogComponent', () => {
     firstSibling.parent = undefined;
     const result = _.cloneDeep(firstSibling);
     result.key = '[1]';
+    result.anchor = 'objarr-1';
 
     expect(ctx.observables.saveProperty.value).toEqual(result);
   });
@@ -865,8 +866,84 @@ describe('AddEditPropertyDialogComponent', () => {
     firstSibling.parent = undefined;
     const result = _.cloneDeep(firstSibling);
     result.key = '[1]';
+    result.anchor = 'objarr-1';
 
     expect(ctx.observables.saveProperty.value).toEqual(result);
+  });
+
+  it('edit object in array of default nodes, should fail if duplicate anchor name', () => {
+
+    const defaultTree = new TreeNode('default');
+    defaultTree.addChild(new TreeNode('objarr', PROPERTY_VALUE_TYPES.OBJECT_ARRAY));
+    defaultTree.findChild(['objarr']).addChild(new TreeNode('[0]'));
+    defaultTree.findChild(['objarr', '[0]']).anchor = 'objarr-0';
+    defaultTree.findChild(['objarr', '[0]']).addChild(new TreeNode('bool', PROPERTY_VALUE_TYPES.BOOLEAN, true));
+    defaultTree.findChild(['objarr']).addChild(new TreeNode('[1]'));
+    defaultTree.findChild(['objarr', '[1]']).anchor = 'objarr-1';
+    defaultTree.findChild(['objarr', '[1]']).addChild(new TreeNode('bool', PROPERTY_VALUE_TYPES.BOOLEAN, false));
+
+    const data = {
+      editMode: true,
+      node: defaultTree.findChild(['objarr', '[1]']),
+      keyOptions: [],
+      defaultTree,
+    };
+
+    ctx.component.data = data;
+    ctx.component.ngOnChanges();
+
+    ctx.component.anchor.setValue('objarr-0');
+    ctx.component.onSubmit();
+
+    const payload = dispatchSpy.calls.mostRecent().args[0].payload;
+    expect(payload).toEqual({
+      message: `Anchor name 'objarr-0' already exists`,
+      alertType: 'error'
+    });
+    expect(ctx.observables.saveProperty.value).toBeUndefined();
+  });
+
+  it('edit object in array with of env nodes, should show alias', () => {
+
+    const defaultTree = new TreeNode('default');
+    defaultTree.addChild(new TreeNode('objarr', PROPERTY_VALUE_TYPES.OBJECT_ARRAY));
+    defaultTree.findChild(['objarr']).addChild(new TreeNode('[0]'));
+    defaultTree.findChild(['objarr', '[0]']).anchor = 'objarr-0';
+    defaultTree.findChild(['objarr', '[0]']).addChild(new TreeNode('bool', PROPERTY_VALUE_TYPES.BOOLEAN, true));
+    defaultTree.findChild(['objarr']).addChild(new TreeNode('[1]'));
+    defaultTree.findChild(['objarr', '[1]']).anchor = 'objarr-1';
+    defaultTree.findChild(['objarr', '[1]']).addChild(new TreeNode('bool', PROPERTY_VALUE_TYPES.BOOLEAN, false));
+
+    const root = new TreeNode('environments');
+    root.addChild(new TreeNode('qat'));
+    root.findChild(['qat']).addChild(new TreeNode('objarr', PROPERTY_VALUE_TYPES.OBJECT_ARRAY));
+    root.findChild(['qat', 'objarr']).addChild(new TreeNode('[0]'));
+    root.findChild(['qat', 'objarr', '[0]']).aliases = ['objarr-0'];
+
+    const data = {
+      editMode: true,
+      node: root.findChild(['qat', 'objarr', '[0]']),
+      keyOptions: [],
+      defaultTree,
+    };
+
+    ctx.component.data = data;
+    ctx.component.ngOnChanges();
+
+    expect(ctx.component.showAlias()).toBeTruthy();
+
+    expect(ctx.component.alias.value).toEqual('objarr-0');
+
+    expect(ctx.component.anchorsOptions).toEqual(['', 'objarr-0', 'objarr-1']);
+
+    ctx.component.alias.setValue('objarr-1');
+    ctx.component.onSubmit();
+    expect(ctx.observables.saveProperty.value.aliases).toEqual(['objarr-1']);
+
+    ctx.component.useDefault({ checked: true });
+    ctx.component.onSubmit();
+    expect(ctx.observables.saveProperty.value.aliases).toEqual(['objarr-1']);
+    expect(ctx.observables.saveProperty.value.findChild(['bool']).value).toEqual(false);
   });
 
   it('add environment in environments tree with duplicate default, should submit changes with default values', () => {

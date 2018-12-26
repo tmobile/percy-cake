@@ -72,7 +72,11 @@ class YamlParser {
    * @returns TreeNode parsed.
    */
   public parse(yaml: string, simpleArray: boolean = true) {
-    this.events = yamlJS.parse(yaml);
+    try {
+      this.events = yamlJS.parse(yaml);
+    } catch (err) {
+      throw new Error(`${err.problem} ${err.context} on line ${err.problem_mark.line + 1}, column ${err.problem_mark.column + 1}`);
+    }
     this.lines = yaml.split(/\r?\n/);
     this.cursor = 0;
     this.anchors = {};
@@ -379,13 +383,6 @@ class YamlRender {
     result += this.walkTreeNode(tree);
     result = _.trim(result);
 
-    try {
-      // Validate against safe schema
-      jsYaml.safeLoad(result, { strict: true });
-    } catch (err) {
-      throw err;
-    }
-
     return result;
   }
 
@@ -541,10 +538,22 @@ export class YamlService {
   /**
    * Convert TreeNode object to yaml format.
    * @param tree The TreeNode object
+   * @param validate Whether validate converted yaml string, defaults to true
    * @returns Yaml format string
    */
-  convertTreeToYaml(tree: TreeNode) {
-    return new YamlRender().render(tree);
+  convertTreeToYaml(tree: TreeNode, validate: boolean = true) {
+    const result = new YamlRender().render(tree);
+
+    if (validate) {
+      try {
+        // Validate against safe schema
+        jsYaml.safeLoad(result, { strict: true });
+      } catch (err) {
+        throw err;
+      }
+    }
+
+    return result;
   }
 
   /**
@@ -718,23 +727,25 @@ export class YamlService {
   }
 
   /**
-   * Environment and inherit another environment.
+   * Environment can inherit another environment.
    * This method merges environment.
    *
    * @param dest the dest environment to merge to
    * @param src the source environment to merge from
    */
   private mergeEnv(dest: TreeNode, src: TreeNode) {
+    const match = src.findChild(dest.getPathsWithoutRoot());
+    if (match) {
+      dest.comment = match.comment || dest.comment;
+      dest.aliases = match.aliases;
+      dest.anchor = match.anchor;
+    }
     if (dest.isLeaf()) {
-      const match = src.findChild(dest.getPathsWithoutRoot());
       if (match) {
         dest.value = match.value;
-        dest.comment = match.comment || dest.comment;
       }
     } else if (dest.isArray()) {
-      const match = src.findChild(dest.getPathsWithoutRoot());
       if (match) {
-        dest.comment = match.comment || dest.comment;
         // Copy array
         dest.children = [];
         const arr = _.cloneDeep(match.children);
@@ -744,7 +755,6 @@ export class YamlService {
         });
       }
     } else {
-      dest.comment = src.comment || dest.comment;
       _.each(dest.children, subChild => {
         this.mergeEnv(subChild, src);
       });
@@ -796,7 +806,10 @@ export class YamlService {
     const substituted = this.substitute(merged, tokens, 0);
     substituted.key = env;
 
-    return this.convertTreeToYaml(substituted);
+    // Don't validate here since the env node is a partial of tree
+    // , the anchor alias will always fail to validate if any
+    // But we'll validate when saving the whole config
+    return this.convertTreeToYaml(substituted, false);
   }
 
   /**

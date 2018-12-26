@@ -187,7 +187,10 @@ export class EditorComponent implements OnChanges {
       const tree = new TreeNode('');
       tree.children.push(node);
       try {
-        this.previewCode = this.yamlService.convertTreeToYaml(tree);
+        // Don't validate here since the node is a partial of tree
+        // , the anchor alias will always fail to validate if any
+        // But we'll validate when saving the whole config
+        this.previewCode = this.yamlService.convertTreeToYaml(tree, false);
       } catch (err) {
         this.store.dispatch(new Alert({ message: err.message, alertType: 'error' }));
       }
