@@ -22,8 +22,7 @@
         background-color: #EFEFEF;
 
         .logo {
-          width: 200px;
-          height: 180px;
+          height: 195px;
           margin-top: 4em;
           background-position: center;
           background-size: cover;
@@ -37,6 +36,23 @@
           height: 410px;
           float: right;
 
+          .open-mode {
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+
+            button {
+              width: 150px;
+            }
+            .btn-local {
+              margin-top: -20px;
+              margin-bottom: 20px;
+            }
+          }
+
           .login-form {
               display: flex;
               flex-direction: column;
@@ -47,10 +63,12 @@
               .form-field {
                   margin-bottom: 10px;
               }
+              button {
+                margin-top: 5px;
+                text-transform: uppercase;
+              }
               .btn-login {
-                  margin-top: 5px;
                   width: 90px;
-                  text-transform: uppercase;
                   float: right;
               }
               .login-error-message {

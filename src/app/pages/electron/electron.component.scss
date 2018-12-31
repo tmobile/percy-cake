@@ -1,0 +1,114 @@
+.electron-container {
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+
+  #file-explorer {
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+
+    .file-explorer-tree {
+      display: flex;
+      flex-direction: row;
+      flex: 1;
+
+      .mat-tree {
+        flex: 1;
+      }
+
+      .sub-tree {
+        padding-left: 10px;
+        background-color: white;
+      }
+
+      .mat-tree-node {
+        overflow: visible;
+        min-height: 0;
+        flex-shrink: 0;
+
+        .btn-tree-toggle {
+          cursor: pointer;
+          width: 20px;
+        }
+
+        .context-menu-trigger {
+          position: absolute;
+        }
+
+        .underline {
+          border-bottom: black;
+          border-bottom-style: dotted;
+          border-bottom-width: thin;
+          display: flex;
+          align-items: center;
+          flex: 1;
+          cursor: pointer;
+
+          .key {
+            font-weight: 700;
+            line-height: 1.2;
+            cursor: pointer;
+          }
+
+          .btn-action {
+            margin-left: auto;
+            ::ng-deep .mat-button-wrapper {
+              position: relative;
+              top: -5px;
+            }
+          }
+          ::ng-deep .mat-icon-button {
+            font-size: 20px;
+            font-weight: 700;
+          }
+        }
+      }
+    }
+  }
+
+  #editor {
+    padding-right: 10px;
+
+    ::ng-deep .mat-tab-label-container, ::ng-deep .mat-tab-body-wrapper, ::ng-deep .mat-tab-body-content {
+      display: flex;
+      flex: 1;
+    }
+
+    .mat-tab-group {
+      height: 100%;
+    }
+
+    app-editor {
+      display: flex;
+      flex: 1;
+      padding-bottom: 10px;
+
+      ::ng-deep .col-container .col-default-env {
+        padding-right: 0 !important;
+      }
+      ::ng-deep .col-container .col-other-envs {
+        padding-left: 0 !important;
+      }
+    }
+
+    .buttons-row {
+        display: flex;
+        padding-top: 10px;
+        .btn-cancel {
+            margin-left: auto;
+        }
+        >* {
+            margin-right: 10px;
+        }
+        button {
+          text-transform: uppercase;
+        }
+    }
+  }
+}
+
+.btn-action-menu {
+  display: block;
+  width: 100%;
+}

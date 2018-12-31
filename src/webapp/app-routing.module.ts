@@ -9,6 +9,7 @@ import { InitComponent } from 'components/init/init.component';
 import { LoginComponent } from 'pages/login/login.component';
 import { DashboardComponent } from 'pages/dashboard/dashboard.component';
 import { EditorPageComponent } from 'pages/editor/editor.component';
+import { ElectronAppComponent } from 'pages/electron/electron.component';
 import { CanDeactivateGuard } from 'services/can-deactivate-guard.service';
 
 
@@ -17,6 +18,11 @@ const routes: Routes = [
     path: 'login',
     component: LoginComponent,
     canActivate: [AuthGuardService],
+  },
+  {
+    path: 'electron/:folder',
+    component: ElectronAppComponent,
+    canDeactivate: [CanDeactivateGuard],
   },
   {
     path: '',

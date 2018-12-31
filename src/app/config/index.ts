@@ -18,3 +18,6 @@ export const percyConfig: any = {};
 
 // The app's specific percy config, will be loaded when editor page load, see EditorEffects#pageLoad method
 export const appPercyConfig: any = {};
+
+// The electron api, only available when running in electron
+export const electronApi = window['acquireElectionApi'] ? window['acquireElectionApi']() : null;

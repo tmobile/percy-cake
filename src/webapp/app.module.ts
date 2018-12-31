@@ -14,6 +14,7 @@ import { AppComponent } from './app.component';
 import { LoginComponent } from 'pages/login/login.component';
 import { DashboardComponent } from 'pages/dashboard/dashboard.component';
 import { EditorPageComponent } from 'pages/editor/editor.component';
+import { ElectronAppComponent } from 'pages/electron/electron.component';
 
 // components
 import { InitComponent } from 'components/init/init.component';
@@ -23,6 +24,7 @@ import { MainHeaderComponent } from 'components/main-header/main-header.componen
 import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.component';
 import { SelectAppDialogComponent } from 'components/select-app-dialog/select-app-dialog.component';
 import { ConflictDialogComponent } from 'components/conflict-dialog/conflict-dialog.component';
+import { PreferencesComponent } from 'components/preferences/preferences.component';
 
 import { StoreModule } from '@ngrx/store';
 import { reducers, metaReducers } from 'store';
@@ -39,6 +41,7 @@ import { EditorEffects } from 'store/affects/editor.effects';
 @NgModule({
   declarations: [
     AppComponent,
+    ElectronAppComponent,
     LoginComponent,
     InitComponent,
     DashboardComponent,
@@ -48,6 +51,7 @@ import { EditorEffects } from 'store/affects/editor.effects';
     CommitDialogComponent,
     SelectAppDialogComponent,
     ConflictDialogComponent,
+    PreferencesComponent,
   ],
   imports: [
     HttpClientModule,
@@ -60,7 +64,8 @@ import { EditorEffects } from 'store/affects/editor.effects';
   entryComponents: [
     CommitDialogComponent,
     SelectAppDialogComponent,
-    ConflictDialogComponent
+    ConflictDialogComponent,
+    PreferencesComponent,
   ],
   bootstrap: [AppComponent]
 })

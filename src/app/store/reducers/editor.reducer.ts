@@ -27,6 +27,12 @@ export const initialState: State = {
 
 export function reducer(state = initialState, action: EditorActionsUnion | BackendActionsUnion): State {
   switch (action.type) {
+    case EditorActionTypes.PageRestore: {
+      return {
+        ...action.payload
+      };
+    }
+
     case EditorActionTypes.PageLoad: {
       return {
         ...initialState,

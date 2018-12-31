@@ -1,0 +1,34 @@
+<!-- preferences component -->
+<div class="preferences-component">
+  <!-- preferences form -->
+  
+  <form class="preferences-form" (ngSubmit)="save()">
+      <h1 class="form-heading">Preferences</h1>
+
+      <mat-form-field class="form-field">
+        <input type="text" matInput placeholder="Environments File" [formControl]="environmentsFile" />
+        <mat-error *ngIf="environmentsFile.hasError('required')">*Required</mat-error>
+        <mat-error *ngIf="environmentsFile.hasError('pattern')">The file name should only contain these characters: "a-zA-Z0-9"</mat-error>
+      </mat-form-field>
+
+      <mat-form-field class="form-field">
+        <input type="text" matInput placeholder="Variable Prefix" [formControl]="variablePrefix" />
+        <mat-error *ngIf="variablePrefix.hasError('required')">*Required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field class="form-field">
+        <input type="text" matInput placeholder="Variable Suffix" [formControl]="variableSuffix" />
+        <mat-error *ngIf="variableSuffix.hasError('required')">*Required</mat-error>
+      </mat-form-field>
+
+      <div class="buttons-row">
+        <button type="button" mat-button color="primary" class="btn-cancel" mat-dialog-close>
+          Cancel
+        </button>
+        <button type="submit" [disabled]="disabed" mat-raised-button color="primary" class="btn-preferences">
+          Save
+        </button>
+      </div>
+
+    </form>
+</div>

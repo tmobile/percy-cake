@@ -1,0 +1,89 @@
+<div class="electron-container" appSplit [gutterWidth]="20" (splitDrag)="splitDrag()">
+
+  <div id="file-explorer" appSplitArea [splitSize]="20" [minSize]="0">
+    <div class="file-explorer-tree">
+      <mat-tree [dataSource]="fileDataSource" [treeControl]="fileTreeControl" class="nested-tree">
+        <mat-tree-node *matTreeNodeDef="let node">
+          <ng-container *ngTemplateOutlet="treeNode; context: {$implicit: node}"></ng-container>
+        </mat-tree-node>
+
+        <mat-nested-tree-node *matTreeNodeDef="let node; when: hasNestedChild">
+          <div>
+            <ng-container *ngTemplateOutlet="treeNode; context: {$implicit: node}"></ng-container>
+            <div class="sub-tree" *ngIf="node.expanded">
+              <ng-container matTreeNodeOutlet></ng-container>
+            </div>
+          </div>
+        </mat-nested-tree-node>
+      </mat-tree>
+    </div>
+
+    <!-- Tree node template -->
+    <ng-template #treeNode let-node>
+      <div class="mat-tree-node">
+        <div *ngIf="node.isFile" class="btn-tree-toggle"></div>
+
+        <div *ngIf="!node.isFile" class="btn-tree-toggle" (click)="toggle(node)">
+          <mat-icon class="mat-icon-rtl-mirror">
+            {{node.expanded ? 'arrow_drop_down' : 'arrow_right'}}
+          </mat-icon>
+        </div>
+
+        <span class="context-menu-trigger" #menuTrigger [matMenuTriggerFor]="menu"></span>
+
+        <div class="underline" (contextmenu)="openMenu($event, menuTrigger)" (click)="editFile(node)">
+          <div [matTooltip]="node.path" matTooltipPosition="above" class="key">{{node.fileName}}</div>
+          <button mat-icon-button #menuButton class="btn-action" (click)="$event.stopPropagation()" (contextmenu)="buttonOpenMenu($event, menuButton)"
+            [matMenuTriggerFor]="menu">...</button>
+        </div>
+
+        <mat-menu #menu="matMenu">
+          <button *ngIf="!node.isFile" mat-button class="btn-action-menu" color="primary" (click)="addNewFile(node)">
+            Add New File
+          </button>
+          <button *ngIf="!node.isFile && !hasEnvFile(node)" mat-button class="btn-action-menu" color="primary" (click)="addEnvironmentsFile(node)">
+            Add Environments File
+          </button>
+          <button *ngIf="node.isFile" mat-button class="btn-action-menu" color="warn" (click)="editFile(node)">
+            Edit
+          </button>
+          <button *ngIf="node.isFile" mat-button class="btn-action-menu" color="warn" (click)="deleteFile(node)">
+            Delete
+          </button>
+        </mat-menu>
+      </div>
+    </ng-template>
+  </div>
+
+  <div id="editor" appSplitArea [splitSize]="80" [minSize]="700">
+    <mat-tab-group animationDuration="0ms" [selectedIndex]="selectedEditor.value" (selectedIndexChange)="selectTab($event)">
+      <mat-tab *ngFor="let file of openedFiles" class="editor-tab">
+        <ng-template mat-tab-label>
+          <span [matTooltip]="file.path">{{file.modified ? '*' + file.fileName : file.fileName}}</span>
+          <button mat-icon-button (click)="closeFile(file)">
+            <mat-icon>close</mat-icon>
+          </button>
+        </ng-template>
+
+        <app-editor #editor [environments]="file.environments" [configuration]="file.configuration" [appName]="file.applicationName"
+          [fileName]="file.editMode || file.envFileMode ? file.fileName : ''" [editMode]="file.editMode" [envFileMode]="file.envFileMode">
+
+          <ng-template #buttonsTemplate>
+            <div class="buttons-row">
+              <button type="button" mat-button color="primary" [disabled]="fileSaving || !file.modified" class="btn-cancel"
+                (click)="reset(file)">
+                Reset
+              </button>
+
+              <button type="button" mat-raised-button color="primary" [disabled]="fileSaving || !file.modified" class="btn-save"
+                (click)="saveConfig(editor, file)">
+                Save
+              </button>
+            </div>
+          </ng-template>
+        </app-editor>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+
+</div>

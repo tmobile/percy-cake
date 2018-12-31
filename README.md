@@ -278,9 +278,13 @@ After build, you can either:
 
 ## How Electron App Works
 
-Electron app has same functionalites as webapp. It actually loads the exactly same built bundle of webapp within Electron environment.
+Electron app has two modes: open remote repo and open local folder.
 
-One thing to note is that Electron app does not need cors-proxy server since there is no cors restrict for a desktop app.
+The open remote repo mode has same functionalites as webapp (With one difference that Electron app does not need cors-proxy server since there is no cors restrict for a desktop app).
+
+The open local folder mode will open folder within local file system and supports multiple editors for multiple files.
+
+The electron app actually loads the exactly same built bundle of webapp, it will detect whether running within the Electron environment to support local folder mode.
 
 ## Run Electron App
 

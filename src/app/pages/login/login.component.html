@@ -6,7 +6,15 @@
         <div class='logo'></div>
     </mat-card>
     <mat-card class="forms-container mat-elevation-z">
-      <form class="login-form" (ngSubmit)="login()">
+      <div class="open-mode" *ngIf="!openMode">
+          <button mat-raised-button color="primary" class="btn-local" (click)="openLocalFolder()">
+              Open Local Folder
+          </button>
+          <button mat-raised-button color="primary" class="btn-remote" (click)="setOpenMode('remote')">
+              Open Remote Repo
+          </button>
+      </div>
+      <form class="login-form" (ngSubmit)="login()" *ngIf="openMode === 'remote'">
         <h1 class="form-heading">Login</h1>
 
         <mat-form-field class="form-field">
@@ -45,6 +53,9 @@
         <mat-error class="user-pass-error" *ngIf="username.hasError('invalid') && password.hasError('invalid')">Invalid username or password</mat-error>
 
         <div>
+            <button type="button" *ngIf="isElectron()" [disabled]="formProcessing| async" mat-icon-button color="primary" (click)="setOpenMode('')">
+              <mat-icon>arrow_back</mat-icon>
+            </button>
             <button type="submit" [disabled]="formProcessing| async" mat-raised-button color="primary" class="btn-login">
               Login
             </button>

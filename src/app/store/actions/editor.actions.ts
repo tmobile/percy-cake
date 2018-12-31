@@ -6,6 +6,7 @@ export enum EditorActionTypes {
   PageLoad = '[Editor] Page Load',
   PageLoadSuccess = '[Editor] Page Load Success',
   PageLoadFailure = '[Editor] Page Load Failure',
+  PageRestore = '[Editor] Page restore',
   ConfigurationChange = '[Editor] Configuration Change',
 }
 
@@ -26,6 +27,12 @@ export class PageLoadFailure implements Action {
   constructor(public payload: any) { }
 }
 
+export class PageRestore implements Action {
+  readonly type = EditorActionTypes.PageRestore;
+
+  constructor(public payload: any) { }
+}
+
 export class ConfigurationChange implements Action {
   readonly type = EditorActionTypes.ConfigurationChange;
   constructor(public payload: Configuration) { }
@@ -35,5 +42,6 @@ export type EditorActionsUnion =
   | PageLoad
   | PageLoadSuccess
   | PageLoadFailure
+  | PageRestore
   | ConfigurationChange
   ;

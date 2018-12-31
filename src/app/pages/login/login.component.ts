@@ -10,7 +10,7 @@ import { startWith, debounceTime, distinctUntilChanged, switchMap, withLatestFro
 
 import * as _ from 'lodash';
 
-import { percyConfig } from 'config';
+import { electronApi, percyConfig } from 'config';
 import * as appStore from 'store';
 import * as AuthActions from 'store/actions/auth.actions';
 import { MaintenanceService } from 'services/maintenance.service';
@@ -43,6 +43,8 @@ export class LoginComponent implements OnInit {
   // use to trigger the change in the input from browser auto fill
   @ViewChild('autoTrigger') private autoTrigger: MatAutocompleteTrigger;
 
+  openMode = '';
+
   /**
    * constructs the component
    * @param router the router instance
@@ -58,9 +60,40 @@ export class LoginComponent implements OnInit {
   ) { }
 
   /**
+   * Check if is running electron.
+   * @returns true if is running electron, false otherwise
+   */
+  isElectron() {
+    return !!electronApi;
+  }
+
+  /**
+   * Open local folder.
+   */
+  openLocalFolder() {
+    electronApi.openFolderDialog();
+  }
+
+  /**
+   * Set open mode.
+   * @param openMode the open mode
+   */
+  setOpenMode(openMode: string) {
+    window['openMode'].next(openMode);
+  }
+
+  /**
    * handle component initialization
    */
   ngOnInit() {
+    if (!this.isElectron()) {
+      this.openMode = 'remote';
+    } else {
+      window['openMode'].subscribe(res => {
+        this.openMode = res;
+      });
+    }
+
     // if currentURL is login then route depending on whether user is logged-in or not
     this.store.pipe(select(appStore.getCurrentUser)).pipe(
       withLatestFrom(this.store.pipe(select(appStore.getRedirectUrl))),

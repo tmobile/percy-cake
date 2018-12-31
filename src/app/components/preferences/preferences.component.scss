@@ -1,0 +1,29 @@
+// preferences page
+@import "variables";
+.preferences-component {
+    width: 300px;
+    height: 300px;
+
+    .preferences-form {
+      display: flex;
+      flex-direction: column;
+      .form-heading {
+          text-align: left;
+          margin-bottom: 25px;
+      }
+      .form-field {
+          margin-bottom: 10px;
+      }
+      .buttons-row {
+        display: flex;
+        justify-content: center;
+  
+        > * {
+          margin: 0 8px;
+        }
+        button {
+          text-transform: uppercase;
+        }
+      }
+    }
+}

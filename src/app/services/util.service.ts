@@ -7,7 +7,7 @@ import * as path from 'path';
 import * as HttpErrors from 'http-errors';
 import * as _ from 'lodash';
 
-import { percyConfig } from 'config';
+import { percyConfig, electronApi } from 'config';
 import { Authenticate } from 'models/auth';
 import * as filesystem from 'filesystem';
 
@@ -36,6 +36,9 @@ export class UtilService extends YamlService {
     if (_.isEmpty(percyConfig)) {
       const config = await this.http.get('percy.conf.json').toPromise();
       _.assign(percyConfig, config);
+      if (electronApi) {
+        _.assign(percyConfig, electronApi.getPreferences());
+      }
     }
   }
 
