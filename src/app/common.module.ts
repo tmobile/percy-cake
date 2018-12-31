@@ -16,7 +16,7 @@ import { AddEditPropertyDialogComponent } from 'components/add-edit-property-dia
 import { NestedConfigViewComponent } from 'components/nested-config-view/nested-config-view.component';
 
 // directives
-import { SplitDirective } from 'directives/splitter.directive';
+import { SplitDirective, SplitAreaDirective } from 'directives/splitter.directive';
 import { HighlightDirective } from 'directives/highlight.directive';
 
 export const hljsLanguages = () => [{ name: 'yaml', func: yaml }];
@@ -30,6 +30,7 @@ export const hljsLanguages = () => [{ name: 'yaml', func: yaml }];
     NestedConfigViewComponent,
     AddEditPropertyDialogComponent,
     SplitDirective,
+    SplitAreaDirective,
     HighlightDirective,
   ],
   imports: [
@@ -44,6 +45,7 @@ export const hljsLanguages = () => [{ name: 'yaml', func: yaml }];
     NestedConfigViewComponent,
     AddEditPropertyDialogComponent,
     SplitDirective,
+    SplitAreaDirective,
     HighlightDirective,
     BrowserModule,
     MaterialComponentsModule,

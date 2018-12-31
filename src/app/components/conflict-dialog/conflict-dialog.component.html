@@ -16,11 +16,11 @@
                   <mat-radio-button value="draft" color="primary" class="mat-radio-button draft">Use Draft</mat-radio-button>
                   <mat-radio-button value="repo" color="primary" class="mat-radio-button repo">Use Repository</mat-radio-button>
               </mat-radio-group>
-              <div class="view-codes" appSplit [gutterHeight]="400" [gutterWidth]="10" [splitAreas]="['#draft-code-' + i,'#repo-code-' + i]" [splitSizes]="[50,50]">
-                  <mat-card class="view-code mat-elevation-z" id="{{'draft-code-' + i}}">
+              <div class="view-codes" appSplit [gutterHeight]="400" [gutterWidth]="10">
+                  <mat-card class="view-code mat-elevation-z" appSplitArea [splitSize]="50" [minSize]="50">
                       <pre><code appHighlight [highlight]="file.draftCode" [languages]="['yaml']"></code></pre>
                   </mat-card>
-                  <mat-card class="view-code mat-elevation-z" id="{{'repo-code-' + i}}">
+                  <mat-card class="view-code mat-elevation-z" appSplitArea [splitSize]="50" [minSize]="50">
                       <pre><code appHighlight [highlight]="file.repoCode" [languages]="['yaml']"></code></pre>
                   </mat-card>
               </div>

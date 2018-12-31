@@ -1,7 +1,6 @@
-<div class="col-container" appSplit [gutterWidth]="20" [splitAreas]="['#editor-tree-view','#editor-detail-view']"
-  [splitSizes]="[60,40]" [splitMinSizes]="[330,150]">
+<div class="col-container" appSplit [gutterWidth]="20">
   <!-- col which shows tree view -->
-  <div class="col-default-env" id="editor-tree-view">
+  <div class="col-default-env" appSplitArea [splitSize]="60" [minSize]="330">
     <!-- filename input -->
     <mat-form-field class="filename" [floatLabel]="'always'">
       <label>{{appName}}/</label>
@@ -22,7 +21,7 @@
   </div>
 
   <!-- detail panel -->
-  <div class="col-other-envs" id="editor-detail-view">
+  <div class="col-other-envs" appSplitArea [splitSize]="40" [minSize]="150">
     <!-- if node is selected to view detail -->
     <div class="section-heading" *ngIf="selectedNode">
       <h3>{{selectedNode.getPathsString()}}</h3>
