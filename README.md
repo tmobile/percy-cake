@@ -2,53 +2,59 @@
 
 ## Overview
 
-"Configuration as code" is a technique to store environmental variables, feature flags, and other configuration items in an SCM the same way the code is stored. When the code is deployed, the CI process generates the specific configuration for the proper environment from the config SCM. Then the CD process deploys it to the appropriate hosts alongside the new code. The significant advantage of this approach is that configuration changes are tracked over time which is critical to support.
+### FAQ:
+- [What is Configuration As Code](docs/faq.md) ?
+- [Why is it called `Percy`](docs/faq.md)?
+- [Why `YAML`](docs/faq.md) ?
 
-Percival Editor is a configuration tool that allows developers and DevOps a standard and hierarchical approach and intuitive form like User Interface for managing and maintaining complex configuration environments. The configuration files created by this tool will be used in DevOps pipeline to generate final configuration for deployment to various environments.
 
-The editor allows the user to manage (list, create, edit or delete) YAML configuration files from a git repository in the browser directly. 
-and it's a pure static web page, that requires no back-end. But a proxy may be needed for it to access the git repository successfully.
+The Percival Editor is a configuration tool that allows authorized users [devs, ops, web admins...] an intuitive form based User Interface for managing and maintaining complex application configuration files that are deployed to multiple environments. This editor will enforce some simple rules that will enable robust continuous deployment pipelines to automate validate, hydration and deployment of application configuration files to any number of snowflake environments.
 
-The git repository to be managed by this editor must follow the mono directory structure as below:
+Percy can interact with a local file system or a remote git repository.
+The editor allows the user to manage (list, create, edit or delete) YAML configuration files from a git repository in the browser directly.
+
+The core Percy application is a pure static web page, that requires no back-end. But a proxy may be needed for it to access the git repository successfully.
+We have provided specialized builders to package Percy for various runtimes (Percy Runtime Modes)[docs/percy.runtime.modes.md]
+
+When accessing a remote git repository with this editor it must follow the mono-repo directory structure as below:
 ```
 apps/
   +- .percyrc
   +- app1/
+  |    +- .percyrc
+  |    +- environments.yaml
   |    +- client.config.yaml
   |    +- server.config.yaml
   |    +- feature.toggles.yaml
-  |    +- environments.yaml
-  |    +- hydrate.js
   |    +- readme.md
-  |    +- .percyrc
   +- app2/
+  |    +- environments.yaml
   |    +- client.config.yaml
   |    ...
   ...
-libs/
-  +- hydration.libs.hjs
-  +- readme.md
 readme.md
 ```
 
-It must have an `apps` directory (the directory name is configurable), with each sub-directory representing an application. The editor will load all applications together with all the YAML files inside each application (non-YAML files will be ignored). 
+The git repo must have a root level folder named `./apps` (_name of this root directory is configurable_), with each sub-directory representing an application. The editor will load all applications together with all the `YAML` files inside each application (non-`YAML` files will be ignored).
 
-The `hydrate.js` script here is used in the CI process to *hydrate* the YAML files in the repository to generate environment specific YAML files, which is then used for deployment to various environments. The editor provides a  feature to allow the user to preview the generated environment specific YAML file. 
+Each application folder must contain a special YAML file calle `environments.yaml` (_file name is configurable_) that lists all environments that the application is deployed to.  So in the editor, when editing the other YAML files, you can simply select the environments pre-defined in this file.
+This `environments` file can list properties for each environment that help an automated build and deployment system (CICD) to know where and how to deploy to each environment.
 
-In each application folder, all YAML files must follow the format as below:
+In each application folder, all `YAML` files must follow the format as below:
 ```yaml
 default: !!map
-
+  property-name: !!type value
 
 environments: !!map
 
 ```
 
-The `default` node contains the default configuration properties for the application, and the `environments` node contains multiple environment nodes, with each environment node containing environment-specific configuration properties. 
+The `default` node contains the default configuration properties for the application, and the `environments` node contains one or more environment nodes as defined in the `environments.yaml` file. The environment nodes inherit *all* the properties defined in the `default` node.
+The user can _override_ any of these default settings inside the environment node, they **cannot** _add_ new properties not already defined in `default`. This is a protection to assure that all environments are given the same set of configuration propteries, while allowing individual environments to replace named properties with values specific to the deployed environment (eg: url to database or api services ).
 
-The environment nodes inherit the `default` node, and the user can add properties to override the default values in the `default` node.
+When the `config.yaml` file is compiled it should create a separate `config.json` file for every environment listed in the `environments.yaml`.
 
-Here is an example of a YAML file, and you can notice the `environments` node contains `prod`, `dev` and `qa` environment nodes. 
+Here is an example of a YAML file, and you can notice the `environments` node contains `prod`, `dev` and `qa` environment nodes.
 ```yaml
 default: !!map
   server.host: !!int 1  # TMO server url
@@ -78,21 +84,20 @@ environments: !!map
     apihost: !!str "http://t-mobile.com_{$api-path}_"
 ```
 
-Each application will have a special YAML file called `environments.yaml` (the file name is configurable), which defines all the environments supported by the application. So in the editor, when editing the other YAML files, you can simply select the environments pre-defined in this file. 
 
 
 ## Usage
 
-Log in with your username / password of your git account, the URL and branch of your configuration repository. 
-The editor dashboard will load the YAML files in each application folder from your repository. 
-Then you can select any file to edit, delete a file or add a new file to the application. 
+Log in with your username / password of your git account, the URL and branch of your configuration repository.
+The editor dashboard will load the YAML files in each application folder from your repository.
+Then you can select any file to edit, delete a file or add a new file to the application.
 
-On the add / edit page, the `SAVE AS DRAFT` button will only save your changes locally, the changes are only committed and pushed to the repository when you click `COMMIT` button. 
-You can also save multiple files as draft, and use the 'COMMIT CHANGES' button on the dashboard page to commit and push changes altogether. 
+On the add / edit page, the `SAVE AS DRAFT` button will only save your changes locally, the changes are only committed and pushed to the repository when you click `COMMIT` button.
+You can also save multiple files as draft, and use the 'COMMIT CHANGES' button on the dashboard page to commit and push changes altogether.
 
-The environment nodes have a `View Compiled YAML` option, which will generate a preview of environment specific YAML file that user uses in application deployment. It does the similar thing as the `hydrate.js` script mentioned above. In this view, all inheritances and variables will be resolved. 
+The environment nodes have a `View Compiled YAML` option, which will generate a preview of environment specific YAML file that user uses in application deployment. It does the similar thing as the `hydrate.js` script mentioned above. In this view, all inheritances and variables will be resolved.
 
-Here is a brief [video](https://www.youtube.com/watch?v=Ealtb91SUFM&feature=youtu.be) to demonstrate the features. 
+Here is a brief [video](https://www.youtube.com/watch?v=Ealtb91SUFM&feature=youtu.be) to demonstrate the features.
 
 
 ## Feature List
@@ -107,8 +112,8 @@ Here is a brief [video](https://www.youtube.com/watch?v=Ealtb91SUFM&feature=yout
 - Commit changes to the repository
 - Resolve conflicts when committing changes
 - Define variables at the top-level, and use the variables anywhere in the YAML file
-- The environment node has a special `inherits` property, it can be used to inherit from another environment node. Note that all environment nodes inherit from the default node by default. 
-- View the compiled YAML of the environment node, in this view, the inherits and variables will be resolved. 
+- The environment node has a special `inherits` property, it can be used to inherit from another environment node. Note that all environment nodes inherit from the default node by default.
+- View the compiled YAML of the environment node, in this view, the inherits and variables will be resolved.
 
 
 ## How it works
@@ -142,36 +147,36 @@ There are 3 configuration files:
 - [src/percy.conf.test.json](src/percy.conf.test.json): configuration used in Karma test
 - [src/percy.conf.prod.json](src/percy.conf.prod.json): for production configuration, it will be copied to `dist/build/percy.conf.json` in the production build
 
-| Variable              | Description                                                  |
-| --------------------- | ------------------------------------------------------------ |
+| Variable              | Description                                                                                                                                                |
+|-----------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | corsProxy             | The cors proxy for isomorphic-git (This config is only used in webapp and irrelevant for Electron app, since Electron app does not need cors proxy server) |
-| defaultBranchName     | Default branch name shown on login page                      |
-| defaultRepositoryUrl  | Default repository url shown on login page                   |
-| lockedBranches        | Locked branches, you cannot enter these branches on login page |
-| storeName             | The browser indexeddb store name                             |
-| reposFolder           | The browserfs folder to clone repos into                     |
-| draftFolder           | The browserfs folder to store draft files                    |
-| metaFolder            | The browserfs folder contains metadata file                  |
-| repoMetadataVersion   | The repo metdata version (in case the structrure of repo metadata changes, update this version) |
-| loggedInUsersMetaFile | The file name which contains logged in user names            |
-| yamlAppsFolder        | The folder name which contains apps' yaml config             |
-| environmentsFile      | The environments file name (JUST file name)                  |
-| pullTimeout           | The git pull timeout, in which case will switch to clone     |
-| loginSessionTimeout   | The login session timeout, like "1m", "2.5 hrs", "2 days". Default to 30m. |
-| encryptKey            | The key used to encrypt security information like password   |
-| encryptSalt           | The salt used to encrypt security information like password  |
-| variablePrefix        | The YAML variable substitute prefix                          |
-| variableSuffix        | The YAML variable substitute suffix                          |
+| defaultBranchName     | Default branch name shown on login page                                                                                                                    |
+| defaultRepositoryUrl  | Default repository url shown on login page                                                                                                                 |
+| lockedBranches        | Locked branches, you cannot enter these branches on login page                                                                                             |
+| storeName             | The browser indexeddb store name                                                                                                                           |
+| reposFolder           | The browserfs folder to clone repos into                                                                                                                   |
+| draftFolder           | The browserfs folder to store draft files                                                                                                                  |
+| metaFolder            | The browserfs folder contains metadata file                                                                                                                |
+| repoMetadataVersion   | The repo metdata version (in case the structrure of repo metadata changes, update this version)                                                            |
+| loggedInUsersMetaFile | The file name which contains logged in user names                                                                                                          |
+| yamlAppsFolder        | The folder name which contains apps' yaml config                                                                                                           |
+| environmentsFile      | The environments file name (JUST file name)                                                                                                                |
+| pullTimeout           | The git pull timeout, in which case will switch to clone                                                                                                   |
+| loginSessionTimeout   | The login session timeout, like "1m", "2.5 hrs", "2 days". Default to 30m.                                                                                 |
+| encryptKey            | The key used to encrypt security information like password                                                                                                 |
+| encryptSalt           | The salt used to encrypt security information like password                                                                                                |
+| variablePrefix        | The YAML variable substitute prefix                                                                                                                        |
+| variableSuffix        | The YAML variable substitute suffix                                                                                                                        |
 
 
 The git repository can contain optional `.percyrc` files, which provide repository-specific or application-specific configuration. The following properties are supported now:
 
-| Property                 | Description                                                  |
-| ------------------------ | ------------------------------------------------------------ |
-| variablePrefix           | The YAML variable substitute prefix                          |
-| variableSuffix           | The YAML variable substitute suffix                          |
+| Property       | Description                         |
+|----------------|-------------------------------------|
+| variablePrefix | The YAML variable substitute prefix |
+| variableSuffix | The YAML variable substitute suffix |
 
-If it's in the `apps` folder, the configuration applies to all applications, and if it's in the specific application folder, it only applies to the corresponding application. When provided, the default properties from the `percy.conf.json` will be overridden. 
+If it's in the `apps` folder, the configuration applies to all applications, and if it's in the specific application folder, it only applies to the corresponding application. When provided, the default properties from the `percy.conf.json` will be overridden.
 
 Here is an example of `.percyrc` file:
 ```json
@@ -202,98 +207,52 @@ npm test
 npm start
 ```
 
+# Percy Runtime Modes:
 
+The Percy Configuration Editor application has **Five** different runtimes that share the same core application modules!
 
-## Run from Docker
+## 1.  Development server
 
-Prerequisite
-
-- Docker
-- Docker Compose
-
-
-
-Build app (which will build in production mode), the static assets are built under `dist/build`:
+the Percy editor can be run using the webpack development server for local testing and development.
 
 ```bash
-./docker/build.sh
-
-# After build, 3 files will be generated in 'dist/build':
-# index.html
-# percy.bundle.min.js
-# percy.conf.json (which is a copy of src/percy.conf.prod.json)
+# Build and Start development server at http://localhost:4200
+npm start
 ```
 
 
+## 2.  Static assets
 
-Run docker compose:
-
-```bash
-docker-compose -f ./docker/docker-compose.yml up --build
-```
-
-
-
-In this step supports config the nginx port, you can refer to [docker/docker-compose.yml](docker/docker-compose.yml)  :
-
-| Environment | Description                                                  |
-| ----------- | ------------------------------------------------------------ |
-| NGINX_PORT  | The nginx server port. The nginx will serve both the static assets in `dist` and the isomorphic-git proxy. |
-
-
-
-Assume `NGINX_PORT` is configured as 8080, then you can visit http://localhost:8080
-
-
-
-## How VSCode Extension works
-
-In general, the VSCode extension of Percy editor is also an Angular app running in [VSCode webview](https://code.visualstudio.com/docs/extensions/webview).
-
-1. Module and Component are core concepts of angular, so we abstract the common ui part of [editor component](src/app/components/editor), making it reusable in both webapp and VSCode extension app.
-2. The vscode extension app does not need some functionalities (like route, browser fs, localstorage, pages components, most ngrx effects. These functionalities may not even be supported in vscode webview). So we have done necessary code refactor to make the vscode extension app can get rid of those unneeded and only import needed dependency modules.
-3. So as point 2 implied, the webapp and vscode extension app use different dependency modules, to build and bundle them separately we pass their main entrypoints as “--main” parameter to “ng build” command:
-   - Webapp main entrypoint: [src/webapp/webapp.ts](src/webapp/webapp.ts)  =>  [src/webapp/app.module.ts](src/webapp/app.module.ts)
-   - VSCode main entrypoint: [src/vscode/vsapp.ts](src/vscode/vsapp.ts)  =>  [src/vscode/vsapp.module.ts](src/vscode/vsapp.module.ts)
-
-4. The communication between vscode extension and its webview content is done by the official way using [message post](https://code.visualstudio.com/docs/extensions/webview#_passing-messages-from-an-extension-to-a-webview).
-
-## Run VSCode Extension
+The Percy editor can be deployed as packaged static assets to any CDN or web server.
 
 ```bash
-# At first build & package the vscode extenstion
-./vscode/build.sh
+# build the application
+npm run build:prod
 
-# The extension will be packaged at ./vscode/percy-editor-extension-0.0.0.vsix
 ```
+### static assets are located at
+
+`/dist/build/`
+- `favicon.png`
+- `index.html`
+- `percy.bundle.min.js`
+- `percy.conf.json`
 
 
+## 3.  Docker container
 
-After build, you can either:
-
-- Open the project in VSCode, Click "Debug -> Start Debugging", a new VSCode window will be opened with the extension activated.
-- Or install the extension in VScode: `code --install-extension ./vscode/percy-editor-extension-0.0.0.vsix`
-
+The Percy editor can be run as web application within a docker container;
+[click here](docker/readme.docker.md) for more information.
 
 
-## How Electron App Works
+## 4.  VSCode editor extension
 
-Electron app has two modes: open remote repo and open local folder.
+The Percy editor can be run as a vscode extension that provides an IDE editor for app config files following the Percy yaml format;
+[click here](vscode/readme.vscode.md) for more information.
 
-The open remote repo mode has same functionalites as webapp (With one difference that Electron app does not need cors-proxy server since there is no cors restrict for a desktop app).
 
-The open local folder mode will open folder within local file system and supports multiple editors for multiple files.
+## 5. Percy Electron App
 
-The electron app actually loads the exactly same built bundle of webapp, it will detect whether running within the Electron environment to support local folder mode.
-
-## Run Electron App
-
-```bash
-./electron/build.sh
-
-# The app executables will be built at:
-# MacOS: ./electron/release/Percy-mac.dmg
-# Linux: ./electron/release/Percy-linux-x64.zip
-# Windows: ./electron/release/Percy-win-x64.zip
-```
+The Percy editor can be run as a standalone desktop application;
+[click here](electron/readme.electron.md) for more information
 
