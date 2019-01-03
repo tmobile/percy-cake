@@ -50,7 +50,7 @@
           <button *ngIf="node.isFile" mat-button class="btn-action-menu" color="warn" (click)="editFile(node)">
             Edit
           </button>
-          <button *ngIf="node.isFile" mat-button class="btn-action-menu" color="warn" (click)="deleteFile(node)">
+          <button *ngIf="node.isFile && !isEnvFile(node)" mat-button class="btn-action-menu" color="warn" (click)="deleteFile(node)">
             Delete
           </button>
         </mat-menu>

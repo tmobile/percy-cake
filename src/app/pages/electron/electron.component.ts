@@ -587,6 +587,15 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Check if file is env file.
+   * @param file the file to check
+   * @returns true if file is env file, false otherwise
+   */
+  isEnvFile(file: File) {
+    return file.isFile && file.fileName === percyConfig.environmentsFile;
+  }
+
+  /**
    * Add env file.
    * @param folder the folder to add env file
    */
