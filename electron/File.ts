@@ -25,9 +25,11 @@ export class File {
   }
 
   constructor(public path: string, public fileName: string, public isFile: boolean, public ino: number, public parent: File) {
-    if (parent) {
-      parent.children.push(this);
-    }
     File.setId(this);
+  }
+
+  addChild(child: File) {
+    this.children.push(child);
+    child.parent = this;
   }
 }

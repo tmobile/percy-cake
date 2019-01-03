@@ -59,7 +59,7 @@
   </div>
 
   <div id="editor" appSplitArea [splitSize]="80" [minSize]="700">
-    <mat-tab-group animationDuration="0ms" [selectedIndex]="selectedEditor.value" (selectedIndexChange)="selectTab($event)">
+    <mat-tab-group animationDuration="0ms" [selectedIndex]="selectedEditor.value" (selectedIndexChange)="selectTab($event)" *ngIf="openedFiles.length">
       <mat-tab *ngFor="let file of openedFiles" class="editor-tab">
         <ng-template mat-tab-label>
           <span [matTooltip]="file.path">{{getFileTitle(file)}}</span>

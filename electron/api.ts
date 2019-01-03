@@ -219,12 +219,13 @@ export function readFolder(folderPath: string, parent?: File) {
 
     if (stat.isDirectory() && fileName !== '.git' && fileName !== '.vscode' && fileName !== 'node_modules') {
       // ignore some well-know folders
-      readFolder(filePath, folder);
+      folder.addChild(readFolder(filePath, folder));
     } else if (stat.isFile()) {
       const ext = path.extname(fileName).toLowerCase();
       if (ext === '.yaml' || ext === '.yml') {
         const file = new File(filePath, fileName, true, stat.ino, folder);
         file.applicationName = folder.applicationName;
+        folder.addChild(file);
       }
     }
   });
