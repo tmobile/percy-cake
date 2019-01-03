@@ -776,7 +776,7 @@ describe('AddEditPropertyDialogComponent', () => {
     expect(ctx.observables.saveProperty.value).toBeUndefined();
   });
 
-  it('change property type in default tree, confirm dialog should show', () => {
+  it('change value type in default tree, confirm dialog should show', () => {
     const data = {
       editMode: true,
       node: new TreeNode('key', PROPERTY_VALUE_TYPES.STRING, 'Lopuse', ['some comment']),
@@ -798,7 +798,7 @@ describe('AddEditPropertyDialogComponent', () => {
 
     assertDialogOpened(ConfirmationDialogComponent, {
       data: {
-        confirmationText: 'You have changed the property type, the corresponding property will be removed from all environments. Do you still want to make the change?' // tslint:disable-line
+        confirmationText: 'You have changed the value type, the corresponding property will be removed from all environments. Do you still want to make the change?' // tslint:disable-line
       }
     });
 
