@@ -38,6 +38,7 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
   fileTreeControl: NestedTreeControl<File>;
   fileDataSource: MatTreeNestedDataSource<File>;
 
+  allFiles: File[] = [];
   openedFiles: File[] = [];
   selectedEditor = new FormControl(0);
 
@@ -71,19 +72,19 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
       if (!editorState.configFile) {
         return;
       }
-      const ino = editorState.configFile['ino'];
-      if (!ino) {
+      const id = editorState.configFile['id'];
+      if (!id) {
         return;
       }
 
       // Align editor state
-      const state = this.editorStates[ino];
+      const state = this.editorStates[id];
       if (state) {
         state.configuration = editorState.configuration;
       }
 
       // Align file state
-      const file = this.findOpenedFile(ino);
+      const file = this.findOpenedFile(id);
       if (file) {
         file.modified = editorState.configFile.modified;
         file.configuration = editorState.configuration;
@@ -101,6 +102,8 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.sub.unsubscribe();
 
+    this.unwatchFiles();
+
     // Reset appPercyConfig
     _.keys(appPercyConfig).forEach(key => delete appPercyConfig[key]);
 
@@ -109,9 +112,21 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Unwatch files.
+   */
+  private unwatchFiles() {
+    this.openedFiles.forEach(file => {
+      if (file.editMode) {
+        electronApi.unwatchFile(file.path);
+      }
+    });
+  }
+
+  /**
    * Hanldes route change to open different folder.
    */
   onRouteChange() {
+    this.unwatchFiles();
 
     this.openedFiles = [];
     this.editorStates = {};
@@ -120,13 +135,12 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
     const folder = routeSnapshot.paramMap.get('folder');
 
     this.fileDataSource = new MatTreeNestedDataSource();
-    this.fileDataSource.data = [electronApi.readFolder(folder)];
-    this.fileDataSource.data[0].expanded = true;
 
     const _getChildren = (node: File) => node.children;
     this.fileTreeControl = new NestedTreeControl<File>(_getChildren);
 
-    this.setBackendState();
+    this.refreshFolder(folder);
+    this.fileDataSource.data[0].expanded = true;
   }
 
   /**
@@ -174,6 +188,67 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Get all folders rescursively.
+   * @param folder the root folder
+   * @returns all folders
+   */
+  private getAllFolders(folders: File[]) {
+    const result: {[key: string]: File} = {};
+    if (!folders) {
+      return result;
+    }
+    folders.forEach(folder => {
+      if (!folder.isFile) {
+        result[folder.path] = folder;
+        const nested = this.getAllFolders(folder.children);
+        _.assign(result, nested);
+      }
+    });
+    return result;
+  }
+
+  /**
+   * Refresh folder.
+   * @param folderPath the folder path
+   */
+  refreshFolder(folderPath: string) {
+    const folders = this.getAllFolders(this.fileDataSource.data);
+
+    const setExpanded = (_folders: File[]) => {
+      _folders.forEach(_folder => {
+        if (!_folder.isFile) {
+          if (folders[_folder.path]) {
+            _folder.expanded = folders[_folder.path].expanded;
+          }
+          setExpanded(_folder.children);
+        }
+      });
+    };
+
+    const newFolder = electronApi.readFolder(folderPath);
+    setExpanded([newFolder]);
+
+    this.fileDataSource.data = [newFolder];
+
+    this.setBackendState();
+  }
+
+  /**
+   * Get file title.
+   * @param file the file
+   * @returns file title
+   */
+  getFileTitle(file: File) {
+    let result = file.modified ? '*' + file.fileName : file.fileName;
+
+    if (file.editMode && !_.find(this.allFiles, f => f.id === file.id)) {
+      result += ' (deleted from disk)';
+    }
+
+    return result;
+  }
+
+  /**
    * Refresh file explorer.
    */
   private refreshFileExplorer() {
@@ -193,11 +268,11 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
 
   /**
    * Find opened file.
-   * @param ino The file ino
+   * @param id The file id
    * @returns found file
    */
-  private findOpenedFile(ino: number) {
-    return this.openedFiles.find(f => f.ino === ino);
+  private findOpenedFile(id: string) {
+    return this.openedFiles.find(f => f.id === id);
   }
 
   /**
@@ -210,13 +285,13 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const opened = this.findOpenedFile(file.ino);
+    const opened = this.findOpenedFile(file.id);
     if (!opened) {
       // Parse environments
-      const enfPath = path.resolve(path.dirname(file.path), percyConfig.environmentsFile);
-      const envContent = electronApi.readFile(enfPath);
+      const envPath = path.resolve(path.dirname(file.path), percyConfig.environmentsFile);
+      const envContent = electronApi.readFile(envPath);
       if (envContent) {
-        const envConfig = this.parseYaml(envContent, enfPath);
+        const envConfig = this.parseYaml(envContent, envPath);
         file.environments = _.map(_.get(envConfig.environments, 'children', <TreeNode[]>[]), child => child.key);
       } else {
         file.environments = [];
@@ -234,9 +309,49 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
       this.openedFiles.push(file);
       this.setEditorState(file, false);
       this.selectTab(this.openedFiles.length - 1);
+
+      this.watchFile(file);
     } else {
       this.selectTab(this.openedFiles.indexOf(opened));
     }
+  }
+
+  /**
+   * Watch file.
+   * @param file the file to watch
+   */
+  private watchFile(file: File) {
+
+    const filePath = file.path;
+    electronApi.watchFile(filePath, this.utilService.wrapInZone((event) => {
+      if (event === 'deleted') {
+        this.refreshFolder(this.fileDataSource.data[0].path);
+      } else if (event === 'changed') {
+
+        const _file = this.findOpenedFile(file.id);
+        if (_file) {
+
+          const _fileContent = electronApi.readFile(filePath);
+          const originalConfig = this.parseYaml(_fileContent, filePath);
+          if (!_.isEqual(originalConfig, _file.originalConfig)) {
+
+            const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+              data: {
+                confirmationText: `${filePath} is changed externally. Do you want to reload the file?`
+              }
+            });
+            dialogRef.afterClosed().subscribe(res => {
+              if (res) {
+                _file.originalConfig = originalConfig;
+                _file.configuration = _.cloneDeep(originalConfig);
+                _file.modified = false;
+                this.setEditorState(_file);
+              }
+            });
+          }
+        }
+      }
+    }));
   }
 
   /**
@@ -263,8 +378,8 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
    */
   private setBackendState() {
     const folders = this.fileDataSource.data;
-    const files = this.getAllFiles(folders);
-    this.store.dispatch(new LoadFilesSuccess({ files, applications: [] }));
+    this.allFiles = this.getAllFiles(folders);
+    this.store.dispatch(new LoadFilesSuccess({ files: this.allFiles, applications: [] }));
   }
 
   /**
@@ -282,7 +397,7 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
       isSaving: false,
       isPageDirty: false,
     };
-    this.editorStates[file.ino] = state;
+    this.editorStates[file.id] = state;
     if (dispath) {
       this.store.dispatch(new PageRestore(state));
     }
@@ -303,7 +418,7 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
       _.assign(appPercyConfig, electronApi.getAppPercyConfig(file));
 
       // Set editor state
-      this.store.dispatch(new PageRestore(this.editorStates[file.ino]));
+      this.store.dispatch(new PageRestore(this.editorStates[file.id]));
     }
   }
 
@@ -342,7 +457,7 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
       const ino = electronApi.saveFile(filePath, fileContent);
 
       if (!editMode) {
-        delete this.editorStates[file.ino];
+        delete this.editorStates[file.id];
       }
 
       file.ino = ino;
@@ -352,14 +467,16 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
       file.modified = false;
       file.configuration = configuration;
       file.originalConfig = _.cloneDeep(configuration);
+      File.setId(file);
 
       this.setEditorState(file);
 
       if (!editMode) {
-        file.parent.addChild(file);
-        this.refreshFileExplorer();
         this.resetNewFileIno();
-        this.setBackendState();
+        this.refreshFolder(this.fileDataSource.data[0].path);
+        this.watchFile(file);
+      } else if (!_.find(this.allFiles, f => f.id === file.id)) {
+        this.refreshFolder(this.fileDataSource.data[0].path);
       }
     });
   }
@@ -369,10 +486,7 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
    * @param folder the folder to add new file
    */
   addNewFile(folder: File) {
-    const newFile = new File(folder.path, true);
-    newFile.parent = folder;
-    newFile.ino = this.newFileIno;
-    newFile.fileName = 'Untitled' + this.newFileIno;
+    const newFile = new File(folder.path, 'Untitled' + this.newFileIno, true, this.newFileIno, folder);
     newFile.applicationName = folder.applicationName;
     newFile.editMode = false;
     newFile.envFileMode = false;
@@ -405,11 +519,11 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
    * @param force the flag indicates whether to force closing editor even there is change
    */
   closeFile(file: File, force: boolean = false) {
-    const index = this.openedFiles.indexOf(file);
-    if (index < 0) {
+    const found = this.findOpenedFile(file.id);
+    if (!found) {
       return;
     }
-
+    const index = this.openedFiles.indexOf(found);
     if (file.modified && !force) {
       this.selectTab(index);
       this.showUnsaveDialog('Are you sure you want to close the file?').subscribe((res) => {
@@ -448,7 +562,7 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
     }
 
     this.openedFiles.splice(index, 1);
-    delete this.editorStates[file.ino];
+    delete this.editorStates[file.id];
 
     if (index < this.openedFiles.length) {
       this.selectTab(index);
@@ -458,6 +572,8 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
 
     if (!file.editMode) {
       this.resetNewFileIno();
+    } else {
+      electronApi.unwatchFile(file.path);
     }
   }
 
@@ -475,17 +591,12 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
    * @param folder the folder to add env file
    */
   addEnvironmentsFile(folder: File) {
-    const newFile = new File(folder.path, true);
-    newFile.parent = folder;
-    newFile.ino = this.newFileIno;
-    newFile.fileName = percyConfig.environmentsFile;
+    const newFile = new File(folder.path, percyConfig.environmentsFile, true, null, folder);
     newFile.applicationName = folder.applicationName;
     newFile.editMode = false;
     newFile.envFileMode = true;
     newFile.modified = true;
     newFile.configuration = new Configuration();
-
-    this.newFileIno--;
 
     this.openedFiles.push(newFile);
     this.setEditorState(newFile);
@@ -507,11 +618,8 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
       if (response) {
         electronApi.removeFile(file.path);
 
-        file.parent.children = file.parent.children.filter(f => f !== file);
-
-        this.refreshFileExplorer();
         this.closeFile(file, true);
-        this.setBackendState();
+        this.refreshFolder(this.fileDataSource.data[0].path);
       }
     });
   }

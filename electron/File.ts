@@ -1,7 +1,5 @@
 export class File {
-  fileName: string;
   applicationName: string;
-  ino: number;
 
   editMode = true;
   envFileMode = false;
@@ -13,14 +11,23 @@ export class File {
   originalConfig: any;
   configuration: any;
 
-  parent: File;
   children: File[] = [];
 
-  constructor(public path: string, public isFile: boolean) {
+  id: string;
+
+  static setId(file: File) {
+
+    if (!file.isFile || (file.ino && file.ino > 0)) {
+      file.id = file.path;
+    } else {
+      file.id = file.parent.path + '/' + file.fileName;
+    }
   }
 
-  addChild(child: File) {
-    this.children.push(child);
-    child.parent = this;
+  constructor(public path: string, public fileName: string, public isFile: boolean, public ino: number, public parent: File) {
+    if (parent) {
+      parent.children.push(this);
+    }
+    File.setId(this);
   }
 }

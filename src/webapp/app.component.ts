@@ -1,10 +1,11 @@
-import { Component, OnInit, NgZone } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { electronApi } from 'config';
 import { BehaviorSubject } from 'rxjs';
 import { MatDialog } from '@angular/material';
 import { PreferencesComponent } from 'components/preferences/preferences.component';
+import { UtilService } from 'services/util.service';
 
 @Component({
   selector: 'app-root',
@@ -16,12 +17,12 @@ export class AppComponent implements OnInit {
    * constructs the component.
    * @param router the router service
    * @param dialog the dialog service
-   * @param ngZone the ngZone service
+   * @param utilService the util service
    */
   constructor(
     private router: Router,
     private dialog: MatDialog,
-    private ngZone: NgZone) {
+    private utilService: UtilService) {
   }
 
   /**
@@ -31,11 +32,7 @@ export class AppComponent implements OnInit {
   private wrapInZone(callbacks) {
     Object.keys(callbacks).forEach(key => {
       const prev = callbacks[key];
-      callbacks[key] = (...args) => {
-        this.ngZone.run(() => {
-          prev(...args);
-        });
-      };
+      callbacks[key] = this.utilService.wrapInZone(prev);
     });
     return callbacks;
   }

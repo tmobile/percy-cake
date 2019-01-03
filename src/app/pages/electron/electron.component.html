@@ -38,6 +38,9 @@
         </div>
 
         <mat-menu #menu="matMenu">
+          <button *ngIf="!node.isFile && !node.parent" mat-button class="btn-action-menu" color="primary" (click)="refreshFolder(node.path)">
+            Refresh
+          </button>
           <button *ngIf="!node.isFile" mat-button class="btn-action-menu" color="primary" (click)="addNewFile(node)">
             Add New File
           </button>
@@ -59,7 +62,7 @@
     <mat-tab-group animationDuration="0ms" [selectedIndex]="selectedEditor.value" (selectedIndexChange)="selectTab($event)">
       <mat-tab *ngFor="let file of openedFiles" class="editor-tab">
         <ng-template mat-tab-label>
-          <span [matTooltip]="file.path">{{file.modified ? '*' + file.fileName : file.fileName}}</span>
+          <span [matTooltip]="file.path">{{getFileTitle(file)}}</span>
           <button mat-icon-button (click)="closeFile(file)">
             <mat-icon>close</mat-icon>
           </button>

@@ -209,8 +209,7 @@ export function getAppPercyConfig(file: File) {
  * @param parent The parent
  */
 export function readFolder(folderPath: string, parent?: File) {
-  const folder = new File(path.normalize(folderPath), false);
-  folder.fileName = path.basename(folder.path);
+  const folder = new File(path.normalize(folderPath), path.basename(folderPath), false, fs.statSync(folderPath).ino, parent);
   folder.applicationName = parent ? parent.applicationName + '/' + folder.fileName : folder.fileName;
 
   const files = fs.readdirSync(folder.path);
@@ -220,15 +219,12 @@ export function readFolder(folderPath: string, parent?: File) {
 
     if (stat.isDirectory() && fileName !== '.git' && fileName !== '.vscode' && fileName !== 'node_modules') {
       // ignore some well-know folders
-      folder.addChild(readFolder(filePath, folder));
+      readFolder(filePath, folder);
     } else if (stat.isFile()) {
       const ext = path.extname(fileName).toLowerCase();
       if (ext === '.yaml' || ext === '.yml') {
-        const file = new File(filePath, true);
-        file.ino = stat.ino;
-        file.fileName = fileName;
+        const file = new File(filePath, fileName, true, stat.ino, folder);
         file.applicationName = folder.applicationName;
-        folder.addChild(file);
       }
     }
   });
@@ -264,4 +260,27 @@ export function saveFile(filePath: string, fileContent: string) {
  */
 export function removeFile(filePath: string) {
   fs.unlinkSync(filePath);
+}
+
+/**
+ * Watch file.
+ * @param filePath The file path to watch
+ * @param callback The callback function
+ */
+export function watchFile(filePath: string, callback) {
+  fs.watchFile(filePath, { interval: 1000 }, (curr, prev) => {
+    if (!fs.existsSync(filePath)) {
+      callback('deleted');
+    } else if (curr.mtimeMs !== prev.mtimeMs) {
+      callback('changed');
+    }
+  });
+}
+
+/**
+ * Unwatch file.
+ * @param filePath The file path to unwatch
+ */
+export function unwatchFile(filePath: string) {
+  fs.unwatchFile(filePath);
 }

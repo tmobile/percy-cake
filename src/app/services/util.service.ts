@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import * as fs from 'fs-extra';
 import * as aesjs from 'aes-js';
@@ -25,8 +25,21 @@ export class UtilService extends YamlService {
   /**
    * initializes the service
    */
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient,
+    private ngZone: NgZone) {
     super();
+  }
+
+  /**
+   * Wrap the function in angular zone.
+   * @param func The function to wrap
+   */
+  wrapInZone(func) {
+    return (...args) => {
+      this.ngZone.run(() => {
+        func(...args);
+      });
+    };
   }
 
   /**
