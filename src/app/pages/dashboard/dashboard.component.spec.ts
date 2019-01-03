@@ -291,22 +291,22 @@ describe('DashboardComponent', () => {
       },
       {
         app: 'app2',
-        appFile: files[2],
-      },
-      {
-        app: 'app2',
         appFile: files[3],
       },
       {
-        app: 'app1',
+        app: 'app2',
+        appFile: files[2],
       },
       {
         app: 'app1',
-        appFile: files[0],
       },
       {
         app: 'app1',
         appFile: files[1],
+      },
+      {
+        app: 'app1',
+        appFile: files[0],
       },
     ]);
   });

@@ -220,6 +220,10 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
           if (folders[_folder.path]) {
             _folder.expanded = folders[_folder.path].expanded;
           }
+          const envFile = _folder.children.find(f => f.fileName === percyConfig.environmentsFile);
+          if (envFile) {
+            _folder.children = [envFile, ..._folder.children.filter(f => f.fileName !== percyConfig.environmentsFile)];
+          }
           setExpanded(_folder.children);
         }
       });

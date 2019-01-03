@@ -78,7 +78,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
               return;
             }
 
-            const appFiles = _.orderBy(grouped[app], ['fileName'], [dashboardState.tableSort.fileName]);
+            let appFiles = _.orderBy(grouped[app], ['fileName'], [dashboardState.tableSort.fileName]);
+            const envFile = appFiles.find(f => f.fileName === this.envFileName);
+            if (envFile) {
+              appFiles = [envFile, ...appFiles.filter(f => f.fileName !== this.envFileName)];
+            }
 
             modified = _.concat(modified, appFiles.filter((f) => f.modified));
 
@@ -99,6 +103,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
           return result;
         })
       ).subscribe(folders$);
+  }
+
+  /**
+   * Check if file is env file.
+   * @param file the file to check
+   * @returns true if file is env file, false otherwise
+   */
+  isEnvFile(file: ConfigFile) {
+    return file.fileName === percyConfig.environmentsFile;
   }
 
   /**

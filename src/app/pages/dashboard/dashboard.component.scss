@@ -55,6 +55,11 @@
                 padding: 0 3px;
                 text-align: left;
                 min-width: auto;
+                &.env  {
+                  ::ng-deep .mat-button-wrapper{
+                    font-weight: bold;
+                  }
+                }
               }
               .mo-ind {
                 color: red;

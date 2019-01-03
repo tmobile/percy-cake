@@ -32,7 +32,7 @@
         <span class="context-menu-trigger" #menuTrigger [matMenuTriggerFor]="menu"></span>
 
         <div class="underline" (contextmenu)="openMenu($event, menuTrigger)" (click)="editFile(node)">
-          <div [matTooltip]="node.path" matTooltipPosition="above" class="key">{{node.fileName}}</div>
+          <div [matTooltip]="node.path" matTooltipPosition="above" class="key" [ngClass]="{'env': isEnvFile(node)}">{{node.fileName}}</div>
           <button mat-icon-button #menuButton class="btn-action" (click)="$event.stopPropagation()" (contextmenu)="buttonOpenMenu($event, menuButton)"
             [matMenuTriggerFor]="menu">...</button>
         </div>

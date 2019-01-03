@@ -47,7 +47,7 @@
     <ng-container matColumnDef="fileName">
       <th mat-header-cell *matHeaderCellDef mat-sort-header="fileName">File Name</th>
       <td mat-cell *matCellDef="let element">
-        <a *ngIf="element.appFile" mat-button color="accent" (click)="editFile(element.appFile)" >
+        <a *ngIf="element.appFile" mat-button color="accent" (click)="editFile(element.appFile)" [ngClass]="{'env': isEnvFile(element.appFile)}">
           {{element.appFile.fileName}}<span *ngIf="element.appFile.modified" class="mo-ind">*</span>
         </a>
       </td>

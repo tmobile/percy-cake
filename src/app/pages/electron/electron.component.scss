@@ -46,9 +46,12 @@
           cursor: pointer;
 
           .key {
-            font-weight: 700;
+            font-weight: 500;
             line-height: 1.2;
             cursor: pointer;
+            &.env {
+              font-weight: bold;
+            }
           }
 
           .btn-action {

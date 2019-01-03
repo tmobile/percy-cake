@@ -37,7 +37,8 @@ _.assign(percyConfig, percyTestConfig);
 
 const httpSpy = jasmine.createSpyObj('httpSpy', ['get']);
 httpSpy.get.and.returnValue(percyConfig);
-export const utilService = new UtilService(httpSpy);
+const ngZoneSpy = jasmine.createSpyObj('ngZoneSpy', ['run']);
+export const utilService = new UtilService(httpSpy, ngZoneSpy);
 
 export const TestUser: User = {
   username: 'test-user',
