@@ -320,6 +320,13 @@ export class NestedConfigViewComponent implements OnChanges {
 
       currentNode.children = _.defaultTo(currentNode.children, []);
       currentNode.children.push(node);
+
+      // expand newly added nodes by default
+      if (this.currentConfigProperty.node.isDefaultNode()) {
+        this.defaultTreeControl.expand(node);
+      } else {
+        this.envTreeControl.expand(node);
+      }
     }
   }
 
