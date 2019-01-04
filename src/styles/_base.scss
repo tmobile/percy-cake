@@ -142,7 +142,7 @@ body.vscode-theme {
   .mat-menu-panel, .mat-select-panel {
     background-color: var(--vscode-dropdown-background) !important;
   }
-  .mat-option, .mat-option.mat-active {
+  .mat-option, .mat-option.mat-active, .mat-select-arrow {
     color: inherit;
   }
 

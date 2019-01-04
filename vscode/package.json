@@ -6,7 +6,7 @@
     "npm": "6.4.1",
     "vscode": "^1.26.0"
   },
-  "repository": "https://gitlab.com/leviastan/yaml-editor/tree/vscode",
+  "repository": "https://gitlab.com/leviastan/yaml-editor",
   "publisher": "percy",
   "icon": "media/appicon.128x128.png",
   "main": "dist/extension",
@@ -19,9 +19,9 @@
   },
   "activationEvents": [
     "onCommand:vscode-percy-editor.new",
-    "onCommand:vscode-percy-editor.newenv",
+    "onCommand:vscode-percy-editor.newEnv",
     "onCommand:vscode-percy-editor.edit",
-    "onCommand:vscode-percy-editor.editside",
+    "onCommand:vscode-percy-editor.editSide",
     "onCommand:vscode-percy-editor.showSource",
     "onCommand:vscode-percy-editor.saveConfig"
   ],
@@ -29,27 +29,23 @@
     "commands": [
       {
         "command": "vscode-percy-editor.new",
-        "title": "Percy: create new config file",
-        "category": "Percy editor"
+        "title": "Percy: Create New Config File"
       },
       {
-        "command": "vscode-percy-editor.newenv",
-        "title": "Percy: create new environments file",
-        "category": "Percy editor"
+        "command": "vscode-percy-editor.newEnv",
+        "title": "Percy: Create New Environments File"
       },
       {
         "command": "vscode-percy-editor.edit",
-        "title": "Percy: edit config file",
-        "category": "Percy editor",
+        "title": "Percy: Edit Config File",
         "icon": {
           "light": "dist/favicon.png",
           "dark": "dist/favicon.png"
         }
       },
       {
-        "command": "vscode-percy-editor.editside",
-        "title": "Percy: edit config file to side",
-        "category": "Percy editor",
+        "command": "vscode-percy-editor.editSide",
+        "title": "Percy: Edit Config File To Side",
         "icon": {
           "light": "dist/favicon.png",
           "dark": "dist/favicon.png"
@@ -57,8 +53,7 @@
       },
       {
         "command": "vscode-percy-editor.showSource",
-        "title": "Percy: show yaml source",
-        "category": "Percy editor",
+        "title": "Percy: Show Yaml Source",
         "icon": {
           "light": "media/ViewSource_light.svg",
           "dark": "media/ViewSource_dark.svg"
@@ -76,14 +71,24 @@
     "menus": {
       "commandPalette": [
         {
-          "when": "editorLangId == yaml",
-          "command": "vscode-percy-editor.edit",
-          "group": "0_percy"
+          "when": "false",
+          "command": "vscode-percy-editor.new"
+        },
+        {
+          "when": "false",
+          "command": "vscode-percy-editor.newEnv"
         },
         {
           "when": "editorLangId == yaml",
-          "command": "vscode-percy-editor.editside",
-          "group": "0_percy"
+          "command": "vscode-percy-editor.edit"
+        },
+        {
+          "when": "editorLangId == yaml",
+          "command": "vscode-percy-editor.editSide"
+        },
+        {
+          "when": "PercyEditorFocused",
+          "command": "vscode-percy-editor.showSource"
         }
       ],
       "explorer/context": [
@@ -94,7 +99,7 @@
         },
         {
           "when": "explorerResourceIsFolder",
-          "command": "vscode-percy-editor.newenv",
+          "command": "vscode-percy-editor.newEnv",
           "group": "0_percy"
         },
         {

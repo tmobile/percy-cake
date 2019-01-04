@@ -1,5 +1,3 @@
-import * as path from 'path';
-
 import { Component, ViewChild, HostListener, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material';
 import { Store, select } from '@ngrx/store';
@@ -29,6 +27,8 @@ const vscode = acquireVsCodeApi();
   styleUrls: ['./vsapp.component.scss']
 })
 export class VSAppComponent implements OnInit {
+
+  pathSep: string;
 
   appName: string;
   fileName: string;
@@ -98,6 +98,12 @@ export class VSAppComponent implements OnInit {
       return;
     }
 
+    // Handle save cancelled event
+    if (message.type === MESSAGE_TYPES.SAVE_CANCELLED) {
+      this.fileSaving = null;
+      return;
+    }
+
     // Handle saved event
     if (message.type === MESSAGE_TYPES.SAVED) {
       this.editMode = true;
@@ -138,6 +144,7 @@ export class VSAppComponent implements OnInit {
     this.fileName = message.fileName;
     this.editMode = message.editMode;
     this.envFileMode = message.envFileMode;
+    this.pathSep = message.pathSep;
 
     _.assign(percyConfig, message.percyConfig);
 
@@ -147,7 +154,7 @@ export class VSAppComponent implements OnInit {
 
     this.environments = [];
     if (message.envFileContent) {
-      const envConfig = this.parseYaml(message.envFileContent, `${this.appName}${path.sep}${percyConfig.environmentsFile}`);
+      const envConfig = this.parseYaml(message.envFileContent, `${this.appName}${this.pathSep}${percyConfig.environmentsFile}`);
       this.environments = _.map(_.get(envConfig.environments, 'children', <TreeNode[]>[]), child => child.key);
     }
 
@@ -183,7 +190,7 @@ export class VSAppComponent implements OnInit {
       file.draftConfig = new Configuration();
       this.store.dispatch(new GetFileContentSuccess({ file, newlyCreated: true }));
     } else {
-      file.originalConfig = this.parseYaml(this.fileContent, `${this.appName}${path.sep}${this.fileName}`);
+      file.originalConfig = this.parseYaml(this.fileContent, `${this.appName}${this.pathSep}${this.fileName}`);
       this.store.dispatch(new GetFileContentSuccess({ file }));
     }
   }

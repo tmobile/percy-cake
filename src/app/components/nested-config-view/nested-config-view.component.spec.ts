@@ -542,6 +542,7 @@ describe('NestedConfigViewComponent', () => {
   it('should open menu', () => {
     const menuTrigger = {
       style: {},
+      offsetParent: {},
       click: () => { }
     };
     spyOn(menuTrigger, 'click');

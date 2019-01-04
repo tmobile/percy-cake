@@ -148,10 +148,19 @@ class PercyEditorPanel {
         if (!message.editMode && !message.envFileMode) {
           // Save a new file
           vscode.window.showSaveDialog({ defaultUri: this._uri }).then((newFile) => {
+            if (!newFile) {
+              this._panel.webview.postMessage({
+                type: MESSAGE_TYPES.SAVE_CANCELLED,
+              });
+              return;
+            }
             let newFileName = path.basename(newFile.fsPath);
 
             if (!new RegExp(CONFIG.FILE_NAME_REGEX).test(newFileName)) {
               vscode.window.showErrorMessage('The file name should only contain these characters: "0-9a-zA-Z-_."');
+              this._panel.webview.postMessage({
+                type: MESSAGE_TYPES.SAVE_CANCELLED,
+              });
             } else {
               newFileName = normalizeFilename(newFileName);
 
@@ -219,6 +228,7 @@ class PercyEditorPanel {
       envFileMode: fileName === envFileName,
       appName: vscode.workspace.asRelativePath(dir),
       fileName,
+      pathSep: path.sep,
       percyConfig: {
         ...config,
         filenameRegex: CONFIG.FILE_NAME_REGEX,
@@ -392,7 +402,7 @@ export function activate(context: vscode.ExtensionContext) {
     if (!uri) {
       return;
     }
-    PercyEditorPanel.CreateOrShow(context.extensionPath, vscode.Uri.file(path.join(uri.fsPath, 'Untitled')), false);
+    PercyEditorPanel.CreateOrShow(context.extensionPath, vscode.Uri.file(path.join(uri.fsPath, 'Untitled.yaml')), false);
   });
   context.subscriptions.push(newCommand);
 
