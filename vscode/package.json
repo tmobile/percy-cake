@@ -71,22 +71,6 @@
     "menus": {
       "commandPalette": [
         {
-          "when": "false",
-          "command": "vscode-percy-editor.new"
-        },
-        {
-          "when": "false",
-          "command": "vscode-percy-editor.newEnv"
-        },
-        {
-          "when": "editorLangId == yaml",
-          "command": "vscode-percy-editor.edit"
-        },
-        {
-          "when": "editorLangId == yaml",
-          "command": "vscode-percy-editor.editSide"
-        },
-        {
           "when": "PercyEditorFocused",
           "command": "vscode-percy-editor.showSource"
         }
@@ -112,6 +96,11 @@
         {
           "when": "editorLangId == yaml",
           "command": "vscode-percy-editor.edit",
+          "group": "0_percy"
+        },
+        {
+          "when": "editorLangId == yaml",
+          "command": "vscode-percy-editor.editSide",
           "group": "0_percy"
         }
       ],
@@ -139,12 +128,17 @@
         "vscode-percy-editor.variablePrefix": {
           "type": "string",
           "default": "_{",
-          "description": "Variable prefix"
+          "description": "Variable substitution wrapper prefix"
         },
         "vscode-percy-editor.variableSuffix": {
           "type": "string",
           "default": "}_",
-          "description": "Variable suffix"
+          "description": "Variable substitution wrapper suffix"
+        },
+        "vscode-percy-editor.variableNamePrefix": {
+          "type": "string",
+          "default": "$",
+          "description": "Variable name prefix"
         }
       }
     }

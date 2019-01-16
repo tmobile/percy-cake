@@ -9,6 +9,7 @@ import { ConflictDialogComponent } from 'components/conflict-dialog/conflict-dia
 
 import { StoreTestComponent, Setup, TestContext, TestUser, assertDialogOpened } from 'test/test-helper';
 
+import * as AuthActions from '../actions/auth.actions';
 import * as BackendActions from '../actions/backend.actions';
 import * as reducer from '../reducers/backend.reducers';
 
@@ -61,7 +62,7 @@ describe('Backend store action/effect/reducer', () => {
 
     const principal: Principal = {
       user: TestUser,
-      repoMetadata: {}
+      repoMetadata: <any>{}
     };
     ctx.store.dispatch(new BackendActions.Initialized({ principal }));
 
@@ -432,6 +433,55 @@ describe('Backend store action/effect/reducer', () => {
     spyOn(fileService, 'refresh').and.throwError('Mock error');
 
     ctx.store.dispatch(new BackendActions.Refresh());
+    expect(ctx.dashboarState().refreshing).toBeTruthy();
+
+    await ctx.fixture.whenStable();
+
+    expect(ctx.dashboarState().refreshing).toBeFalsy();
+
+    assertDialogOpened(AlertDialogComponent, {
+      data: {
+        message: 'Mock error',
+        alertType: 'error'
+      }
+    });
+  });
+
+  it('Checkout action should be successful', async () => {
+    spyOn(fileService, 'checkoutBranch').and.callFake(() => { });
+    spyOn(fileService, 'getFiles').and.returnValues(
+      { files: [], applications: [] },
+      { files: [file1, file2], applications: ['app1'] });
+
+    ctx.store.dispatch(new AuthActions.LoginSuccess(TestUser));
+
+    const principal: Principal = {
+      user: { ...TestUser },
+      repoMetadata: { ...TestUser, version: '1.0', commitBaseSHA: {} }
+    };
+    ctx.store.dispatch(new BackendActions.Initialized({ principal }));
+
+    await ctx.fixture.whenStable();
+
+    ctx.store.dispatch(new BackendActions.Checkout({ type: 'create', branch: 'some-branch' }));
+    expect(ctx.dashboarState().refreshing).toBeTruthy();
+
+    await ctx.fixture.whenStable();
+
+    expect(ctx.dashboarState().refreshing).toBeFalsy();
+    expect(ctx.backendState().principal.user.branchName).toEqual('some-branch');
+    expect(ctx.backendState().principal.repoMetadata.branchName).toEqual('some-branch');
+    expect(ctx.authState().currentUser.branchName).toEqual('some-branch');
+
+    await ctx.fixture.whenStable();
+
+    expect(ctx.backendState().files.ids.length).toEqual(2);
+  });
+
+  it('Checkout action fail, alert dialog should show', async () => {
+    spyOn(fileService, 'checkoutBranch').and.throwError('Mock error');
+
+    ctx.store.dispatch(new BackendActions.Checkout({ type: 'create', branch: 'some-branch' }));
     expect(ctx.dashboarState().refreshing).toBeTruthy();
 
     await ctx.fixture.whenStable();

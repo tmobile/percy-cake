@@ -150,9 +150,8 @@ There are 3 configuration files:
 | Variable              | Description                                                                                                                                                |
 |-----------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | corsProxy             | The cors proxy for isomorphic-git (This config is only used in webapp and irrelevant for Electron app, since Electron app does not need cors proxy server) |
-| defaultBranchName     | Default branch name shown on login page                                                                                                                    |
 | defaultRepositoryUrl  | Default repository url shown on login page                                                                                                                 |
-| lockedBranches        | Locked branches, you cannot enter these branches on login page                                                                                             |
+| lockedBranches        | Locked branches, you cannot checkout these branches on dashboard page                                                                                      |
 | storeName             | The browser indexeddb store name                                                                                                                           |
 | reposFolder           | The browserfs folder to clone repos into                                                                                                                   |
 | draftFolder           | The browserfs folder to store draft files                                                                                                                  |
@@ -161,7 +160,6 @@ There are 3 configuration files:
 | loggedInUsersMetaFile | The file name which contains logged in user names                                                                                                          |
 | yamlAppsFolder        | The folder name which contains apps' yaml config                                                                                                           |
 | environmentsFile      | The environments file name (JUST file name)                                                                                                                |
-| pullTimeout           | The git pull timeout, in which case will switch to clone                                                                                                   |
 | loginSessionTimeout   | The login session timeout, like "1m", "2.5 hrs", "2 days". Default to 30m.                                                                                 |
 | encryptKey            | The key used to encrypt security information like password                                                                                                 |
 | encryptSalt           | The salt used to encrypt security information like password                                                                                                |

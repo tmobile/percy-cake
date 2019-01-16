@@ -16,11 +16,15 @@ import { MatDialogRef } from '@angular/material';
 })
 export class PreferencesComponent implements OnInit {
 
-  environmentsFile = new FormControl('', [NotEmpty, Validators.pattern('^[a-zA-Z0-9]*(\.(yaml|yml))?$')]);
+  envFileSuffix = '.yaml';
+
+  environmentsFile = new FormControl('', [NotEmpty, Validators.pattern('^[\\s]*[a-zA-Z0-9]*[\\s]*$')]);
   variablePrefix = new FormControl('', [NotEmpty]);
   variableSuffix = new FormControl('', [NotEmpty]);
+  variableNamePrefix = new FormControl('', [NotEmpty, Validators.pattern('^[\\s]*[\\S]*[\\s]*$')]);
 
   disabed = true;
+  prefs: any;
   originalPrefs: any;
 
   /**
@@ -35,18 +39,15 @@ export class PreferencesComponent implements OnInit {
   ngOnInit() {
 
     this.originalPrefs = electronApi.getPreferences();
-    this.environmentsFile.setValue(this.originalPrefs.environmentsFile);
+    this.environmentsFile.setValue(_.replace(this.originalPrefs.environmentsFile, this.envFileSuffix, ''));
     this.variablePrefix.setValue(this.originalPrefs.variablePrefix);
     this.variableSuffix.setValue(this.originalPrefs.variableSuffix);
+    this.variableNamePrefix.setValue(this.originalPrefs.variableNamePrefix);
 
-    this.environmentsFile.valueChanges.subscribe(() => {
-      this.setDisabed();
-    });
-    this.variablePrefix.valueChanges.subscribe(() => {
-      this.setDisabed();
-    });
-    this.variableSuffix.valueChanges.subscribe(() => {
-      this.setDisabed();
+    _.each([this.environmentsFile, this.variablePrefix, this.variableSuffix, this.variableNamePrefix], (ctl) => {
+      ctl.valueChanges.subscribe(() => {
+        this.setDisabed();
+      });
     });
   }
 
@@ -54,14 +55,16 @@ export class PreferencesComponent implements OnInit {
    * Set whether the save button should be disabled.
    */
   private setDisabed() {
-    if (this.environmentsFile.invalid || this.variablePrefix.invalid || this.variableSuffix.invalid) {
+    if (this.environmentsFile.invalid || this.variablePrefix.invalid || this.variableSuffix.invalid || this.variableNamePrefix.invalid) {
       this.disabed = true;
     } else {
-      this.disabed = _.isEqual(this.originalPrefs, {
-        environmentsFile: this.environmentsFile.value.trim(),
+      this.prefs = {
+        environmentsFile: this.environmentsFile.value.trim() + this.envFileSuffix,
         variablePrefix: this.variablePrefix.value.trim(),
-        variableSuffix: this.variableSuffix.value.trim()
-      });
+        variableSuffix: this.variableSuffix.value.trim(),
+        variableNamePrefix: this.variableNamePrefix.value.trim()
+      };
+      this.disabed = _.isEqual(this.originalPrefs, this.prefs);
     }
   }
 
@@ -69,14 +72,9 @@ export class PreferencesComponent implements OnInit {
    * Save preferences.
    */
   save() {
-    const prefs = {
-      environmentsFile: this.environmentsFile.value.trim(),
-      variablePrefix: this.variablePrefix.value.trim(),
-      variableSuffix: this.variableSuffix.value.trim()
-    };
-    electronApi.savePreferences(prefs);
+    electronApi.savePreferences(this.prefs);
 
-    this.originalPrefs = prefs;
+    this.originalPrefs = this.prefs;
     this.disabed = true;
     this.dialogRef.close(true);
   }

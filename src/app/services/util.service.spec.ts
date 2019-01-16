@@ -122,15 +122,12 @@ joe: !!map  # comment line1
   arr2: *arrAnchor  # alias comment line1
     # alias comment line2
   oarr: !!seq
-    - !!map  # map in array comment line1
+    - *anchor2  # map in array comment line1
       # map in array comment line2
-      <<: *anchor2
-    - !!map  # map in array comment line1
+    - *anchor3  # map in array comment line1
       # map in array comment line2
-      <<: *anchor3
-    - !!map  # map in array comment line1
+    - *anchor4  # map in array comment line1
       # map in array comment line2
-      <<: *anchor4
 `;
 
     const tree = utilService.convertYamlToTree(anchorYaml, false);
@@ -138,6 +135,32 @@ joe: !!map  # comment line1
     const yaml2 = utilService.convertTreeToYaml(tree);
 
     expect(yaml2).toEqual(anchorYaml.trim());
+
+  });
+
+  it('should parse and render number correctly', () => {
+
+    const numberYaml = `
+floats: !!map
+  f1: !!float .inf  # positive inifinity
+  f2: !!float -.inf  # negative inifinity
+  f3: !!float .nan  # not a number
+  f4: !!float 1e3
+  f5: !!float 9e-9
+  f6: !!float 0.99999
+  f7: !!float -12.3
+  f8: !!float 0.0
+ints: !!map
+  i1: !!int 8800
+  i2: !!int -9900
+  i3: !!int 0
+`;
+
+    const tree = utilService.convertYamlToTree(numberYaml, false);
+
+    const yaml2 = utilService.convertTreeToYaml(tree);
+
+    expect(yaml2).toEqual(numberYaml.trim());
 
   });
 
@@ -290,6 +313,41 @@ foo: !!map
     }
   });
 
+  it('should compile yaml, anchor/alias should be merged', () => {
+    const config = new Configuration();
+    config.default.addChild(new TreeNode('oarr', PROPERTY_VALUE_TYPES.OBJECT_ARRAY, null, ['oarr-comment']));
+    config.default.findChild(['oarr']).addChild(new TreeNode('[0]', PROPERTY_VALUE_TYPES.OBJECT, null, ['item0']));
+    config.default.findChild(['oarr', '[0]']).anchor = 'oarr-0';
+    config.default.findChild(['oarr', '[0]']).addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, 'value1', ['comment1']));
+    config.default.findChild(['oarr', '[0]']).addChild(new TreeNode('key2', PROPERTY_VALUE_TYPES.STRING, 'value2', ['comment2']));
+    config.default.findChild(['oarr']).addChild(new TreeNode('[1]', PROPERTY_VALUE_TYPES.OBJECT, null, ['item1']));
+    config.default.findChild(['oarr', '[1]']).anchor = 'oarr-1';
+    config.default.findChild(['oarr', '[1]']).addChild(new TreeNode('key3', PROPERTY_VALUE_TYPES.STRING, 'value3', ['comment3']));
+    config.default.findChild(['oarr', '[1]']).addChild(new TreeNode('key4', PROPERTY_VALUE_TYPES.STRING, 'value4', ['comment4']));
+
+    config.environments.addChild(new TreeNode('dev'));
+
+    config.environments.findChild(['dev']).addChild(new TreeNode('oarr', PROPERTY_VALUE_TYPES.OBJECT_ARRAY));
+    config.environments.findChild(['dev', 'oarr']).addChild(new TreeNode('[0]', PROPERTY_VALUE_TYPES.OBJECT, null, ['devitem0']));
+    config.environments.findChild(['dev', 'oarr', '[0]']).aliases = ['oarr-0'];
+    config.environments.findChild(['dev', 'oarr', '[0]']).addChild(
+      new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, 'devvalue1', ['devcomment1']));
+    config.environments.findChild(['dev', 'oarr', '[0]']).addChild(
+      new TreeNode('key2', PROPERTY_VALUE_TYPES.STRING, 'devvalue2', ['devcomment2']));
+    config.environments.findChild(['dev', 'oarr']).addChild(new TreeNode('[1]', PROPERTY_VALUE_TYPES.OBJECT));
+    config.environments.findChild(['dev', 'oarr', '[1]']).aliases = ['oarr-1'];
+
+
+    expect(utilService.compileYAML('dev', config)).toEqual(
+`oarr: !!seq  # oarr-comment
+  - !!map  # devitem0
+    key1: !!str "devvalue1"  # devcomment1
+    key2: !!str "devvalue2"  # devcomment2
+  - !!map
+    key3: !!str "value3"  # comment3
+    key4: !!str "value4"  # comment4`);
+  });
+
   it('should compile yaml', () => {
     const config = new Configuration();
     config.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, 'value', ['comment1']));
@@ -435,8 +493,8 @@ obj: !!map  # prod-obj-comment
   it('should get repo folder', () => {
     const { repoName, repoFolder } = utilService.getRepoFolder(TestUser);
 
-    expect(repoName).toEqual('tc/repo');
-    expect(repoFolder).toEqual('test-user!tc%2Frepo!admin');
+    expect(repoName).toEqual(TestUser.repoName);
+    expect(repoFolder).toEqual(TestUser.repoFolder);
   });
 
   it('should highlight variable correctly', () => {

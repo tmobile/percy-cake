@@ -105,6 +105,22 @@ export function reducer(state = initialState, action: BackendActionsUnion): Stat
       };
     }
 
+    case BackendActionTypes.CheckoutSuccess: {
+      return {
+        ...state,
+        principal: {
+          user: {
+            ...state.principal.user,
+            branchName: action.payload.branch
+          },
+          repoMetadata: {
+            ...state.principal.repoMetadata,
+            branchName: action.payload.branch
+          }
+        }
+      };
+    }
+
     default: {
       return state;
     }

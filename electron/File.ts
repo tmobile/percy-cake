@@ -1,4 +1,5 @@
 export class File {
+  ino: number;
   applicationName: string;
 
   editMode = true;
@@ -11,25 +12,26 @@ export class File {
   originalConfig: any;
   configuration: any;
 
+  folderPopulated = false;
   children: File[] = [];
 
-  id: string;
-
-  static setId(file: File) {
-
-    if (!file.isFile || (file.ino && file.ino > 0)) {
-      file.id = file.path;
-    } else {
-      file.id = file.parent.path + '/' + file.fileName;
-    }
-  }
-
-  constructor(public path: string, public fileName: string, public isFile: boolean, public ino: number, public parent: File) {
-    File.setId(this);
+  constructor(public path: string, public fileName: string, public isFile: boolean, public parent: File) {
   }
 
   addChild(child: File) {
     this.children.push(child);
     child.parent = this;
+  }
+
+  hasChild(childPath: string) {
+    for (const child of this.children) {
+      if (child.path === childPath) {
+        return true;
+      }
+    }
+    return false;
+  }
+  removeChild(childPath: string) {
+    this.children = this.children.filter(c => c.path !== childPath);
   }
 }

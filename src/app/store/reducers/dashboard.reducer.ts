@@ -99,6 +99,7 @@ export function reducer(state = initialState, action: BackendActionsUnion | Dash
       };
     }
 
+    case BackendActionTypes.Checkout:
     case BackendActionTypes.Refresh: {
       return {
         ...state,
@@ -106,6 +107,7 @@ export function reducer(state = initialState, action: BackendActionsUnion | Dash
       };
     }
 
+    case BackendActionTypes.CheckoutSuccess:
     case BackendActionTypes.RefreshSuccess: {
       return {
         ...state,
@@ -113,6 +115,7 @@ export function reducer(state = initialState, action: BackendActionsUnion | Dash
       };
     }
 
+    case BackendActionTypes.CheckoutFailure:
     case BackendActionTypes.RefreshFailure: {
       return {
         ...state,

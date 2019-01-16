@@ -11,11 +11,12 @@
 
     .login-container {
       width: 620px;
+      height: 350px;
       padding: 0;
 
       .logo-container {
         width: 260px;
-        height: 410px;
+        height: 100%;
 
         float: left;
         text-align: center;
@@ -33,7 +34,7 @@
 
       .forms-container {
           width: 360px;
-          height: 410px;
+          height: 100%;
           float: right;
 
           .open-mode {

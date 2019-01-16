@@ -8,7 +8,9 @@
 
     app-editor {
       display: flex;
+      flex-direction: column;
       flex: 1;
+      min-height: 1px;
     }
 
     .buttons-row {

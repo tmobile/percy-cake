@@ -1,11 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { Store } from '@ngrx/store';
 
 import { electronApi } from 'config';
 import { BehaviorSubject } from 'rxjs';
 import { MatDialog } from '@angular/material';
 import { PreferencesComponent } from 'components/preferences/preferences.component';
 import { UtilService } from 'services/util.service';
+import * as appStore from 'store';
+import * as AuthActions from 'store/actions/auth.actions';
+
 
 @Component({
   selector: 'app-root',
@@ -22,7 +26,8 @@ export class AppComponent implements OnInit {
   constructor(
     private router: Router,
     private dialog: MatDialog,
-    private utilService: UtilService) {
+    private utilService: UtilService,
+    private store: Store<appStore.AppState>) {
   }
 
   /**
@@ -50,7 +55,7 @@ export class AppComponent implements OnInit {
           this.router.navigate(['/electron', folder]);
         },
         openRepo: () => {
-          this.router.navigate(['/login']);
+          this.store.dispatch(new AuthActions.Logout());
           openMode.next('remote');
         },
         showPreferences: () => {

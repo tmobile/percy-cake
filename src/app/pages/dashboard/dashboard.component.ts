@@ -10,7 +10,8 @@ import { User } from 'models/auth';
 import { ConfigFile } from 'models/config-file';
 import * as appStore from 'store';
 import { SelectApp, CollapseApps, ToggleApp, TableSort } from 'store/actions/dashboard.actions';
-import { DeleteFile, CommitChanges, Refresh } from 'store/actions/backend.actions';
+import { DeleteFile, CommitChanges, Refresh, Checkout } from 'store/actions/backend.actions';
+import { BranchesDialogComponent } from 'components/branches-dialog/branches-dialog.component';
 import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
 import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.component';
 import { SelectAppDialogComponent } from 'components/select-app-dialog/select-app-dialog.component';
@@ -42,6 +43,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   displayedColumns: string[] = ['applicationName', 'fileName', 'actions'];
   envFileName;
+  pullRequestUrl: string;
 
   /**
    * creates the component
@@ -103,6 +105,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
           return result;
         })
       ).subscribe(folders$);
+
+      this.currentUser.subscribe((user) => {
+        if (user) {
+          const url = new URL(user.repositoryUrl);
+          if (url.host.endsWith('bitbucket.org')) {
+            this.pullRequestUrl = `${url.href}/pull-requests/new?source=${user.branchName}&t=1`;
+          } else if (url.host.endsWith('github.com')) {
+            this.pullRequestUrl = `${url.href}/pull/new/${user.branchName}`;
+          } else if (url.host.endsWith('gitlab.com')) {
+            this.pullRequestUrl = `${url.href}//merge_requests/new`;
+          }
+        }
+      });
   }
 
   /**
@@ -119,6 +134,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
    */
   ngOnDestroy() {
     this.foldersSubscription.unsubscribe();
+  }
+
+  /**
+   * Show the dialog to change branch.
+   */
+  checkoutBranch() {
+    this.store.pipe(select(appStore.getPrincipal), take(1)).subscribe(principal => {
+      const dialogRef = this.dialog.open(BranchesDialogComponent, {
+        data: { principal }
+      });
+      dialogRef.afterClosed().subscribe(data => {
+        if (data) {
+          this.store.dispatch(new Checkout(data));
+        }
+      });
+    });
   }
 
   /**
@@ -226,7 +257,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   deleteFile(file: ConfigFile) {
     const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
       data: {
-        confirmationText: `Delete ${file.applicationName} / ${file.fileName} ?`
+        confirmationText: `Delete ${file.applicationName}/${file.fileName} ?`
       }
     });
 

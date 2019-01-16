@@ -19,7 +19,6 @@ module.exports = {
           path.resolve(__dirname, "node_modules/universalify"),
           path.resolve(__dirname, "node_modules/fs-extra"),
           path.resolve(__dirname, "node_modules/filer"),
-          path.resolve(__dirname, "node_modules/split2"),
           path.resolve(__dirname, "node_modules/globrex"),
           path.resolve(__dirname, "node_modules/globalyzer"),
           path.resolve(__dirname, "node_modules/simple-get"),

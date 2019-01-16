@@ -110,7 +110,7 @@ class YamlParser {
       result = this.parseMappingEvent();
     }
 
-    const anchor = event.anchor;
+    const anchor = event && event.anchor;
     if (anchor) {
       if (this.anchors[anchor]) {
         throw new Error(`Found duplicate anchor: ${anchor}`);
@@ -150,8 +150,9 @@ class YamlParser {
     let event = this.getEvent();
     this.parseComment(result, event.start_mark);
 
+    event = this.peekEvent();
     while (!(event instanceof yamlJS.events.MappingEndEvent)) {
-      const keyNode = this.parseScalarEvent(false);
+      const keyNode = this.parseScalarEvent(true);
       const valueNode = this.parseEvent();
 
       valueNode.key = keyNode.value;
@@ -182,6 +183,7 @@ class YamlParser {
     let idx = 0;
     let itemType: string;
 
+    event = this.peekEvent();
     while (!(event instanceof yamlJS.events.SequenceEndEvent)) {
       const child = this.parseEvent();
       child.key = `[${idx++}]`;
@@ -216,7 +218,7 @@ class YamlParser {
         case PROPERTY_VALUE_TYPES.NUMBER:
           result.valueType = PROPERTY_VALUE_TYPES.NUMBER_ARRAY;
           break;
-        case PROPERTY_VALUE_TYPES.OBJECT:
+        default:
           result.valueType = PROPERTY_VALUE_TYPES.OBJECT_ARRAY;
           break;
       }
@@ -228,17 +230,36 @@ class YamlParser {
 
   /**
    * Parse scalar event.
-   * @param parseComment Flag indicates whether to parse comment
+   * @param forKeyNode Flag indicates whether this scalar event is for key node
    * @returns TreeNode parsed.
    */
-  private parseScalarEvent(parseComment: boolean = true) {
+  private parseScalarEvent(forKeyNode: boolean = false) {
     const event = this.getEvent();
-    const type = this.extractYamlDataType(event.tag) || 'string';
+    const yamlType = this.extractYamlDataType(event.tag);
+    let type = this.convertYamlDataType(yamlType);
+    if (!forKeyNode && (!type || type === 'number') && !event.style && event.value) {
+      try {
+        const loaded = yamlJS.load(`value: ${yamlType ? '!!' + yamlType + ' ' : ''}${event.value}`);
+        const value = loaded['value'];
+        if (_.isNumber(value)) {
+          type = 'number';
+
+          if (value === Number.POSITIVE_INFINITY || value === Number.NEGATIVE_INFINITY || _.isNaN(value)) {
+            event.value = value;
+          } else if (_.isInteger(value) && event.value.indexOf('e') < 0 && event.value.indexOf('.') < 0) {
+            event.value = value;
+          }
+        }
+      } catch (err) {
+        console.error(err); // ignore it
+      }
+    }
+    type = type || 'string';
     const result = new TreeNode('', type);
 
     // Parse number if possible
     if (result.valueType === 'number') {
-      result.value = _.toNumber(event.value);
+      result.value = event.value;
     } else if (result.valueType === 'boolean') {
       result.value = JSON.parse(event.value);
     } else if (result.valueType === 'string') {
@@ -250,7 +271,7 @@ class YamlParser {
       result.valueType = 'string[]';
     }
 
-    if (parseComment) {
+    if (!forKeyNode) {
       this.parseComment(result, event.end_mark);
     }
     return result;
@@ -258,17 +279,26 @@ class YamlParser {
 
   /**
    * Extract yaml data type.
-   * @param comment The comment to extract
-   * @returns extracted comment or undefined if it is not a comment
+   * @param tag The tag to extract data type
+   * @returns extracted data type or empty if it is not a data type
    */
-  private extractYamlDataType(dataType: string) {
-    const trimmed = _.trim(dataType);
+  private extractYamlDataType(tag: string) {
+    const trimmed = _.trim(tag);
     // Extract the data type
     const extracted = trimmed.replace(/^tag:yaml.org,2002:/, '');
 
     // Return extracted data type
+    return extracted || '';
+  }
+
+  /**
+   * Convert yaml data type.
+   * @param yamlType The yaml data type
+   * @returns converted data type or empty if it is not a data type
+   */
+  private convertYamlDataType(yamlType: string) {
     // note if there is more data types need to map then add on mapping of types of YAML and JSON
-    return this.typeMap[extracted] ? this.typeMap[extracted] : _.trim(extracted);
+    return this.typeMap[yamlType] ? this.typeMap[yamlType] : _.trim(yamlType);
   }
 
   /**
@@ -446,7 +476,10 @@ class YamlRender {
 
       let type = child.valueType;
 
-      if (child.aliases && child.valueType !== PROPERTY_VALUE_TYPES.OBJECT) {
+      const aliasOnly = child.aliases && child.aliases.length && (child.valueType !== PROPERTY_VALUE_TYPES.OBJECT
+        || (!child.anchor && (!child.children || !child.children.length)));
+
+      if (aliasOnly) {
         result += ` *${child.aliases[0]}`;
 
         if (hasComment) {
@@ -496,6 +529,12 @@ class YamlRender {
           value = value.replace(/\\/g, '\\\\');
           value = value.replace(/\"/g, '\\"');
           result += ' "' + value + '"';
+        } else if (value === Number.POSITIVE_INFINITY) {
+          result += ' .inf';
+        } else if (value === Number.NEGATIVE_INFINITY) {
+          result += ' -.inf';
+        } else if (Number.isNaN(value)) {
+          result += ' .nan';
         } else {
           result += ' ' + value;
         }
@@ -768,6 +807,7 @@ export class YamlService {
    * @returns compiled yaml string
    */
   compileYAML(env: string, config: Configuration) {
+    // Step 1, merge env inheritance with default config
     const mergeStack = [];
     const inheritedEnvs = [env];
 
@@ -794,6 +834,7 @@ export class YamlService {
       this.mergeEnv(merged, m);
     });
 
+    // Step 2, resolve tokens
     let tokens = {};
     _.each(merged.children, (child) => {
       if (child.isLeaf()) {
@@ -803,12 +844,40 @@ export class YamlService {
 
     tokens = this.resolveTokens(tokens);
 
+    // Step 3, substitute variable reference with tokens
     const substituted = this.substitute(merged, tokens, 0);
     substituted.key = env;
 
-    // Don't validate here since the env node is a partial of tree
-    // , the anchor alias will always fail to validate if any
-    // But we'll validate when saving the whole config
+    // Step 4, merge anchor/alias
+    const mergeAnchor = (node: TreeNode) => {
+      _.each(node.children, (child) => {
+        if (child.children) {
+          mergeAnchor(child);
+        }
+        if (child.isObjectInArray() && child.aliases && child.aliases.length) {
+          const anchorNode = _.cloneDeep(config.default.findAnchorNode(child.aliases[0]));
+          if (anchorNode) {
+            const childKeys = _.map(child.children, c => c.key);
+            const anchorChildren = _.filter(anchorNode.children, c => childKeys.indexOf(c.key) < 0);
+            _.each(anchorChildren, item => {
+              item.parent = null;
+              child.addChild(item);
+            });
+            child.aliases = null; // We've merged anchor/alias, don't need show alias in compiled view
+          }
+        }
+      });
+    };
+    mergeAnchor(substituted);
+
+    // Step 5, omit variable
+    const variableNamePrefix = _.defaultTo(appPercyConfig.variableNamePrefix, percyConfig.variableNamePrefix);
+    if (variableNamePrefix) {
+      substituted.children = _.filter(substituted.children, c => {
+        return !c.isLeaf() || !c.key.startsWith(variableNamePrefix);
+      });
+    }
+
     return this.convertTreeToYaml(substituted, false);
   }
 

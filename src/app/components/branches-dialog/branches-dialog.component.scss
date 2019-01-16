@@ -1,0 +1,32 @@
+.branches-dialog {
+  .radio-group {
+    display: inline-flex;
+    flex-direction: column;
+  }
+  .button-row {
+      padding-top: 20px;
+      display: flex;
+      justify-content: center;
+      >* {
+          margin: 0 8px;
+      }
+      button {
+        text-transform: uppercase;
+
+        &.btn-submit {
+          width: 85px;
+        }
+      }
+  }
+}
+::ng-deep .mat-select-panel.branches-select {
+  max-height: 210px !important;
+}
+
+::ng-deep .mat-form-field-infix {
+  width: 200px !important;
+}
+
+::ng-deep .mat-radio-label-content {
+  padding-left: 12px !important;
+}

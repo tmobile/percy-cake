@@ -4,29 +4,30 @@
     padding: 30px 50px;
     color: $color-text-secondary;
 
-    h1 {
-      color: black;
+    .repo-row {
+      display: flex;
+      align-items: center;
+
+      h1 {
+        color: black;
+      }
+      h2 {
+        margin-left: 30px;
+      }
     }
     .table-header-row {
         display: flex;
         align-items: center;
         padding: 25px 0 20px;
-        .btn-expand-all {
-          margin-right: 20px;
-          margin-left: auto;
-        }
-        .btn-commit-changes {
-            margin-left: auto;
-            text-transform: uppercase;
-        }
-        .btn-add-file {
+
+        a, button {
             margin-left: 10px;
             text-transform: uppercase;
+            &.btn-commit-changes{
+              margin-left: auto;
+            }
         }
-        .btn-refresh-file {
-            margin-left: 10px;
-            text-transform: uppercase;
-        }
+
         .apps-label {
           margin-left: 100px;
           margin-right: 20px;
@@ -73,9 +74,6 @@
                     .btn-with-icon {
                       display: flex;
                       align-items: center;
-                      .btn-icon {
-                        cursor: pointer;
-                      }
                       button {
                           min-width: auto;
                           text-transform: uppercase;

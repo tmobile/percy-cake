@@ -1,14 +1,18 @@
-import { Component, Input, Output, EventEmitter, OnChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 import { NestedTreeControl } from '@angular/cdk/tree';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
 import { MatDialog } from '@angular/material';
+import { Observable } from 'rxjs';
+import { select, Store } from '@ngrx/store';
 import * as _ from 'lodash';
 
 import { PROPERTY_VALUE_TYPES } from 'config';
+import { User } from 'models/auth';
 import { Configuration } from 'models/config-file';
 import { TreeNode } from 'models/tree-node';
 import { ConfigProperty } from 'models/config-property';
 
+import * as appStore from 'store';
 import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
 import { YamlService } from 'services/yaml.service';
 
@@ -32,20 +36,20 @@ export class NestedConfigViewComponent implements OnChanges {
   @Output() cancelAddEditPropertyChange = new EventEmitter<any>();
   @Output() viewCompiledYAMLEvent = new EventEmitter<string>();
 
+  currentUser: Observable<User> = this.store.pipe(select(appStore.getCurrentUser));
+
   defaultTreeControl: NestedTreeControl<TreeNode>;
   defaultDataSource: MatTreeNestedDataSource<TreeNode>;
 
   envTreeControl: NestedTreeControl<TreeNode>;
   envDataSource: MatTreeNestedDataSource<TreeNode>;
 
-  firstInit = true;
-
   /**
    * initializes the component
    * @param dialog the material dialog instance
    * @param yamlService the yaml service
    */
-  constructor(private dialog: MatDialog, private yamlService: YamlService) {
+  constructor(private store: Store<appStore.AppState>, private dialog: MatDialog, private yamlService: YamlService) {
     const _getChildren = (node: TreeNode) => node.children;
     this.defaultTreeControl = new NestedTreeControl<TreeNode>(_getChildren);
     this.defaultDataSource = new MatTreeNestedDataSource();
@@ -54,29 +58,17 @@ export class NestedConfigViewComponent implements OnChanges {
   }
 
   /**
-   * handle component initialization
+   * handle component changes
+   * @param changes the changes
    */
-  ngOnChanges() {
-    const defaultTree = this.configuration.default;
-
-    if (!this.defaultDataSource.data
-      || !this.defaultDataSource.data.length
-      || !_.isEqual(this.defaultDataSource.data[0], defaultTree)) {
-      this.firstInit = true;
+  ngOnChanges(changes: SimpleChanges) {
+    const configurationChanged = changes['configuration'];
+    if (configurationChanged) {
+      const defaultTree = this.configuration.default;
       this.defaultDataSource.data = [defaultTree];
-    }
 
-    const environmentsTree = this.configuration.environments;
-
-    if (!this.envDataSource.data
-      || !this.envDataSource.data.length
-      || !_.isEqual(this.envDataSource.data[0], environmentsTree)) {
-      this.firstInit = true;
+      const environmentsTree = this.configuration.environments;
       this.envDataSource.data = [environmentsTree];
-    }
-
-    if (this.firstInit) {
-      this.firstInit = false;
       this.toggle(this.defaultTreeControl, this.defaultDataSource.data[0], true, true);
       this.toggle(this.envTreeControl, this.envDataSource.data[0], true, true);
     }
@@ -150,23 +142,29 @@ export class NestedConfigViewComponent implements OnChanges {
         keyOptions.push({ key: 'inherits', type: 'string' });
       }
 
-      // Build key hierarchy
-      const keyHierarchy: string[] = [];
-      let parentNode = node;
-      while (parentNode && parentNode.getLevel() > 1) {
-        if (parentNode.isObjectInArray()) {
-          // object in array, use first child
-          keyHierarchy.unshift('[0]');
-        } else {
-          keyHierarchy.unshift(parentNode.key);
-        }
-        parentNode = parentNode.parent;
-      }
-
       // Find the respective defalut node
       let defaultNode = this.defaultDataSource.data[0];
-      for (let i = 0; i < keyHierarchy.length; i++) {
-        defaultNode = _.find(defaultNode.children, { key: keyHierarchy[i] });
+
+      if (node.aliases && node.aliases.length) {
+        // Use alias node as default node
+        defaultNode = defaultNode.findAnchorNode(node.aliases[0]);
+      } else {
+        // Build key hierarchy
+        const keyHierarchy: string[] = [];
+        let parentNode = node;
+        while (parentNode && parentNode.getLevel() > 1) {
+          if (parentNode.isObjectInArray()) {
+            // object in array, use first child
+            keyHierarchy.unshift('[0]');
+          } else {
+            keyHierarchy.unshift(parentNode.key);
+          }
+          parentNode = parentNode.parent;
+        }
+
+        for (let i = 0; i < keyHierarchy.length; i++) {
+          defaultNode = _.find(defaultNode.children, { key: keyHierarchy[i] });
+        }
       }
 
       if (defaultNode) {
@@ -220,8 +218,7 @@ export class NestedConfigViewComponent implements OnChanges {
     this.envDataSource.data = null;
     this.envDataSource.data = _data;
 
-    const newConfiguration = new Configuration(this.defaultDataSource.data[0], this.envDataSource.data[0]);
-    this.configurationChange.emit(newConfiguration);
+    this.configurationChange.emit(this.configuration);
   }
 
   /**
@@ -347,7 +344,7 @@ export class NestedConfigViewComponent implements OnChanges {
     }
 
     this.refreshTree();
-    this.cancelAddEditProperty();
+    this.showDetail(this.currentConfigProperty.editMode ? this.currentConfigProperty.node : node);
   }
 
 
@@ -401,6 +398,16 @@ export class NestedConfigViewComponent implements OnChanges {
 
     const parent = node.parent;
     parent.removeChildren([node.key]);
+
+    if (!node.isDefaultNode() && node.getLevel() === 1) {
+      // Delete inherit if any
+      _.each(parent.children, child => {
+        const inherits = child.findChild(['inherits']);
+        if (inherits && inherits.value === node.key) {
+          child.removeChildren(['inherits']);
+        }
+      });
+    }
 
     if (node.anchor) {
       const removeAlias = (envNode: TreeNode) => {

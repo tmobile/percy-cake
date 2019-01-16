@@ -8,17 +8,17 @@
     <mat-card class="forms-container mat-elevation-z">
       <div class="open-mode" *ngIf="!openMode">
           <button mat-raised-button color="primary" class="btn-local" (click)="openLocalFolder()">
-              Open Local Folder
+              Open Folder
           </button>
           <button mat-raised-button color="primary" class="btn-remote" (click)="setOpenMode('remote')">
-              Open Remote Repo
+              Open Repo
           </button>
       </div>
       <form class="login-form" (ngSubmit)="login()" *ngIf="openMode === 'remote'">
         <h1 class="form-heading">Login</h1>
 
         <mat-form-field class="form-field">
-          <input type="text" placeholder="Username" (input)="onInput($event)" [matAutocomplete]="auto" matInput
+          <input type="text" name="Username" placeholder="Username" (input)="onInput($event)" [matAutocomplete]="auto" matInput
             #autoTrigger="matAutocompleteTrigger" [formControl]="username" (keyup)="inputChange('user-pass')" />
           <mat-autocomplete #auto="matAutocomplete">
             <mat-option *ngFor="let name of filteredUsernames | async" [value]="name">
@@ -29,23 +29,16 @@
         </mat-form-field>
 
         <mat-form-field class="form-field">
-          <input type="password" matInput placeholder="Password" [formControl]="password" (keyup)="inputChange('user-pass')" />
+          <input type="password" name="Password" matInput placeholder="Password" [formControl]="password" (keyup)="inputChange('user-pass')" />
           <mat-error *ngIf="password.hasError('required')">*Required</mat-error>
         </mat-form-field>
 
         <mat-form-field class="form-field">
-          <input type="text" matInput placeholder="Repository URL" [formControl]="repositoryURL" (keyup)="inputChange()" />
+          <input type="text" name="RepositoryURL" matInput placeholder="Repository URL" [formControl]="repositoryURL" (keyup)="inputChange()" />
           <mat-error *ngIf="repositoryURL.hasError('required')">*Required</mat-error>
           <mat-error *ngIf="!repositoryURL.hasError('required') && repositoryURL.hasError('pattern')">Invalid URL</mat-error>
           <mat-error *ngIf="repositoryURL.hasError('notFound')">Repository not found</mat-error>
           <mat-error *ngIf="repositoryURL.hasError('forbidden')">You are not allowed to access the repo</mat-error>
-        </mat-form-field>
-
-        <mat-form-field class="form-field">
-          <input type="text" matInput placeholder="Branch Name" [formControl]="branchName" (keyup)="inputChange()" />
-          <mat-error *ngIf="branchName.hasError('required')">*Required</mat-error>
-          <mat-error *ngIf="branchName.hasError('notFound')">Branch not found</mat-error>
-          <mat-error *ngIf="branchName.hasError('locked')">Branch is locked</mat-error>
         </mat-form-field>
 
         <!-- login error message -->

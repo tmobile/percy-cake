@@ -13,7 +13,7 @@ import {
   LoadFiles, LoadFilesSuccess, LoadFilesFailure,
   DeleteFile, DeleteFileFailure, DeleteFileSuccess,
   GetFileContent, GetFileContentSuccess, GetFileContentFailure,
-  SaveDraftSuccess, SaveDraftFailure, Refresh, RefreshFailure, RefreshSuccess
+  SaveDraftSuccess, SaveDraftFailure, Refresh, RefreshFailure, RefreshSuccess, CheckoutFailure, Checkout, CheckoutSuccess
 } from '../actions/backend.actions';
 import { FileManagementService } from 'services/file-management.service';
 import { ConflictDialogComponent } from 'components/conflict-dialog/conflict-dialog.component';
@@ -231,6 +231,33 @@ export class BackendEffects {
   @Effect()
   deleteFileFailure$ = this.actions$.pipe(
     ofType<DeleteFileFailure>(BackendActionTypes.DeleteFileFailure),
+    map((action) => new APIError(action.payload))
+  );
+
+  // checkout branch effect
+  @Effect()
+  checkout$ = this.actions$.pipe(
+    ofType<Checkout>(BackendActionTypes.Checkout),
+    withLatestFrom(this.store.pipe(select(appStore.getPrincipal))),
+    switchMap(async ([action, pricinpal]) => {
+      try {
+        await this.fileManagementService.checkoutBranch(pricinpal, action.payload.type, action.payload.branch);
+        const result = [];
+
+        result.push(new CheckoutSuccess({ branch: action.payload.branch }));
+        result.push(new LoadFiles());
+        return result;
+      } catch (error) {
+        return [new CheckoutFailure(error)];
+      }
+    }),
+    switchMap(res => res),
+  );
+
+  // checkout branch failure effect
+  @Effect()
+  checkoutFailure$ = this.actions$.pipe(
+    ofType<CheckoutFailure>(BackendActionTypes.CheckoutFailure),
     map((action) => new APIError(action.payload))
   );
 }

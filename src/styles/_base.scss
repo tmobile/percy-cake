@@ -44,7 +44,18 @@ a {
   justify-content: center;
   align-items: center;
 }
-
+.unselectable {
+  -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+     -khtml-user-select: none; /* Konqueror HTML */
+       -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome and Opera */
+}
+.word-break-all {
+  word-break: break-all;
+}
 
 // text ellipsis
 .is-ellipsis {
@@ -106,6 +117,9 @@ mat-tooltip-component .mat-tooltip {
   font-feature-settings: 'liga';
   -webkit-font-smoothing: antialiased;
 }
+pre {
+  font-family: Roboto, sans-serif;
+}
 code.hljs {
   line-height: 18px;
   
@@ -156,7 +170,7 @@ body.vscode-theme {
   }
 
   .mat-select-value, .mat-card, .mat-tree, .mat-tree-node, .mat-input-element, .mat-nested-tree-node, .mat-form-field-label,
-  .property-form-wrapper, .preview .property {
+  .property-form-wrapper, .preview .property, .value-radio-options .section-heading {
     color: inherit !important;
   }
 

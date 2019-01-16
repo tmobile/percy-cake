@@ -18,12 +18,24 @@
           margin-bottom: 20px;
       }
       .filename {
+        ::ng-deep .mat-form-field-infix {
+          display: flex;
+          padding-top: 1em;
+          overflow-x: auto;
+          overflow-y: hidden;
+        }
+        ::ng-deep .mat-form-field-label-wrapper {
+          top: 0;
+        }
         label {
           color: grey;
         }
         input {
           width: auto;
           flex: 1;
+          &.hidden {
+            display: none;
+          }
         }
       }
       app-nested-config-view {
@@ -56,17 +68,17 @@
           min-height: 1px;
           pre {
               flex: 1;
-              display: grid;
-              display: -ms-grid;
               min-height: 1px;
               .hljs {
-                  flex: 1;
+                  max-height: 100%;
                   overflow: auto;
-                  padding: 10px;
+                  padding: 15px;
                   background-color: $white;
               }
           }
           .property {
+              max-height: 100%;
+              overflow: auto;
               display: flex;
               background-color: $white;
               padding: 10px 10px 0;
@@ -77,6 +89,7 @@
                       flex-shrink: 1;
                   }
                   .comment pre {
+                      word-wrap: break-word;
                       white-space: pre-wrap;
                       margin-top: 0;
                   }

@@ -1,8 +1,10 @@
 import * as fs from 'fs';
-import * as path from 'path';
+import * as _path from 'path';
 import * as electron from 'electron';
 
 import { File } from './File';
+
+export const path = _path;
 
 export const CHANNELS = {
   OPEN_FOLER: 'percy-open-folder',
@@ -29,11 +31,19 @@ export function registerRendererListeners(listeners) {
 }
 
 /**
+ * Get app.
+ * @returns electron app
+ */
+function getApp() {
+  return electron.app || electron.remote.app;
+}
+
+/**
  * Get state file path.
  * @returns state file path
  */
 function getStateFile() {
-  return path.resolve((electron.app || electron.remote.app).getPath('userData'), 'state.json');
+  return path.resolve(getApp().getPath('userData'), 'state.json');
 }
 
 /**
@@ -118,7 +128,7 @@ export function openFolder(folerPath: string, win?: Electron.BrowserWindow) {
 export function openFolderDialog(win?: Electron.BrowserWindow) {
   win = getBrowserWindow(win);
 
-  (electron.dialog || electron.remote.dialog).showOpenDialog({ properties: ['openDirectory'] }, (result) => {
+  (electron.dialog || electron.remote.dialog).showOpenDialog(win, { properties: ['openDirectory'] }, (result) => {
     if (result && result[0]) {
       openFolder(result[0], win);
     }
@@ -139,7 +149,7 @@ export function openRepo(win?: Electron.BrowserWindow) {
  * @returns the preferences file path
  */
 function getPreferencesFile() {
-  return path.resolve((electron.app || electron.remote.app).getPath('userData'), 'preferences.json');
+  return path.resolve(getApp().getPath('userData'), 'preferences.json');
 }
 
 /**
@@ -155,11 +165,8 @@ export function getPreferences() {
   }
 
   // Return default settings.
-  return {
-    environmentsFile: 'environments.yaml',
-    variablePrefix: '_{',
-    variableSuffix: '}_',
-  };
+  const defaultConf = readFile(path.resolve(getApp().getAppPath(), 'dist/percy.conf.json'));
+  return JSON.parse(defaultConf);
 }
 
 /**
@@ -204,13 +211,26 @@ export function getAppPercyConfig(file: File) {
 }
 
 /**
- * Read folder.
- * @param folderPath The folder path
- * @param parent The parent
+ * Construct new folder instance.
+ * @param folderPath the folder path
+ * @param parent the parent folder
+ * @returns new folder instance
  */
-export function readFolder(folderPath: string, parent?: File) {
-  const folder = new File(path.normalize(folderPath), path.basename(folderPath), false, fs.statSync(folderPath).ino, parent);
+export function constructFolder(folderPath: string, parent?: File) {
+  const folder = new File(path.normalize(folderPath), path.basename(folderPath), false, parent);
   folder.applicationName = parent ? parent.applicationName + '/' + folder.fileName : folder.fileName;
+  return folder;
+}
+
+/**
+ * Populate folder.
+ * @param folder The folder to populate
+ */
+export function populateFolder(folder: File) {
+  if (folder.folderPopulated) {
+    return;
+  }
+  folder.children = [];
 
   const files = fs.readdirSync(folder.path);
   files.forEach(fileName => {
@@ -219,18 +239,18 @@ export function readFolder(folderPath: string, parent?: File) {
 
     if (stat.isDirectory() && fileName !== '.git' && fileName !== '.vscode' && fileName !== 'node_modules') {
       // ignore some well-know folders
-      folder.addChild(readFolder(filePath, folder));
+      folder.addChild(constructFolder(filePath, folder));
     } else if (stat.isFile()) {
       const ext = path.extname(fileName).toLowerCase();
       if (ext === '.yaml' || ext === '.yml') {
-        const file = new File(filePath, fileName, true, stat.ino, folder);
+        const file = new File(filePath, fileName, true, folder);
         file.applicationName = folder.applicationName;
         folder.addChild(file);
       }
     }
   });
 
-  return folder;
+  folder.folderPopulated = true;
 }
 
 /**
@@ -252,7 +272,6 @@ export function readFile(filePath: string) {
  */
 export function saveFile(filePath: string, fileContent: string) {
   fs.writeFileSync(filePath, fileContent);
-  return fs.statSync(filePath).ino;
 }
 
 /**

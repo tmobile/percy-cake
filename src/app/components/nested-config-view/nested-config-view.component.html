@@ -36,31 +36,38 @@
     <div class="mat-tree-node">
         <div *ngIf="node.isLeaf()" class="btn-tree-toggle"></div>
 
-        <div *ngIf="!node.isLeaf() && node.getLevel() === 0" (click)="toggle(treeControl, node, true)" class="{{treeControl.isExpanded(node)?'btn-tree-toggle toggle-all-up':'btn-tree-toggle toggle-all-down'}}" >&raquo;</div>
+        <div *ngIf="!node.isLeaf() && node.getLevel() === 0" (click)="toggle(treeControl, node, true)" class="{{treeControl.isExpanded(node)?'btn-tree-toggle toggle-all-up unselectable':'btn-tree-toggle toggle-all-down unselectable'}}" >&raquo;</div>
 
-        <div *ngIf="!node.isLeaf()" class="{{treeControl.isExpanded(node)?'btn-tree-toggle toggle-up':'btn-tree-toggle toggle-down'}}" (click)="toggle(treeControl, node)">{{treeControl.isExpanded(node) ? '-' : '+' }}</div>
+        <div *ngIf="!node.isLeaf()" class="{{treeControl.isExpanded(node)?'btn-tree-toggle toggle-up unselectable':'btn-tree-toggle toggle-down unselectable'}}" (click)="toggle(treeControl, node)">{{treeControl.isExpanded(node) ? '-' : '+' }}</div>
 
         <span class="context-menu-trigger" #menuTrigger [matMenuTriggerFor]="menu"></span>
 
         <div class="underline" (contextmenu)="openMenu($event, menuTrigger)"
             (click)="showDetail(node)" (dblclick)="treeControl.isExpanded(node) ? treeControl.collapse(node): treeControl.expand(node)">
-            <div [matTooltip]="node.getCommentStr()" matTooltipPosition="above" class="key" >{{node.key}} :</div>
-            <div  [matTooltip]="node.getCommentStr()" matTooltipPosition="above" *ngIf="node.isLeaf()" class="value" [innerHTML]="yamlService.highlightNodeVariable(node)"></div>
+            <div [matTooltip]="node.getCommentStr(true)" matTooltipPosition="above" class="key" >{{node.key}} :</div>
+            <div [matTooltip]="node.getCommentStr(true)" matTooltipPosition="above" class="value">
+              <ng-container *ngIf="node.isObjectInArray() && node.aliases && node.aliases.length">{{'*' + node.aliases[0]}}</ng-container>
+              <ng-container *ngIf="node.isObjectInArray() && node.anchor">{{'&' + node.anchor}}</ng-container>
+              <div *ngIf="node.isLeaf()" [innerHTML]="yamlService.highlightNodeVariable(node)"></div>
+            </div>
             <button mat-icon-button #menuButton class="btn-action" (click)="$event.stopPropagation()" (contextmenu)="buttonOpenMenu($event, menuButton)" [matMenuTriggerFor]="menu">...</button>
         </div>
 
         <mat-menu #menu="matMenu">
-          <button *ngIf="!node.isLeaf()" mat-button class="btn-action-menu" color="primary" (click)="openAddPropertyDialog(node)">
+          <button *ngIf="!node.isLeaf() && (currentUser|async)?.branchName !== 'master'" mat-button class="btn-action-menu" color="primary" (click)="openAddPropertyDialog(node)">
             {{node.isDefaultNode() || node.getLevel() > 0? (node.isDefaultNode()? 'Add Property':'Override Property'): 'Add Environment'}}
           </button>
-          <button mat-button class="btn-action-menu" color="primary" (click)="openEditPropertyDialog(node)">
+          <button *ngIf="(currentUser|async)?.branchName !== 'master'" mat-button class="btn-action-menu" color="primary" (click)="openEditPropertyDialog(node)">
             Edit
           </button>
           <button *ngIf="!node.isDefaultNode() && node.getLevel() === 1" (click)="viewCompiledYAML(node.key)" mat-button class="btn-action-menu" color="primary">
             View Compiled YAML
           </button>
-          <button *ngIf="node.getLevel()>0" mat-button class="btn-action-menu" color="warn" (click)="deleteProperty(node)">
+          <button *ngIf="node.getLevel()>0 && (currentUser|async)?.branchName !== 'master'" mat-button class="btn-action-menu" color="warn" (click)="deleteProperty(node)">
             Delete
+          </button>
+          <button *ngIf="(currentUser|async)?.branchName === 'master'" (click)="showDetail(node)" mat-button class="btn-action-menu" color="primary">
+            View Detail
           </button>
         </mat-menu>
     </div>

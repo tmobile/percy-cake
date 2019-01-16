@@ -41,8 +41,6 @@ describe('LoginComponent', () => {
 
   it('should show default repo url and branch', () => {
     expect(ctx.component.repositoryURL.value).toEqual(percyConfig.defaultRepositoryUrl);
-    expect(ctx.component.branchName.value).toEqual(percyConfig.defaultBranchName);
-    expect(ctx.component.lockedBranches).toEqual(percyConfig.lockedBranches);
   });
 
   it('should show auto complete prompt for username', async () => {
@@ -107,22 +105,6 @@ describe('LoginComponent', () => {
     expect(dispatchSpy.calls.count()).toEqual(0);
   });
 
-  it('branch locked, should not login', () => {
-
-    ctx.component.username.setValue(TestUser.username);
-    ctx.component.username.setErrors(null);
-    ctx.component.password.setValue('test-pass');
-    ctx.component.password.setErrors(null);
-    ctx.component.repositoryURL.setValue(TestUser.repositoryUrl);
-    ctx.component.repositoryURL.setErrors(null);
-    ctx.component.branchName.setValue(percyConfig.lockedBranches[0]);
-    ctx.component.branchName.setErrors(null);
-    ctx.component.login();
-
-    expect(ctx.component.branchName.hasError('locked')).toBeTruthy();
-    expect(dispatchSpy.calls.count()).toEqual(0);
-  });
-
   it('login function should work', () => {
 
     ctx.component.username.setValue(TestUser.username);
@@ -131,14 +113,11 @@ describe('LoginComponent', () => {
     ctx.component.password.setErrors(null);
     ctx.component.repositoryURL.setValue(TestUser.repositoryUrl);
     ctx.component.repositoryURL.setErrors(null);
-    ctx.component.branchName.setValue(TestUser.branchName);
-    ctx.component.branchName.setErrors(null);
     ctx.component.login();
 
     const payload = dispatchSpy.calls.mostRecent().args[0].payload;
     expect(payload).toEqual({
       repositoryUrl: TestUser.repositoryUrl,
-      branchName: TestUser.branchName,
       username: TestUser.username,
       password: 'test-pass'
     });
@@ -155,15 +134,6 @@ describe('LoginComponent', () => {
 
     ctx.store.next(new LoginFailure(new HttpErrors.NotFound('Repository not found')));
     expect(ctx.component.repositoryURL.hasError('notFound')).toBeTruthy();
-
-    ctx.component.branchName.setValue(TestUser.branchName);
-    const branchNotFoundError = new HttpErrors.NotFound('Branch not found');
-    branchNotFoundError.code = 'ResolveRefError';
-    branchNotFoundError.data = {
-      ref: TestUser.branchName
-    };
-    ctx.store.next(new LoginFailure(branchNotFoundError));
-    expect(ctx.component.branchName.hasError('notFound')).toBeTruthy();
 
     ctx.store.next(new LoginFailure(new HttpErrors.InternalServerError('mock error')));
     expect(ctx.component.loginError).toEqual('Login failed');

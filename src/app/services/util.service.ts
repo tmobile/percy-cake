@@ -144,14 +144,14 @@ export class UtilService extends YamlService {
 
   /**
    * Get repo folder name.
-   * @param user The user contains username, repo name and branch name
+   * @param auth The authenticate
    * @returns the repo folder name
    */
   getRepoFolder(auth: Authenticate) {
     const repoName = this.getRepoName(new URL(auth.repositoryUrl));
 
-    // Construct folder name by combining username, repoName and branchName
-    const repoFolder = encodeURIComponent(`${auth.username}!${repoName}!${auth.branchName}`);
+    // Construct folder name by combining username, repoName
+    const repoFolder = encodeURIComponent(`${auth.username}!${repoName}`);
     return { repoName, repoFolder };
   }
 

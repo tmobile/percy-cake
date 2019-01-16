@@ -27,6 +27,9 @@ export enum BackendActionTypes {
   Refresh = '[Backend] Refresh',
   RefreshSuccess = '[Backend] Refresh Success',
   RefreshFailure = '[Backend] Refresh Failure',
+  Checkout = '[Backend] Checkout',
+  CheckoutSuccess = '[Backend] Checkout Success',
+  CheckoutFailure = '[Backend] Checkout Failure',
 }
 
 export class Initialize implements Action {
@@ -142,6 +145,24 @@ export class RefreshFailure implements Action {
   constructor(public payload: Error) { }
 }
 
+export class Checkout implements Action {
+  readonly type = BackendActionTypes.Checkout;
+
+  constructor(public payload: { type: string, branch: string }) { }
+}
+
+export class CheckoutSuccess implements Action {
+  readonly type = BackendActionTypes.CheckoutSuccess;
+
+  constructor(public payload: { branch: string }) { }
+}
+
+export class CheckoutFailure implements Action {
+  readonly type = BackendActionTypes.CheckoutFailure;
+
+  constructor(public payload: Error) { }
+}
+
 
 export type BackendActionsUnion =
   | Initialize
@@ -164,4 +185,7 @@ export type BackendActionsUnion =
   | Refresh
   | RefreshSuccess
   | RefreshFailure
+  | Checkout
+  | CheckoutSuccess
+  | CheckoutFailure
   ;

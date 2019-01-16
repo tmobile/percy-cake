@@ -620,6 +620,11 @@ describe('AddEditPropertyDialogComponent', () => {
     result.value = ctx.component.value.value;
     result.comment = ctx.component.comment.value.split('\n');
 
+    ctx.component.numberInput = {
+      nativeElement: {
+        value: ctx.component.value.value + ''
+      }
+    };
     ctx.component.onSubmit();
     expect(ctx.observables.saveProperty.value).toEqual(result);
   });
@@ -649,6 +654,11 @@ describe('AddEditPropertyDialogComponent', () => {
     result.value = ctx.component.value.value;
     result.comment = ctx.component.comment.value.trim().split('\n');
 
+    ctx.component.numberInput = {
+      nativeElement: {
+        value: ctx.component.value.value + ''
+      }
+    };
     ctx.component.onSubmit();
     expect(ctx.observables.saveProperty.value).toEqual(result);
   });
@@ -1056,6 +1066,40 @@ describe('AddEditPropertyDialogComponent', () => {
 
     const result = _.cloneDeep(defaultTree.findChild(['obj', 'url']));
     result.parent = undefined;
+    expect(ctx.observables.saveProperty.value).toEqual(result);
+  });
+
+  it('duplicate default of object array, should copy alias instead of full array', () => {
+
+    const defaultTree = new TreeNode('default');
+    defaultTree.addChild(new TreeNode('oarr', PROPERTY_VALUE_TYPES.OBJECT_ARRAY));
+    defaultTree.findChild(['oarr']).addChild(new TreeNode('[0]'));
+    defaultTree.findChild(['oarr', '[0]']).anchor = 'oarr-0';
+    defaultTree.findChild(['oarr']).addChild(new TreeNode('[1]'));
+    defaultTree.findChild(['oarr', '[1]']).anchor = 'oarr-1';
+
+    const data = {
+      editMode: true,
+      node: new TreeNode('oarr', PROPERTY_VALUE_TYPES.OBJECT_ARRAY),
+      keyOptions: [],
+      defaultTree,
+    };
+
+    const root = new TreeNode('environments');
+    root.addChild(new TreeNode('dev'));
+    root.findChild(['dev']).addChild(data.node);
+
+    ctx.component.data = data;
+    ctx.component.ngOnChanges();
+
+    ctx.component.useDefault({ checked: true });
+    ctx.component.onSubmit();
+
+    const result = new TreeNode('oarr', PROPERTY_VALUE_TYPES.OBJECT_ARRAY);
+    result.addChild(new TreeNode('[0]'));
+    result.addChild(new TreeNode('[1]'));
+    result.findChild(['[0]']).aliases = ['oarr-0'];
+    result.findChild(['[1]']).aliases = ['oarr-1'];
     expect(ctx.observables.saveProperty.value).toEqual(result);
   });
 

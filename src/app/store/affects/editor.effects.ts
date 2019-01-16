@@ -92,9 +92,12 @@ export class EditorEffects {
   @Effect()
   pageLoadFailure$ = this.actions$.pipe(
     ofType<PageLoadFailure>(EditorActionTypes.PageLoadFailure),
-    map((action) => new Alert({
+    map((action) => {
+      const alertType = action.payload.statusCode === 401 || action.payload.statusCode === 403 ? 'logout' : 'go-to-dashboard';
+      return new Alert({
         message: action.payload.message,
-        alertType: 'go-to-dashboard'
-      }))
+        alertType
+      });
+    })
   );
 }

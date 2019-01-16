@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, ViewChild, ElementRef } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material';
 import { Store } from '@ngrx/store';
@@ -34,6 +34,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
   comment: FormControl;
   anchor: FormControl;
   alias: FormControl;
+  @ViewChild('numberInput') numberInput: ElementRef;
 
   inheritsOptions: string[];
   anchorsOptions: string[];
@@ -55,7 +56,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     this.valueType = new FormControl('', [NotEmpty]);
     this.value = new FormControl('', [NotEmpty]);
     this.alias = new FormControl('', [NotEmpty]);
-    this.anchor = new FormControl('', [NotEmpty, Validators.pattern('^[a-zA-Z0-9_-]*$')]);
+    this.anchor = new FormControl('', [NotEmpty, Validators.pattern('^[a-zA-Z0-9_-]*$'), Validators.maxLength(40)]);
     this.comment = new FormControl('');
   }
 
@@ -72,7 +73,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
       this.valueType.setValue(node.valueType);
 
       if (node.valueType === PROPERTY_VALUE_TYPES.NUMBER) {
-        this.value.setValue(_.isNumber(node.value) ? node.value : '');
+        this.value.setValue(_.isNumber(node.value) || _.isString(node.value) ? node.value : '');
       } else {
         this.value.setValue(_.toString(node.value));
       }
@@ -438,7 +439,10 @@ export class AddEditPropertyDialogComponent implements OnChanges {
         if (node.valueType === PROPERTY_VALUE_TYPES.BOOLEAN) {
           node.value = this.value.value === 'true' || this.value.value === true;
         } else if (node.valueType === PROPERTY_VALUE_TYPES.NUMBER) {
-          node.value = _.toNumber(this.value.value);
+          node.value = this.numberInput.nativeElement.value;
+          if (node.value && node.value.indexOf('.') < 0 && node.value.indexOf('e') < 0) {
+            node.value = parseInt(node.value, 10);
+          }
         } else {
           node.value = this.value.value;
         }
@@ -457,9 +461,26 @@ export class AddEditPropertyDialogComponent implements OnChanges {
       } else {
         defaultNode = this.getDefaultNodeToDuplicate();
       }
-      node = this.cloneWithoutParent(defaultNode);
 
-      node.key = this.key.value;
+      if (this.valueType.value === PROPERTY_VALUE_TYPES.OBJECT_ARRAY) {
+        node = new TreeNode(this.key.value, this.valueType.value);
+        node.comment = _.cloneDeep(defaultNode.comment);
+        _.each(defaultNode.children, c => {
+          let cc;
+          if (c.anchor) {
+            cc = new TreeNode(c.key, c.valueType);
+            cc.comment = _.cloneDeep(c.comment);
+            cc.aliases = [c.anchor];
+          } else {
+            cc = this.cloneWithoutParent(c);
+          }
+          node.addChild(cc);
+        });
+      } else {
+        node = this.cloneWithoutParent(defaultNode);
+        node.key = this.key.value;
+      }
+
     } else {
       // Clone first sibling
       const firstSibling = this.data.editMode ? this.data.node.parent.children[0] : this.data.node.children[0];

@@ -1,4 +1,3 @@
-import * as path from 'path';
 import * as _ from 'lodash';
 import { Subscription } from 'rxjs';
 
@@ -6,7 +5,7 @@ import { FormControl } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { NestedTreeControl } from '@angular/cdk/tree';
-import { MatTreeNestedDataSource, MatDialog } from '@angular/material';
+import { MatTreeNestedDataSource, MatDialog, MatDialogRef } from '@angular/material';
 import { Store, select } from '@ngrx/store';
 
 import { electronApi, percyConfig, appPercyConfig } from 'config';
@@ -38,11 +37,11 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
   fileTreeControl: NestedTreeControl<File>;
   fileDataSource: MatTreeNestedDataSource<File>;
 
-  allFiles: File[] = [];
   openedFiles: File[] = [];
   selectedEditor = new FormControl(0);
 
   editorStates: { [key: number]: EditorState } = {};
+  changedDialogRef: { [key: string]: MatDialogRef<ConfirmationDialogComponent> } = {};
 
   newFileIno = -1;
 
@@ -72,19 +71,19 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
       if (!editorState.configFile) {
         return;
       }
-      const id = editorState.configFile['id'];
-      if (!id) {
+      const filePath = editorState.configFile['path'];
+      if (!filePath) {
         return;
       }
 
       // Align editor state
-      const state = this.editorStates[id];
+      const state = this.editorStates[filePath];
       if (state) {
         state.configuration = editorState.configuration;
       }
 
       // Align file state
-      const file = this.findOpenedFile(id);
+      const file = this.findOpenedFile(filePath);
       if (file) {
         file.modified = editorState.configFile.modified;
         file.configuration = editorState.configuration;
@@ -132,15 +131,17 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
     this.editorStates = {};
 
     const routeSnapshot = this.route.snapshot;
-    const folder = routeSnapshot.paramMap.get('folder');
+    const folderPath = routeSnapshot.paramMap.get('folder');
 
     this.fileDataSource = new MatTreeNestedDataSource();
 
     const _getChildren = (node: File) => node.children;
     this.fileTreeControl = new NestedTreeControl<File>(_getChildren);
 
-    this.refreshFolder(folder);
-    this.fileDataSource.data[0].expanded = true;
+    const newFolder = electronApi.constructFolder(folderPath);
+    newFolder.expanded = true;
+    this.fileDataSource.data = [newFolder];
+    this.populateFolder(newFolder);
   }
 
   /**
@@ -188,23 +189,22 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Get all folders rescursively.
-   * @param folder the root folder
-   * @returns all folders
+   * Find folder.
+   * @param folderPath the folder path
+   * @param folders the folders to find
+   * @returns folder found
    */
-  private getAllFolders(folders: File[]) {
-    const result: {[key: string]: File} = {};
-    if (!folders) {
-      return result;
-    }
-    folders.forEach(folder => {
+  private findFolder(folderPath: string, folders: File[]): File {
+    for (const folder of folders) {
       if (!folder.isFile) {
-        result[folder.path] = folder;
-        const nested = this.getAllFolders(folder.children);
-        _.assign(result, nested);
+        if (folder.path === folderPath) {
+          return folder;
+        }
+        if (folderPath.startsWith(folder.path)) {
+          return this.findFolder(folderPath, folder.children);
+        }
       }
-    });
-    return result;
+    }
   }
 
   /**
@@ -212,29 +212,102 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
    * @param folderPath the folder path
    */
   refreshFolder(folderPath: string) {
-    const folders = this.getAllFolders(this.fileDataSource.data);
 
-    const setExpanded = (_folders: File[]) => {
+    const expandFolders = (_folders: File[]) => {
       _folders.forEach(_folder => {
         if (!_folder.isFile) {
-          if (folders[_folder.path]) {
-            _folder.expanded = folders[_folder.path].expanded;
+          _folder.folderPopulated = false;
+
+          const found = this.findFolder(_folder.path, this.fileDataSource.data);
+          if (found) {
+            _folder.expanded = found.expanded;
           }
-          const envFile = _folder.children.find(f => f.fileName === percyConfig.environmentsFile);
-          if (envFile) {
-            _folder.children = [envFile, ..._folder.children.filter(f => f.fileName !== percyConfig.environmentsFile)];
+          if (_folder.expanded) {
+            this.populateFolder(_folder, false);
           }
-          setExpanded(_folder.children);
+          expandFolders(_folder.children);
         }
       });
     };
 
-    const newFolder = electronApi.readFolder(folderPath);
-    setExpanded([newFolder]);
+    const newFolder = electronApi.constructFolder(folderPath);
+    expandFolders([newFolder]);
 
     this.fileDataSource.data = [newFolder];
+    this.refreshFileExplorer();
+  }
 
-    this.setBackendState();
+  /**
+   * Populate folder.
+   * @param folder The folder to populate
+   * @param refreshExplorer Flag indicates whether to refresh file explorer, default to true
+   */
+  private populateFolder(folder: File, refreshExplorer = true) {
+    electronApi.populateFolder(folder);
+    this.sortFolderChildren(folder);
+    if (refreshExplorer) {
+      this.refreshFileExplorer();
+    }
+  }
+
+  /**
+   * Sort folder's children.
+   * @param folder The folder to sort its children
+   */
+  private sortFolderChildren(folder: File) {
+
+    folder.children = folder.children.sort((a, b) => {
+      if (a.path < b.path) { return -1; }
+      if (a.path > b.path) { return 1; }
+      return 0;
+    });
+
+    const envFile = this.getEnvFile(folder);
+    if (envFile) {
+      folder.children = [envFile, ...folder.children.filter(f => f.fileName !== percyConfig.environmentsFile)];
+    }
+  }
+
+  /**
+   * Refresh file explorer.
+   * @param updateBackend Flag indicates whether to update backend, default to true
+   */
+  private refreshFileExplorer(updateBackend: boolean = true) {
+    const data = this.fileDataSource.data;
+    this.fileDataSource.data = null;
+    this.fileDataSource.data = data;
+
+    if (updateBackend) {
+      this.setBackendState();
+    }
+  }
+
+  /**
+   * Set backend state.
+   */
+  private setBackendState() {
+    const folders = this.fileDataSource.data;
+    const allFiles = this.getAllFiles(folders);
+    this.store.dispatch(new LoadFilesSuccess({ files: allFiles, applications: [] }));
+  }
+
+  /**
+   * Get all files in folder rescursively.
+   * @param folder the folder
+   * @returns all files in folder
+   */
+  private getAllFiles(folders: File[]) {
+    const result: File[] = [];
+    folders.forEach(folder => {
+      folder.children.forEach(child => {
+        if (child.isFile) {
+          result.push(child);
+        } else {
+          result.push(...this.getAllFiles([child]));
+        }
+      });
+    });
+    return result;
   }
 
   /**
@@ -245,20 +318,11 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
   getFileTitle(file: File) {
     let result = file.modified ? '*' + file.fileName : file.fileName;
 
-    if (file.editMode && !_.find(this.allFiles, f => f.id === file.id)) {
+    if (file.editMode && !file.parent.hasChild(file.path)) {
       result += ' (deleted from disk)';
     }
 
     return result;
-  }
-
-  /**
-   * Refresh file explorer.
-   */
-  private refreshFileExplorer() {
-    const data = this.fileDataSource.data;
-    this.fileDataSource.data = null;
-    this.fileDataSource.data = data;
   }
 
   /**
@@ -267,16 +331,37 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
    */
   toggle(folder: File) {
     folder.expanded = !folder.expanded;
-    this.refreshFileExplorer();
+    if (!folder.folderPopulated) {
+      this.populateFolder(folder);
+    } else {
+      this.refreshFileExplorer(false);
+    }
   }
 
   /**
    * Find opened file.
-   * @param id The file id
+   * @param filePath The file path
    * @returns found file
    */
-  private findOpenedFile(id: string) {
-    return this.openedFiles.find(f => f.id === id);
+  private findOpenedFile(filePath: string) {
+    return this.openedFiles.find(f => f.path === filePath);
+  }
+
+  /**
+   * Get environments of folder.
+   * @param folderPath The folder path
+   * @returns environments
+   */
+  private getEnvironments(folderPath: string) {
+    // Parse environments
+    const envPath = electronApi.path.resolve(folderPath, percyConfig.environmentsFile);
+    const envContent = electronApi.readFile(envPath);
+    if (envContent) {
+      const envConfig = this.parseYaml(envContent, envPath);
+      return _.map(_.get(envConfig.environments, 'children', <TreeNode[]>[]), child => child.key);
+    } else {
+      return [];
+    }
   }
 
   /**
@@ -289,17 +374,10 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const opened = this.findOpenedFile(file.id);
+    const opened = this.findOpenedFile(file.path);
     if (!opened) {
       // Parse environments
-      const envPath = path.resolve(path.dirname(file.path), percyConfig.environmentsFile);
-      const envContent = electronApi.readFile(envPath);
-      if (envContent) {
-        const envConfig = this.parseYaml(envContent, envPath);
-        file.environments = _.map(_.get(envConfig.environments, 'children', <TreeNode[]>[]), child => child.key);
-      } else {
-        file.environments = [];
-      }
+      file.environments = this.getEnvironments(electronApi.path.dirname(file.path));
 
       // Parse file content
       const fileContent = electronApi.readFile(file.path);
@@ -329,61 +407,41 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
     const filePath = file.path;
     electronApi.watchFile(filePath, this.utilService.wrapInZone((event) => {
       if (event === 'deleted') {
-        this.refreshFolder(this.fileDataSource.data[0].path);
+        file.parent.removeChild(filePath);
+        this.refreshFileExplorer();
       } else if (event === 'changed') {
 
-        const _file = this.findOpenedFile(file.id);
+        const _file = this.findOpenedFile(file.path);
         if (_file) {
 
           const _fileContent = electronApi.readFile(filePath);
           const originalConfig = this.parseYaml(_fileContent, filePath);
           if (!_.isEqual(originalConfig, _file.originalConfig)) {
+            if (this.changedDialogRef[filePath]) {
+              this.changedDialogRef[filePath].componentInstance.data.originalConfig = originalConfig;
+              return;
+            }
 
             const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
               data: {
+                originalConfig,
                 confirmationText: `${filePath} is changed externally. Do you want to reload the file?`
               }
             });
             dialogRef.afterClosed().subscribe(res => {
+              delete this.changedDialogRef[filePath];
               if (res) {
-                _file.originalConfig = originalConfig;
-                _file.configuration = _.cloneDeep(originalConfig);
+                _file.originalConfig = dialogRef.componentInstance.data.originalConfig;
+                _file.configuration = _.cloneDeep(_file.originalConfig);
                 _file.modified = false;
                 this.setEditorState(_file);
               }
             });
+            this.changedDialogRef[filePath] = dialogRef;
           }
         }
       }
     }));
-  }
-
-  /**
-   * Get all files in folder rescursively.
-   * @param folder the folder
-   * @returns all files in folder
-   */
-  private getAllFiles(folders: File[]) {
-    const result: File[] = [];
-    folders.forEach(folder => {
-      folder.children.forEach(child => {
-        if (child.isFile) {
-          result.push(child);
-        } else {
-          result.push(...this.getAllFiles([child]));
-        }
-      });
-    });
-    return result;
-  }
-
-  /**
-   * Set backend state.
-   */
-  private setBackendState() {
-    const folders = this.fileDataSource.data;
-    this.allFiles = this.getAllFiles(folders);
-    this.store.dispatch(new LoadFilesSuccess({ files: this.allFiles, applications: [] }));
   }
 
   /**
@@ -401,7 +459,7 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
       isSaving: false,
       isPageDirty: false,
     };
-    this.editorStates[file.id] = state;
+    this.editorStates[file.path] = state;
     if (dispath) {
       this.store.dispatch(new PageRestore(state));
     }
@@ -422,7 +480,7 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
       _.assign(appPercyConfig, electronApi.getAppPercyConfig(file));
 
       // Set editor state
-      this.store.dispatch(new PageRestore(this.editorStates[file.id]));
+      this.store.dispatch(new PageRestore(this.editorStates[file.path]));
     }
   }
 
@@ -455,53 +513,36 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
 
       const editMode = file.editMode;
       const fileName = editor.getFileName();
-      const filePath = editMode ? file.path : path.resolve(file.parent.path, fileName);
+      const filePath = editMode ? file.path : electronApi.path.resolve(file.parent.path, fileName);
 
       const fileContent = this.utilService.convertTreeToYaml(configuration);
-      const ino = electronApi.saveFile(filePath, fileContent);
+      electronApi.saveFile(filePath, fileContent);
 
       if (!editMode) {
-        delete this.editorStates[file.id];
+        delete this.editorStates[file.path];
       }
 
-      file.ino = ino;
+      file.ino = null;
       file.path = filePath;
       file.fileName = fileName;
       file.editMode = true;
       file.modified = false;
       file.configuration = configuration;
       file.originalConfig = _.cloneDeep(configuration);
-      File.setId(file);
 
       this.setEditorState(file);
 
+      if (!file.parent.hasChild(filePath)) {
+        file.parent.addChild(file);
+        this.sortFolderChildren(file.parent);
+        this.refreshFileExplorer();
+      }
+
       if (!editMode) {
         this.resetNewFileIno();
-        this.refreshFolder(this.fileDataSource.data[0].path);
         this.watchFile(file);
-      } else if (!_.find(this.allFiles, f => f.id === file.id)) {
-        this.refreshFolder(this.fileDataSource.data[0].path);
       }
     });
-  }
-
-  /**
-   * Add new file.
-   * @param folder the folder to add new file
-   */
-  addNewFile(folder: File) {
-    const newFile = new File(folder.path, 'Untitled' + this.newFileIno, true, this.newFileIno, folder);
-    newFile.applicationName = folder.applicationName;
-    newFile.editMode = false;
-    newFile.envFileMode = false;
-    newFile.modified = true;
-    newFile.configuration = new Configuration();
-
-    this.newFileIno--;
-
-    this.openedFiles.push(newFile);
-    this.setEditorState(newFile);
-    this.selectedEditor.setValue(this.openedFiles.length - 1);
   }
 
   /**
@@ -511,10 +552,80 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
     let ino = 0;
     this.openedFiles.forEach(file => {
       if (!file.editMode) {
-        ino = Math.min(ino, file.ino);
+        ino = Math.min(ino, file.ino || 0);
       }
     });
     this.newFileIno = ino - 1;
+  }
+
+  /**
+   * Get folder's env file.
+   * @param folder the folder to get its env file
+   * @returns folder's env file
+   */
+  getEnvFile(folder: File) {
+    return folder.children.find(f => f.fileName === percyConfig.environmentsFile);
+  }
+
+  /**
+   * Check if file is env file.
+   * @param file the file to check
+   * @returns true if file is env file, false otherwise
+   */
+  isEnvFile(file: File) {
+    return file.isFile && file.fileName === percyConfig.environmentsFile;
+  }
+
+  /**
+   * Add new file.
+   * @param folder the folder to add new file
+   */
+  addNewFile(folder: File) {
+    if (!folder.folderPopulated) {
+      this.populateFolder(folder);
+    }
+    const fileName = 'Untitled' + this.newFileIno;
+    const newFile = new File(electronApi.path.resolve(folder.path, fileName), fileName, true, folder);
+    newFile.ino = this.newFileIno;
+    newFile.applicationName = folder.applicationName;
+    newFile.editMode = false;
+    newFile.envFileMode = false;
+    newFile.modified = true;
+    newFile.configuration = new Configuration();
+    newFile.environments = this.getEnvironments(folder.path);
+
+    this.newFileIno--;
+
+    this.openedFiles.push(newFile);
+    this.setEditorState(newFile);
+    this.selectedEditor.setValue(this.openedFiles.length - 1);
+  }
+
+  /**
+   * Add env file.
+   * @param folder the folder to add env file
+   */
+  addEnvironmentsFile(folder: File) {
+    if (!folder.folderPopulated) {
+      this.populateFolder(folder);
+    }
+    const envFile = this.getEnvFile(folder);
+    if (envFile) {
+      this.editFile(envFile);
+      return;
+    }
+
+    const fileName = percyConfig.environmentsFile;
+    const newFile = new File(electronApi.path.resolve(folder.path, fileName), fileName, true, folder);
+    newFile.applicationName = folder.applicationName;
+    newFile.editMode = false;
+    newFile.envFileMode = true;
+    newFile.modified = true;
+    newFile.configuration = new Configuration();
+
+    this.openedFiles.push(newFile);
+    this.setEditorState(newFile);
+    this.selectedEditor.setValue(this.openedFiles.length - 1);
   }
 
   /**
@@ -523,7 +634,7 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
    * @param force the flag indicates whether to force closing editor even there is change
    */
   closeFile(file: File, force: boolean = false) {
-    const found = this.findOpenedFile(file.id);
+    const found = this.findOpenedFile(file.path);
     if (!found) {
       return;
     }
@@ -566,12 +677,14 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
     }
 
     this.openedFiles.splice(index, 1);
-    delete this.editorStates[file.id];
+    delete this.editorStates[file.path];
 
-    if (index < this.openedFiles.length) {
-      this.selectTab(index);
-    } else {
-      this.selectTab(index - 1);
+    if (this.selectedEditor.value === index) {
+      if (index < this.openedFiles.length) {
+        this.selectTab(index);
+      } else {
+        this.selectTab(index - 1);
+      }
     }
 
     if (!file.editMode) {
@@ -579,41 +692,6 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
     } else {
       electronApi.unwatchFile(file.path);
     }
-  }
-
-  /**
-   * Check if folder has env file.
-   * @param folder the folder to check
-   * @returns true if folder has env file, false otherwise
-   */
-  hasEnvFile(folder: File) {
-    return !!folder.children.find(f => f.fileName === percyConfig.environmentsFile);
-  }
-
-  /**
-   * Check if file is env file.
-   * @param file the file to check
-   * @returns true if file is env file, false otherwise
-   */
-  isEnvFile(file: File) {
-    return file.isFile && file.fileName === percyConfig.environmentsFile;
-  }
-
-  /**
-   * Add env file.
-   * @param folder the folder to add env file
-   */
-  addEnvironmentsFile(folder: File) {
-    const newFile = new File(folder.path, percyConfig.environmentsFile, true, null, folder);
-    newFile.applicationName = folder.applicationName;
-    newFile.editMode = false;
-    newFile.envFileMode = true;
-    newFile.modified = true;
-    newFile.configuration = new Configuration();
-
-    this.openedFiles.push(newFile);
-    this.setEditorState(newFile);
-    this.selectedEditor.setValue(this.openedFiles.length - 1);
   }
 
   /**
@@ -632,7 +710,8 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
         electronApi.removeFile(file.path);
 
         this.closeFile(file, true);
-        this.refreshFolder(this.fileDataSource.data[0].path);
+        file.parent.removeChild(file.path);
+        this.refreshFileExplorer();
       }
     });
   }
@@ -663,7 +742,7 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
   openMenu(event, menuTrigger) {
     event.preventDefault();
     menuTrigger.style.left = event.layerX + 'px';
-    menuTrigger.style.top = event.Y + 'px';
+    menuTrigger.style.top = (event.layerY + menuTrigger.offsetParent.scrollTop) + 'px';
     menuTrigger.click();
   }
 

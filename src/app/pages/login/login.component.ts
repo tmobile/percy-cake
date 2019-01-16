@@ -31,14 +31,11 @@ export class LoginComponent implements OnInit {
   username = new FormControl('', [NotEmpty]);
   password = new FormControl('', [NotEmpty]);
   repositoryURL = new FormControl('', [NotEmpty, Validators.pattern(urlFormat)]);
-  branchName = new FormControl('', [NotEmpty]);
   loginError: string = null;
   formProcessing = this.store.pipe(select(appStore.getFormProcessing));
 
   usernameTypeAhead: string[] = [];
   filteredUsernames = new BehaviorSubject<string[]>([]);
-
-  lockedBranches: string[];
 
   // use to trigger the change in the input from browser auto fill
   @ViewChild('autoTrigger') private autoTrigger: MatAutocompleteTrigger;
@@ -113,10 +110,8 @@ export class LoginComponent implements OnInit {
       ).subscribe(this.filteredUsernames);
 
     this.repositoryURL.setValue(percyConfig.defaultRepositoryUrl);
-    this.branchName.setValue(percyConfig.defaultBranchName);
-    this.lockedBranches = percyConfig.lockedBranches;
 
-    this.store.pipe(select(appStore.getLoginError)).pipe(tap((le) => {
+    this.store.pipe(select(appStore.getLoginError), tap((le) => {
       this.loginError = null;
 
       if (!le) {
@@ -127,13 +122,10 @@ export class LoginComponent implements OnInit {
       if (le['statusCode'] === 401) {
         this.password.setErrors({ invalid: true });
         return this.username.setErrors({ invalid: true });
-        return;
       } else if (le['statusCode'] === 403) {
         return this.repositoryURL.setErrors({ forbidden: true });
       } else if (le.message === 'Repository not found') {
         return this.repositoryURL.setErrors({ notFound: true });
-      } else if (le['code'] === 'ResolveRefError' && _.get(le, 'data.ref') === this.branchName.value) {
-        return this.branchName.setErrors({ notFound: true });
       }
 
       this.loginError = 'Login failed';
@@ -147,16 +139,12 @@ export class LoginComponent implements OnInit {
     // trim fields
     this.username.setValue(_.trim(this.username.value));
     this.repositoryURL.setValue(_.trim(this.repositoryURL.value));
-    this.branchName.setValue(_.trim(this.branchName.value));
 
-    if (this.username.valid && this.password.valid && this.repositoryURL.valid && this.branchName.valid) {
-      if (this.lockedBranches && this.lockedBranches.indexOf(this.branchName.value) > -1) {
-        this.branchName.setErrors({ locked: true });
-        return;
-      }
+    if (this.username.valid && this.password.valid && this.repositoryURL.valid) {
+      const url = new URL(this.repositoryURL.value);
+      url.pathname = url.pathname.replace(/(\.git)$/, '');
       this.store.dispatch(new AuthActions.Login({
-        repositoryUrl: this.repositoryURL.value,
-        branchName: this.branchName.value,
+        repositoryUrl: url.href,
         username: this.username.value,
         password: this.password.value
       }));

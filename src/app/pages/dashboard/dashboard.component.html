@@ -1,6 +1,10 @@
 <!-- dashboard page -->
 <div class="dashboard-page">
-  <h1>{{(currentUser|async)?.repoName}}</h1>
+  <div class="repo-row">
+      <h1>{{(currentUser|async)?.repoName}}</h1>
+      <h2>Branch:</h2>
+      <button mat-button color="primary" (click)="checkoutBranch()">{{(currentUser|async)?.branchName}}</button>
+  </div>
 
   <!-- table header row -->
   <div class="table-header-row">
@@ -14,12 +18,15 @@
       </mat-select>
     </mat-form-field>
 
-    <button type="button" mat-raised-button [disabled]="disableCommit|async" color="primary" class="btn-commit-changes" (click)="commitChanges()">
+    <button type="button" mat-raised-button [disabled]="(disableCommit|async) || (currentUser|async)?.branchName === 'master'" color="primary" class="btn-commit-changes" (click)="commitChanges()">
       Commit Changes
     </button>
-    <button type="button" mat-raised-button color="primary" class="btn-add-file" (click)="addNewFile()">
+    <button type="button" mat-raised-button [disabled]="(currentUser|async)?.branchName === 'master'" color="primary" class="btn-add-file" (click)="addNewFile()">
       Add New File
     </button>
+    <a *ngIf="(currentUser|async)?.branchName !== 'master'" mat-raised-button color="primary" class="btn-pull-request" href="{{pullRequestUrl}}" target="_blank">
+      Pull Request
+    </a>
     <button type="button" mat-raised-button color="primary" class="btn-refresh-file" (click)="refresh()">
       Refresh
     </button>
@@ -59,9 +66,9 @@
       <td mat-cell *matCellDef="let element;" class="actions-col">
         <div class="btn-group" *ngIf="element.appFile">
           <div class="btn-with-icon" *ngIf="element.appFile.fileName !== envFileName">
-              <mat-icon (click)="deleteFile(element.appFile)" class="btn-icon">delete</mat-icon>
-              <button type="button" mat-button color="primary" class="btn-delete-file" (click)="deleteFile(element.appFile)">
-                Delete
+              <button [disabled]="(currentUser|async)?.branchName === 'master'" type="button" mat-button color="primary" class="btn-delete-file" (click)="deleteFile(element.appFile)">
+                  <mat-icon>delete</mat-icon>
+                  Delete
               </button>
           </div>
         </div>

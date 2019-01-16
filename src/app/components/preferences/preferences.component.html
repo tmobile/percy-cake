@@ -6,19 +6,26 @@
       <h1 class="form-heading">Preferences</h1>
 
       <mat-form-field class="form-field">
-        <input type="text" matInput placeholder="Environments File" [formControl]="environmentsFile" />
+        <input type="text" matInput placeholder="Environments File Name" [formControl]="environmentsFile" />
+        <span matSuffix>{{envFileSuffix}}</span>
         <mat-error *ngIf="environmentsFile.hasError('required')">*Required</mat-error>
         <mat-error *ngIf="environmentsFile.hasError('pattern')">The file name should only contain these characters: "a-zA-Z0-9"</mat-error>
       </mat-form-field>
 
       <mat-form-field class="form-field">
-        <input type="text" matInput placeholder="Variable Prefix" [formControl]="variablePrefix" />
+        <input type="text" matInput placeholder="Variable Substitution Wrapper Prefix" [formControl]="variablePrefix" />
         <mat-error *ngIf="variablePrefix.hasError('required')">*Required</mat-error>
       </mat-form-field>
 
       <mat-form-field class="form-field">
-        <input type="text" matInput placeholder="Variable Suffix" [formControl]="variableSuffix" />
+        <input type="text" matInput placeholder="Variable Substitution Wrapper Suffix" [formControl]="variableSuffix" />
         <mat-error *ngIf="variableSuffix.hasError('required')">*Required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field class="form-field">
+        <input type="text" maxlength="10" matInput placeholder="Variable Name Prefix" [formControl]="variableNamePrefix" />
+        <mat-error *ngIf="variableNamePrefix.hasError('required')">*Required</mat-error>
+        <mat-error *ngIf="variableNamePrefix.hasError('pattern')">Spaces not allowed in variable name prefix</mat-error>
       </mat-form-field>
 
       <div class="buttons-row">

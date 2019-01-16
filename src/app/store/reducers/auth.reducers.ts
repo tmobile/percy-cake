@@ -1,4 +1,5 @@
 import { AuthActionsUnion, AuthActionTypes } from '../actions/auth.actions';
+import { BackendActionTypes, CheckoutSuccess } from '../actions/backend.actions';
 import { User } from 'models/auth';
 
 export interface State {
@@ -15,7 +16,7 @@ export const initialState: State = {
   redirectUrl: null,
 };
 
-export function reducer(state = initialState, action: AuthActionsUnion): State {
+export function reducer(state = initialState, action: AuthActionsUnion|CheckoutSuccess): State {
   switch (action.type) {
 
     case AuthActionTypes.Login: {
@@ -52,6 +53,16 @@ export function reducer(state = initialState, action: AuthActionsUnion): State {
 
     case AuthActionTypes.LogoutSuccess: {
       return initialState;
+    }
+
+    case BackendActionTypes.CheckoutSuccess: {
+      return {
+        ...state,
+        currentUser: {
+          ...state.currentUser,
+          branchName: action.payload.branch
+        }
+      };
     }
 
     default: {

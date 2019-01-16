@@ -3,12 +3,11 @@
   <div class="col-default-env" appSplitArea [splitSize]="60" [minSize]="330">
     <!-- filename input -->
     <mat-form-field class="filename" [floatLabel]="'always'">
-      <label>{{appName}}/</label>
-      <input type="text" #fileNameInput="matInput" matInput maxlength="50" placeholder="File Name" [formControl]="filename"
-        (input)="fileNameChange()" />
+      <label>{{appName}}/{{editMode || envFileMode ? fileName : ''}}</label>
+      <input [ngClass]="{'hidden': editMode || envFileMode}" type="text" #fileNameInput="matInput" matInput maxlength="50" placeholder="File Name" [formControl]="filename"/>
       <mat-error *ngIf="filename.hasError('required')">*Required</mat-error>
-      <mat-error *ngIf="filename.hasError('alreadyExists')">*The file name arealdy exists</mat-error>
-      <mat-error *ngIf="filename.hasError('pattern')">The file name should only contain these characters:
+      <mat-error *ngIf="filename.hasError('alreadyExists')">*The file name already exists</mat-error>
+      <mat-error *ngIf="!filename.hasError('required') && filename.hasError('pattern')">The file name should only contain these characters:
         "0-9a-zA-Z-_."</mat-error>
     </mat-form-field>
     <!-- property tree -->
@@ -23,17 +22,22 @@
   <!-- detail panel -->
   <div class="col-other-envs" appSplitArea [splitSize]="40" [minSize]="250">
     <!-- if node is selected to view detail -->
-    <div class="section-heading" *ngIf="selectedNode">
-      <h3>{{selectedNode.getPathsString()}}</h3>
-      <button mat-flat-button color="primary" *ngIf="!showAsCode" class="btn-submit" (click)="openEditPropertyDialog(selectedNode)">
-        Edit
-      </button>
+    <div class="section-heading" *ngIf="selectedNode || showAsCompiledYAMLEnvironment">
+      <ng-container *ngIf="selectedNode">
+          <h3>{{selectedNode.getPathsString()}}</h3>
+          <button mat-flat-button color="primary" *ngIf="!showAsCode && (currentUser|async)?.branchName !== 'master'" class="btn-submit" (click)="openEditPropertyDialog(selectedNode)">
+            Edit
+          </button>
+      </ng-container>
+      <ng-container *ngIf="showAsCompiledYAMLEnvironment">
+          <h3>{{showAsCompiledYAMLEnvironment}} environment compiled yaml</h3>
+      </ng-container>
     </div>
-    <div class="preview" *ngIf="selectedNode">
+    <div class="preview" *ngIf="selectedNode || showAsCompiledYAMLEnvironment">
       <!-- shows the node as YAML for non-leaf node -->
-      <pre *ngIf="showAsCode"><code appHighlight [highlight]="previewCode" [languages]="['yaml']"></code></pre>
+      <pre *ngIf="previewCode"><code #codeEle appHighlight [highlight]="previewCode" [languages]="['yaml']"></code></pre>
       <!-- shows the leaf node as readonly label -->
-      <div *ngIf="!showAsCode" class="property">
+      <div *ngIf="!previewCode" class="property">
         <div class="mat-form-field mat-form-field-appearance-legacy mat-form-field-disabled mat-form-field-can-float mat-form-field-should-float">
           <div class="mat-form-field-wrapper">
             <div class="mat-form-field-flex">
@@ -97,13 +101,6 @@
           </div>
         </div>
       </div>
-    </div>
-    <!-- shows the compiled YAML -->
-    <div class="section-heading" *ngIf="showAsCompiledYAMLEnvironment">
-      <h3>{{showAsCompiledYAMLEnvironment}} environment compiled yaml</h3>
-    </div>
-    <div class="preview" *ngIf="showAsCompiledYAMLEnvironment">
-      <pre><code appHighlight [highlight]="previewCode" [languages]="['yaml']"></code></pre>
     </div>
     <!-- shows the add/edit panel -->
     <div class="add-edit-property-mode" *ngIf="currentConfigProperty">

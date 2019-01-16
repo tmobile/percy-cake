@@ -1,10 +1,10 @@
 import {
   Component, ViewChild, ChangeDetectorRef,
-  Input, ContentChild, TemplateRef, OnChanges
+  Input, ContentChild, TemplateRef, OnChanges, SimpleChanges, OnInit, OnDestroy, ElementRef
 } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import { MatInput } from '@angular/material';
-import { of } from 'rxjs';
+import { of, combineLatest, Subscription, Observable } from 'rxjs';
 import { map, take, tap } from 'rxjs/operators';
 import { Store, select } from '@ngrx/store';
 import * as _ from 'lodash';
@@ -22,6 +22,7 @@ import { NotEmpty } from 'services/validators';
 
 import { NestedConfigViewComponent } from 'components/nested-config-view/nested-config-view.component';
 import { YamlService } from 'services/yaml.service';
+import { User } from 'models/auth';
 
 /*
   Configurations editor page
@@ -32,7 +33,7 @@ import { YamlService } from 'services/yaml.service';
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.scss']
 })
-export class EditorComponent implements OnChanges {
+export class EditorComponent implements OnInit, OnDestroy, OnChanges {
   @Input()
   appName: string;
   @Input()
@@ -46,6 +47,8 @@ export class EditorComponent implements OnChanges {
   @Input()
   configuration: Configuration;
 
+  currentUser: Observable<User> = this.store.pipe(select(appStore.getCurrentUser));
+
   showAsCode: boolean;
   previewCode: string;
   selectedNode: TreeNode;
@@ -54,6 +57,7 @@ export class EditorComponent implements OnChanges {
 
   @ContentChild('buttonsTemplate') buttonsTemplate: TemplateRef<any>;
   @ViewChild('nestedConfig') nestedConfig: NestedConfigViewComponent;
+  @ViewChild('codeEle') codeEle: ElementRef;
 
   filename = new FormControl('', [NotEmpty, Validators.pattern(percyConfig.filenameRegex)]);
   fileNameInput: MatInput;
@@ -70,6 +74,8 @@ export class EditorComponent implements OnChanges {
     }
   }
 
+  sub: Subscription;
+
   /**
    * creates the component
    * @param route the route
@@ -84,37 +90,47 @@ export class EditorComponent implements OnChanges {
   ) { }
 
   /**
-   * Initializes the component.
+   * Initializes component.
    */
-  ngOnChanges() {
-    if (this.fileName) {
-      this.filename.setValue(this.fileName);
-      this.filename.disable();
-    } else {
-      this.filename.setValue('');
-      this.filename.enable();
-    }
-    this.reset();
-  }
+  ngOnInit() {
+    this.sub = combineLatest(this.filename.valueChanges, this.store.pipe(select(appStore.backendState))).pipe(map(([_value, bs]) => {
+      if (!this.editMode) {
+        if (this.filename.invalid && !this.filename.hasError('alreadyExists')) {
+          return;
+        }
 
-  /**
-   * File name change handler.
-   */
-  fileNameChange() {
-    if (!this.editMode) {
-      if (this.filename.invalid) {
-        return;
-      }
-
-      // Check whether the file name already exists
-      this.store.pipe(select(appStore.backendState), take(1), tap((backendState) => {
-        if (_.find(backendState.files.entities, { fileName: this.getFileName(), applicationName: this.appName })) {
+        // Check whether the file name already exists
+        if (_.find(bs.files.entities, { fileName: this.getFileName(), applicationName: this.appName })) {
           this.filename.setErrors({ alreadyExists: true });
         } else {
           this.filename.setErrors(undefined);
         }
-      })).subscribe();
+      }
+    })).subscribe();
+  }
+
+  /**
+   * Destroy component.
+   */
+  ngOnDestroy() {
+    this.sub.unsubscribe();
+  }
+
+  /**
+   * Handles the component changes.
+   * @param changes The component changes
+   */
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['fileName']) {
+      if (this.fileName) {
+        this.filename.setValue(this.fileName);
+        this.filename.disable();
+      } else {
+        this.filename.setValue('');
+        this.filename.enable();
+      }
     }
+    this.reset();
   }
 
   /**
@@ -171,6 +187,10 @@ export class EditorComponent implements OnChanges {
     this.selectedNode = null;
     this.showAsCompiledYAMLEnvironment = null;
     this.currentConfigProperty = null;
+    if (this.codeEle && this.codeEle.nativeElement) {
+      this.codeEle.nativeElement.scrollLeft = 0;
+      this.codeEle.nativeElement.scrollTop = 0;
+    }
   }
 
   /**
@@ -219,7 +239,6 @@ export class EditorComponent implements OnChanges {
    */
   onSaveAddEditProperty(node: TreeNode) {
     this.nestedConfig.saveAddEditProperty(node);
-    this.reset();
   }
 
   /**

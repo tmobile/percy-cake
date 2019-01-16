@@ -19,4 +19,13 @@ npm i
 
 node conf.js
 
-./node_modules/.bin/electron-builder -mwl
+case "$(uname -s)" in
+
+   Darwin)
+     ./node_modules/.bin/electron-builder -mwl
+     ;;
+
+   *)
+     ./node_modules/.bin/electron-builder -wl
+     ;;
+esac

@@ -13,7 +13,7 @@ import { AlertDialogComponent } from 'components/alert-dialog/alert-dialog.compo
 import { EditorComponent } from './editor.component';
 
 describe('EditorComponent', () => {
-  const setup = Setup(EditorComponent, false);
+  const setup = Setup(EditorComponent);
 
   const file = {
     applicationName: 'app1',
@@ -47,7 +47,9 @@ describe('EditorComponent', () => {
     ctx.component.environments = ['dev'];
     ctx.component.configuration = new Configuration();
 
-    ctx.component.ngOnChanges();
+    ctx.component.ngOnChanges({
+      fileName: <any>{}
+    });
 
     expect(ctx.component.filename.value).toEqual('test.yaml');
 
@@ -62,7 +64,9 @@ describe('EditorComponent', () => {
     ctx.component.environments = ['dev'];
     ctx.component.configuration = new Configuration();
 
-    ctx.component.ngOnChanges();
+    ctx.component.ngOnChanges({
+      fileName: <any>{}
+    });
 
     const focusSpy = spyOn(ctx.component.fileNameInput, 'focus');
 
@@ -74,11 +78,9 @@ describe('EditorComponent', () => {
     });
 
     ctx.component.filename.setValue('');
-    ctx.component.fileNameChange();
     expect(ctx.component.filename.valid).toBeFalsy();
 
     ctx.component.filename.setValue('new.yaml');
-    ctx.component.fileNameChange();
     expect(ctx.component.filename.valid).toBeTruthy();
   });
 
@@ -100,7 +102,9 @@ describe('EditorComponent', () => {
     ctx.store.next(new PageLoadSuccess({ environments: ['dev'] }));
     ctx.store.next(new GetFileContentSuccess({file: newFile, newlyCreated: true}));
 
-    ctx.component.ngOnChanges();
+    ctx.component.ngOnChanges({
+      fileName: <any>{}
+    });
     await ctx.fixture.whenStable();
   }
 
@@ -108,7 +112,6 @@ describe('EditorComponent', () => {
     await initNewFileMode();
 
     ctx.component.filename.setValue(file.fileName.replace('\.yaml', ''));
-    ctx.component.fileNameChange();
     expect(ctx.component.filename.valid).toBeFalsy();
     expect(ctx.component.filename.hasError('alreadyExists')).toBeTruthy();
   });
@@ -118,7 +121,6 @@ describe('EditorComponent', () => {
     const focusSpy = spyOn(ctx.component.fileNameInput, 'focus');
 
     ctx.component.filename.setValue('');
-    ctx.component.fileNameChange();
     expect(ctx.component.filename.valid).toBeFalsy();
 
     const result = await ctx.component.validate().toPromise();
@@ -224,13 +226,6 @@ describe('EditorComponent', () => {
 
     const node = new TreeNode('key');
     ctx.component.onSaveAddEditProperty(node);
-
-    expect(spy.saveAddEditProperty.calls.mostRecent().args[0]).toEqual(node);
-    expect(ctx.component.selectedNode).toEqual(null);
-    expect(ctx.component.showAsCode).toEqual(false);
-    expect(ctx.component.previewCode).toEqual(null);
-    expect(ctx.component.showAsCompiledYAMLEnvironment).toEqual(null);
-    expect(ctx.component.currentConfigProperty).toEqual(null);
   });
 
   it('show compiled YAML should work', async () => {

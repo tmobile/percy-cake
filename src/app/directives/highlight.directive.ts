@@ -29,16 +29,28 @@ export class HighlightDirective extends Highlight {
       const code = res.value;
       const $ = cheerio.load(code);
 
-      const spans = $('span.hljs-string');
+      // fix tag category incorrectly assigned by highlightjs
+      const numSpans = $('span.hljs-number');
+      numSpans.each((_idx, span) => {
+        if (
+            !span.prev || !span.prev.prev || !span.prev.prev.firstChild ||
+            (span.prev.prev.firstChild.data !== '!!int' && span.prev.prev.firstChild.data !== '!!float')
+          ) {
+          $(span).removeClass('hljs-number').addClass('hljs-attr');
+        }
+      });
 
-      spans.each((_idx, span) => {
-        // Check it really repsents a string value
+      const stringSpans = $('span.hljs-string');
+      stringSpans.each((_idx, span) => {
+        const spanNode = $(span);
+
+        // Check it really repsents a string value else correct the tag category
         if (!span.prev || !span.prev.prev || !span.prev.prev.firstChild || span.prev.prev.firstChild.data !== '!!str') {
+          spanNode.removeClass('hljs-string').addClass('hljs-attr');
           return;
         }
 
         // Highlight the color the variable reference
-        const spanNode = $(span);
         const text = spanNode.text();
         const newSpan = yamlService.highlightVariable(text, spanNode);
         if (newSpan !== spanNode) {

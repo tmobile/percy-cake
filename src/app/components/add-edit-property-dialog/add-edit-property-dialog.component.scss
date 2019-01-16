@@ -27,7 +27,10 @@ h2 {
         }
         .value-radio-options {
             .section-heading {
-                margin-bottom: 15px;
+                margin-bottom: 8px;
+                transform: scale(0.75);
+                transform-origin: 0 0;
+                color: rgba($black, 0.54);
             }
             ::ng-deep .mat-radio-group {
                 display: block;

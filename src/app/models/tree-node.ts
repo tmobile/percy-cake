@@ -59,7 +59,7 @@ export class TreeNode {
    * @param anchor The anchor name
    * @returns found node
    */
-  findAnchorNode(anchor: string) {
+  findAnchorNode(anchor: string): TreeNode {
     if (this.anchor === anchor) {
       return this;
     }
@@ -130,11 +130,16 @@ export class TreeNode {
   }
 
   /**
-   * Get string representation of comments array.
+   * Get string representation of comments array, and truncate it to 300 characters if truncated is true
+   * @param truncated  optional parameter which if true the comment string should be truncated
    * @returns comment string
    */
-  getCommentStr() {
-    return this.comment && this.comment.length ? this.comment.join('\n') : undefined;
+  getCommentStr(truncated?: boolean) {
+    if (this.comment && this.comment.length) {
+      const commentString = this.comment.join('\n');
+      return (truncated && commentString.length > 300) ? (commentString.substring(0, 300) + ' ...') : commentString;
+    }
+    return undefined;
   }
 
   /**

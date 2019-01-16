@@ -1,30 +1,33 @@
 import * as path from 'path';
 import * as _ from 'lodash';
 
-import { TestUser, utilService } from 'test/test-helper';
+import { TestUser, utilService } from '../test/test-helper';
 
-import { percyConfig } from 'config';
-import { Configuration } from 'models/config-file';
-import { TreeNode } from 'models/tree-node';
+import { percyConfig } from '../config';
 import { MaintenanceService } from './maintenance.service';
 import { FileManagementService, PathFinder } from './file-management.service';
 import { git, FS } from './util.service';
+import { Principal } from 'models/auth';
+import { Configuration } from 'models/config-file';
+import { TreeNode } from 'models/tree-node';
 
 describe('FileManagementService', () => {
 
   let maintenanceService: MaintenanceService;
 
-  const { repoFolder } = utilService.getRepoFolder(TestUser);
+  const dir = PathFinder.getRepoDir(TestUser);
+  const repoMetadataFile = utilService.getMetadataPath(TestUser.repoFolder);
 
-  const dir = path.resolve(percyConfig.reposFolder, repoFolder);
-  const repoMetadataFile = utilService.getMetadataPath(repoFolder);
+  const newCommitOid = '2345346457658768345243523452234234234345';
 
-  const commitOid1 = '1234567890123456789012345678901234567890';
-  const commitOid2 = '6789012345678901234567890123456789012345';
+  const commits = {
+    master: '1234567890123456789012345678901234567890',
+    [TestUser.branchName]: '6789012345678901234567890123456789012345',
+  };
 
   const objectTree = [
     {
-      object: { tree: commitOid1 }
+      object: { tree: commits.master }
     },
     {
       object: {
@@ -72,15 +75,17 @@ describe('FileManagementService', () => {
     }
   ];
 
+  const PRINCIPAL: Principal = { user: TestUser, repoMetadata: { ...TestUser, commitBaseSHA: {}, version: '1.0' } };
+  let principal: Principal;
+
   let fs: FS;
   let fileService: FileManagementService;
 
   let cloneStub: jasmine.Spy;
-  let pullStub: jasmine.Spy;
-  let resolveRefStub: jasmine.Spy;
+  let fetchStub: jasmine.Spy;
+  let getRemoteInfoStub: jasmine.Spy;
   let statusMatrixStub: jasmine.Spy;
   let resetIndexStub: jasmine.Spy;
-  let statusStub: jasmine.Spy;
   let readObjectStub: jasmine.Spy;
   let addStub: jasmine.Spy;
   let removeStub: jasmine.Spy;
@@ -88,6 +93,7 @@ describe('FileManagementService', () => {
   let pushStub: jasmine.Spy;
 
   beforeEach(async () => {
+    principal = _.cloneDeep(PRINCIPAL);
     fs = await utilService.getBrowserFS();
     await fs.emptyDir(percyConfig.reposFolder);
     await fs.emptyDir(percyConfig.draftFolder);
@@ -102,30 +108,58 @@ describe('FileManagementService', () => {
 
       // Set the remote commit
       await fs.mkdirs(path.resolve(ops.dir, '.git', 'refs', 'remotes', 'origin'));
-      await fs.writeFile(path.resolve(ops.dir, '.git', 'refs', 'remotes', 'origin', ops.ref), commitOid1 + '\n');
+      await git.writeRef({
+        dir: ops.dir,
+        ref: `refs/remotes/origin/master`,
+        value: commits.master,
+        force: true,
+      });
+      await git.writeRef({
+        dir: ops.dir,
+        ref: `refs/remotes/origin/${TestUser.branchName}`,
+        value: commits[TestUser.branchName],
+        force: true,
+      });
 
-      // Config branch
-      await git.config({ dir: ops.dir, path: `branch.${ops.ref}.merge`, value: `refs/heads/${ops.ref}` });
-      await git.config({ dir: ops.dir, path: `branch.${ops.ref}.remote`, value: 'origin' });
+      await git.config({ dir: ops.dir, path: 'remote.origin.url', value: TestUser.repositoryUrl });
 
       // Set the HEAD ref
-      await fs.writeFile(path.resolve(ops.dir, '.git', 'HEAD'), `ref: refs/heads/${ops.ref}`);
+      await git.writeRef({
+        dir,
+        ref: 'HEAD',
+        value: `refs/heads/master`,
+        symbolic: true,
+        force: true,
+      });
 
       // Set HEAD commit oid
-      await fs.writeFile(path.resolve(dir, '.git', 'refs', 'heads', ops.ref), commitOid1 + '\n');
+      await git.writeRef({
+        dir: ops.dir,
+        ref: `refs/heads/master`,
+        value: commits.master,
+        force: true,
+      });
     });
 
-    resolveRefStub = spyOn(git, 'resolveRef');
-    resolveRefStub.and.callThrough();
+    fetchStub = spyOn(git, 'fetch');
+    fetchStub.and.callFake(async (ops) => {
+      return { fetchHead: commits[ops.ref] };
+    });
 
-    pullStub = spyOn(git, 'fetch');
-    pullStub.and.returnValue({ fetchHead: commitOid1 });
+    getRemoteInfoStub = spyOn(git, 'getRemoteInfo');
+    getRemoteInfoStub.and.returnValue({
+      refs: {
+        heads: {
+          'master': commits.master,
+          [TestUser.branchName]: commits.master,
+        }
+      }
+    });
 
     statusMatrixStub = spyOn(git, 'statusMatrix');
     statusMatrixStub.and.returnValue([]);
 
     resetIndexStub = spyOn(git, 'resetIndex');
-    statusStub = spyOn(git, 'status');
     readObjectStub = spyOn(git, 'readObject');
     addStub = spyOn(git, 'add');
     removeStub = spyOn(git, 'remove');
@@ -133,16 +167,15 @@ describe('FileManagementService', () => {
     pushStub = spyOn(git, 'push');
   });
 
-  const assertHeadRef = async (sha) => {
-    expect(await git.resolveRef({ dir, ref: 'refs/heads/' + TestUser.branchName })).toEqual(sha);
+  const assertHeadCommit = async (branch: string, sha: string) => {
+    expect(await git.resolveRef({ dir, ref: 'refs/heads/' + branch })).toEqual(sha);
   };
 
-  const assertRemoteRef = async (sha) => {
-    expect(await git.resolveRef({ dir, ref: 'refs/remotes/origin/' + TestUser.branchName })).toEqual(sha);
+  const assertRemoteCommit = async (branch: string, sha: string) => {
+    expect(await git.resolveRef({ dir, ref: 'refs/remotes/origin/' + branch })).toEqual(sha);
   };
 
   it('should clone repo successfully', async () => {
-    statusMatrixStub.and.returnValue([['a.txt', 1, 0, 0], ['b.txt', 1, 0, 1]]);
 
     const user = await fileService.accessRepo(TestUser);
 
@@ -153,25 +186,12 @@ describe('FileManagementService', () => {
 
     expect(cloneStub.calls.count()).toEqual(1);
 
-    expect(resolveRefStub.calls.count()).toEqual(0);
-
     // Head SHA ref should be same as remotes SHA
-    assertHeadRef(commitOid1);
-    assertRemoteRef(commitOid1);
-
-    // Status matrix should be queried
-    expect(statusMatrixStub.calls.count()).toEqual(1);
-    expect(statusMatrixStub.calls.first().args[0]).toEqual({ dir, pattern: '**' });
-
-    // Index should be reset
-    expect(resetIndexStub.calls.count()).toEqual(1);
-    expect(resetIndexStub.calls.first().args[0]).toEqual({
-      fs: git.plugins.get('fs'), dir, filepath: 'a.txt',
-      ref: 'refs/heads/' + TestUser.branchName
-    });
+    assertHeadCommit('master', commits.master);
+    assertRemoteCommit('master', commits.master);
 
     // Draft folder should be created
-    const draftFolder = path.resolve(percyConfig.draftFolder, repoFolder, percyConfig.yamlAppsFolder);
+    const draftFolder = path.resolve(percyConfig.draftFolder, TestUser.repoFolder);
     expect(await fs.pathExists(draftFolder)).toBeTruthy();
 
     // User name should be added to type ahead
@@ -226,15 +246,19 @@ describe('FileManagementService', () => {
     }
   });
 
-  it('should pull repo successfully', async () => {
-    await fileService.accessRepo(TestUser);
-    await fs.writeFile(dir + '/test.txt', 'aaaa');
+  it('access already cloned repo should be successfully', async () => {
 
-    pullStub.and.callFake(async (ops) => {
-      await fs.writeFile(path.resolve(ops.dir, '.git', 'refs', 'remotes', 'origin', TestUser.branchName), commitOid2);
-      return { fetchHead: commitOid2 };
+    await fileService.accessRepo(TestUser);
+
+    fetchStub.and.callFake(async (ops) => {
+      await git.writeRef({
+        dir: ops.dir,
+        ref: 'refs/remotes/origin/master',
+        value: newCommitOid,
+        force: true,
+      });
+      return { fetchHead: newCommitOid };
     });
-    statusMatrixStub.and.returnValue([['a.txt', 1, 0, 1], ['b.txt', 1, 0, 0]]);
 
     const user = await fileService.accessRepo(TestUser);
 
@@ -243,112 +267,174 @@ describe('FileManagementService', () => {
     expect({ ..._.omit(user, 'password'), commitBaseSHA: {}, version: percyConfig.repoMetadataVersion })
       .toEqual(_.omit(metadata, 'password'));
 
-    expect(cloneStub.calls.count()).toEqual(1);
-    expect(pullStub.calls.count()).toEqual(1);
-    expect(resolveRefStub.calls.count()).toEqual(1);
-
-    // Repo files should be cleaned
-    expect(await fs.pathExists(dir + '/test.txt')).toBeFalsy();
+    expect(fetchStub.calls.count()).toEqual(1);
+    expect(fetchStub.calls.first().args[0].singleBranch).toBeFalsy();
 
     // Head SHA ref should be same as remotes SHA
-    assertHeadRef(commitOid2);
-    assertRemoteRef(commitOid2);
-
-    // Status matrix should be queried
-    expect(statusMatrixStub.calls.count()).toEqual(2);
-    expect(statusMatrixStub.calls.argsFor(1)[0]).toEqual({ dir, pattern: '**' });
-
-    // Index should be reset
-    expect(resetIndexStub.calls.count()).toEqual(1);
-    expect(resetIndexStub.calls.first().args[0]).toEqual({
-      fs: git.plugins.get('fs'), dir, filepath: 'b.txt',
-      ref: 'refs/heads/' + TestUser.branchName
-    });
+    assertHeadCommit('master', newCommitOid);
+    assertRemoteCommit('master', newCommitOid);
 
     // Draft folder should be created
-    const draftFolder = path.resolve(percyConfig.draftFolder, repoFolder, percyConfig.yamlAppsFolder);
+    const draftFolder = path.resolve(percyConfig.draftFolder, TestUser.repoFolder);
     expect(await fs.pathExists(draftFolder)).toBeTruthy();
 
     // User name should be added to type ahead
     expect(await maintenanceService.getUserTypeAhead(TestUser.username[0])).toEqual([TestUser.username]);
   });
 
+  it('should list branches successfully', async () => {
+    await fileService.accessRepo(TestUser);
+
+    const branches = await fileService.listBranches(principal);
+
+    expect(branches).toEqual(['master', TestUser.branchName].sort());
+  });
+
+  it('should switch branch successfully', async () => {
+    await fileService.accessRepo(TestUser);
+
+    await fileService.checkoutBranch(principal, 'switch', TestUser.branchName);
+
+    const metadata = await fs.readJson(repoMetadataFile);
+    expect(metadata.branchName).toEqual(TestUser.branchName);
+
+    // Current branch should be switched
+    expect(await git.currentBranch({ dir })).toEqual(TestUser.branchName);
+
+    assertHeadCommit(TestUser.branchName, commits[TestUser.branchName]);
+    assertRemoteCommit(TestUser.branchName, commits[TestUser.branchName]);
+  });
+
+  it('should create branch successfully', async () => {
+    await fileService.accessRepo(TestUser);
+
+    commitStub.and.returnValue(newCommitOid);
+    await fileService.checkoutBranch(principal, 'create', 'branch1');
+
+    expect(commitStub.calls.count()).toEqual(1);
+    expect(pushStub.calls.count()).toEqual(1);
+
+    const metadata = await fs.readJson(repoMetadataFile);
+    expect(metadata.branchName).toEqual('branch1');
+
+    // Current branch should be switched
+    expect(await git.currentBranch({ dir })).toEqual('branch1');
+
+    assertHeadCommit('branch1', newCommitOid);
+    assertRemoteCommit('branch1', newCommitOid);
+  });
+
+  it('push fail, branch should not be created', async () => {
+    await fileService.accessRepo(TestUser);
+
+    pushStub.and.throwError('Mock push error');
+    try {
+      await fileService.checkoutBranch(principal, 'create', 'branch1');
+      fail('should fail');
+    } catch (err) {
+      expect(err.message.indexOf('Mock push error') > -1).toBeTruthy();
+
+      expect(await fs.pathExists(path.resolve(dir, '.git/refs/heads/branch1'))).toBeFalsy();
+
+      // Current branch should not be switched
+      expect(await git.currentBranch({ dir })).toEqual('master');
+
+      const metadata = await fs.readJson(repoMetadataFile);
+      expect(metadata.branchName).toEqual('master');
+    }
+  });
+
+  it('branch already exist, should not be created again', async () => {
+    await fileService.accessRepo(TestUser);
+
+    fetchStub.and.callFake(async (ops) => {
+      await git.writeRef({
+        dir: ops.dir,
+        ref: 'refs/remotes/origin/branch1',
+        value: newCommitOid,
+        force: true,
+      });
+      return { fetchHead: commits.master };
+    });
+
+    try {
+      await fileService.checkoutBranch(principal, 'create', 'branch1');
+      fail('should fail');
+    } catch (err) {
+      expect(err.message.indexOf('branch1 already exists') > -1).toBeTruthy();
+
+      expect(await fs.pathExists(path.resolve(dir, '.git/refs/heads/branch1'))).toBeFalsy();
+
+      const metadata = await fs.readJson(repoMetadataFile);
+      expect(metadata.branchName).toEqual('master');
+    }
+  });
+
   it('should refresh repo successfully', async () => {
     await fileService.accessRepo(TestUser);
-    await fs.writeFile(dir + '/test.txt', 'aaaa');
+    await fileService.checkoutBranch(principal, 'switch', TestUser.branchName);
 
-    pullStub.and.callFake(async (ops) => {
-      await fs.writeFile(path.resolve(ops.dir, '.git', 'refs', 'remotes', 'origin', TestUser.branchName), commitOid2);
-      return { fetchHead: commitOid2 };
+    fetchStub.and.callFake(async (ops) => {
+      await git.writeRef({
+        dir: ops.dir,
+        ref: `refs/remotes/origin/${TestUser.branchName}`,
+        value: newCommitOid,
+        force: true,
+      });
+      return { fetchHead: newCommitOid };
     });
-    statusMatrixStub.and.returnValue([['a.txt', 1, 0, 1], ['b.txt', 1, 0, 0]]);
 
-    const { pulledCommit, changed } = await fileService.refresh({ user: TestUser, repoMetadata: {} });
-    expect(pulledCommit).toEqual(commitOid2);
+    const { pulledCommit, changed } = await fileService.refresh(principal);
+    expect(pulledCommit).toEqual(newCommitOid);
     expect(changed).toBeTruthy();
 
-    expect(pullStub.calls.count()).toEqual(1);
-    expect(resolveRefStub.calls.count()).toEqual(1);
-
-    // Repo files should be cleaned
-    expect(await fs.pathExists(dir + '/test.txt')).toBeFalsy();
+    expect(fetchStub.calls.count()).toEqual(1);
+    expect(fetchStub.calls.first().args[0].singleBranch).toBeFalsy();
 
     // Head SHA ref should be same as remotes SHA
-    assertHeadRef(commitOid2);
-    assertRemoteRef(commitOid2);
-
-    // Status matrix should be queried
-    expect(statusMatrixStub.calls.count()).toEqual(2);
-    expect(statusMatrixStub.calls.argsFor(1)[0]).toEqual({ dir, pattern: '**' });
-
-    // Index should be reset
-    expect(resetIndexStub.calls.count()).toEqual(1);
-    expect(resetIndexStub.calls.first().args[0]).toEqual({
-      fs: git.plugins.get('fs'), dir, filepath: 'b.txt',
-      ref: 'refs/heads/' + TestUser.branchName
-    });
+    assertHeadCommit(TestUser.branchName, newCommitOid);
+    assertRemoteCommit(TestUser.branchName, newCommitOid);
   });
 
-  it('should refresh repo without new commits', async () => {
+  it('should refresh repo when remote branch deleted', async () => {
     await fileService.accessRepo(TestUser);
-    const { pulledCommit, changed } = await fileService.refresh({ user: TestUser, repoMetadata: {} });
-    expect(pulledCommit).toEqual(commitOid1);
+    await fileService.checkoutBranch(principal, 'switch', TestUser.branchName);
+
+    fetchStub.and.callFake(async () => {
+      const error = new Error();
+      error['code'] = git.E.ResolveRefError;
+      throw error;
+    });
+
+    const { pulledCommit, changed } = await fileService.refresh(principal);
+    expect(pulledCommit).toEqual(commits[TestUser.branchName]);
     expect(changed).toBeFalsy();
 
-    expect(pullStub.calls.count()).toEqual(1);
-    expect(resolveRefStub.calls.count()).toEqual(1);
-    expect(statusMatrixStub.calls.count()).toEqual(1);
-    expect(resetIndexStub.calls.count()).toEqual(0);
+    // Head SHA ref should be same as remotes SHA
+    assertHeadCommit(TestUser.branchName, commits[TestUser.branchName]);
+    assertRemoteCommit(TestUser.branchName, commits[TestUser.branchName]);
   });
 
-  it('pull should only reset Index if commit actaully changes', async () => {
-    await fileService.accessRepo(TestUser);
+  it('refresh repo fails, error expected', async () => {
 
     await fileService.accessRepo(TestUser);
+    await fileService.checkoutBranch(principal, 'switch', TestUser.branchName);
 
-    assertHeadRef(commitOid1);
-    assertRemoteRef(commitOid1);
-
-    expect(statusMatrixStub.calls.count()).toEqual(1);
-  });
-
-  it('pull timeout, should fallback to clone', async () => {
-
-    await fileService.accessRepo(TestUser);
-
-    percyConfig.pullTimeout = '1s';
-    pullStub.and.callFake(async () => {
-      await new Promise(resolve => setTimeout(resolve, 1100)); // wait for timeout
+    fetchStub.and.callFake(async () => {
+      const error = new Error('Mock fetch error');
+      throw error;
     });
 
-    await fileService.accessRepo(TestUser);
-    expect(cloneStub.calls.count()).toEqual(2);
+    try {
+      await fileService.refresh(principal);
+      fail('should fail');
+    } catch (err) {
+      expect(err.message.indexOf('Mock fetch error') > -1).toBeTruthy();
+    }
   });
 
   it('should get app environments successfully', async () => {
     await fileService.accessRepo(TestUser);
-
-    const principal = { user: TestUser, repoMetadata: {} };
 
     const appPercyConf = { key: 'value' };
 
@@ -357,45 +443,33 @@ describe('FileManagementService', () => {
     config.environments.addChild(new TreeNode('qat'));
     config.environments.addChild(new TreeNode('prod'));
 
-    statusStub.and.callFake((options) => {
-      if (options.filepath.indexOf('environments') > -1) {
-        return 'unmodified';
-      }
-      if (options.filepath.indexOf(percyConfig.yamlAppsFolder + '/app1/' + '.percyrc') > -1) {
-        return 'unmodified';
-      }
-      return 'absent';
-    });
     readObjectStub.and.callFake((options) => {
       if (options.filepath.indexOf('environments') > -1) {
-        return { object: utilService.convertTreeToYaml(config) };
+        return { object: utilService.convertTreeToYaml(config), type: 'blob' };
       }
       if (options.filepath.indexOf(percyConfig.yamlAppsFolder + '/app1/' + '.percyrc') > -1) {
-        return { object: JSON.stringify(appPercyConf) };
+        return { object: JSON.stringify(appPercyConf), type: 'blob' };
       }
-      return null;
+      throw { code: git.E.TreeOrBlobNotFoundError };
     });
 
     const envs = await fileService.getEnvironments(principal, 'app1');
 
-    expect(statusStub.calls.count()).toEqual(3);
-    expect(resolveRefStub.calls.count()).toEqual(2);
-    expect(readObjectStub.calls.count()).toEqual(2);
+    expect(readObjectStub.calls.count()).toEqual(3);
 
     expect(envs.environments).toEqual(['dev', 'qat', 'prod']);
     expect(envs.appPercyConfig).toEqual(appPercyConf);
   });
 
   it('should get an empty array when environments file does not exists', async () => {
-    const principal = { user: TestUser, repoMetadata: {} };
+    await fileService.accessRepo(TestUser);
 
-    statusStub.and.returnValue('absent');
-
+    readObjectStub.and.callFake(() => {
+      throw { code: git.E.TreeOrBlobNotFoundError };
+    });
     const envs = await fileService.getEnvironments(principal, 'app1');
 
-    expect(statusStub.calls.count()).toEqual(3);
-    expect(resolveRefStub.calls.count()).toEqual(0);
-    expect(readObjectStub.calls.count()).toEqual(0);
+    expect(readObjectStub.calls.count()).toEqual(3);
 
     expect(envs.environments).toEqual([]);
   });
@@ -405,7 +479,7 @@ describe('FileManagementService', () => {
 
     readObjectStub.and.returnValues(...objectTree);
 
-    const draftPath = path.resolve(percyConfig.draftFolder, repoFolder);
+    const draftPath = path.resolve(percyConfig.draftFolder, TestUser.repoFolder, TestUser.branchName);
     const draftAppsPath = path.resolve(draftPath, percyConfig.yamlAppsFolder);
     await fs.mkdirs(draftAppsPath);
     await fs.mkdirs(draftAppsPath + '/app1');
@@ -414,10 +488,8 @@ describe('FileManagementService', () => {
     await fs.writeFile(draftAppsPath + '/app1/app1-client.yaml', '{}');
     await fs.writeFile(draftAppsPath + '/app2/test.txt', 'text');
 
-    const principal = { user: TestUser, repoMetadata: {} };
     const result = await fileService.getFiles(principal);
 
-    expect(resolveRefStub.calls.count()).toEqual(1);
     expect(readObjectStub.calls.count()).toEqual(6);
 
     expect(result.applications.sort()).toEqual(['app1', 'app2', 'app3']);
@@ -433,13 +505,11 @@ describe('FileManagementService', () => {
   it('should get file content successfully', async () => {
     await fileService.accessRepo(TestUser);
 
-    statusStub.and.returnValue('unmodified');
-
     const originalConfig = new Configuration();
     originalConfig.environments.addChild(new TreeNode('dev'));
     originalConfig.environments.addChild(new TreeNode('qat'));
 
-    readObjectStub.and.returnValue({ oid: '222333', object: utilService.convertTreeToYaml(originalConfig) });
+    readObjectStub.and.returnValue({ oid: '222333', type: 'blob', object: utilService.convertTreeToYaml(originalConfig) });
 
     const draftConfig = new Configuration();
     draftConfig.environments.addChild(new TreeNode('dev'));
@@ -451,37 +521,55 @@ describe('FileManagementService', () => {
       fileName: 'config.yaml'
     };
 
-    const pathFinder = new PathFinder(TestUser, file);
+    const pathFinder = new PathFinder(TestUser, file, TestUser.branchName);
     await fs.mkdirs(pathFinder.draftAppDir);
     await fs.writeFile(pathFinder.draftFullFilePath, utilService.convertTreeToYaml(draftConfig));
-
-    const principal = { user: TestUser, repoMetadata: { ...TestUser, commitBaseSHA: {} } };
 
     const result = await fileService.getFileContent(principal, file);
 
     expect(result).toEqual({ ...file, oid: '222333', modified: true, originalConfig, draftConfig });
   });
 
-  it('should get file content without draft config successfully', async () => {
+  it('should get file content and remove draft file if it\'s same', async () => {
     await fileService.accessRepo(TestUser);
-
-    statusStub.and.returnValue('unmodified');
 
     const originalConfig = new Configuration();
     originalConfig.environments.addChild(new TreeNode('dev'));
     originalConfig.environments.addChild(new TreeNode('qat'));
 
-    readObjectStub.and.returnValue({ oid: '222333', object: utilService.convertTreeToYaml(originalConfig) });
+    readObjectStub.and.returnValue({ oid: '222333', type: 'blob', object: utilService.convertTreeToYaml(originalConfig) });
 
     const file = {
       applicationName: 'app1',
       fileName: 'config.yaml'
     };
 
-    const pathFinder = new PathFinder(TestUser, file);
-    await fs.remove(pathFinder.draftFullFilePath);
+    const pathFinder = new PathFinder(TestUser, file, TestUser.branchName);
+    await fs.mkdirs(pathFinder.draftAppDir);
+    await fs.writeFile(pathFinder.draftFullFilePath, utilService.convertTreeToYaml(originalConfig));
 
-    const principal = { user: TestUser, repoMetadata: { ...TestUser, commitBaseSHA: {} } };
+    const result = await fileService.getFileContent(principal, file);
+
+    expect(await fs.pathExists(pathFinder.draftFullFilePath)).toBeFalsy();
+    expect(result).toEqual({ ...file, oid: '222333', modified: false, originalConfig, draftConfig: undefined });
+  });
+
+  it('should get file content without draft config successfully', async () => {
+    await fileService.accessRepo(TestUser);
+
+    const originalConfig = new Configuration();
+    originalConfig.environments.addChild(new TreeNode('dev'));
+    originalConfig.environments.addChild(new TreeNode('qat'));
+
+    readObjectStub.and.returnValue({ oid: '222333', type: 'blob', object: utilService.convertTreeToYaml(originalConfig) });
+
+    const file = {
+      applicationName: 'app1',
+      fileName: 'config.yaml'
+    };
+
+    const pathFinder = new PathFinder(TestUser, file, TestUser.branchName);
+    await fs.remove(pathFinder.draftFullFilePath);
 
     const result = await fileService.getFileContent(principal, file);
 
@@ -491,7 +579,9 @@ describe('FileManagementService', () => {
   it('should get file content without original config successfully', async () => {
     await fileService.accessRepo(TestUser);
 
-    statusStub.and.returnValue('absent');
+    readObjectStub.and.callFake(() => {
+      throw { code: git.E.TreeOrBlobNotFoundError };
+    });
 
     const draftConfig = new Configuration();
     draftConfig.environments.addChild(new TreeNode('dev'));
@@ -503,69 +593,29 @@ describe('FileManagementService', () => {
       fileName: 'config.yaml'
     };
 
-    const pathFinder = new PathFinder(TestUser, file);
+    const pathFinder = new PathFinder(TestUser, file, TestUser.branchName);
     await fs.mkdirs(pathFinder.draftAppDir);
     await fs.writeFile(pathFinder.draftFullFilePath, utilService.convertTreeToYaml(draftConfig));
-
-    const principal = { user: TestUser, repoMetadata: { ...TestUser, commitBaseSHA: {} } };
 
     const result = await fileService.getFileContent(principal, file);
 
     expect(result).toEqual({ ...file, modified: true, draftConfig });
   });
 
-  it('get file content, original config and draft config are same', async () => {
+  it('error expected if both original config and draft config missing', async () => {
     await fileService.accessRepo(TestUser);
 
-    statusStub.and.returnValue('unmodified');
-
-    const originalConfig = new Configuration();
-    originalConfig.environments.addChild(new TreeNode('dev'));
-    originalConfig.environments.addChild(new TreeNode('qat'));
-
-    readObjectStub.and.returnValue({ object: utilService.convertTreeToYaml(originalConfig) });
-
-    const draftConfig = new Configuration();
-    draftConfig.environments.addChild(new TreeNode('dev'));
-    draftConfig.environments.addChild(new TreeNode('qat'));
+    readObjectStub.and.callFake(() => {
+      throw { code: git.E.TreeOrBlobNotFoundError };
+    });
 
     const file = {
       applicationName: 'app1',
       fileName: 'config.yaml'
     };
 
-    const pathFinder = new PathFinder(TestUser, file);
-    await fs.mkdirs(pathFinder.draftAppDir);
-    await fs.writeFile(pathFinder.draftFullFilePath, utilService.convertTreeToYaml(draftConfig));
-
-    const principal = { user: TestUser, repoMetadata: { ...TestUser, commitBaseSHA: { [pathFinder.repoFilePath]: '112233' } } };
-
-    const result = await fileService.getFileContent(principal, file);
-
-    expect(result).toEqual({ ...file, modified: false, originalConfig, draftConfig: undefined });
-
-    // Draft file should be deleted
-    expect(await fs.pathExists(pathFinder.draftFullFilePath)).toBeFalsy();
-
-    // Commit base SHA should be cleared
-    expect(principal.repoMetadata.commitBaseSHA).toEqual({});
-    const metadataFile = utilService.getMetadataPath(TestUser.repoFolder);
-    expect((await fs.readJson(metadataFile)).commitBaseSHA).toEqual({});
-  });
-
-  it('error expected if both original config and draft config missing', async () => {
-
-    statusStub.and.returnValue('absent');
-
-    const file = {
-      applicationName: 'app1',
-      fileName: 'config.yaml'
-    };
-
-    const pathFinder = new PathFinder(TestUser, file);
+    const pathFinder = new PathFinder(TestUser, file, TestUser.branchName);
     await fs.remove(pathFinder.draftFullFilePath);
-
-    const principal = { user: TestUser, repoMetadata: { ...TestUser, commitBaseSHA: {} } };
 
     try {
       await fileService.getFileContent(principal, file);
@@ -576,6 +626,9 @@ describe('FileManagementService', () => {
   });
 
   it('should save draft file successfully', async () => {
+    await fileService.accessRepo(TestUser);
+    await fileService.checkoutBranch(principal, 'switch', TestUser.branchName);
+
     const draftConfig = new Configuration();
     draftConfig.environments.addChild(new TreeNode('dev'));
     draftConfig.environments.addChild(new TreeNode('qat'));
@@ -587,22 +640,24 @@ describe('FileManagementService', () => {
       modified: true,
       oid: '223344'
     };
-    const principal = { user: TestUser, repoMetadata: { ...TestUser, commitBaseSHA: {} } };
 
     await fileService.saveDraft(principal, file);
 
-    const pathFinder = new PathFinder(TestUser, file);
+    const pathFinder = new PathFinder(TestUser, file, TestUser.branchName);
 
     const draftFile = await fs.readFile(pathFinder.draftFullFilePath);
     expect(utilService.parseYamlConfig(draftFile.toString())).toEqual(draftConfig);
 
     // Commit base SHA should be cleared
-    expect(principal.repoMetadata.commitBaseSHA).toEqual({ [pathFinder.repoFilePath]: file.oid });
+    expect(principal.repoMetadata.commitBaseSHA[TestUser.branchName]).toEqual({ [pathFinder.repoFilePath]: file.oid });
     const metadataFile = utilService.getMetadataPath(TestUser.repoFolder);
-    expect((await fs.readJson(metadataFile)).commitBaseSHA).toEqual({ [pathFinder.repoFilePath]: file.oid });
+    expect((await fs.readJson(metadataFile)).commitBaseSHA[TestUser.branchName]).toEqual({ [pathFinder.repoFilePath]: file.oid });
   });
 
   it('save draft file which is same as original file, draft file should be deleted', async () => {
+    await fileService.accessRepo(TestUser);
+    await fileService.checkoutBranch(principal, 'switch', TestUser.branchName);
+
     const originalConfig = new Configuration();
     originalConfig.environments.addChild(new TreeNode('dev'));
     originalConfig.environments.addChild(new TreeNode('qat'));
@@ -616,13 +671,20 @@ describe('FileManagementService', () => {
       oid: '223344'
     };
 
-    const pathFinder = new PathFinder(TestUser, file);
+    const pathFinder = new PathFinder(TestUser, file, TestUser.branchName);
     await fs.mkdirs(pathFinder.draftAppDir);
     await fs.mkdirs(pathFinder.repoAppDir);
     await fs.writeFile(pathFinder.fullFilePath, utilService.convertTreeToYaml(originalConfig));
     await fs.writeFile(pathFinder.draftFullFilePath, utilService.convertTreeToYaml(originalConfig));
 
-    const principal = { user: TestUser, repoMetadata: { ...TestUser, commitBaseSHA: { [pathFinder.repoFilePath]: file.oid } } };
+    principal = {
+      user: TestUser,
+      repoMetadata: {
+        ...TestUser,
+        commitBaseSHA: { [TestUser.branchName]: { [pathFinder.repoFilePath]: file.oid } },
+        version: '1.0'
+      }
+    };
 
     await fileService.saveDraft(principal, file);
 
@@ -630,30 +692,32 @@ describe('FileManagementService', () => {
     expect(await fs.pathExists(pathFinder.draftFullFilePath)).toBeFalsy();
 
     // Commit base SHA should be cleared
-    expect(principal.repoMetadata.commitBaseSHA).toEqual({});
+    expect(principal.repoMetadata.commitBaseSHA[TestUser.branchName]).toEqual({});
     const metadataFile = utilService.getMetadataPath(TestUser.repoFolder);
-    expect((await fs.readJson(metadataFile)).commitBaseSHA).toEqual({});
+    expect((await fs.readJson(metadataFile)).commitBaseSHA[TestUser.branchName]).toEqual({});
   });
 
   it('should delete draft-only file successfully', async () => {
+    await fileService.accessRepo(TestUser);
+    await fileService.checkoutBranch(principal, 'switch', TestUser.branchName);
 
-    statusStub.and.returnValue('absent');
+    readObjectStub.and.callFake(() => {
+      throw { code: git.E.TreeOrBlobNotFoundError };
+    });
 
     const file = {
       applicationName: 'app1',
       fileName: 'config.yaml',
     };
-    const pathFinder = new PathFinder(TestUser, file);
+    const pathFinder = new PathFinder(TestUser, file, TestUser.branchName);
     await fs.mkdirs(pathFinder.draftAppDir);
     await fs.writeFile(pathFinder.draftFullFilePath, utilService.convertTreeToYaml(new Configuration()));
-
-    const principal = { user: TestUser, repoMetadata: { ...TestUser, commitBaseSHA: {} } };
 
     const result = await fileService.deleteFile(principal, file);
 
     // Should not be pulled
     expect(result).toBeFalsy();
-    expect(pullStub.calls.count()).toEqual(0);
+    expect(fetchStub.calls.count()).toEqual(0);
     expect(removeStub.calls.count()).toEqual(0);
 
     // Draft file should be deleted
@@ -663,82 +727,94 @@ describe('FileManagementService', () => {
   it('should delete both draft and original file successfully', async () => {
 
     await fileService.accessRepo(TestUser);
+    await fileService.checkoutBranch(principal, 'switch', TestUser.branchName);
 
-    statusStub.and.returnValue('unmodified');
-    commitStub.and.returnValue(commitOid2);
+    readObjectStub.and.callFake(() => {
+    });
+
+    commitStub.and.returnValue(newCommitOid);
 
     const file = {
       applicationName: 'app1',
       fileName: 'config.yaml',
       oid: '223344'
     };
-    const pathFinder = new PathFinder(TestUser, file);
+    const pathFinder = new PathFinder(TestUser, file, TestUser.branchName);
     await fs.mkdirs(pathFinder.draftAppDir);
     await fs.writeFile(pathFinder.draftFullFilePath, utilService.convertTreeToYaml(new Configuration()));
 
-    const principal = { user: TestUser, repoMetadata: { ...TestUser, commitBaseSHA: { [pathFinder.repoFilePath]: file.oid } } };
-
+    principal = {
+      user: TestUser,
+      repoMetadata: {
+        ...TestUser,
+        commitBaseSHA: { [TestUser.branchName]: { [pathFinder.repoFilePath]: file.oid } },
+        version: '1.0'
+      }
+    };
     const result = await fileService.deleteFile(principal, file);
 
     // Should pushed to repo
     expect(result).toBeFalsy();
-    expect(pullStub.calls.count()).toEqual(1);
+    expect(fetchStub.calls.count()).toEqual(1);
     expect(removeStub.calls.count()).toEqual(1);
     expect(commitStub.calls.count()).toEqual(1);
     expect(pushStub.calls.count()).toEqual(1);
 
     // Head/Remote ref should be updated
-    assertHeadRef(commitOid2);
-    assertRemoteRef(commitOid2);
+    assertHeadCommit(TestUser.branchName, newCommitOid);
+    assertRemoteCommit(TestUser.branchName, newCommitOid);
 
     // Draft file should be deleted
     expect(await fs.pathExists(pathFinder.draftFullFilePath)).toBeFalsy();
 
     // Commit base SHA should be cleared
-    expect(principal.repoMetadata.commitBaseSHA).toEqual({});
+    expect(principal.repoMetadata.commitBaseSHA[TestUser.branchName]).toEqual({});
     const metadataFile = utilService.getMetadataPath(TestUser.repoFolder);
-    expect((await fs.readJson(metadataFile)).commitBaseSHA).toEqual({});
+    expect((await fs.readJson(metadataFile)).commitBaseSHA[TestUser.branchName]).toEqual({});
   });
 
   it('should delete original-only file successfully', async () => {
 
     await fileService.accessRepo(TestUser);
+    await fileService.checkoutBranch(principal, 'switch', TestUser.branchName);
 
-    statusStub.and.returnValue('unmodified');
-    commitStub.and.returnValue(commitOid2);
+    readObjectStub.and.callFake(() => {
+    });
+    commitStub.and.returnValue(newCommitOid);
 
     const file = {
       applicationName: 'app1',
       fileName: 'config.yaml',
       oid: '223344'
     };
-    const principal = { user: TestUser, repoMetadata: { ...TestUser, commitBaseSHA: {} } };
 
     const result = await fileService.deleteFile(principal, file);
 
     // Should pushed to repo
     expect(result).toBeFalsy();
-    expect(pullStub.calls.count()).toEqual(1);
+    expect(fetchStub.calls.count()).toEqual(1);
     expect(removeStub.calls.count()).toEqual(1);
     expect(commitStub.calls.count()).toEqual(1);
     expect(pushStub.calls.count()).toEqual(1);
 
     // Head/Remote ref should be updated
-    assertHeadRef(commitOid2);
-    assertRemoteRef(commitOid2);
+    assertHeadCommit(TestUser.branchName, newCommitOid);
+    assertRemoteCommit(TestUser.branchName, newCommitOid);
 
     // Commit base SHA should be cleared
-    expect(principal.repoMetadata.commitBaseSHA).toEqual({});
+    expect(principal.repoMetadata.commitBaseSHA[TestUser.branchName]).toEqual({});
     const metadataFile = utilService.getMetadataPath(TestUser.repoFolder);
-    expect((await fs.readJson(metadataFile)).commitBaseSHA).toEqual({});
+    expect((await fs.readJson(metadataFile)).commitBaseSHA[TestUser.branchName]).toEqual({});
   });
 
   it('delete failed when push, should reset to last commit', async () => {
 
     await fileService.accessRepo(TestUser);
+    await fileService.checkoutBranch(principal, 'switch', TestUser.branchName);
 
-    statusStub.and.returnValue('unmodified');
-    commitStub.and.returnValue(commitOid2);
+    readObjectStub.and.callFake(() => {
+    });
+    commitStub.and.returnValue(newCommitOid);
     pushStub.and.throwError('mock push error');
 
     const file = {
@@ -746,39 +822,47 @@ describe('FileManagementService', () => {
       fileName: 'config.yaml',
       oid: '223344'
     };
-    const pathFinder = new PathFinder(TestUser, file);
+    const pathFinder = new PathFinder(TestUser, file, TestUser.branchName);
     await fs.mkdirs(pathFinder.draftAppDir);
     await fs.writeFile(pathFinder.draftFullFilePath, utilService.convertTreeToYaml(new Configuration()));
 
-    const principal = { user: TestUser, repoMetadata: { ...TestUser, commitBaseSHA: { [pathFinder.repoFilePath]: file.oid } } };
-
+    principal = {
+      user: TestUser,
+      repoMetadata: {
+        ...TestUser,
+        commitBaseSHA: { [TestUser.branchName]: { [pathFinder.repoFilePath]: file.oid } },
+        version: '1.0'
+      }
+    };
     try {
       await fileService.deleteFile(principal, file);
       fail('error expected');
     } catch (err) {
       expect(err.message.indexOf('mock push error')).toBeGreaterThan(-1);
-      expect(pullStub.calls.count()).toEqual(1);
+      expect(fetchStub.calls.count()).toEqual(1);
       expect(removeStub.calls.count()).toEqual(1);
       expect(commitStub.calls.count()).toEqual(1);
       expect(pushStub.calls.count()).toEqual(1);
 
       // Head/Remote ref should be reset to last commit
-      assertHeadRef(commitOid1);
-      assertRemoteRef(commitOid1);
+      assertHeadCommit(TestUser.branchName, commits[TestUser.branchName]);
+      assertRemoteCommit(TestUser.branchName, commits[TestUser.branchName]);
 
       // Draft file should still exists
       expect(await fs.pathExists(pathFinder.draftFullFilePath)).toBeTruthy();
 
       // Commit base SHA should not be cleared
-      expect(principal.repoMetadata.commitBaseSHA).toEqual({ [pathFinder.repoFilePath]: file.oid });
+      expect(principal.repoMetadata.commitBaseSHA[TestUser.branchName]).toEqual({ [pathFinder.repoFilePath]: file.oid });
     }
   });
 
   it('should commit changed files successfully', async () => {
     await fileService.accessRepo(TestUser);
+    await fileService.checkoutBranch(principal, 'switch', TestUser.branchName);
 
     readObjectStub.and.returnValues(...objectTree, ...objectTree);
-    commitStub.and.returnValue(commitOid2);
+    commitStub.and.returnValue(newCommitOid);
+    statusMatrixStub.and.returnValue([['a.txt', 1, 0, 0], ['b.txt', 1, 0, 1]]);
 
     const draftConfig = new Configuration();
     draftConfig.environments.addChild(new TreeNode('dev'));
@@ -789,20 +873,26 @@ describe('FileManagementService', () => {
       oid: '111111',
       draftConfig: draftConfig
     };
-    const pathFinder1 = new PathFinder(TestUser, file1);
+    const pathFinder1 = new PathFinder(TestUser, file1, TestUser.branchName);
 
     const file2 = {
       applicationName: 'app1',
       fileName: 'app1-server.yaml',
       oid: '222222'
     };
-    const pathFinder2 = new PathFinder(TestUser, file2);
+    const pathFinder2 = new PathFinder(TestUser, file2, TestUser.branchName);
 
     await fs.mkdirs(pathFinder2.draftAppDir);
     await fs.writeFile(pathFinder2.draftFullFilePath, utilService.convertTreeToYaml(draftConfig));
 
-    const principal = { user: TestUser, repoMetadata: { ...TestUser, commitBaseSHA: { [pathFinder1.repoFilePath]: file1.oid } } };
-
+    principal = {
+      user: TestUser,
+      repoMetadata: {
+        ...TestUser,
+        commitBaseSHA: { [TestUser.branchName]: { [pathFinder1.repoFilePath]: file1.oid } },
+        version: '1.0'
+      }
+    };
     const result = await fileService.commitFiles(principal, [file1, file2], 'test commit');
 
     expect(result.length).toEqual(2);
@@ -812,32 +902,34 @@ describe('FileManagementService', () => {
       expect(file.draftConfig).toBeUndefined();
     });
 
-    expect(pullStub.calls.count()).toEqual(1);
+    expect(fetchStub.calls.count()).toEqual(1);
     expect(addStub.calls.count()).toEqual(2);
     expect(commitStub.calls.count()).toEqual(1);
     expect(pushStub.calls.count()).toEqual(1);
 
     // Head/Remote ref should be updated
-    assertHeadRef(commitOid2);
-    assertRemoteRef(commitOid2);
+    assertHeadCommit(TestUser.branchName, newCommitOid);
+    assertRemoteCommit(TestUser.branchName, newCommitOid);
 
     // Repo dir should be clean (only have .git subfolder)
-    expect(await fs.readdir(pathFinder1.repoDir)).toEqual(['.git']);
+    expect(await fs.readdir(PathFinder.getRepoDir(TestUser))).toEqual(['.git']);
+    expect(resetIndexStub.calls.count()).toEqual(2);
 
     // Draft file should be deleted
     expect(await fs.pathExists(pathFinder2.draftFullFilePath)).toBeFalsy();
 
     // Commit base SHA should be cleared
-    expect(principal.repoMetadata.commitBaseSHA).toEqual({});
+    expect(principal.repoMetadata.commitBaseSHA[TestUser.branchName]).toEqual({});
     const metadataFile = utilService.getMetadataPath(TestUser.repoFolder);
-    expect((await fs.readJson(metadataFile)).commitBaseSHA).toEqual({});
+    expect((await fs.readJson(metadataFile)).commitBaseSHA[TestUser.branchName]).toEqual({});
   });
 
   it('force push should ignore confict files', async () => {
 
     await fileService.accessRepo(TestUser);
+    await fileService.checkoutBranch(principal, 'switch', TestUser.branchName);
 
-    commitStub.and.returnValue(commitOid2);
+    commitStub.and.returnValue(newCommitOid);
 
     const draftConfig = new Configuration();
     draftConfig.environments.addChild(new TreeNode('dev'));
@@ -848,19 +940,25 @@ describe('FileManagementService', () => {
       oid: 'changed-oid',
       draftConfig: draftConfig
     };
-    const pathFinder1 = new PathFinder(TestUser, file1);
+    const pathFinder1 = new PathFinder(TestUser, file1, TestUser.branchName);
 
     const file2 = {
       applicationName: 'app1',
       fileName: 'app1-server.yaml',
     };
-    const pathFinder2 = new PathFinder(TestUser, file2);
+    const pathFinder2 = new PathFinder(TestUser, file2, TestUser.branchName);
 
     await fs.mkdirs(pathFinder2.draftAppDir);
     await fs.writeFile(pathFinder2.draftFullFilePath, utilService.convertTreeToYaml(draftConfig));
 
-    const principal = { user: TestUser, repoMetadata: { ...TestUser, commitBaseSHA: { [pathFinder1.repoFilePath]: file1.oid } } };
-
+    principal = {
+      user: TestUser,
+      repoMetadata: {
+        ...TestUser,
+        commitBaseSHA: { [TestUser.branchName]: { [pathFinder1.repoFilePath]: file1.oid } },
+        version: '1.0'
+      }
+    };
     const result = await fileService.commitFiles(principal, [file1, file2], 'test commit', true);
 
     expect(result.length).toEqual(2);
@@ -871,39 +969,40 @@ describe('FileManagementService', () => {
     });
 
     expect(readObjectStub.calls.count()).toEqual(0);
-    expect(pullStub.calls.count()).toEqual(1);
+    expect(fetchStub.calls.count()).toEqual(1);
     expect(addStub.calls.count()).toEqual(2);
     expect(commitStub.calls.count()).toEqual(1);
     expect(pushStub.calls.count()).toEqual(1);
 
     // Head/Remote ref should be updated
-    assertHeadRef(commitOid2);
-    assertRemoteRef(commitOid2);
+    assertHeadCommit(TestUser.branchName, newCommitOid);
+    assertRemoteCommit(TestUser.branchName, newCommitOid);
 
     // Repo dir should be clean (only have .git subfolder)
-    expect(await fs.readdir(pathFinder1.repoDir)).toEqual(['.git']);
+    expect(await fs.readdir(PathFinder.getRepoDir(TestUser))).toEqual(['.git']);
 
     // Draft file should be deleted
     expect(await fs.pathExists(pathFinder2.draftFullFilePath)).toBeFalsy();
 
     // Commit base SHA should be cleared
-    expect(principal.repoMetadata.commitBaseSHA).toEqual({});
+    expect(principal.repoMetadata.commitBaseSHA[TestUser.branchName]).toEqual({});
     const metadataFile = utilService.getMetadataPath(TestUser.repoFolder);
-    expect((await fs.readJson(metadataFile)).commitBaseSHA).toEqual({});
+    expect((await fs.readJson(metadataFile)).commitBaseSHA[TestUser.branchName]).toEqual({});
   });
 
   it('error expected when conflict files exist', async () => {
     await fileService.accessRepo(TestUser);
+    await fileService.checkoutBranch(principal, 'switch', TestUser.branchName);
 
     const originalConfig = new Configuration();
     originalConfig.environments.addChild(new TreeNode('dev'));
     originalConfig.environments.addChild(new TreeNode('qat'));
     originalConfig.environments.addChild(new TreeNode('prod'));
 
-    const originalConfigObj = { object: utilService.convertTreeToYaml(originalConfig) };
+    const originalConfigObj = { object: utilService.convertTreeToYaml(originalConfig), type: 'blob' };
 
     readObjectStub.and.returnValues(...objectTree, originalConfigObj, originalConfigObj);
-    commitStub.and.returnValue(commitOid2);
+    commitStub.and.returnValue(newCommitOid);
 
     const draftConfig = new Configuration();
     draftConfig.environments.addChild(new TreeNode('dev'));
@@ -914,18 +1013,16 @@ describe('FileManagementService', () => {
       oid: 'changed-oid',
       draftConfig: draftConfig
     };
-    const pathFinder1 = new PathFinder(TestUser, file1);
+    const pathFinder1 = new PathFinder(TestUser, file1, TestUser.branchName);
 
     const file2 = {
       applicationName: 'app1',
       fileName: 'app1-server.yaml',
     };
-    const pathFinder2 = new PathFinder(TestUser, file2);
+    const pathFinder2 = new PathFinder(TestUser, file2, TestUser.branchName);
 
     await fs.mkdirs(pathFinder2.draftAppDir);
     await fs.writeFile(pathFinder2.draftFullFilePath, utilService.convertTreeToYaml(draftConfig));
-
-    const principal = { user: TestUser, repoMetadata: { ...TestUser, commitBaseSHA: {} } };
 
     try {
       await fileService.commitFiles(principal, [file1, file2], 'test commit');
@@ -938,33 +1035,34 @@ describe('FileManagementService', () => {
         expect(file.draftConfig).toEqual(draftConfig);
         expect(file.originalConfig).toEqual(originalConfig);
       });
-      expect(pullStub.calls.count()).toEqual(1);
+      expect(fetchStub.calls.count()).toEqual(1);
       expect(addStub.calls.count()).toEqual(0);
       expect(commitStub.calls.count()).toEqual(0);
       expect(pushStub.calls.count()).toEqual(0);
 
       // Head/Remote ref should not be updated
-      assertHeadRef(commitOid1);
-      assertRemoteRef(commitOid1);
+      assertHeadCommit(TestUser.branchName, commits[TestUser.branchName]);
+      assertRemoteCommit(TestUser.branchName, commits[TestUser.branchName]);
 
       // Repo dir should be clean (only have .git subfolder)
-      expect(await fs.readdir(pathFinder1.repoDir)).toEqual(['.git']);
+      expect(await fs.readdir(PathFinder.getRepoDir(TestUser))).toEqual(['.git']);
 
       // Draft file should not be deleted
       expect(await fs.pathExists(pathFinder2.draftFullFilePath)).toBeTruthy();
 
       // Commit base SHA should be updated
-      expect(principal.repoMetadata.commitBaseSHA).toEqual({ [pathFinder1.repoFilePath]: file1.oid });
+      expect(principal.repoMetadata.commitBaseSHA[TestUser.branchName]).toEqual({ [pathFinder1.repoFilePath]: file1.oid });
       const metadataFile = utilService.getMetadataPath(TestUser.repoFolder);
-      expect((await fs.readJson(metadataFile)).commitBaseSHA).toEqual({ [pathFinder1.repoFilePath]: file1.oid });
+      expect((await fs.readJson(metadataFile)).commitBaseSHA[TestUser.branchName]).toEqual({ [pathFinder1.repoFilePath]: file1.oid });
     }
   });
 
   it('commit changes failed when push, should reset to last commit', async () => {
 
     await fileService.accessRepo(TestUser);
+    await fileService.checkoutBranch(principal, 'switch', TestUser.branchName);
 
-    commitStub.and.returnValue(commitOid2);
+    commitStub.and.returnValue(newCommitOid);
     pushStub.and.throwError('mock push error');
 
     const draftConfig = new Configuration();
@@ -976,50 +1074,57 @@ describe('FileManagementService', () => {
       oid: 'changed-oid',
       draftConfig: draftConfig
     };
-    const pathFinder1 = new PathFinder(TestUser, file1);
+    const pathFinder1 = new PathFinder(TestUser, file1, TestUser.branchName);
 
     const file2 = {
       applicationName: 'app1',
       fileName: 'app1-server.yaml',
     };
-    const pathFinder2 = new PathFinder(TestUser, file2);
+    const pathFinder2 = new PathFinder(TestUser, file2, TestUser.branchName);
 
     await fs.mkdirs(pathFinder2.draftAppDir);
     await fs.writeFile(pathFinder2.draftFullFilePath, utilService.convertTreeToYaml(draftConfig));
 
-    const principal = { user: TestUser, repoMetadata: { ...TestUser, commitBaseSHA: { [pathFinder1.repoFilePath]: file1.oid } } };
-
+    principal = {
+      user: TestUser,
+      repoMetadata: {
+        ...TestUser,
+        commitBaseSHA: { [TestUser.branchName]: { [pathFinder1.repoFilePath]: file1.oid } },
+        version: '1.0'
+      }
+    };
     try {
       await fileService.commitFiles(principal, [file1, file2], 'test commit', true);
       fail('error expected');
     } catch (err) {
       expect(err.message.indexOf('mock push error')).toBeGreaterThan(-1);
 
-      expect(pullStub.calls.count()).toEqual(1);
+      expect(fetchStub.calls.count()).toEqual(1);
       expect(addStub.calls.count()).toEqual(2);
       expect(commitStub.calls.count()).toEqual(1);
       expect(pushStub.calls.count()).toEqual(1);
 
       // Head/Remote ref should be reset to last commit
-      assertHeadRef(commitOid1);
-      assertRemoteRef(commitOid1);
+      assertHeadCommit(TestUser.branchName, commits[TestUser.branchName]);
+      assertRemoteCommit(TestUser.branchName, commits[TestUser.branchName]);
 
       // Repo dir should be clean (only have .git subfolder)
-      expect(await fs.readdir(pathFinder1.repoDir)).toEqual(['.git']);
+      expect(await fs.readdir(PathFinder.getRepoDir(TestUser))).toEqual(['.git']);
 
       // Draft file should still exists
       expect(await fs.pathExists(pathFinder2.draftFullFilePath)).toBeTruthy();
 
       // Commit base SHA should not be cleared
-      expect(principal.repoMetadata.commitBaseSHA).toEqual({ [pathFinder1.repoFilePath]: file1.oid });
+      expect(principal.repoMetadata.commitBaseSHA[TestUser.branchName]).toEqual({ [pathFinder1.repoFilePath]: file1.oid });
     }
   });
 
   it('should resolve conflicts successfully', async () => {
 
     await fileService.accessRepo(TestUser);
+    await fileService.checkoutBranch(principal, 'switch', TestUser.branchName);
 
-    commitStub.and.returnValue(commitOid2);
+    commitStub.and.returnValue(newCommitOid);
 
     const draftConfig = new Configuration();
     draftConfig.environments.addChild(new TreeNode('dev'));
@@ -1047,13 +1152,19 @@ describe('FileManagementService', () => {
       draftConfig: originalConfig,
       originalConfig: originalConfig
     };
-    const pathFinder2 = new PathFinder(TestUser, file2);
+    const pathFinder2 = new PathFinder(TestUser, file2, TestUser.branchName);
 
     await fs.mkdirs(pathFinder2.draftAppDir);
     await fs.writeFile(pathFinder2.draftFullFilePath, utilService.convertTreeToYaml(draftConfig));
 
-    const principal = { user: TestUser, repoMetadata: { ...TestUser, commitBaseSHA: { [pathFinder2.repoFilePath]: file2.oid } } };
-
+    principal = {
+      user: TestUser,
+      repoMetadata: {
+        ...TestUser,
+        commitBaseSHA: { [TestUser.branchName]: { [pathFinder2.repoFilePath]: file2.oid } },
+        version: '1.0'
+      }
+    };
     const result = await fileService.resovelConflicts(principal, [file1, file2], 'test commit');
 
     expect(result.length).toEqual(2);
@@ -1062,32 +1173,33 @@ describe('FileManagementService', () => {
     expect(result[0].originalConfig).toEqual(draftConfig);
     expect(result[1].originalConfig).toEqual(originalConfig);
 
-    expect(pullStub.calls.count()).toEqual(1);
+    expect(fetchStub.calls.count()).toEqual(1);
     expect(addStub.calls.count()).toEqual(1);
     expect(commitStub.calls.count()).toEqual(1);
     expect(pushStub.calls.count()).toEqual(1);
 
     // Head/Remote ref should be updated
-    assertHeadRef(commitOid2);
-    assertRemoteRef(commitOid2);
+    assertHeadCommit(TestUser.branchName, newCommitOid);
+    assertRemoteCommit(TestUser.branchName, newCommitOid);
 
     // Repo dir should be clean (only have .git subfolder)
-    expect(await fs.readdir(pathFinder2.repoDir)).toEqual(['.git']);
+    expect(await fs.readdir(PathFinder.getRepoDir(TestUser))).toEqual(['.git']);
 
     // Draft file should be deleted
     expect(await fs.pathExists(pathFinder2.draftFullFilePath)).toBeFalsy();
 
     // Commit base SHA should be cleared
-    expect(principal.repoMetadata.commitBaseSHA).toEqual({});
+    expect(principal.repoMetadata.commitBaseSHA[TestUser.branchName]).toEqual({});
     const metadataFile = utilService.getMetadataPath(TestUser.repoFolder);
-    expect((await fs.readJson(metadataFile)).commitBaseSHA).toEqual({});
+    expect((await fs.readJson(metadataFile)).commitBaseSHA[TestUser.branchName]).toEqual({});
   });
 
   it('should resolve conflicts successfully, all files are not modified', async () => {
 
     await fileService.accessRepo(TestUser);
+    await fileService.checkoutBranch(principal, 'switch', TestUser.branchName);
 
-    commitStub.and.returnValue(commitOid2);
+    commitStub.and.returnValue(newCommitOid);
 
     const draftConfig = new Configuration();
     draftConfig.environments.addChild(new TreeNode('dev'));
@@ -1115,13 +1227,19 @@ describe('FileManagementService', () => {
       draftConfig: originalConfig,
       originalConfig: originalConfig
     };
-    const pathFinder2 = new PathFinder(TestUser, file2);
+    const pathFinder2 = new PathFinder(TestUser, file2, TestUser.branchName);
 
     await fs.mkdirs(pathFinder2.draftAppDir);
     await fs.writeFile(pathFinder2.draftFullFilePath, utilService.convertTreeToYaml(draftConfig));
 
-    const principal = { user: TestUser, repoMetadata: { ...TestUser, commitBaseSHA: { [pathFinder2.repoFilePath]: file2.oid } } };
-
+    principal = {
+      user: TestUser,
+      repoMetadata: {
+        ...TestUser,
+        commitBaseSHA: { [TestUser.branchName]: { [pathFinder2.repoFilePath]: file2.oid } },
+        version: '1.0'
+      }
+    };
     const result = await fileService.resovelConflicts(principal, [file1, file2], 'test commit');
 
     expect(result.length).toEqual(2);
@@ -1130,25 +1248,24 @@ describe('FileManagementService', () => {
     expect(result[0].originalConfig).toEqual(originalConfig);
     expect(result[1].originalConfig).toEqual(originalConfig);
 
-    expect(pullStub.calls.count()).toEqual(0);
+    expect(fetchStub.calls.count()).toEqual(0);
     expect(addStub.calls.count()).toEqual(0);
     expect(commitStub.calls.count()).toEqual(0);
     expect(pushStub.calls.count()).toEqual(0);
 
     // Head/Remote ref should not be updated
-    assertHeadRef(commitOid1);
-    assertRemoteRef(commitOid1);
+    assertHeadCommit(TestUser.branchName, commits[TestUser.branchName]);
+    assertRemoteCommit(TestUser.branchName, commits[TestUser.branchName]);
 
     // Repo dir should be clean (only have .git subfolder)
-    expect(await fs.readdir(pathFinder2.repoDir)).toEqual(['.git']);
+    expect(await fs.readdir(PathFinder.getRepoDir(TestUser))).toEqual(['.git']);
 
     // Draft file should be deleted
     expect(await fs.pathExists(pathFinder2.draftFullFilePath)).toBeFalsy();
 
     // Commit base SHA should be cleared
-    expect(principal.repoMetadata.commitBaseSHA).toEqual({});
+    expect(principal.repoMetadata.commitBaseSHA[TestUser.branchName]).toEqual({});
     const metadataFile = utilService.getMetadataPath(TestUser.repoFolder);
-    expect((await fs.readJson(metadataFile)).commitBaseSHA).toEqual({});
+    expect((await fs.readJson(metadataFile)).commitBaseSHA[TestUser.branchName]).toEqual({});
   });
-
 });

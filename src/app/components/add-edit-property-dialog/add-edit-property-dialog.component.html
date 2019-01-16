@@ -50,7 +50,7 @@
     </ng-container>
 
     <mat-form-field *ngIf="valueType.value === 'number'" class="form-field">
-        <input type="number" matInput placeholder="Value" [formControl]="value" />
+        <input type="number" #numberInput matInput placeholder="Value" [formControl]="value" />
         <mat-error *ngIf="value.hasError('required')">*Required valid number</mat-error>
         <mat-error *ngIf="value.hasError('range')">The value should be a valid number</mat-error>
     </mat-form-field>
@@ -65,9 +65,10 @@
     </div>
 
     <mat-form-field *ngIf="showAnchor()" class="form-field">
-      <input maxlength="30" type="text" matInput placeholder="Anchor" [formControl]="anchor" />
+      <input maxlength="40" type="text" matInput placeholder="Anchorname" [formControl]="anchor" />
       <mat-error *ngIf="anchor.hasError('required')">*Required anchor</mat-error>
       <mat-error *ngIf="anchor.hasError('pattern')">The anchor should only contain these characters: "a-zA-Z0-9_-"</mat-error>
+      <mat-error *ngIf="anchor.hasError('maxlength')">Please reduce the anchor name to less than 40 characters</mat-error>
     </mat-form-field>
 
     <mat-form-field *ngIf="showAlias()" class="form-field">

@@ -76,7 +76,7 @@ class PercyEditorPanel {
    * @param uri the uri of file
    * @param editMode the edit mode
    */
-  show(uri: vscode.Uri, editMode: boolean) {
+  private show(uri: vscode.Uri, editMode: boolean) {
     this._uri = uri;
     this._editMode = editMode;
 
@@ -260,7 +260,11 @@ class PercyEditorPanel {
         if (roots.indexOf(percyrcdir) > -1) {
           break;
         }
-        percyrcdir = path.resolve(percyrcdir, '../');
+        const parentDir = path.resolve(percyrcdir, '..');
+        if (parentDir === percyrcdir) {
+          break;
+        }
+        percyrcdir = parentDir;
       }
     } catch (err) {
       // ignore
@@ -289,7 +293,7 @@ class PercyEditorPanel {
   /**
    * Close this panel.
    */
-  public dispose() {
+  private dispose() {
     PercyEditorPanel.currentPanel = undefined;
 
     this._panel.dispose();
@@ -363,6 +367,65 @@ function normalizeFilename(fileName: string): string {
 }
 
 /**
+ * Edit file.
+ * @param context vscode extension context
+ * @param uri File uri
+ * @param column The column to show
+ */
+function editFile(context: vscode.ExtensionContext, uri: vscode.Uri, column?: vscode.ViewColumn) {
+
+  if (!uri) {
+    if (vscode.window.activeTextEditor) {
+      const ext = path.extname(vscode.window.activeTextEditor.document.uri.fsPath).toLowerCase();
+      if (ext === '.yaml' || ext === '.yml') {
+        PercyEditorPanel.CreateOrShow(context.extensionPath, vscode.window.activeTextEditor.document.uri, true, column);
+        return;
+      }
+    }
+
+    const options: vscode.OpenDialogOptions = {
+      canSelectFiles: true,
+      canSelectFolders: false,
+      filters: {Yaml: ['yaml', 'yml']}
+    };
+    if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length) {
+      options.defaultUri = vscode.workspace.workspaceFolders[0].uri;
+    }
+    vscode.window.showOpenDialog(options).then(uris => {
+      if (uris && uris.length) {
+        PercyEditorPanel.CreateOrShow(context.extensionPath, uris[0], true, column);
+      }
+    });
+  } else {
+    PercyEditorPanel.CreateOrShow(context.extensionPath, uri, true, column);
+  }
+}
+
+/**
+ * Create new file.
+ * @param uri Folder uri
+ * @param callback The callback function
+ */
+function createNewFile(uri: vscode.Uri, callback: Function) {
+  if (!uri) {
+    const options: vscode.OpenDialogOptions = {
+      canSelectFiles: false,
+      canSelectFolders: true
+    };
+    if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length) {
+      options.defaultUri = vscode.workspace.workspaceFolders[0].uri;
+    }
+    vscode.window.showOpenDialog(options).then(uris => {
+      if (uris && uris.length) {
+        callback(uris[0]);
+      }
+    });
+  } else {
+    callback(uri);
+  }
+}
+
+/**
  * Activate this extension. Register all the commands this extension supports.
  * @param context the extension context
  */
@@ -370,14 +433,14 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Edit file
   const editCommand = vscode.commands.registerCommand(COMMANDS.EDIT, (uri: vscode.Uri) => {
-    PercyEditorPanel.CreateOrShow(context.extensionPath, uri, true);
+    editFile(context, uri);
   });
   context.subscriptions.push(editCommand);
 
   // Edit file to side
   const editSideCommand = vscode.commands.registerCommand(COMMANDS.EDIT_SIDE, (uri: vscode.Uri) => {
     const active = vscode.window.activeTextEditor;
-    let column;
+    let column: vscode.ViewColumn;
     if (!active) {
       column = vscode.ViewColumn.One;
     } else {
@@ -393,37 +456,35 @@ export function activate(context: vscode.ExtensionContext) {
       }
     }
 
-    PercyEditorPanel.CreateOrShow(context.extensionPath, uri, true, column);
+    editFile(context, uri, column);
   });
   context.subscriptions.push(editSideCommand);
 
   // Create new file
   const newCommand = vscode.commands.registerCommand(COMMANDS.NEW, (uri: vscode.Uri) => {
-    if (!uri) {
-      return;
-    }
-    PercyEditorPanel.CreateOrShow(context.extensionPath, vscode.Uri.file(path.join(uri.fsPath, 'Untitled.yaml')), false);
+    createNewFile(uri, (_uri: vscode.Uri) => {
+      PercyEditorPanel.CreateOrShow(context.extensionPath, vscode.Uri.file(path.join(_uri.fsPath, 'Untitled.yaml')), false);
+    });
   });
   context.subscriptions.push(newCommand);
 
   // Create new env file
   const newEnvCommand = vscode.commands.registerCommand(COMMANDS.NEW_ENV, (uri: vscode.Uri) => {
-    if (!uri) {
-      return;
-    }
-    const envFileName = getEnvFileName();
+    createNewFile(uri, (_uri: vscode.Uri) => {
+      const envFileName = getEnvFileName();
 
-    let envFileExists = false;
-    fs.readdirSync(uri.fsPath).forEach(file => {
-      if (file === envFileName) {
-        envFileExists = true;
+      let envFileExists = false;
+      fs.readdirSync(_uri.fsPath).forEach(file => {
+        if (file === envFileName) {
+          envFileExists = true;
+        }
+      });
+      if (envFileExists) {
+        vscode.window.showWarningMessage(`${vscode.workspace.asRelativePath(`${_uri.fsPath}${path.sep}${envFileName}`)} already exists`);
+        return;
       }
+      PercyEditorPanel.CreateOrShow(context.extensionPath, vscode.Uri.file(path.join(_uri.fsPath, envFileName)), false);
     });
-    if (envFileExists) {
-      vscode.window.showWarningMessage(`${vscode.workspace.asRelativePath(`${uri.fsPath}${path.sep}${envFileName}`)} already exists`);
-      return;
-    }
-    PercyEditorPanel.CreateOrShow(context.extensionPath, vscode.Uri.file(path.join(uri.fsPath, envFileName)), false);
   });
   context.subscriptions.push(newEnvCommand);
 

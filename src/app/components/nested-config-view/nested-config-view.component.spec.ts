@@ -54,10 +54,15 @@ describe('NestedConfigViewComponent', () => {
     config.environments.findChild(['dev', 'objarr']).addChild(new TreeNode('[1]'));
     config.environments.findChild(['dev', 'objarr', '[1]']).aliases = ['objarr-1'];
 
+    config.environments.addChild(new TreeNode('qa'));
+    config.environments.findChild(['qa']).addChild(new TreeNode('inherits', PROPERTY_VALUE_TYPES.STRING, 'dev'));
+
     ctx.component.configuration = config;
     ctx.component.environments = environments;
     ctx.component.envFileMode = false;
-    ctx.component.ngOnChanges();
+    ctx.component.ngOnChanges({
+      configuration: <any>{}
+    });
   });
 
   it('should create NestedConfigViewComponent', () => {
@@ -65,7 +70,6 @@ describe('NestedConfigViewComponent', () => {
   });
 
   it('should expand all trees initially and then able to toggle', () => {
-    ctx.component.ngOnChanges();
 
     expect(ctx.component.defaultTreeControl.isExpanded(ctx.component.defaultDataSource.data[0])).toBeTruthy();
     expect(ctx.component.defaultTreeControl.isExpanded(ctx.component.defaultDataSource.data[0].children[0])).toBeTruthy();
@@ -484,6 +488,24 @@ describe('NestedConfigViewComponent', () => {
     expect(node.valueType).toEqual(newNode.valueType);
     expect(node.comment).toEqual(newNode.comment);
     expect(node.children.length).toEqual(prevChildrenLength);
+
+    expect(ctx.observables.configurationChange.value).toEqual(config);
+  });
+
+  it('delete env from environments tree, related inherits propery in environments tree should also be deleted', () => {
+    const node = config.environments.findChild(['dev']);
+    ctx.component.deleteProperty(node);
+
+    assertDialogOpened(ConfirmationDialogComponent, {
+      data: {
+        confirmationText: 'Are you sure you want to delete this environment?'
+      }
+    });
+    ctx.dialogStub.output.next(true);
+
+    expect(config.environments.findChild(['dev'])).toBeUndefined();
+
+    expect(config.environments.findChild(['qa', 'inherits'])).toBeUndefined();
 
     expect(ctx.observables.configurationChange.value).toEqual(config);
   });

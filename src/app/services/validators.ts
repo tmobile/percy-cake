@@ -12,3 +12,21 @@ export function NotEmpty(control: AbstractControl) {
   }
   return null;
 }
+
+/**
+ * A validtor used to verify string value is with pattern after trim.
+ * @param pattern the string pattern
+ * @returns the validator
+ */
+export function TrimPattern(pattern: string) {
+  return (control: AbstractControl) => {
+    const trimValue = _.trim(control.value);
+    if (!trimValue) {
+      return { required: true };
+    }
+    if (!new RegExp(pattern).test(trimValue)) {
+      return { pattern: true };
+    }
+    return null;
+  };
+}
