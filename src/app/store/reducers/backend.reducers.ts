@@ -13,6 +13,7 @@ export interface State {
   files: ConfigFiles;
   principal: Principal;
   redirectUrl: string;
+  canPullRequest: boolean;
 }
 
 const ConfigFileAdapter: EntityAdapter<ConfigFile> = createEntityAdapter<ConfigFile>({
@@ -28,6 +29,7 @@ export const initialState: State = {
   files: ConfigFileAdapter.getInitialState(),
   principal: null,
   redirectUrl: null,
+  canPullRequest: false
 };
 
 export function reducer(state = initialState, action: BackendActionsUnion): State {
@@ -69,6 +71,7 @@ export function reducer(state = initialState, action: BackendActionsUnion): Stat
 
       return {
         ...state,
+        canPullRequest: !!action.payload.canPullRequest,
         files,
         applications: _.orderBy(action.payload.applications)
       };
@@ -128,6 +131,7 @@ export function reducer(state = initialState, action: BackendActionsUnion): Stat
 }
 
 export const getPrincipal = (state: State) => state.principal;
+export const getCanPullRequest = (state: State) => state.canPullRequest;
 export const getApplications = (state: State) => state.applications;
 export const getAllFiles = (state: State) => {
   const files = ConfigFileAdapter.getSelectors().selectAll(state.files);

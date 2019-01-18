@@ -4,6 +4,8 @@ import { Store, select } from '@ngrx/store';
 import { Actions, Effect, ofType } from '@ngrx/effects';
 import { of } from 'rxjs';
 import { map, withLatestFrom, switchMap } from 'rxjs/operators';
+import * as HttpErrors from 'http-errors';
+import * as _ from 'lodash';
 
 import * as appStore from '..';
 import { Alert, APIError, Navigate } from '../actions/common.actions';
@@ -13,10 +15,12 @@ import {
   LoadFiles, LoadFilesSuccess, LoadFilesFailure,
   DeleteFile, DeleteFileFailure, DeleteFileSuccess,
   GetFileContent, GetFileContentSuccess, GetFileContentFailure,
-  SaveDraftSuccess, SaveDraftFailure, Refresh, RefreshFailure, RefreshSuccess, CheckoutFailure, Checkout, CheckoutSuccess
+  SaveDraftSuccess, SaveDraftFailure, Refresh, RefreshFailure, RefreshSuccess,
+  CheckoutFailure, Checkout, CheckoutSuccess, MergeBranch, MergeBranchFailure, MergeBranchSuccess
 } from '../actions/backend.actions';
 import { FileManagementService } from 'services/file-management.service';
 import { ConflictDialogComponent } from 'components/conflict-dialog/conflict-dialog.component';
+import { ConfigFile } from 'models/config-file';
 
 // defines the backend related effects
 @Injectable()
@@ -73,11 +77,11 @@ export class BackendEffects {
     switchMap(async ([_action, pricinpal]) => {
 
       try {
-        const { changed } = await this.fileManagementService.refresh(pricinpal);
+        const { branchChanged, masterChanged } = await this.fileManagementService.refresh(pricinpal);
         const result = [];
 
         result.push(new RefreshSuccess());
-        if (changed) {
+        if (branchChanged || masterChanged) {
           result.push(new LoadFiles());
         }
         return result;
@@ -184,14 +188,110 @@ export class BackendEffects {
     switchMap((action) => {
       const error: any = action.payload.error;
       if (error.statusCode === 409) {
-        this.dialog.open(ConflictDialogComponent, {
+        const dialogRef = this.dialog.open(ConflictDialogComponent, {
           data: {
-            fromEditor: action.payload.fromEditor,
-            draftFiles: action.payload.files,
             conflictFiles: error.data,
-            commitMessage: action.payload.commitMessage
           }
         });
+        dialogRef.afterClosed().subscribe((resolved: ConfigFile[]) => {
+          if (resolved) {
+            // Add back the unconlict draft file(s)
+            action.payload.files.forEach(draftFile => {
+              if (!_.find(resolved, _.pick(draftFile, ['applicationName', 'fileName']))) {
+                resolved.push(draftFile);
+              }
+            });
+
+            this.store.dispatch(new CommitChanges({
+              files: resolved,
+              message: action.payload.commitMessage,
+              fromEditor: action.payload.fromEditor,
+              resolveConflicts: true,
+            }));
+          } else {
+            this.store.dispatch(new LoadFiles());
+          }
+        });
+        return of();
+      } else {
+        return of(new APIError(error));
+      }
+    })
+  );
+
+  // merge branch effect
+  @Effect()
+  MergeBranch$ = this.actions$.pipe(
+    ofType<MergeBranch>(BackendActionTypes.MergeBranch),
+    withLatestFrom(this.store.pipe(select(appStore.getPrincipal))),
+    switchMap(async ([action, pricinpal]) => {
+      const srcBranch = action.payload.srcBranch;
+      const targetBranch = action.payload.targetBranch;
+
+      let diff = action.payload.diff;
+      try {
+        const results = [];
+
+        if (!diff) {
+          await this.fileManagementService.refresh(pricinpal);
+          const { toCreate, conflictFiles } =
+            await this.fileManagementService.branchDiff(pricinpal, srcBranch, targetBranch);
+          diff = toCreate;
+
+          if (conflictFiles.length) {
+            const error = new HttpErrors.Conflict('Branch conflict');
+            error.data = {
+              diff,
+              conflictFiles,
+              srcBranch,
+              targetBranch,
+            };
+            throw error;
+          }
+        }
+
+        if (diff.length) {
+          await this.fileManagementService.mergeBranch(pricinpal, srcBranch, targetBranch, diff);
+        }
+
+        results.push(new MergeBranchSuccess());
+        results.push(new LoadFiles()); // reload files
+        return results;
+      } catch (error) {
+        return [new MergeBranchFailure(error)];
+      }
+    }),
+    switchMap(res => res)
+  );
+
+  // merge branch failure effect
+  @Effect()
+  MergeBranchFailure$ = this.actions$.pipe(
+    ofType<MergeBranchFailure>(BackendActionTypes.MergeBranchFailure),
+    switchMap((action) => {
+      const error: any = action.payload;
+
+      if (error.statusCode === 409 && error.data) {
+        const dialogRef = this.dialog.open(ConflictDialogComponent, {
+          data: error.data
+        });
+
+        dialogRef.afterClosed().subscribe((resolved: ConfigFile[]) => {
+          if (resolved) {
+            // Add back the unconlict file(s)
+            error.data.diff.forEach(res => {
+              resolved.push(res);
+            });
+            this.store.dispatch(new MergeBranch({
+              srcBranch: error.data.srcBranch,
+              targetBranch: error.data.targetBranch,
+              diff: resolved
+            }));
+          } else {
+            this.store.dispatch(new LoadFiles());
+          }
+        });
+
         return of();
       } else {
         return of(new APIError(error));
@@ -207,7 +307,7 @@ export class BackendEffects {
     switchMap(async ([action, user]) => {
       const file = action.payload;
       try {
-        const gitPulled = await this.fileManagementService.deleteFile(user, file);
+        await this.fileManagementService.deleteFile(user, file);
 
         const result = [];
         result.push(new DeleteFileSuccess(file)),
@@ -216,9 +316,7 @@ export class BackendEffects {
             alertType: 'delete'
           }));
 
-        if (gitPulled) {
-          result.push(new LoadFiles());
-        }
+        result.push(new LoadFiles());
         return result;
       } catch (error) {
         return [new DeleteFileFailure(error)];

@@ -12,6 +12,7 @@ import { Alert } from 'store/actions/common.actions';
 import { ToggleApp, CollapseApps, TableSort, SelectApp } from 'store/actions/dashboard.actions';
 import { BranchesDialogComponent } from 'components/branches-dialog/branches-dialog.component';
 import { Principal } from 'models/auth';
+import { LoginSuccess } from 'store/actions/auth.actions';
 
 describe('DashboardComponent', () => {
   const setup = Setup(DashboardComponent);
@@ -63,7 +64,21 @@ describe('DashboardComponent', () => {
 
   it('should create DashboardComponent', () => {
     expect(ctx.component).toBeTruthy();
-    expect(ctx.component.envFileName).toEqual(percyConfig.environmentsFile);
+    expect(ctx.component.isEnvFile(files[0])).toBeFalsy();
+    expect(ctx.component.isEnvFile(files[1])).toBeTruthy();
+
+    ctx.store.next(new LoginSuccess({...TestUser, repositoryUrl: 'https://bitbucket.org/repo'}));
+    expect(ctx.component.pullRequestUrl).toEqual(`https://bitbucket.org/repo/pull-requests/new?source=${TestUser.branchName}&t=1#diff`);
+
+    ctx.store.next(new LoginSuccess({...TestUser, repositoryUrl: 'https://github.com/repo'}));
+    expect(ctx.component.pullRequestUrl).toEqual(`https://github.com/repo/pull/new/${TestUser.branchName}`);
+
+    ctx.store.next(new LoginSuccess({...TestUser, repositoryUrl: 'https://gitlab.com/repo'}));
+    expect(ctx.component.pullRequestUrl).toEqual(`https://gitlab.com/repo/merge_requests/new`);
+
+    ctx.store.next(new LoginSuccess({...TestUser, repositoryUrl: 'https://not-supported.com/repo'}));
+    expect(ctx.component.pullRequestUrl).toBeNull();
+
     ctx.component.ngOnDestroy();
     expect(ctx.component.foldersSubscription.closed).toBeTruthy();
   });
@@ -357,6 +372,18 @@ describe('DashboardComponent', () => {
     ctx.dialogStub.output.next(data);
 
     expect(dispatchSpy.calls.mostRecent().args[0].payload).toEqual(data);
+  });
+
+  it('should sync master successfully', () => {
+
+    ctx.store.next(new LoginSuccess(TestUser));
+
+    ctx.component.syncMaster();
+
+    expect(dispatchSpy.calls.mostRecent().args[0].payload).toEqual({
+      srcBranch: 'master',
+      targetBranch: TestUser.branchName,
+    });
   });
 
   it('should commit files successfully', () => {

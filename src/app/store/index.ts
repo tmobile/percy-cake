@@ -57,6 +57,7 @@ export const backendState = createFeatureSelector<AppState, fromBackend.State>('
 export const getPrincipal = createSelector(backendState, fromBackend.getPrincipal);
 export const getApplications = createSelector(backendState, fromBackend.getApplications);
 export const getAllFiles = createSelector(backendState, fromBackend.getAllFiles);
+export const getCanPullRequest = createSelector(backendState, fromBackend.getCanPullRequest);
 
 
 // dashboard related selectors

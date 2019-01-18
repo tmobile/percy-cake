@@ -30,6 +30,9 @@ export enum BackendActionTypes {
   Checkout = '[Backend] Checkout',
   CheckoutSuccess = '[Backend] Checkout Success',
   CheckoutFailure = '[Backend] Checkout Failure',
+  MergeBranch = '[Backend] Merge Branch',
+  MergeBranchSuccess = '[Backend] Merge Branch Success',
+  MergeBranchFailure = '[Backend] Merge Branch Failure',
 }
 
 export class Initialize implements Action {
@@ -50,7 +53,7 @@ export class LoadFiles implements Action {
 export class LoadFilesSuccess implements Action {
   readonly type = BackendActionTypes.LoadFilesSuccess;
 
-  constructor(public payload: { files: ConfigFile[], applications: string[] }) { }
+  constructor(public payload: { files: ConfigFile[], applications: string[], canPullRequest?: boolean }) { }
 }
 
 export class LoadFilesFailure implements Action {
@@ -163,6 +166,24 @@ export class CheckoutFailure implements Action {
   constructor(public payload: Error) { }
 }
 
+export class MergeBranch implements Action {
+  readonly type = BackendActionTypes.MergeBranch;
+
+  constructor(public payload: { srcBranch: string, targetBranch: string, diff?: ConfigFile[] }) { }
+}
+
+export class MergeBranchSuccess implements Action {
+  readonly type = BackendActionTypes.MergeBranchSuccess;
+
+  constructor() { }
+}
+
+export class MergeBranchFailure implements Action {
+  readonly type = BackendActionTypes.MergeBranchFailure;
+
+  constructor(public payload: Error) { }
+}
+
 
 export type BackendActionsUnion =
   | Initialize
@@ -188,4 +209,7 @@ export type BackendActionsUnion =
   | Checkout
   | CheckoutSuccess
   | CheckoutFailure
+  | MergeBranch
+  | MergeBranchSuccess
+  | MergeBranchFailure
   ;

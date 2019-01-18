@@ -1,5 +1,5 @@
 <div class="conflict-dialog">
-    <div class="conflict-title">The following file(s) are already changed in the repository:</div>
+    <div class="conflict-title">Resolve following conflict file(s):</div>
 
     <mat-accordion>
       <ng-container *ngFor="let file of data.conflictFiles; let i = index">
@@ -13,15 +13,15 @@
               </mat-expansion-panel-header>
 
               <mat-radio-group (change)="resolveConflict($event, file)">
-                  <mat-radio-button value="draft" color="primary" class="mat-radio-button draft">Use Draft</mat-radio-button>
-                  <mat-radio-button value="repo" color="primary" class="mat-radio-button repo">Use Repository</mat-radio-button>
+                  <mat-radio-button value="draft" color="primary" class="mat-radio-button draft">Use {{data.srcBranch || 'Draft'}}</mat-radio-button>
+                  <mat-radio-button value="repo" color="primary" class="mat-radio-button repo">Use {{data.targetBranch || 'Repository'}}</mat-radio-button>
               </mat-radio-group>
               <div class="view-codes" appSplit [gutterHeight]="400" [gutterWidth]="10">
                   <mat-card class="view-code mat-elevation-z" appSplitArea [splitSize]="50" [minSize]="50">
-                      <pre><code appHighlight [highlight]="file.draftCode" [languages]="['yaml']"></code></pre>
+                      <pre><code appHighlight [highlight]="file.draftYaml" [languages]="['yaml']"></code></pre>
                   </mat-card>
                   <mat-card class="view-code mat-elevation-z" appSplitArea [splitSize]="50" [minSize]="50">
-                      <pre><code appHighlight [highlight]="file.repoCode" [languages]="['yaml']"></code></pre>
+                      <pre><code appHighlight [highlight]="file.originalYaml" [languages]="['yaml']"></code></pre>
                   </mat-card>
               </div>
             </mat-expansion-panel>

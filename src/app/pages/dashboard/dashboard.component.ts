@@ -10,7 +10,7 @@ import { User } from 'models/auth';
 import { ConfigFile } from 'models/config-file';
 import * as appStore from 'store';
 import { SelectApp, CollapseApps, ToggleApp, TableSort } from 'store/actions/dashboard.actions';
-import { DeleteFile, CommitChanges, Refresh, Checkout } from 'store/actions/backend.actions';
+import { DeleteFile, CommitChanges, Refresh, Checkout, MergeBranch } from 'store/actions/backend.actions';
 import { BranchesDialogComponent } from 'components/branches-dialog/branches-dialog.component';
 import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
 import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.component';
@@ -36,13 +36,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   isDeleting: Observable<boolean> = this.store.pipe(select(appStore.getDashboardFileDeleting));
   isCommitting: Observable<boolean> = this.store.pipe(select(appStore.getDashboardCommittingFile));
   isRefreshing: Observable<boolean> = this.store.pipe(select(appStore.getDashboardRefreshing));
+  canPullRequest: Observable<boolean> = this.store.pipe(select(appStore.getCanPullRequest));
 
   folders = new BehaviorSubject<any[]>(null);
   disableCommit = new BehaviorSubject<boolean>(true);
   foldersSubscription: Subscription;
 
   displayedColumns: string[] = ['applicationName', 'fileName', 'actions'];
-  envFileName;
   pullRequestUrl: string;
 
   /**
@@ -61,7 +61,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
    * handle component initialization
    */
   ngOnInit() {
-    this.envFileName = percyConfig.environmentsFile;
     const folders$ = new Subject<any[]>();
 
     folders$.subscribe(this.folders);
@@ -81,9 +80,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
             }
 
             let appFiles = _.orderBy(grouped[app], ['fileName'], [dashboardState.tableSort.fileName]);
-            const envFile = appFiles.find(f => f.fileName === this.envFileName);
+            const envFile = appFiles.find(f => f.fileName === percyConfig.environmentsFile);
             if (envFile) {
-              appFiles = [envFile, ...appFiles.filter(f => f.fileName !== this.envFileName)];
+              appFiles = [envFile, ...appFiles.filter(f => f.fileName !== percyConfig.environmentsFile)];
             }
 
             modified = _.concat(modified, appFiles.filter((f) => f.modified));
@@ -110,11 +109,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
         if (user) {
           const url = new URL(user.repositoryUrl);
           if (url.host.endsWith('bitbucket.org')) {
-            this.pullRequestUrl = `${url.href}/pull-requests/new?source=${user.branchName}&t=1`;
+            this.pullRequestUrl = `${url.href}/pull-requests/new?source=${user.branchName}&t=1#diff`;
           } else if (url.host.endsWith('github.com')) {
             this.pullRequestUrl = `${url.href}/pull/new/${user.branchName}`;
           } else if (url.host.endsWith('gitlab.com')) {
-            this.pullRequestUrl = `${url.href}//merge_requests/new`;
+            this.pullRequestUrl = `${url.href}/merge_requests/new`;
+          } else {
+            this.pullRequestUrl = null;
           }
         }
       });
@@ -199,7 +200,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   addNewFile() {
     this.store.pipe(select(appStore.getAppState)).pipe(take(1)).subscribe(appState => {
 
-      const envFileName = this.envFileName;
+      const envFileName = percyConfig.environmentsFile;
 
       const dialogRef = this.dialog.open(SelectAppDialogComponent, {
         data: {
@@ -228,7 +229,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
    * @param file the file to edit
    */
   editFile(file: ConfigFile) {
-    this.router.navigate([file.fileName === this.envFileName ? '/files/editenv' : '/files/edit', file.applicationName, file.fileName]);
+    this.router.navigate([file.fileName === percyConfig.environmentsFile ? '/files/editenv' : '/files/edit',
+      file.applicationName, file.fileName]);
   }
 
   /**
@@ -273,5 +275,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
    */
   refresh() {
     this.store.dispatch(new Refresh());
+  }
+
+  /**
+   * Sync master.
+   */
+  syncMaster() {
+    this.currentUser.pipe(take(1)).subscribe(user => {
+      this.store.dispatch(new MergeBranch({
+        srcBranch: 'master',
+        targetBranch: user.branchName,
+      }));
+    });
   }
 }
