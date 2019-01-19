@@ -50,8 +50,8 @@ export class ConflictDialogComponent {
         fileName: file.fileName,
         applicationName: file.applicationName,
         size: file.size,
-        draftYaml: file.resolveStrategy === 'draft' ? file.draftYaml : file.originalYaml,
-        originalYaml: file.originalYaml,
+        draftContent: file.resolveStrategy === 'draft' ? file.draftContent : file.originalContent,
+        originalContent: file.originalContent,
         draftConfig: file.resolveStrategy === 'draft' ? file.draftConfig : file.originalConfig,
         originalConfig: file.originalConfig,
       };

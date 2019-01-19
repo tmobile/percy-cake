@@ -497,7 +497,8 @@ describe('Backend store action/effect/reducer', () => {
     getFilesSpy.and.returnValue(
       { files: [file1, file2], applications: ['app1'] });
 
-    ctx.store.dispatch(new BackendActions.MergeBranch({ srcBranch: 'master', targetBranch: 'some-branch', diff: [file1] }));
+    ctx.store.dispatch(new BackendActions.MergeBranch(
+      { srcBranch: 'master', targetBranch: 'some-branch', diff: { toSave: [file1], toDelete: [] } }));
     expect(ctx.dashboarState().committingFile).toBeTruthy();
 
     await ctx.fixture.whenStable();
@@ -514,7 +515,7 @@ describe('Backend store action/effect/reducer', () => {
     const mergeBranchSpy = spyOn(fileService, 'mergeBranch');
     spyOn(fileService, 'refresh').and.callFake(() => { });
     spyOn(fileService, 'branchDiff').and.callFake(() => {
-      return { toCreate: [], conflictFiles: [] };
+      return { toSave: [], toDelete: [], conflictFiles: [] };
     });
 
     getFilesSpy.and.returnValue(
@@ -538,7 +539,7 @@ describe('Backend store action/effect/reducer', () => {
     const mergeBranchSpy = spyOn(fileService, 'mergeBranch');
     spyOn(fileService, 'refresh').and.callFake(() => { });
     spyOn(fileService, 'branchDiff').and.callFake(() => {
-      return { toCreate: [file1], conflictFiles: [file2] };
+      return { toSave: [file1], toDelete: [], conflictFiles: [file2] };
     });
 
     getFilesSpy.and.returnValue(
@@ -550,7 +551,7 @@ describe('Backend store action/effect/reducer', () => {
 
     assertDialogOpened(ConflictDialogComponent, {
       data: {
-        diff: [file1],
+        diff: { toSave: [file1], toDelete: [] },
         conflictFiles: [file2],
         srcBranch: 'master',
         targetBranch: 'some-branch'
@@ -568,7 +569,8 @@ describe('Backend store action/effect/reducer', () => {
     const mergeBranchSpy = spyOn(fileService, 'mergeBranch');
     mergeBranchSpy.and.throwError('Mock merge error');
 
-    ctx.store.dispatch(new BackendActions.MergeBranch({ srcBranch: 'master', targetBranch: 'some-branch', diff: [file1] }));
+    ctx.store.dispatch(new BackendActions.MergeBranch(
+      { srcBranch: 'master', targetBranch: 'some-branch', diff: { toSave: [file1], toDelete: [] } }));
     expect(ctx.dashboarState().committingFile).toBeTruthy();
 
     await ctx.fixture.whenStable();

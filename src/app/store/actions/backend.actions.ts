@@ -53,7 +53,7 @@ export class LoadFiles implements Action {
 export class LoadFilesSuccess implements Action {
   readonly type = BackendActionTypes.LoadFilesSuccess;
 
-  constructor(public payload: { files: ConfigFile[], applications: string[], canPullRequest?: boolean }) { }
+  constructor(public payload: { files: ConfigFile[], applications: string[], canPullRequest?: boolean, canSyncMaster?: boolean }) { }
 }
 
 export class LoadFilesFailure implements Action {
@@ -169,7 +169,7 @@ export class CheckoutFailure implements Action {
 export class MergeBranch implements Action {
   readonly type = BackendActionTypes.MergeBranch;
 
-  constructor(public payload: { srcBranch: string, targetBranch: string, diff?: ConfigFile[] }) { }
+  constructor(public payload: { srcBranch: string, targetBranch: string, diff?: { toSave: ConfigFile[], toDelete: ConfigFile[] } }) { }
 }
 
 export class MergeBranchSuccess implements Action {

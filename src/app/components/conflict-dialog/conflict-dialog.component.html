@@ -8,7 +8,7 @@
                 <mat-panel-title class="conflict-panel-title">
                   <mat-icon *ngIf="!file.resolveStrategy">error</mat-icon>
                   <mat-icon *ngIf="file.resolveStrategy">check_circle</mat-icon>
-                  {{file.applicationName}} / {{file.fileName}}
+                  {{file.applicationName}}/{{file.fileName}}
                 </mat-panel-title>
               </mat-expansion-panel-header>
 
@@ -18,10 +18,10 @@
               </mat-radio-group>
               <div class="view-codes" appSplit [gutterHeight]="400" [gutterWidth]="10">
                   <mat-card class="view-code mat-elevation-z" appSplitArea [splitSize]="50" [minSize]="50">
-                      <pre><code appHighlight [highlight]="file.draftYaml" [languages]="['yaml']"></code></pre>
+                      <pre><code appHighlight [highlight]="file.draftContent" [languages]="file.fileName === '.percyrc' ? ['json']:['yaml']"></code></pre>
                   </mat-card>
                   <mat-card class="view-code mat-elevation-z" appSplitArea [splitSize]="50" [minSize]="50">
-                      <pre><code appHighlight [highlight]="file.originalYaml" [languages]="['yaml']"></code></pre>
+                      <pre><code appHighlight [highlight]="file.originalContent" [languages]="file.fileName === '.percyrc' ? ['json']:['yaml']"></code></pre>
                   </mat-card>
               </div>
             </mat-expansion-panel>

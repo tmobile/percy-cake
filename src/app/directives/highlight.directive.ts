@@ -1,6 +1,6 @@
 import { Directive, NgZone, HostBinding } from '@angular/core';
 
-import { Highlight, HighlightJS } from 'ngx-highlightjs';
+import { Highlight, HighlightJS, HighlightResult } from 'ngx-highlightjs';
 import * as cheerio from 'cheerio';
 
 import { YamlService } from 'services/yaml.service';
@@ -25,8 +25,14 @@ export class HighlightDirective extends Highlight {
   constructor(hljs: HighlightJS, zone: NgZone, yamlService: YamlService) {
     super(hljs, zone);
 
-    this.highlighted.subscribe((res) => {
+    this.highlighted.subscribe((res: HighlightResult) => {
       const code = res.value;
+
+      if (res.language !== 'yaml') {
+        this.renderedCode = code;
+        return;
+      }
+
       const $ = cheerio.load(code);
 
       // fix tag category incorrectly assigned by highlightjs

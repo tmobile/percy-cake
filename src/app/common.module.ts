@@ -6,6 +6,7 @@ import { MaterialComponentsModule } from 'material-components/material-component
 
 import { HIGHLIGHT_OPTIONS } from 'ngx-highlightjs';
 import * as yaml from 'highlight.js/lib/languages/yaml';
+import * as json from 'highlight.js/lib/languages/json';
 
 // components
 import { LoaderComponent } from 'components/loader/loader.component';
@@ -19,7 +20,7 @@ import { NestedConfigViewComponent } from 'components/nested-config-view/nested-
 import { SplitDirective, SplitAreaDirective } from 'directives/splitter.directive';
 import { HighlightDirective } from 'directives/highlight.directive';
 
-export const hljsLanguages = () => [{ name: 'yaml', func: yaml }];
+export const hljsLanguages = () => [{ name: 'yaml', func: yaml }, { name: 'json', func: json }];
 
 @NgModule({
   declarations: [

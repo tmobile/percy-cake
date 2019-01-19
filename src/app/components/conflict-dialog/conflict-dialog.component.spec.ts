@@ -7,18 +7,18 @@ describe('ConflictDialogComponent', () => {
   const setup = Setup(ConflictDialogComponent, false);
 
   const draftConfig = new Configuration();
-  const draftYaml = utilService.convertTreeToYaml(draftConfig);
+  const draftContent = utilService.convertTreeToYaml(draftConfig);
   const originalConfig = new Configuration();
-  const originalYaml = utilService.convertTreeToYaml(originalConfig);
+  const originalContent = utilService.convertTreeToYaml(originalConfig);
 
 
   const conflictFile: ConflictFile = {
     fileName: 'sample.yaml',
     applicationName: 'app1',
     draftConfig,
-    draftYaml,
+    draftContent,
     originalConfig,
-    originalYaml,
+    originalContent,
   };
 
   let ctx: TestContext<ConflictDialogComponent>;
@@ -59,7 +59,7 @@ describe('ConflictDialogComponent', () => {
 
     const dialogOutput = ctx.dialogStub.output.value;
     expect(dialogOutput.length).toEqual(1);
-    expect(dialogOutput[0].draftYaml === draftYaml).toBeTruthy();
+    expect(dialogOutput[0].draftContent === draftContent).toBeTruthy();
     expect(dialogOutput[0].draftConfig === draftConfig).toBeTruthy();
   });
 
@@ -73,7 +73,7 @@ describe('ConflictDialogComponent', () => {
 
     const dialogOutput = ctx.dialogStub.output.value;
     expect(dialogOutput.length).toEqual(1);
-    expect(dialogOutput[0].draftYaml === originalYaml).toBeTruthy();
+    expect(dialogOutput[0].draftContent === originalContent).toBeTruthy();
     expect(dialogOutput[0].draftConfig === originalConfig).toBeTruthy();
   });
 });

@@ -37,6 +37,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   isCommitting: Observable<boolean> = this.store.pipe(select(appStore.getDashboardCommittingFile));
   isRefreshing: Observable<boolean> = this.store.pipe(select(appStore.getDashboardRefreshing));
   canPullRequest: Observable<boolean> = this.store.pipe(select(appStore.getCanPullRequest));
+  canSyncMaster: Observable<boolean> = this.store.pipe(select(appStore.getCanSyncMaster));
 
   folders = new BehaviorSubject<any[]>(null);
   disableCommit = new BehaviorSubject<boolean>(true);

@@ -234,9 +234,9 @@ export class BackendEffects {
 
         if (!diff) {
           await this.fileManagementService.refresh(pricinpal);
-          const { toCreate, conflictFiles } =
+          const { toSave, toDelete, conflictFiles } =
             await this.fileManagementService.branchDiff(pricinpal, srcBranch, targetBranch);
-          diff = toCreate;
+          diff = { toSave, toDelete };
 
           if (conflictFiles.length) {
             const error = new HttpErrors.Conflict('Branch conflict');
@@ -250,7 +250,7 @@ export class BackendEffects {
           }
         }
 
-        if (diff.length) {
+        if (diff.toSave.length || diff.toDelete.length) {
           await this.fileManagementService.mergeBranch(pricinpal, srcBranch, targetBranch, diff);
         }
 
@@ -279,13 +279,13 @@ export class BackendEffects {
         dialogRef.afterClosed().subscribe((resolved: ConfigFile[]) => {
           if (resolved) {
             // Add back the unconlict file(s)
-            error.data.diff.forEach(res => {
-              resolved.push(res);
+            resolved.forEach(res => {
+              error.data.diff.toSave.push(res);
             });
             this.store.dispatch(new MergeBranch({
               srcBranch: error.data.srcBranch,
               targetBranch: error.data.targetBranch,
-              diff: resolved
+              diff: error.data.diff
             }));
           } else {
             this.store.dispatch(new LoadFiles());
