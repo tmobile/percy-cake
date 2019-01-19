@@ -345,7 +345,8 @@ export class FileManagementService {
           dir: repoDir,
           oid: commitOid
         })).object;
-        parents = commit.parent;
+        // In case of merge commit which has 2 parents, the second parent represents tip common state and should come first
+        parents = _.reverse(commit.parent);
       } catch (err) {
         if (err.code !== git.E.ReadObjectFail) {
           // We shallow clone, the commit history may be incomplete,
