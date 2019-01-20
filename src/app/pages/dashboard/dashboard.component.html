@@ -1,11 +1,5 @@
 <!-- dashboard page -->
 <div class="dashboard-page">
-  <div class="repo-row">
-      <h1>{{(currentUser|async)?.repoName}}</h1>
-      <h2>Branch:</h2>
-      <button mat-button color="primary" (click)="checkoutBranch()">{{(currentUser|async)?.branchName}}</button>
-  </div>
-
   <!-- table header row -->
   <div class="table-header-row">
     <h2>Files</h2>
@@ -18,19 +12,19 @@
       </mat-select>
     </mat-form-field>
 
-    <button type="button" mat-raised-button [disabled]="(disableCommit|async) || (currentUser|async)?.branchName === 'master'" color="primary" class="btn-commit-changes" (click)="commitChanges()">
+    <button type="button" mat-raised-button [disabled]="(disableCommit|async) || (currentUser|async)?.branchName === 'master'" color="primary" matTooltip="Commit Changes" class="btn-commit-changes" (click)="commitChanges()">
       Commit Changes
     </button>
-    <button type="button" mat-raised-button [disabled]="(currentUser|async)?.branchName === 'master'" color="primary" class="btn-add-file" (click)="addNewFile()">
+    <button type="button" mat-raised-button [disabled]="(currentUser|async)?.branchName === 'master'" color="primary" class="btn-add-file" matTooltip="Add New File" (click)="addNewFile()">
       Add New File
     </button>
-    <button type="button" *ngIf="(currentUser|async)?.branchName !== 'master'" mat-raised-button [disabled]="!(canSyncMaster|async)" color="primary" class="btn-sync-master" (click)="syncMaster()">
+    <button type="button" *ngIf="(currentUser|async)?.branchName !== 'master'" mat-raised-button matTooltip="Merge Master Branch" [disabled]="!(canSyncMaster|async)" color="primary" class="btn-sync-master" (click)="syncMaster()">
       Sync Master
     </button>
-    <a *ngIf="(currentUser|async)?.branchName !== 'master' && pullRequestUrl" mat-raised-button [disabled]="!(canPullRequest|async)" color="primary" class="btn-pull-request" href="{{pullRequestUrl}}" target="_blank">
+    <a *ngIf="(currentUser|async)?.branchName !== 'master' && pullRequestUrl" mat-raised-button matTooltip="Pull Request" [disabled]="!(canPullRequest|async)" color="primary" class="btn-pull-request" href="{{pullRequestUrl}}" target="_blank">
       Pull Request
     </a>
-    <button type="button" mat-raised-button color="primary" class="btn-refresh-file" (click)="refresh()">
+    <button type="button" mat-raised-button color="primary" class="btn-refresh-file" matTooltip="Refresh" (click)="refresh()">
       Refresh
     </button>
   </div>

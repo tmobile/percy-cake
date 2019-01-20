@@ -4,21 +4,10 @@
     padding: 30px 50px;
     color: $color-text-secondary;
 
-    .repo-row {
-      display: flex;
-      align-items: center;
-
-      h1 {
-        color: black;
-      }
-      h2 {
-        margin-left: 30px;
-      }
-    }
     .table-header-row {
         display: flex;
         align-items: center;
-        padding: 25px 0 20px;
+        padding-bottom: 20px;
 
         a, button {
             margin-left: 10px;
@@ -105,6 +94,9 @@
                 margin-left: 4px;
               }
             }
+        }
+        tr.mat-row:nth-child(2n+1) td.mat-cell {
+          background-color: $color-bg-body;
         }
     }
 }

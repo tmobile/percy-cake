@@ -17,14 +17,7 @@ import { FileManagementService } from 'services/file-management.service';
 })
 export class BranchesDialogComponent implements OnInit {
 
-  currentBranchName: string;
-
-  branchName = new FormControl('');
   newBranchName = new FormControl('', [TrimPattern('^[a-zA-Z0-9_-]*$'), Validators.maxLength(30)]);
-
-  branches: string[];
-
-  actionType = 'switch';
 
   /**
    * creates the component
@@ -36,42 +29,18 @@ export class BranchesDialogComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data,
     public filService: FileManagementService) { }
 
-  /**
-   * initializes the component
-   */
-  async ngOnInit() {
-    this.actionTypeChange();
-    this.currentBranchName = this.data.principal.user.branchName;
-    this.branchName.setValue(this.data.principal.user.branchName);
-    this.branches = await this.filService.listBranches(this.data.principal);
+  ngOnInit() {
   }
 
   /**
-   * Listener when action type changes: switch branch or create a new one.
+   * create new branch
    */
-  actionTypeChange() {
-    if (this.actionType === 'switch') {
-      this.branchName.enable();
-      this.newBranchName.disable();
-    } else {
-      this.branchName.disable();
-      this.newBranchName.enable();
-    }
-  }
-
-  /**
-   * Checkout.
-   */
-  checkout() {
-    if (this.actionType === 'switch') {
-      this.doCheckout(this.branchName.value);
-    } else {
-      if (!this.newBranchName.valid) {
-        return;
-      }
+  createBranch() {
+    if (this.newBranchName.valid) {
+      const { branches } = this.data;
 
       const newBranch = _.trim(this.newBranchName.value);
-      if (this.branches.indexOf(newBranch) >= 0) {
+      if (branches.indexOf(newBranch) >= 0) {
         this.newBranchName.setErrors({ duplicate: true });
         return;
       }
@@ -79,22 +48,8 @@ export class BranchesDialogComponent implements OnInit {
         this.newBranchName.setErrors({ locked: true });
         return;
       }
-      this.doCheckout(newBranch);
+      this.dialogRef.close(newBranch);
     }
   }
 
-  /**
-   * Do checkout.
-   * @param branch the branch name
-   */
-  private doCheckout(branch: string) {
-    if (branch === this.currentBranchName) {
-      this.dialogRef.close();
-    } else {
-      this.dialogRef.close({
-        type: this.actionType,
-        branch
-      });
-    }
-  }
 }

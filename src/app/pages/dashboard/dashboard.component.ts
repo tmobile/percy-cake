@@ -10,8 +10,7 @@ import { User } from 'models/auth';
 import { ConfigFile } from 'models/config-file';
 import * as appStore from 'store';
 import { SelectApp, CollapseApps, ToggleApp, TableSort } from 'store/actions/dashboard.actions';
-import { DeleteFile, CommitChanges, Refresh, Checkout, MergeBranch } from 'store/actions/backend.actions';
-import { BranchesDialogComponent } from 'components/branches-dialog/branches-dialog.component';
+import { DeleteFile, CommitChanges, Refresh, MergeBranch } from 'store/actions/backend.actions';
 import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
 import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.component';
 import { SelectAppDialogComponent } from 'components/select-app-dialog/select-app-dialog.component';
@@ -136,22 +135,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
    */
   ngOnDestroy() {
     this.foldersSubscription.unsubscribe();
-  }
-
-  /**
-   * Show the dialog to change branch.
-   */
-  checkoutBranch() {
-    this.store.pipe(select(appStore.getPrincipal), take(1)).subscribe(principal => {
-      const dialogRef = this.dialog.open(BranchesDialogComponent, {
-        data: { principal }
-      });
-      dialogRef.afterClosed().subscribe(data => {
-        if (data) {
-          this.store.dispatch(new Checkout(data));
-        }
-      });
-    });
   }
 
   /**
