@@ -3,15 +3,13 @@ import { Sort } from '@angular/material';
 import { Setup, assertDialogOpened, TestContext, TestUser } from 'test/test-helper';
 
 import { DashboardComponent } from './dashboard.component';
-import { LoadFilesSuccess, Refresh, Initialized } from 'store/actions/backend.actions';
+import { LoadFilesSuccess, Refresh } from 'store/actions/backend.actions';
 import { SelectAppDialogComponent } from 'components/select-app-dialog/select-app-dialog.component';
 import { percyConfig } from 'config';
 import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
 import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.component';
 import { Alert } from 'store/actions/common.actions';
 import { ToggleApp, CollapseApps, TableSort, SelectApp } from 'store/actions/dashboard.actions';
-import { BranchesDialogComponent } from 'components/branches-dialog/branches-dialog.component';
-import { Principal } from 'models/auth';
 import { LoginSuccess } from 'store/actions/auth.actions';
 
 describe('DashboardComponent', () => {
@@ -358,21 +356,21 @@ describe('DashboardComponent', () => {
     expect(ctx.routerStub.value).toEqual(['/files/editenv', file.applicationName, file.fileName]);
   });
 
-  it('should checkout branch successfully', () => {
+  // it('should checkout branch successfully', () => {
 
-    const principal: Principal = {
-      user: { ...TestUser },
-      repoMetadata: { ...TestUser, version: '1.0', commitBaseSHA: {} }
-    };
-    ctx.store.next(new Initialized({ principal }));
+  //   const principal: Principal = {
+  //     user: { ...TestUser },
+  //     repoMetadata: { ...TestUser, version: '1.0', commitBaseSHA: {} }
+  //   };
+  //   ctx.store.next(new Initialized({ principal }));
 
-    ctx.component.checkoutBranch();
-    assertDialogOpened(BranchesDialogComponent, { data: { principal } });
-    const data = { type: 'create', branch: 'some-branch' };
-    ctx.dialogStub.output.next(data);
+  //   ctx.component.checkoutBranch();
+  //   assertDialogOpened(BranchesDialogComponent, { data: { principal } });
+  //   const data = { type: 'create', branch: 'some-branch' };
+  //   ctx.dialogStub.output.next(data);
 
-    expect(dispatchSpy.calls.mostRecent().args[0].payload).toEqual(data);
-  });
+  //   expect(dispatchSpy.calls.mostRecent().args[0].payload).toEqual(data);
+  // });
 
   it('should sync master successfully', () => {
 
