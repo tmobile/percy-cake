@@ -30,12 +30,6 @@ describe('CreateBranchDialogComponent', () => {
     expect(ctx.component).toBeTruthy();
   });
 
-  // it('switch to different branch should be successful', async () => {
-  //   ctx.component.branchName.setValue('branch1');
-  //   ctx.component.checkout();
-  //   expect(ctx.dialogStub.output.value).toEqual({ type: 'switch', branch: 'branch1' });
-  // });
-
   it('new branch name should be required', async () => {
     ctx.component.newBranchName.setValue('');
     ctx.component.createBranch();

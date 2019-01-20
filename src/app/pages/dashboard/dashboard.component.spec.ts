@@ -356,22 +356,6 @@ describe('DashboardComponent', () => {
     expect(ctx.routerStub.value).toEqual(['/files/editenv', file.applicationName, file.fileName]);
   });
 
-  // it('should checkout branch successfully', () => {
-
-  //   const principal: Principal = {
-  //     user: { ...TestUser },
-  //     repoMetadata: { ...TestUser, version: '1.0', commitBaseSHA: {} }
-  //   };
-  //   ctx.store.next(new Initialized({ principal }));
-
-  //   ctx.component.checkoutBranch();
-  //   assertDialogOpened(BranchesDialogComponent, { data: { principal } });
-  //   const data = { type: 'create', branch: 'some-branch' };
-  //   ctx.dialogStub.output.next(data);
-
-  //   expect(dispatchSpy.calls.mostRecent().args[0].payload).toEqual(data);
-  // });
-
   it('should sync master successfully', () => {
 
     ctx.store.next(new LoginSuccess(TestUser));
