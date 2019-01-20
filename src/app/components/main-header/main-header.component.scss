@@ -36,8 +36,9 @@
     margin-left: 15px;
   }
 }
-::ng-deep .branches-menu-container {
-  width: 300px;
+::ng-deep .branches-menu-container.mat-menu-panel {
+  min-width: 175px;
+  max-width: 300px;
 
   .btn-branch-menu {
     display: block;

@@ -12,21 +12,33 @@
       </mat-select>
     </mat-form-field>
 
-    <button type="button" mat-raised-button [disabled]="(disableCommit|async) || (currentUser|async)?.branchName === 'master'" color="primary" matTooltip="Commit Changes" class="btn-commit-changes" (click)="commitChanges()">
-      Commit Changes
-    </button>
-    <button type="button" mat-raised-button [disabled]="(currentUser|async)?.branchName === 'master'" color="primary" class="btn-add-file" matTooltip="Add New File" (click)="addNewFile()">
-      Add New File
-    </button>
-    <button type="button" *ngIf="(currentUser|async)?.branchName !== 'master'" mat-raised-button matTooltip="Merge Master Branch" [disabled]="!(canSyncMaster|async)" color="primary" class="btn-sync-master" (click)="syncMaster()">
-      Sync Master
-    </button>
-    <a *ngIf="(currentUser|async)?.branchName !== 'master' && pullRequestUrl" mat-raised-button matTooltip="Pull Request" [disabled]="!(canPullRequest|async)" color="primary" class="btn-pull-request" href="{{pullRequestUrl}}" target="_blank">
-      Pull Request
-    </a>
-    <button type="button" mat-raised-button color="primary" class="btn-refresh-file" matTooltip="Refresh" (click)="refresh()">
-      Refresh
-    </button>
+    <div class="btns-wrapper">
+      <div matTooltip="Commit Changes">
+        <button type="button" mat-raised-button [disabled]="(disableCommit|async) || (currentUser|async)?.branchName === 'master'" color="primary" class="btn-icon" (click)="commitChanges()">
+          <span class="icon" inlineSVG="assets/icon-commit.svg"></span>
+        </button>
+      </div>
+      <div matTooltip="Add New File">
+        <button type="button" mat-raised-button [disabled]="(currentUser|async)?.branchName === 'master'" color="primary" class="btn-icon" (click)="addNewFile()">
+          <span class="icon" inlineSVG="assets/icon-add-file.svg"></span>
+        </button>
+      </div>
+      <div matTooltip="Merge Master Branch">
+        <button type="button" *ngIf="(currentUser|async)?.branchName !== 'master'" mat-raised-button [disabled]="!(canSyncMaster|async)" color="primary" class="btn-icon" (click)="syncMaster()">
+          <span class="icon" inlineSVG="assets/icon-sync.svg"></span>
+        </button>
+      </div>
+      <div matTooltip="Pull Request">
+        <a *ngIf="(currentUser|async)?.branchName !== 'master' && pullRequestUrl" mat-raised-button [disabled]="!(canPullRequest|async)" color="primary" class="btn-icon" href="{{pullRequestUrl}}" target="_blank">
+          <span class="icon" inlineSVG="assets/icon-pull-request.svg"></span>
+        </a>
+      </div>
+      <div matTooltip="Refresh">
+        <button type="button" mat-raised-button color="primary" class="btn-icon" (click)="refresh()">
+          <span class="icon" inlineSVG="assets/icon-refresh.svg"></span>
+        </button>
+      </div>
+    </div>
   </div>
   <!-- files table -->
   <table *ngIf="applications| async; else loader" matSort [matSortDisableClear]="true" (matSortChange)="onSortChange($event)" mat-table [dataSource]="folders|async" class="files-table mat-elevation-z8">

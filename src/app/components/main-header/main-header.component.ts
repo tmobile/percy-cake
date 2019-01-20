@@ -11,7 +11,7 @@ import * as AuthActions from 'store/actions/auth.actions';
 import { Checkout } from 'store/actions/backend.actions';
 import { User } from 'models/auth';
 import { FileManagementService } from 'services/file-management.service';
-import { BranchesDialogComponent } from 'components/branches-dialog/branches-dialog.component';
+import { CreateBranchDialogComponent } from 'components/create-branch-dialog/create-branch-dialog.component';
 
 
 @Component({
@@ -69,7 +69,7 @@ export class MainHeaderComponent implements OnInit {
     open create branch dialog
    */
   createBranch() {
-    const dialogRef = this.dialog.open(BranchesDialogComponent, {
+    const dialogRef = this.dialog.open(CreateBranchDialogComponent, {
       data: {
         branches: this.branches
       }

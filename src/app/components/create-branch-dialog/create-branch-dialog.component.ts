@@ -8,14 +8,14 @@ import { TrimPattern } from 'services/validators';
 import { FileManagementService } from 'services/file-management.service';
 
 /**
- * The branches dialog component
+ * Create new branch dialog
  */
 @Component({
-  selector: 'app-branches-dialog',
-  templateUrl: './branches-dialog.component.html',
-  styleUrls: ['./branches-dialog.component.scss']
+  selector: 'app-create-branch-dialog',
+  templateUrl: './create-branch-dialog.component.html',
+  styleUrls: ['./create-branch-dialog.component.scss']
 })
-export class BranchesDialogComponent implements OnInit {
+export class CreateBranchDialogComponent implements OnInit {
 
   newBranchName = new FormControl('', [TrimPattern('^[a-zA-Z0-9_-]*$'), Validators.maxLength(30)]);
 
@@ -25,7 +25,7 @@ export class BranchesDialogComponent implements OnInit {
    * @param store the state store instance
    * @param data the injection token that can be used to access the data that was passed in to a dialog
    */
-  constructor(public dialogRef: MatDialogRef<BranchesDialogComponent>,
+  constructor(public dialogRef: MatDialogRef<CreateBranchDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data,
     public filService: FileManagementService) { }
 

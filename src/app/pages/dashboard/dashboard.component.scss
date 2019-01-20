@@ -9,12 +9,14 @@
         align-items: center;
         padding-bottom: 20px;
 
-        a, button {
+        .btns-wrapper {
+          margin-left: auto;
+          display: flex;
+          align-items: center;
+
+          > div:not(:first-child):not(:empty) {
             margin-left: 10px;
-            text-transform: uppercase;
-            &.btn-commit-changes{
-              margin-left: auto;
-            }
+          }
         }
 
         .apps-label {

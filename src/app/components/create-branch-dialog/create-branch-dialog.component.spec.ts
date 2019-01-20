@@ -1,17 +1,17 @@
 import { Setup, TestContext, TestUser } from 'test/test-helper';
 
-import { BranchesDialogComponent } from './branches-dialog.component';
+import { CreateBranchDialogComponent } from './create-branch-dialog.component';
 import { Principal } from 'models/auth';
 import { FileManagementService } from 'services/file-management.service';
 import { percyConfig } from 'config';
 
-describe('BranchesDialogComponent', () => {
+describe('CreateBranchDialogComponent', () => {
 
-  const setup = Setup(BranchesDialogComponent, false);
+  const setup = Setup(CreateBranchDialogComponent, false);
   const branches = [TestUser.branchName, 'branch1', 'branch2'];
 
   let fileService: FileManagementService;
-  let ctx: TestContext<BranchesDialogComponent>;
+  let ctx: TestContext<CreateBranchDialogComponent>;
 
   beforeEach(async () => {
     ctx = setup();
@@ -32,7 +32,7 @@ describe('BranchesDialogComponent', () => {
     await ctx.fixture.whenStable();
   });
 
-  it('should create BranchesDialogComponent', () => {
+  it('should create CreateBranchDialogComponent', () => {
     expect(ctx.component).toBeTruthy();
   });
 
