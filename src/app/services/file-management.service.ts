@@ -183,7 +183,7 @@ export class FileManagementService {
         dir: repoDir,
         ref: branch,
         singleBranch,
-        depth: 1,
+        // depth: 1,
         corsProxy: percyConfig.corsProxy
       });
     } catch (err) {
@@ -372,8 +372,10 @@ export class FileManagementService {
       return null;
     };
 
-    return await walkHistroy(targetCommitOid, targetHistory, srcHistory)
+    const base = await walkHistroy(targetCommitOid, targetHistory, srcHistory)
       || await walkHistroy(srcCommitOid, srcHistory, targetHistory);
+    console.info(`Merge base for source commit ${srcCommitOid} and target commit ${targetCommitOid}: ${base}`); // tslint:disable-line
+    return base;
   }
 
   /**
