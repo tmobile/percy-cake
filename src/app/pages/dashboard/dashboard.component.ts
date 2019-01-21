@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { MatDialog, Sort } from '@angular/material';
+import { MatDialog, Sort, MatIconRegistry } from '@angular/material';
 import { Router } from '@angular/router';
+import { DomSanitizer } from '@angular/platform-browser';
 import { Store, select } from '@ngrx/store';
 import { Observable, combineLatest, Subject, BehaviorSubject, Subscription } from 'rxjs';
 import { take, map, withLatestFrom } from 'rxjs/operators';
@@ -10,13 +11,18 @@ import { User } from 'models/auth';
 import { ConfigFile } from 'models/config-file';
 import * as appStore from 'store';
 import { SelectApp, CollapseApps, ToggleApp, TableSort } from 'store/actions/dashboard.actions';
-import { DeleteFile, CommitChanges, Refresh, Checkout, MergeBranch } from 'store/actions/backend.actions';
-import { BranchesDialogComponent } from 'components/branches-dialog/branches-dialog.component';
+import { DeleteFile, CommitChanges, Refresh, MergeBranch } from 'store/actions/backend.actions';
 import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
 import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.component';
 import { SelectAppDialogComponent } from 'components/select-app-dialog/select-app-dialog.component';
 
 import * as _ from 'lodash';
+
+const commitIcon = require('../../../assets/icon-commit.svg');
+const addFileIcon = require('../../../assets/icon-add-file.svg');
+const syncIcon = require('../../../assets/icon-sync.svg');
+const pullRequestIcon = require('../../../assets/icon-pull-request.svg');
+const refreshIcon = require('../../../assets/icon-refresh.svg');
 
 /*
   Dashboard page
@@ -55,8 +61,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
   constructor(
     private store: Store<appStore.AppState>,
     private router: Router,
-    private dialog: MatDialog
-  ) { }
+    private dialog: MatDialog,
+    private matIconRegistry: MatIconRegistry,
+    private domSanitizer: DomSanitizer
+  ) {
+    _.each({
+      commit: commitIcon,
+      add_file: addFileIcon,
+      sync: syncIcon,
+      pull_request: pullRequestIcon,
+      refresh: refreshIcon,
+    }, (icon, key) => {
+      this.matIconRegistry.addSvgIcon(
+        key,
+        this.domSanitizer.bypassSecurityTrustResourceUrl('data:image/svg+xml,' + encodeURIComponent(icon))
+      );
+    });
+  }
 
   /**
    * handle component initialization
@@ -136,22 +157,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
    */
   ngOnDestroy() {
     this.foldersSubscription.unsubscribe();
-  }
-
-  /**
-   * Show the dialog to change branch.
-   */
-  checkoutBranch() {
-    this.store.pipe(select(appStore.getPrincipal), take(1)).subscribe(principal => {
-      const dialogRef = this.dialog.open(BranchesDialogComponent, {
-        data: { principal }
-      });
-      dialogRef.afterClosed().subscribe(data => {
-        if (data) {
-          this.store.dispatch(new Checkout(data));
-        }
-      });
-    });
   }
 
   /**

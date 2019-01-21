@@ -21,7 +21,7 @@ import { InitComponent } from 'components/init/init.component';
 import { LayoutComponent } from 'components/layout/layout.component';
 import { MainHeaderComponent } from 'components/main-header/main-header.component';
 
-import { BranchesDialogComponent } from 'components/branches-dialog/branches-dialog.component';
+import { CreateBranchDialogComponent } from 'components/create-branch-dialog/create-branch-dialog.component';
 import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.component';
 import { SelectAppDialogComponent } from 'components/select-app-dialog/select-app-dialog.component';
 import { ConflictDialogComponent } from 'components/conflict-dialog/conflict-dialog.component';
@@ -49,7 +49,7 @@ import { EditorEffects } from 'store/affects/editor.effects';
     LayoutComponent,
     MainHeaderComponent,
     EditorPageComponent,
-    BranchesDialogComponent,
+    CreateBranchDialogComponent,
     CommitDialogComponent,
     SelectAppDialogComponent,
     ConflictDialogComponent,
@@ -64,7 +64,7 @@ import { EditorEffects } from 'store/affects/editor.effects';
     EffectsModule.forRoot([AuthEffects, AppEffects, BackendEffects, DashboardEffects, EditorEffects])
   ],
   entryComponents: [
-    BranchesDialogComponent,
+    CreateBranchDialogComponent,
     CommitDialogComponent,
     SelectAppDialogComponent,
     ConflictDialogComponent,

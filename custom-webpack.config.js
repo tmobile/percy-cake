@@ -13,6 +13,10 @@ module.exports = {
   module: {
     rules: [
       {
+        test: /\.svg$/,
+        loader: 'raw-loader'
+      },
+      {
         test: /\.js$/,
         include: [
           // These dependency modules need be transpiled to es5 for older browser like IE11

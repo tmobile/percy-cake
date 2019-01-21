@@ -34,3 +34,25 @@ button {
     min-width: 0;
   }
 }
+
+// buttons with icons only/ svg icons or mat-icons
+.mat-raised-button,
+.mat-flat-button {
+
+  &.btn-icon {
+    padding: 0;
+    min-width: 0;
+
+    .mat-button-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 36px;
+      height: 36px;
+
+      svg {
+        fill: currentColor;
+      }
+    }
+  }
+}

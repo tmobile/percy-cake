@@ -24,6 +24,11 @@ function pushEntires(entries, entry) {
 exports.mergeWebpack = function (defaultWebpackConfig) {
   // Use postcss-url to inline woff2 and svg files
   _.each(defaultWebpackConfig.module.rules, rule => {
+    if (rule.loader === 'file-loader') {
+      // We'll use raw-loader for svg
+      rule.test = /\.(eot|cur|jpg|png|webp|gif|otf|ttf|woff|woff2|ani)$/;
+      return;
+    }
     _.each(rule.use, usedLoader => {
       if (usedLoader.loader !== 'postcss-loader') {
         return;
