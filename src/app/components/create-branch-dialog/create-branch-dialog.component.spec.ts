@@ -1,7 +1,6 @@
 import { Setup, TestContext, TestUser } from 'test/test-helper';
 
 import { CreateBranchDialogComponent } from './create-branch-dialog.component';
-import { FileManagementService } from 'services/file-management.service';
 import { percyConfig } from 'config';
 
 describe('CreateBranchDialogComponent', () => {
@@ -9,13 +8,10 @@ describe('CreateBranchDialogComponent', () => {
   const setup = Setup(CreateBranchDialogComponent, false);
   const branches = [TestUser.branchName, 'branch1', 'branch2'];
 
-  let fileService: FileManagementService;
   let ctx: TestContext<CreateBranchDialogComponent>;
 
   beforeEach(async () => {
     ctx = setup();
-    fileService = ctx.resolve(FileManagementService);
-    spyOn(fileService, 'listBranches').and.returnValue(branches);
 
     const data = {
       branches,

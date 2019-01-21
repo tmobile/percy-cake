@@ -5,7 +5,6 @@ import * as _ from 'lodash';
 
 import { percyConfig } from 'config';
 import { TrimPattern } from 'services/validators';
-import { FileManagementService } from 'services/file-management.service';
 
 /**
  * Create new branch dialog
@@ -26,8 +25,7 @@ export class CreateBranchDialogComponent implements OnInit {
    * @param data the injection token that can be used to access the data that was passed in to a dialog
    */
   constructor(public dialogRef: MatDialogRef<CreateBranchDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data,
-    public filService: FileManagementService) { }
+    @Inject(MAT_DIALOG_DATA) public data) { }
 
   ngOnInit() {
   }

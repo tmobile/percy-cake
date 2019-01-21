@@ -21,6 +21,7 @@ describe('MainHeaderComponent', () => {
 
     fileService = ctx.resolve(FileManagementService);
     spyOn(fileService, 'listBranches').and.returnValue(branches);
+    spyOn(fileService, 'getFiles').and.returnValue({ files: [], applications: [] });
 
     const principal: Principal = {
       user: { ...TestUser },
