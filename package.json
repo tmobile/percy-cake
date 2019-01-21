@@ -45,7 +45,6 @@
     "js-yaml": "^3.12.0",
     "lodash": "^4.17.11",
     "ms": "^2.1.1",
-    "ng-inline-svg": "^8.3.0",
     "ngrx-store-localstorage": "^5.1.1",
     "ngx-highlightjs": "^3.0.0",
     "pbkdf2": "^3.0.17",

@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
-import { InlineSVGModule } from 'ng-inline-svg';
 
 // Common
 import { CommonModule } from 'common.module';
@@ -60,7 +59,6 @@ import { EditorEffects } from 'store/affects/editor.effects';
     HttpClientModule,
     AppRoutingModule,
     CommonModule,
-    InlineSVGModule.forRoot(),
     StoreModule.forRoot(reducers, { metaReducers }),
     !environment.production ? StoreDevtoolsModule.instrument() : [],
     EffectsModule.forRoot([AuthEffects, AppEffects, BackendEffects, DashboardEffects, EditorEffects])

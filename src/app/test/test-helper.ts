@@ -2,7 +2,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { Type, NO_ERRORS_SCHEMA, Component } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { HttpClient } from '@angular/common/http';
-import { Observable, isObservable, BehaviorSubject, Subscription } from 'rxjs';
+import { Observable, isObservable, BehaviorSubject, Subscription, of } from 'rxjs';
 import { Store, StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
 import { HIGHLIGHT_OPTIONS } from 'ngx-highlightjs';
@@ -36,7 +36,15 @@ const percyTestConfig = require('../../percy.conf.test.json');
 _.assign(percyConfig, percyTestConfig);
 
 const httpSpy = jasmine.createSpyObj('httpSpy', ['get']);
-httpSpy.get.and.returnValue(percyConfig);
+(<jasmine.Spy> httpSpy.get).and.callFake((url: string) => {
+  if (url === 'percy.conf.json') {
+    return of(percyConfig);
+  }
+  if (url.startsWith('data:image/svg+xml,')) {
+    return of(decodeURIComponent(url.replace('data:image/svg+xml,', '')));
+  }
+  return of(url);
+});
 const ngZoneSpy = jasmine.createSpyObj('ngZoneSpy', ['run']);
 export const utilService = new UtilService(httpSpy, ngZoneSpy);
 

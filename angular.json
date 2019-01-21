@@ -24,8 +24,7 @@
             "tsConfig": "src/tsconfig.app.json",
             "assets": [
               "src/favicon.png",
-              "src/percy.conf.json",
-              "src/assets"
+              "src/percy.conf.json"
             ],
             "styles": [
               "src/styles.scss"
