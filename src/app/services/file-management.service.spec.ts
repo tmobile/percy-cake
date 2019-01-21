@@ -84,9 +84,10 @@ describe('FileManagementService', () => {
   let cloneStub: jasmine.Spy;
   let fetchStub: jasmine.Spy;
   let getRemoteInfoStub: jasmine.Spy;
-  let statusMatrixStub: jasmine.Spy;
+  let listFilesStub: jasmine.Spy;
   let resetIndexStub: jasmine.Spy;
   let readObjectStub: jasmine.Spy;
+  let writeObjectStub: jasmine.Spy;
   let addStub: jasmine.Spy;
   let removeStub: jasmine.Spy;
   let commitStub: jasmine.Spy;
@@ -156,11 +157,12 @@ describe('FileManagementService', () => {
       }
     });
 
-    statusMatrixStub = spyOn(git, 'statusMatrix');
-    statusMatrixStub.and.returnValue([]);
+    listFilesStub = spyOn(git, 'listFiles');
+    listFilesStub.and.returnValue([]);
 
     resetIndexStub = spyOn(git, 'resetIndex');
     readObjectStub = spyOn(git, 'readObject');
+    writeObjectStub = spyOn(git, 'writeObject');
     addStub = spyOn(git, 'add');
     removeStub = spyOn(git, 'remove');
     commitStub = spyOn(git, 'commit');
@@ -370,6 +372,173 @@ describe('FileManagementService', () => {
     }
   });
 
+  it('should get branch diff successfully when no merge base found', async () => {
+    await fileService.accessRepo(TestUser);
+
+    const targetObjectTree = _.cloneDeep(objectTree);
+    targetObjectTree[targetObjectTree.length - 2].object.entries = [
+      { path: 'app2-client.yaml', type: 'blob', oid: '999999' },
+      { path: 'nest', type: 'tree' }
+    ];
+    readObjectStub.and.returnValues(
+      { object: { parent: [] } },
+      { object: { parent: [] } },
+      ...objectTree,
+      ...targetObjectTree,
+      { type: 'blob', object: 'draftContent1' },
+      { type: 'blob', object: 'draftContent2' },
+      { type: 'blob', object: 'originalContent2' }
+    );
+
+    const { toSave, toDelete, conflictFiles } = await fileService.branchDiff(principal, 'master', TestUser.branchName);
+
+    expect(toSave.length).toEqual(1);
+    expect(toDelete.length).toEqual(0);
+    expect(conflictFiles.length).toEqual(1);
+  });
+
+  it('should get branch diff successfully when using 3-way diff', async () => {
+    await fileService.accessRepo(TestUser);
+
+    const srcObjectTree = _.cloneDeep(objectTree);
+    srcObjectTree[srcObjectTree.length - 2].object.entries = [
+      { path: 'app2-client.yaml', type: 'blob', oid: '444444' },
+      { path: 'app2-new.yaml', type: 'blob', oid: '555555' },
+      { path: 'nest', type: 'tree' }
+    ];
+    const baseObjectTree = _.cloneDeep(objectTree);
+    baseObjectTree[baseObjectTree.length - 2].object.entries = [
+      { path: 'app2-client.yaml', type: 'blob', oid: '999999' },
+      { path: 'app2-server.yaml', type: 'blob', oid: '000000' },
+      { path: 'nest', type: 'tree' }
+    ];
+
+    const targetObjectTree = _.cloneDeep(objectTree);
+    targetObjectTree[targetObjectTree.length - 2].object.entries = [
+      { path: 'app2-client.yaml', type: 'blob', oid: '888888' },
+      { path: 'app2-new.yaml', type: 'blob', oid: '999999' },
+      { path: 'app2-server.yaml', type: 'blob', oid: '000000' },
+      { path: 'nest', type: 'tree' }
+    ];
+
+    readObjectStub.and.returnValues(
+      { object: { parent: ['111111'] } },
+      { object: { parent: [] } },
+      { object: { parent: ['111111'] } },
+      ...srcObjectTree,
+      ...targetObjectTree,
+      ...baseObjectTree,
+      { type: 'blob', object: 'draftContent1' },
+      { type: 'blob', object: 'draftContent2' },
+      { type: 'blob', object: 'originalContent1' },
+      { type: 'blob', object: 'originalContent2' }
+    );
+
+    const { toSave, toDelete, conflictFiles } = await fileService.branchDiff(principal, 'master', TestUser.branchName);
+
+    expect(toSave.length).toEqual(0);
+    expect(toDelete.length).toEqual(1);
+    expect(toDelete[0].fileName).toEqual('app2-server.yaml');
+    expect(conflictFiles.length).toEqual(2);
+    expect(conflictFiles[0].fileName).toEqual('app2-new.yaml');
+    expect(conflictFiles[1].fileName).toEqual('app2-client.yaml');
+  });
+
+  it('should get branch diff successfully when merge base is target branch head commit', async () => {
+    await fileService.accessRepo(TestUser);
+
+    const srcObjectTree = _.cloneDeep(objectTree);
+    srcObjectTree[srcObjectTree.length - 2].object.entries = [
+      { path: 'app2-client.yaml', type: 'blob', oid: '444444' },
+      { path: 'app2-new.yaml', type: 'blob', oid: '555555' },
+      { path: 'nest', type: 'tree' }
+    ];
+    const targetObjectTree = _.cloneDeep(objectTree);
+    targetObjectTree[targetObjectTree.length - 2].object.entries = [
+      { path: 'app2-client.yaml', type: 'blob', oid: '999999' },
+      { path: 'app2-server.yaml', type: 'blob', oid: '000000' },
+      { path: 'nest', type: 'tree' }
+    ];
+
+    readObjectStub.and.returnValues(
+      { object: { parent: [] } },
+      { object: { parent: [commits[TestUser.branchName]] } },
+      ...srcObjectTree,
+      ...targetObjectTree,
+      { type: 'blob', object: 'draftContent1' },
+      { type: 'blob', object: 'draftContent2' },
+      { type: 'blob', object: 'originalContent2' }
+    );
+
+    const { toSave, toDelete, conflictFiles } = await fileService.branchDiff(principal, 'master', TestUser.branchName);
+
+    expect(toSave.length).toEqual(2);
+    expect(toSave[0].fileName).toEqual('app2-new.yaml');
+    expect(toSave[1].fileName).toEqual('app2-client.yaml');
+    expect(toDelete.length).toEqual(1);
+    expect(toDelete[0].fileName).toEqual('app2-server.yaml');
+    expect(conflictFiles.length).toEqual(0);
+  });
+
+  it('should get empty diff when merge base is source branch head commit', async () => {
+    await fileService.accessRepo(TestUser);
+
+    readObjectStub.and.returnValues(
+      { object: { parent: [commits.master] } },
+    );
+
+    const { toSave, toDelete, conflictFiles } = await fileService.branchDiff(principal, 'master', TestUser.branchName);
+
+    expect(toSave.length).toEqual(0);
+    expect(toDelete.length).toEqual(0);
+    expect(conflictFiles.length).toEqual(0);
+  });
+
+  it('should merge branch successfully', async () => {
+    await fileService.accessRepo(TestUser);
+
+    readObjectStub.and.returnValues(
+      { object: { parent: [commits[TestUser.branchName]] } },
+    );
+    listFilesStub.and.returnValue(['a.txt']);
+
+    writeObjectStub.and.returnValue(newCommitOid);
+    const draftConfig = new Configuration();
+    draftConfig.environments.addChild(new TreeNode('dev'));
+    draftConfig.environments.addChild(new TreeNode('qat'));
+    const file1 = {
+      applicationName: 'app1',
+      fileName: 'app1-client.yaml',
+      oid: '111111',
+      draftContent: utilService.convertTreeToYaml(draftConfig)
+    };
+    const file2 = {
+      applicationName: 'app1',
+      fileName: 'app1-server.yaml',
+      oid: '222222',
+    };
+
+    await fileService.mergeBranch(principal, 'master', TestUser.branchName, { toSave: [file1], toDelete: [file2] });
+
+    expect(addStub.calls.count()).toEqual(1);
+    expect(removeStub.calls.count()).toEqual(1);
+    expect(commitStub.calls.count()).toEqual(1);
+    expect(readObjectStub.calls.count()).toEqual(1);
+    expect(writeObjectStub.calls.count()).toEqual(1);
+    expect(pushStub.calls.count()).toEqual(1);
+
+    // Merge commit should be created with two parents
+    expect(writeObjectStub.calls.first().args[0].object.parent).toEqual([commits[TestUser.branchName], commits.master]);
+
+    // Head/Remote ref should be updated
+    assertHeadCommit(TestUser.branchName, newCommitOid);
+    assertRemoteCommit(TestUser.branchName, newCommitOid);
+
+    // Repo dir should be clean (only have .git subfolder)
+    expect(await fs.readdir(PathFinder.getRepoDir(TestUser))).toEqual(['.git']);
+    expect(resetIndexStub.calls.count()).toEqual(2);
+  });
+
   it('should refresh repo successfully', async () => {
     await fileService.accessRepo(TestUser);
     await fileService.checkoutBranch(principal, 'switch', TestUser.branchName);
@@ -381,12 +550,19 @@ describe('FileManagementService', () => {
         value: newCommitOid,
         force: true,
       });
+      await git.writeRef({
+        dir: ops.dir,
+        ref: `refs/remotes/origin/master`,
+        value: newCommitOid,
+        force: true,
+      });
       return { fetchHead: newCommitOid };
     });
 
-    const { pulledCommit, changed } = await fileService.refresh(principal);
+    const { pulledCommit, branchChanged, masterChanged } = await fileService.refresh(principal);
     expect(pulledCommit).toEqual(newCommitOid);
-    expect(changed).toBeTruthy();
+    expect(branchChanged).toBeTruthy();
+    expect(masterChanged).toBeTruthy();
 
     expect(fetchStub.calls.count()).toEqual(1);
     expect(fetchStub.calls.first().args[0].singleBranch).toBeFalsy();
@@ -406,9 +582,10 @@ describe('FileManagementService', () => {
       throw error;
     });
 
-    const { pulledCommit, changed } = await fileService.refresh(principal);
+    const { pulledCommit, branchChanged, masterChanged } = await fileService.refresh(principal);
     expect(pulledCommit).toEqual(commits[TestUser.branchName]);
-    expect(changed).toBeFalsy();
+    expect(branchChanged).toBeFalsy();
+    expect(masterChanged).toBeFalsy();
 
     // Head SHA ref should be same as remotes SHA
     assertHeadCommit(TestUser.branchName, commits[TestUser.branchName]);
@@ -477,7 +654,7 @@ describe('FileManagementService', () => {
   it('should get files successfully', async () => {
     await fileService.accessRepo(TestUser);
 
-    readObjectStub.and.returnValues(...objectTree);
+    readObjectStub.and.returnValues(...objectTree, ...objectTree, { object: { parent: [] } }, { object: { parent: [] } });
 
     const draftPath = path.resolve(percyConfig.draftFolder, TestUser.repoFolder, TestUser.branchName);
     const draftAppsPath = path.resolve(draftPath, percyConfig.yamlAppsFolder);
@@ -490,8 +667,8 @@ describe('FileManagementService', () => {
 
     const result = await fileService.getFiles(principal);
 
-    expect(readObjectStub.calls.count()).toEqual(6);
-
+    expect(result.canPullRequest).toBeFalsy();
+    expect(result.canSyncMaster).toBeFalsy();
     expect(result.applications.sort()).toEqual(['app1', 'app2', 'app3']);
     expect(_.sortBy(result.files, ['applicationName', 'filename'])).toEqual([
       { applicationName: 'app1', fileName: 'app1-client.yaml', size: 2, modified: true, oid: '111111' },
@@ -860,9 +1037,9 @@ describe('FileManagementService', () => {
     await fileService.accessRepo(TestUser);
     await fileService.checkoutBranch(principal, 'switch', TestUser.branchName);
 
-    readObjectStub.and.returnValues(...objectTree, ...objectTree);
+    readObjectStub.and.returnValues(...objectTree);
     commitStub.and.returnValue(newCommitOid);
-    statusMatrixStub.and.returnValue([['a.txt', 1, 0, 0], ['b.txt', 1, 0, 1]]);
+    listFilesStub.and.returnValue(['a.txt']);
 
     const draftConfig = new Configuration();
     draftConfig.environments.addChild(new TreeNode('dev'));

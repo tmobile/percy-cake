@@ -55,5 +55,11 @@ export interface ConfigFile {
   modified?: boolean; // Means this is a modified file compared to repo, able to commit
   draftConfig?: Configuration;
   originalConfig?: Configuration;
+  draftContent?: string;
+  originalContent?: string;
   oid?: string; // File SHA oid
+}
+
+export interface ConflictFile extends ConfigFile {
+  resolveStrategy?: string;
 }

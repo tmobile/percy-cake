@@ -3,15 +3,14 @@ import { Sort } from '@angular/material';
 import { Setup, assertDialogOpened, TestContext, TestUser } from 'test/test-helper';
 
 import { DashboardComponent } from './dashboard.component';
-import { LoadFilesSuccess, Refresh, Initialized } from 'store/actions/backend.actions';
+import { LoadFilesSuccess, Refresh } from 'store/actions/backend.actions';
 import { SelectAppDialogComponent } from 'components/select-app-dialog/select-app-dialog.component';
 import { percyConfig } from 'config';
 import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
 import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.component';
 import { Alert } from 'store/actions/common.actions';
 import { ToggleApp, CollapseApps, TableSort, SelectApp } from 'store/actions/dashboard.actions';
-import { BranchesDialogComponent } from 'components/branches-dialog/branches-dialog.component';
-import { Principal } from 'models/auth';
+import { LoginSuccess } from 'store/actions/auth.actions';
 
 describe('DashboardComponent', () => {
   const setup = Setup(DashboardComponent);
@@ -63,7 +62,21 @@ describe('DashboardComponent', () => {
 
   it('should create DashboardComponent', () => {
     expect(ctx.component).toBeTruthy();
-    expect(ctx.component.envFileName).toEqual(percyConfig.environmentsFile);
+    expect(ctx.component.isEnvFile(files[0])).toBeFalsy();
+    expect(ctx.component.isEnvFile(files[1])).toBeTruthy();
+
+    ctx.store.next(new LoginSuccess({...TestUser, repositoryUrl: 'https://bitbucket.org/repo'}));
+    expect(ctx.component.pullRequestUrl).toEqual(`https://bitbucket.org/repo/pull-requests/new?source=${TestUser.branchName}&t=1#diff`);
+
+    ctx.store.next(new LoginSuccess({...TestUser, repositoryUrl: 'https://github.com/repo'}));
+    expect(ctx.component.pullRequestUrl).toEqual(`https://github.com/repo/pull/new/${TestUser.branchName}`);
+
+    ctx.store.next(new LoginSuccess({...TestUser, repositoryUrl: 'https://gitlab.com/repo'}));
+    expect(ctx.component.pullRequestUrl).toEqual(`https://gitlab.com/repo/merge_requests/new`);
+
+    ctx.store.next(new LoginSuccess({...TestUser, repositoryUrl: 'https://not-supported.com/repo'}));
+    expect(ctx.component.pullRequestUrl).toBeNull();
+
     ctx.component.ngOnDestroy();
     expect(ctx.component.foldersSubscription.closed).toBeTruthy();
   });
@@ -343,20 +356,16 @@ describe('DashboardComponent', () => {
     expect(ctx.routerStub.value).toEqual(['/files/editenv', file.applicationName, file.fileName]);
   });
 
-  it('should checkout branch successfully', () => {
+  it('should sync master successfully', () => {
 
-    const principal: Principal = {
-      user: { ...TestUser },
-      repoMetadata: { ...TestUser, version: '1.0', commitBaseSHA: {} }
-    };
-    ctx.store.next(new Initialized({ principal }));
+    ctx.store.next(new LoginSuccess(TestUser));
 
-    ctx.component.checkoutBranch();
-    assertDialogOpened(BranchesDialogComponent, { data: { principal } });
-    const data = { type: 'create', branch: 'some-branch' };
-    ctx.dialogStub.output.next(data);
+    ctx.component.syncMaster();
 
-    expect(dispatchSpy.calls.mostRecent().args[0].payload).toEqual(data);
+    expect(dispatchSpy.calls.mostRecent().args[0].payload).toEqual({
+      srcBranch: 'master',
+      targetBranch: TestUser.branchName,
+    });
   });
 
   it('should commit files successfully', () => {

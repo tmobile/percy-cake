@@ -57,6 +57,7 @@ export function reducer(state = initialState, action: BackendActionsUnion | Dash
       };
     }
 
+    case BackendActionTypes.MergeBranch:
     case BackendActionTypes.CommitChanges: {
       return {
         ...state,
@@ -64,6 +65,7 @@ export function reducer(state = initialState, action: BackendActionsUnion | Dash
       };
     }
 
+    case BackendActionTypes.MergeBranchSuccess:
     case BackendActionTypes.CommitChangesSuccess: {
       return {
         ...state,
@@ -71,6 +73,7 @@ export function reducer(state = initialState, action: BackendActionsUnion | Dash
       };
     }
 
+    case BackendActionTypes.MergeBranchFailure:
     case BackendActionTypes.CommitChangesFailure: {
       return {
         ...state,

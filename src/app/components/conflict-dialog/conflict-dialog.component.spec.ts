@@ -1,35 +1,33 @@
-import { Setup, TestContext } from 'test/test-helper';
+import { Setup, TestContext, utilService } from 'test/test-helper';
 
 import { ConflictDialogComponent } from './conflict-dialog.component';
-import { Configuration } from 'models/config-file';
+import { Configuration, ConflictFile } from 'models/config-file';
 
 describe('ConflictDialogComponent', () => {
   const setup = Setup(ConflictDialogComponent, false);
 
-  const draftFile = {
-    fileName: 'sample.yaml',
-    applicationname: 'app1',
-    draftConfig: new Configuration()
-  };
+  const draftConfig = new Configuration();
+  const draftContent = utilService.convertTreeToYaml(draftConfig);
+  const originalConfig = new Configuration();
+  const originalContent = utilService.convertTreeToYaml(originalConfig);
 
-  const conflictFile = {
+
+  const conflictFile: ConflictFile = {
     fileName: 'sample.yaml',
-    applicationname: 'app1',
-    originalConfig: new Configuration()
+    applicationName: 'app1',
+    draftConfig,
+    draftContent,
+    originalConfig,
+    originalContent,
   };
 
   let ctx: TestContext<ConflictDialogComponent>;
-  let dispatchSpy: jasmine.Spy;
   beforeEach(() => {
     ctx = setup();
-    dispatchSpy = spyOn(ctx.store, 'dispatch');
   });
 
   const data = {
     conflictFiles: [conflictFile],
-    draftFiles: [draftFile],
-    fromEditor: true,
-    commitMessage: 'test commit',
   };
 
   it('should create ConflictDialogComponent', () => {
@@ -40,12 +38,6 @@ describe('ConflictDialogComponent', () => {
 
     ctx.component.data = data;
     ctx.detectChanges();
-
-    data.conflictFiles.forEach((file: any) => {
-      expect(file.repoCode).toBeDefined();
-      expect(file.draftCode).toBeDefined();
-      expect(file.draftConfig).toBeDefined();
-    });
 
     expect(ctx.component.fileIdx).toEqual(0);
     expect(ctx.component.allResolved()).toBeFalsy();
@@ -65,11 +57,10 @@ describe('ConflictDialogComponent', () => {
     ctx.component.resolveConflict({ value: 'draft' }, data.conflictFiles[0]);
     ctx.component.confirmAction();
 
-    const payload = dispatchSpy.calls.mostRecent().args[0].payload;
-    expect(payload.resolveConflicts).toBeTruthy();
-    expect(payload.fromEditor).toEqual(data.fromEditor);
-    expect(payload.message).toEqual(data.commitMessage);
-    expect(payload.files[0].draftConfig === draftFile.draftConfig).toBeTruthy();
+    const dialogOutput = ctx.dialogStub.output.value;
+    expect(dialogOutput.length).toEqual(1);
+    expect(dialogOutput[0].draftContent === draftContent).toBeTruthy();
+    expect(dialogOutput[0].draftConfig === draftConfig).toBeTruthy();
   });
 
   it('should confirm to use repo and reload files', () => {
@@ -80,33 +71,9 @@ describe('ConflictDialogComponent', () => {
     ctx.component.resolveConflict({ value: 'repo' }, data.conflictFiles[0]);
     ctx.component.confirmAction();
 
-    const payload = dispatchSpy.calls.mostRecent().args[0].payload;
-    expect(payload.resolveConflicts).toBeTruthy();
-    expect(payload.fromEditor).toEqual(data.fromEditor);
-    expect(payload.message).toEqual(data.commitMessage);
-    expect(payload.files[0].draftConfig === conflictFile.originalConfig).toBeTruthy();
-  });
-
-  it('should confirm to use repo, still recommit because there is one more unconflicted draft', () => {
-
-    ctx.component.data = data;
-
-    const anotherFile = {
-      fileName: 'sample2.yaml',
-      applicationname: 'app1',
-      draftConfig: new Configuration()
-    };
-    ctx.component.data.draftFiles.push(anotherFile);
-    ctx.detectChanges();
-
-    ctx.component.resolveConflict({ value: 'repo' }, data.conflictFiles[0]);
-    ctx.component.confirmAction();
-
-    const payload = dispatchSpy.calls.mostRecent().args[0].payload;
-    expect(payload.resolveConflicts).toBeTruthy();
-    expect(payload.fromEditor).toEqual(data.fromEditor);
-    expect(payload.message).toEqual(data.commitMessage);
-    expect(payload.files[0].draftConfig === conflictFile.originalConfig).toBeTruthy();
-    expect(payload.files[1] === anotherFile).toBeTruthy();
+    const dialogOutput = ctx.dialogStub.output.value;
+    expect(dialogOutput.length).toEqual(1);
+    expect(dialogOutput[0].draftContent === originalContent).toBeTruthy();
+    expect(dialogOutput[0].draftConfig === originalConfig).toBeTruthy();
   });
 });

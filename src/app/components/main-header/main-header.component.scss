@@ -15,10 +15,58 @@
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
-    background-image: url('../../../assets/Logo-Landscape.svg')
+    background-image: url('../../../assets/Logo-Landscape.svg');
+    margin-right: auto;
+  }
+  .repo-info {
+    display: flex;
+    align-items: center;
+
+    .mat-button {
+      min-width: 0;
+      padding: 0 2px;
+
+      &.is-disabled {
+        pointer-events: none;
+      }
+    }
   }
   .btn-logout {
-    margin-left: auto;
     text-transform: uppercase;
+    margin-left: 15px;
+  }
+}
+::ng-deep .branches-menu-container.mat-menu-panel {
+  min-width: 175px;
+  max-width: 300px;
+
+  .btn-branch-menu {
+    display: block;
+    width: 100%;
+    text-align: left;
+    border-radius: 0;
+    text-overflow: ellipsis;
+    overflow: hidden;
+
+    &.is-current {
+      padding-right: 50px;
+      position: relative;
+
+      .mat-icon {
+        position: absolute;
+        right: 16px;
+        top: calc(50% - 9px);
+        font-size: 18px;
+        height: 18px;
+        width: 18px;
+      }
+    }
+
+    &.btn-create-branch {
+      border-top: 1px solid #c4c4c4;
+      border-top-right-radius: 0;
+      border-top-left-radius: 0;
+      height: 45px;
+    }
   }
 }

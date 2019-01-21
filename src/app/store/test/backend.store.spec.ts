@@ -39,9 +39,16 @@ describe('Backend store action/effect/reducer', () => {
 
   const setup = Setup(StoreTestComponent);
 
+  let getFilesSpy: jasmine.Spy;
+
   beforeEach(() => {
     ctx = setup();
     fileService = ctx.resolve(FileManagementService);
+    getFilesSpy = spyOn(fileService, 'getFiles');
+    getFilesSpy.and.returnValue({
+      files: [],
+      applications: []
+    });
   });
 
   it('Initialize action should be successful', () => {
@@ -55,7 +62,7 @@ describe('Backend store action/effect/reducer', () => {
 
   it('Initialized action should be successful', async () => {
 
-    spyOn(fileService, 'getFiles').and.returnValue({
+    getFilesSpy.and.returnValue({
       files: [file1],
       applications: ['app1', 'app2']
     });
@@ -84,10 +91,8 @@ describe('Backend store action/effect/reducer', () => {
 
   it('LoadFiles action should be successful', async () => {
 
-    const spy = spyOn(fileService, 'getFiles');
-
     // Get one file
-    spy.and.returnValue({
+    getFilesSpy.and.returnValue({
       files: [file1],
       applications: ['app1']
     });
@@ -97,7 +102,7 @@ describe('Backend store action/effect/reducer', () => {
     expect(ctx.backendState().files.entities).toEqual({ 'app1/test1.yaml': file1 });
 
     // Get two files
-    spy.and.returnValue({
+    getFilesSpy.and.returnValue({
       files: [file1, file2],
       applications: ['app1']
     });
@@ -110,7 +115,7 @@ describe('Backend store action/effect/reducer', () => {
     });
 
     // Get three files
-    spy.and.returnValue({
+    getFilesSpy.and.returnValue({
       files: [file1, file2, file3],
       applications: ['app1']
     });
@@ -124,7 +129,7 @@ describe('Backend store action/effect/reducer', () => {
     });
 
     // Change oids
-    spy.and.returnValue({
+    getFilesSpy.and.returnValue({
       files: [{ ...file1, oid: '111111' }, { ...file2, oid: undefined }, { ...file3, oid: 'newoid' }],
       applications: ['app1']
     });
@@ -140,7 +145,7 @@ describe('Backend store action/effect/reducer', () => {
     });
 
     // Some file removed
-    spy.and.returnValue({
+    getFilesSpy.and.returnValue({
       files: [file2, file3],
       applications: ['app1']
     });
@@ -154,9 +159,7 @@ describe('Backend store action/effect/reducer', () => {
   });
 
   it('LoadFiles action fail, alert dialog should show', async () => {
-    const spy = spyOn(fileService, 'getFiles');
-
-    spy.and.throwError('Mock error');
+    getFilesSpy.and.throwError('Mock error');
 
     ctx.store.dispatch(new BackendActions.LoadFiles());
     await ctx.fixture.whenStable();
@@ -169,10 +172,8 @@ describe('Backend store action/effect/reducer', () => {
   });
 
   it('GetFileContent action should be successful', async () => {
-    const spy = spyOn(fileService, 'getFiles');
-
     // Load files at first
-    spy.and.returnValue({
+    getFilesSpy.and.returnValue({
       files: [file1, file2],
       applications: ['app1']
     });
@@ -267,7 +268,7 @@ describe('Backend store action/effect/reducer', () => {
 
   it('CommitChanges action should be successful', async () => {
     spyOn(fileService, 'commitFiles').and.returnValue([file1]);
-    spyOn(fileService, 'getFiles').and.returnValues({ files: [file1, file2], applications: ['app1'] });
+    getFilesSpy.and.returnValue({ files: [file1, file2], applications: ['app1'] });
 
     ctx.store.dispatch(new BackendActions.CommitChanges({ files: [], message: 'test commit', fromEditor: true }));
     await ctx.fixture.whenStable();
@@ -280,38 +281,30 @@ describe('Backend store action/effect/reducer', () => {
   });
 
   it('CommitChanges action should be successful to resovel conflicts', async () => {
+    getFilesSpy.and.returnValue({ files: [file1, file2], applications: ['app1'] });
 
-    spyOn(fileService, 'resovelConflicts').and.returnValue([file1]);
-    spyOn(fileService, 'getFiles').and.returnValues({ files: [file1, file2], applications: ['app1'] });
-
-    ctx.store.dispatch(new BackendActions.CommitChanges({ files: [], message: 'test commit', resolveConflicts: true, fromEditor: false }));
-    await ctx.fixture.whenStable();
-    expect(ctx.backendState().files.ids.length).toEqual(1);
-    expect(ctx.backendState().files.entities).toEqual({ 'app1/test1.yaml': file1 });
-    expect(ctx.routerStub.value).toBeUndefined();
-
-    await ctx.fixture.whenStable();
-    expect(ctx.backendState().files.ids.length).toEqual(2);
-  });
-
-  it('CommitChanges action fail with conflict, conflict dialog should show', async () => {
     spyOn(fileService, 'commitFiles').and.callFake(() => {
       const error = new HttpErrors.Conflict('conflict error');
-      error.data = [file2];
+      error.data = [file1];
       throw error;
     });
 
-    ctx.store.dispatch(new BackendActions.CommitChanges({ files: [file1], message: 'test commit', fromEditor: true }));
+    spyOn(fileService, 'resovelConflicts').and.returnValue([file1, file2]);
+
+    ctx.store.dispatch(new BackendActions.CommitChanges({ files: [file1, file2], message: 'test commit', fromEditor: false }));
     await ctx.fixture.whenStable();
 
     assertDialogOpened(ConflictDialogComponent, {
       data: {
-        fromEditor: true,
-        draftFiles: [file1],
-        conflictFiles: [file2],
-        commitMessage: 'test commit'
+        conflictFiles: [file1],
       }
     });
+
+    ctx.dialogStub.output.next([file1]);
+    await ctx.fixture.whenStable();
+
+    expect(ctx.backendState().files.ids.length).toEqual(2);
+    expect(ctx.routerStub.value).toBeUndefined();
   });
 
   it('CommitChanges action fail, alert dialog should show', async () => {
@@ -331,7 +324,7 @@ describe('Backend store action/effect/reducer', () => {
 
   it('DeleteFile action should be successful', async () => {
     spyOn(fileService, 'deleteFile').and.returnValue(true);
-    spyOn(fileService, 'getFiles').and.returnValues({ files: [file2], applications: ['app1'] });
+    getFilesSpy.and.returnValue({ files: [file2], applications: ['app1'] });
 
     ctx.store.dispatch(new BackendActions.GetFileContentSuccess({ file: file1 }));
     expect(ctx.backendState().files.ids.length).toEqual(1);
@@ -353,7 +346,7 @@ describe('Backend store action/effect/reducer', () => {
 
   it('DeleteFile action should be successful without pull', async () => {
     spyOn(fileService, 'deleteFile').and.returnValue(false);
-    spyOn(fileService, 'getFiles').and.throwError('should not call me');
+    getFilesSpy.and.throwError('should not call me');
 
     ctx.store.dispatch(new BackendActions.GetFileContentSuccess({ file: file1 }));
     expect(ctx.backendState().files.ids.length).toEqual(1);
@@ -376,7 +369,7 @@ describe('Backend store action/effect/reducer', () => {
   it('DeleteFile action fail, alert dialog should show', async () => {
 
     spyOn(fileService, 'deleteFile').and.throwError('Mock error');
-    spyOn(fileService, 'getFiles').and.returnValues({ files: [file1, file2], applications: ['app1'] });
+    getFilesSpy.and.returnValue({ files: [file1, file2], applications: ['app1'] });
 
     ctx.store.dispatch(new BackendActions.GetFileContentSuccess({ file: file1 }));
 
@@ -396,8 +389,8 @@ describe('Backend store action/effect/reducer', () => {
   });
 
   it('Refresh action should be successful', async () => {
-    spyOn(fileService, 'refresh').and.returnValue({ changed: true });
-    spyOn(fileService, 'getFiles').and.returnValues({ files: [file1, file2], applications: ['app1'] });
+    spyOn(fileService, 'refresh').and.returnValue({ branchChanged: true });
+    getFilesSpy.and.returnValue({ files: [file1, file2], applications: ['app1'] });
 
     ctx.store.dispatch(new BackendActions.Refresh());
     expect(ctx.dashboarState().refreshing).toBeTruthy();
@@ -413,8 +406,8 @@ describe('Backend store action/effect/reducer', () => {
   });
 
   it('Refresh action should be successful without change', async () => {
-    spyOn(fileService, 'refresh').and.returnValue({ changed: false });
-    spyOn(fileService, 'getFiles').and.returnValues({ files: [file1, file2], applications: ['app1'] });
+    spyOn(fileService, 'refresh').and.returnValue({ branchChanged: false });
+    getFilesSpy.and.returnValue({ files: [file1, file2], applications: ['app1'] });
 
     ctx.store.dispatch(new BackendActions.Refresh());
     expect(ctx.dashboarState().refreshing).toBeTruthy();
@@ -449,7 +442,7 @@ describe('Backend store action/effect/reducer', () => {
 
   it('Checkout action should be successful', async () => {
     spyOn(fileService, 'checkoutBranch').and.callFake(() => { });
-    spyOn(fileService, 'getFiles').and.returnValues(
+    getFilesSpy.and.returnValues(
       { files: [], applications: [] },
       { files: [file1, file2], applications: ['app1'] });
 
@@ -462,6 +455,8 @@ describe('Backend store action/effect/reducer', () => {
     ctx.store.dispatch(new BackendActions.Initialized({ principal }));
 
     await ctx.fixture.whenStable();
+
+    expect(ctx.backendState().files.ids.length).toEqual(0);
 
     ctx.store.dispatch(new BackendActions.Checkout({ type: 'create', branch: 'some-branch' }));
     expect(ctx.dashboarState().refreshing).toBeTruthy();
@@ -491,6 +486,101 @@ describe('Backend store action/effect/reducer', () => {
     assertDialogOpened(AlertDialogComponent, {
       data: {
         message: 'Mock error',
+        alertType: 'error'
+      }
+    });
+  });
+
+  it('Merge branch action should be successful', async () => {
+    const mergeBranchSpy = spyOn(fileService, 'mergeBranch');
+
+    getFilesSpy.and.returnValue(
+      { files: [file1, file2], applications: ['app1'] });
+
+    ctx.store.dispatch(new BackendActions.MergeBranch(
+      { srcBranch: 'master', targetBranch: 'some-branch', diff: { toSave: [file1], toDelete: [] } }));
+    expect(ctx.dashboarState().committingFile).toBeTruthy();
+
+    await ctx.fixture.whenStable();
+
+    expect(mergeBranchSpy.calls.count()).toEqual(1);
+    expect(ctx.dashboarState().committingFile).toBeFalsy();
+
+    await ctx.fixture.whenStable();
+
+    expect(ctx.backendState().files.ids.length).toEqual(2);
+  });
+
+  it('Merge branch action should be successful without diff', async () => {
+    const mergeBranchSpy = spyOn(fileService, 'mergeBranch');
+    spyOn(fileService, 'refresh').and.callFake(() => { });
+    spyOn(fileService, 'branchDiff').and.callFake(() => {
+      return { toSave: [], toDelete: [], conflictFiles: [] };
+    });
+
+    getFilesSpy.and.returnValue(
+      { files: [file1, file2], applications: ['app1'] });
+
+    ctx.store.dispatch(new BackendActions.MergeBranch({ srcBranch: 'master', targetBranch: 'some-branch' }));
+    expect(ctx.dashboarState().committingFile).toBeTruthy();
+
+    await ctx.fixture.whenStable();
+    await ctx.fixture.whenStable();
+
+    expect(mergeBranchSpy.calls.count()).toEqual(0);
+    expect(ctx.dashboarState().committingFile).toBeFalsy();
+
+    await ctx.fixture.whenStable();
+
+    expect(ctx.backendState().files.ids.length).toEqual(2);
+  });
+
+  it('Merge branch action should resolve conflicts successfully', async () => {
+    const mergeBranchSpy = spyOn(fileService, 'mergeBranch');
+    spyOn(fileService, 'refresh').and.callFake(() => { });
+    spyOn(fileService, 'branchDiff').and.callFake(() => {
+      return { toSave: [file1], toDelete: [], conflictFiles: [file2] };
+    });
+
+    getFilesSpy.and.returnValue(
+      { files: [file1, file2], applications: ['app1'] });
+
+    ctx.store.dispatch(new BackendActions.MergeBranch({ srcBranch: 'master', targetBranch: 'some-branch' }));
+    await ctx.fixture.whenStable();
+    await ctx.fixture.whenStable();
+
+    assertDialogOpened(ConflictDialogComponent, {
+      data: {
+        diff: { toSave: [file1], toDelete: [] },
+        conflictFiles: [file2],
+        srcBranch: 'master',
+        targetBranch: 'some-branch'
+      }
+    });
+
+    ctx.dialogStub.output.next([file2]);
+    await ctx.fixture.whenStable();
+
+    expect(mergeBranchSpy.calls.count()).toEqual(1);
+    expect(ctx.backendState().files.ids.length).toEqual(2);
+  });
+
+  it('Merge branch fail, alert dialog should show', async () => {
+    const mergeBranchSpy = spyOn(fileService, 'mergeBranch');
+    mergeBranchSpy.and.throwError('Mock merge error');
+
+    ctx.store.dispatch(new BackendActions.MergeBranch(
+      { srcBranch: 'master', targetBranch: 'some-branch', diff: { toSave: [file1], toDelete: [] } }));
+    expect(ctx.dashboarState().committingFile).toBeTruthy();
+
+    await ctx.fixture.whenStable();
+
+    expect(mergeBranchSpy.calls.count()).toEqual(1);
+    expect(ctx.dashboarState().committingFile).toBeFalsy();
+
+    assertDialogOpened(AlertDialogComponent, {
+      data: {
+        message: 'Mock merge error',
         alertType: 'error'
       }
     });
