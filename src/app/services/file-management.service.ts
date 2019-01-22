@@ -398,10 +398,21 @@ export class FileManagementService {
     srcFiles = srcFiles || this.flatFiles(await this.findRepoYamlFiles(repoDir, srcCommitOid));
     targetFiles = targetFiles || this.flatFiles(await this.findRepoYamlFiles(repoDir, targetCommitOid));
 
-    if (mergeBase) {
-      // Changes in src branch
-      const baseFiles = mergeBase === targetCommitOid ? targetFiles : this.flatFiles(await this.findRepoYamlFiles(repoDir, mergeBase));
+    let baseFiles: { [key: string]: ConfigFile };
 
+    if (mergeBase) {
+      try {
+        baseFiles = mergeBase === targetCommitOid ? targetFiles : this.flatFiles(await this.findRepoYamlFiles(repoDir, mergeBase));
+      } catch (err) {
+        if (err.code !== git.E.ReadObjectFail) {
+          // We shallow clone, the commit history may be incomplete,
+          throw err;
+        }
+      }
+    }
+
+    if (baseFiles) {
+      // Changes in src branch
       const { onlyInLeft: srcCreated, onlyInRight: srcDeleted, modified: srcModified } = this.diffBranchFiles(srcFiles, baseFiles);
 
       // 3-way diff

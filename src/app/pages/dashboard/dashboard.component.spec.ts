@@ -72,7 +72,8 @@ describe('DashboardComponent', () => {
     expect(ctx.component.pullRequestUrl).toEqual(`https://github.com/repo/pull/new/${TestUser.branchName}`);
 
     ctx.store.next(new LoginSuccess({...TestUser, repositoryUrl: 'https://gitlab.com/repo'}));
-    expect(ctx.component.pullRequestUrl).toEqual(`https://gitlab.com/repo/merge_requests/new`);
+    expect(ctx.component.pullRequestUrl).toEqual(
+      `https://gitlab.com/repo/merge_requests/new/diffs?merge_request%5Bsource_branch%5D=${TestUser.branchName}`);
 
     ctx.store.next(new LoginSuccess({...TestUser, repositoryUrl: 'https://not-supported.com/repo'}));
     expect(ctx.component.pullRequestUrl).toBeNull();
