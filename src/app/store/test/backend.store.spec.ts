@@ -440,6 +440,30 @@ describe('Backend store action/effect/reducer', () => {
     });
   });
 
+  it('Refresh while current branch deleted, should switch to master', async () => {
+    spyOn(fileService, 'refresh').and.callFake(() => {
+      const err = new Error(`Branch has been deleted in remote repo`);
+      err['currentBranchDeleted'] = true;
+      throw err;
+    });
+    spyOn(fileService, 'checkoutBranch').and.throwError('Mock checkout error');
+
+    ctx.store.dispatch(new BackendActions.Refresh());
+    expect(ctx.dashboarState().refreshing).toBeTruthy();
+
+    await ctx.fixture.whenStable();
+    await ctx.fixture.whenStable();
+
+    expect(ctx.dashboarState().refreshing).toBeFalsy();
+
+    assertDialogOpened(AlertDialogComponent, {
+      data: {
+        message: 'Mock checkout error',
+        alertType: 'error'
+      }
+    });
+  });
+
   it('Checkout action should be successful', async () => {
     spyOn(fileService, 'checkoutBranch').and.callFake(() => { });
     getFilesSpy.and.returnValues(

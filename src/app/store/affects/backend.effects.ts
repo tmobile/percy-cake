@@ -75,10 +75,10 @@ export class BackendEffects {
     ofType<Refresh>(BackendActionTypes.Refresh),
     withLatestFrom(this.store.pipe(select(appStore.getPrincipal))),
     switchMap(async ([_action, pricinpal]) => {
+      const result = [];
 
       try {
         const { branchChanged, masterChanged } = await this.fileManagementService.refresh(pricinpal);
-        const result = [];
 
         result.push(new RefreshSuccess());
         if (branchChanged || masterChanged) {
@@ -86,7 +86,11 @@ export class BackendEffects {
         }
         return result;
       } catch (error) {
-        return [new RefreshFailure(error)];
+        result.push(new RefreshFailure(error));
+        if (error['currentBranchDeleted']) {
+          result.push(new Checkout({ type: 'switch', branch: 'master' }));
+        }
+        return result;
       }
     }),
     switchMap(res => res),

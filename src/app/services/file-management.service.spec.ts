@@ -349,14 +349,14 @@ describe('FileManagementService', () => {
   it('branch already exist, should not be created again', async () => {
     await fileService.accessRepo(TestUser);
 
-    fetchStub.and.callFake(async (ops) => {
-      await git.writeRef({
-        dir: ops.dir,
-        ref: 'refs/remotes/origin/branch1',
-        value: newCommitOid,
-        force: true,
-      });
-      return { fetchHead: commits.master };
+    getRemoteInfoStub.and.returnValue({
+      refs: {
+        heads: {
+          'master': commits.master,
+          [TestUser.branchName]: commits.master,
+          'branch1': newCommitOid,
+        }
+      }
     });
 
     try {
@@ -576,20 +576,20 @@ describe('FileManagementService', () => {
     await fileService.accessRepo(TestUser);
     await fileService.checkoutBranch(principal, 'switch', TestUser.branchName);
 
-    fetchStub.and.callFake(async () => {
-      const error = new Error();
-      error['code'] = git.E.ResolveRefError;
-      throw error;
+    getRemoteInfoStub.and.returnValue({
+      refs: {
+        heads: {
+          'master': commits.master,
+        }
+      }
     });
 
-    const { pulledCommit, branchChanged, masterChanged } = await fileService.refresh(principal);
-    expect(pulledCommit).toEqual(commits[TestUser.branchName]);
-    expect(branchChanged).toBeFalsy();
-    expect(masterChanged).toBeFalsy();
-
-    // Head SHA ref should be same as remotes SHA
-    assertHeadCommit(TestUser.branchName, commits[TestUser.branchName]);
-    assertRemoteCommit(TestUser.branchName, commits[TestUser.branchName]);
+    try {
+      await fileService.refresh(principal);
+      fail('should fail');
+    } catch (err) {
+      expect(err.message.indexOf(`Branch ${TestUser.branchName} has been deleted in remote repo`) > -1).toBeTruthy();
+    }
   });
 
   it('refresh repo fails, error expected', async () => {
