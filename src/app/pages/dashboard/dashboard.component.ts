@@ -135,7 +135,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           } else if (url.host.endsWith('github.com')) {
             this.pullRequestUrl = `${url.href}/pull/new/${user.branchName}`;
           } else if (url.host.endsWith('gitlab.com')) {
-            this.pullRequestUrl = `${url.href}/merge_requests/new`;
+            this.pullRequestUrl = `${url.href}/merge_requests/new/diffs?merge_request%5Bsource_branch%5D=${user.branchName}`;
           } else {
             this.pullRequestUrl = null;
           }
