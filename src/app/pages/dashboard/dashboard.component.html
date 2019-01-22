@@ -14,12 +14,12 @@
 
     <div class="btns-wrapper">
       <div matTooltip="Commit Changes">
-        <button type="button" mat-raised-button [disabled]="(disableCommit|async) || (currentUser|async)?.branchName === 'master'" color="primary" class="btn-icon" (click)="commitChanges()">
+        <button type="button" *ngIf="(currentUser|async)?.branchName !== 'master'" mat-raised-button [disabled]="(disableCommit|async)" color="primary" class="btn-icon" (click)="commitChanges()">
           <mat-icon svgIcon="commit"></mat-icon>
         </button>
       </div>
       <div matTooltip="Add New File">
-        <button type="button" mat-raised-button [disabled]="(currentUser|async)?.branchName === 'master'" color="primary" class="btn-icon" (click)="addNewFile()">
+        <button type="button" *ngIf="(currentUser|async)?.branchName !== 'master'" mat-raised-button color="primary" class="btn-icon" (click)="addNewFile()">
           <mat-icon svgIcon="add_file"></mat-icon>
         </button>
       </div>
