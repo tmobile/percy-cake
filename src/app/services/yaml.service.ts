@@ -930,4 +930,15 @@ export class YamlService {
     const span = this.highlightVariable(_.defaultTo(node.value, ''));
     return span.html();
   }
+
+  /**
+   * Get tooltip for app's specific percy config.
+   * @param appConfig app's specific percy config
+   * @returns tooltip for app's specific percy config
+   */
+  getAppConfigTooltip(appConfig) {
+    const defaultAppConfig = _.pick(percyConfig, ['variablePrefix', 'variableSuffix', 'variableNamePrefix']);
+    const overridden = _.assign(defaultAppConfig, appConfig);
+    return _.reduce(overridden, (_result, value, key) => _result + key + ': ' + value + '\n', '');
+  }
 }

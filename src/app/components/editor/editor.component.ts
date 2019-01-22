@@ -120,8 +120,7 @@ export class EditorComponent implements OnInit, OnDestroy, OnChanges {
    * Get app's specific percy config
    */
   getAppConfigTooltip() {
-    const defaultAppConfig = _.pick(percyConfig, ['variablePrefix', 'variableSuffix', 'variableNamePrefix']);
-    return JSON.stringify(_.assign(defaultAppConfig, appPercyConfig), null, 2);
+    return this.yamlService.getAppConfigTooltip(appPercyConfig);
   }
 
   /**

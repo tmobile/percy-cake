@@ -17,6 +17,7 @@ import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.co
 import { SelectAppDialogComponent } from 'components/select-app-dialog/select-app-dialog.component';
 
 import * as _ from 'lodash';
+import { YamlService } from 'services/yaml.service';
 
 const commitIcon = require('../../../assets/icon-commit.svg');
 const addFileIcon = require('../../../assets/icon-add-file.svg');
@@ -65,7 +66,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private router: Router,
     private dialog: MatDialog,
     private matIconRegistry: MatIconRegistry,
-    private domSanitizer: DomSanitizer
+    private domSanitizer: DomSanitizer,
+    private yamlService: YamlService,
   ) {
     _.each({
       commit: commitIcon,
@@ -145,6 +147,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
           }
         }
       });
+  }
+
+  /**
+   * Get app's specific percy config
+   */
+  getAppConfigTooltip(appConfig) {
+    return this.yamlService.getAppConfigTooltip(appConfig);
   }
 
   /**

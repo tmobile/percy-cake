@@ -1,7 +1,7 @@
 import { Setup, assertDialogOpened, TestContext, utilService } from 'test/test-helper';
 import * as _ from 'lodash';
 
-import { PROPERTY_VALUE_TYPES, percyConfig, appPercyConfig } from 'config';
+import { PROPERTY_VALUE_TYPES, appPercyConfig } from 'config';
 import { TreeNode } from 'models/tree-node';
 import { Configuration } from 'models/config-file';
 import { Alert } from 'store/actions/common.actions';
@@ -39,8 +39,7 @@ describe('EditorComponent', () => {
 
   it('should create EditorComponent', () => {
     expect(ctx.component).toBeTruthy();
-    const defaultAppConfig = _.pick(percyConfig, ['variablePrefix', 'variableSuffix', 'variableNamePrefix']);
-    expect(JSON.parse(ctx.component.getAppConfigTooltip())).toEqual(_.assign(defaultAppConfig, appPercyConfig));
+    expect(ctx.component.getAppConfigTooltip()).toEqual(utilService.getAppConfigTooltip(appPercyConfig));
   });
 
   it('should init EditorComponent with edit file mode', () => {
