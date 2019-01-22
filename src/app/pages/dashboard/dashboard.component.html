@@ -28,7 +28,7 @@
           <mat-icon svgIcon="sync"></mat-icon>
         </button>
       </div>
-      <div matTooltip="Pull Request">
+      <div matTooltip="{{pullRequestTooltip}}">
         <a *ngIf="(currentUser|async)?.branchName !== 'master' && pullRequestUrl" mat-raised-button [disabled]="!(canPullRequest|async)" color="primary" class="btn-icon" href="{{pullRequestUrl}}" target="_blank">
           <mat-icon svgIcon="pull_request"></mat-icon>
         </a>

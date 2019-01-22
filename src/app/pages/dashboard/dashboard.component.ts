@@ -51,6 +51,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   displayedColumns: string[] = ['applicationName', 'fileName', 'actions'];
   pullRequestUrl: string;
+  pullRequestTooltip: string;
 
   /**
    * creates the component
@@ -129,12 +130,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
       this.currentUser.subscribe((user) => {
         if (user) {
+          this.pullRequestTooltip = 'Pull Request';
           const url = new URL(user.repositoryUrl);
           if (url.host.endsWith('bitbucket.org')) {
             this.pullRequestUrl = `${url.href}/pull-requests/new?source=${user.branchName}&t=1#diff`;
           } else if (url.host.endsWith('github.com')) {
             this.pullRequestUrl = `${url.href}/pull/new/${user.branchName}`;
           } else if (url.host.endsWith('gitlab.com')) {
+            this.pullRequestTooltip = 'Merge Request';
             this.pullRequestUrl = `${url.href}/merge_requests/new/diffs?merge_request%5Bsource_branch%5D=${user.branchName}`;
           } else {
             this.pullRequestUrl = null;
