@@ -10,6 +10,7 @@ export interface ConfigFiles extends EntityState<ConfigFile> { }
 
 export interface State {
   applications: string[];
+  appConfigs: {[app: string]: any};
   files: ConfigFiles;
   principal: Principal;
   redirectUrl: string;
@@ -27,6 +28,7 @@ export const GetConfigFile = (state: State, fileName: string, applicationName: s
 
 export const initialState: State = {
   applications: null,
+  appConfigs: {},
   files: ConfigFileAdapter.getInitialState(),
   principal: null,
   redirectUrl: null,
@@ -76,6 +78,7 @@ export function reducer(state = initialState, action: BackendActionsUnion): Stat
         canPullRequest: !!action.payload.canPullRequest,
         canSyncMaster: !!action.payload.canSyncMaster,
         files,
+        appConfigs: action.payload.appConfigs || {},
         applications: _.orderBy(action.payload.applications)
       };
     }
@@ -137,6 +140,7 @@ export const getPrincipal = (state: State) => state.principal;
 export const getCanPullRequest = (state: State) => state.canPullRequest;
 export const getCanSyncMaster = (state: State) => state.canSyncMaster;
 export const getApplications = (state: State) => state.applications;
+export const getAppConfigs = (state: State) => state.appConfigs;
 export const getAllFiles = (state: State) => {
   const files = ConfigFileAdapter.getSelectors().selectAll(state.files);
   const grouped = _.groupBy(files, (file) => file.applicationName);

@@ -39,6 +39,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   currentUser: Observable<User> = this.store.pipe(select(appStore.getCurrentUser));
   selectedApp: Observable<string> = this.store.pipe(select(appStore.getSelectedApp));
   applications: Observable<string[]> = this.store.pipe(select(appStore.getApplications));
+  appConfigs: Observable<{[app: string]: any}> = this.store.pipe(select(appStore.getAppConfigs));
   isDeleting: Observable<boolean> = this.store.pipe(select(appStore.getDashboardFileDeleting));
   isCommitting: Observable<boolean> = this.store.pipe(select(appStore.getDashboardCommittingFile));
   isRefreshing: Observable<boolean> = this.store.pipe(select(appStore.getDashboardRefreshing));

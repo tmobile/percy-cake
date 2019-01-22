@@ -57,7 +57,7 @@ describe('DashboardComponent', () => {
       }
     });
 
-    ctx.store.next(new LoadFilesSuccess({ files, applications }));
+    ctx.store.next(new LoadFilesSuccess({ files, applications, appConfigs: {} }));
   });
 
   it('should create DashboardComponent', () => {

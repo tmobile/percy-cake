@@ -3,6 +3,7 @@
   <div class="col-default-env" appSplitArea [splitSize]="60" [minSize]="330">
     <!-- filename input -->
     <mat-form-field class="filename" [floatLabel]="'always'">
+      <mat-icon matTooltip="{{getAppConfigTooltip()}}" color="primary">info</mat-icon>
       <label>{{appName}}/{{editMode || envFileMode ? fileName : ''}}</label>
       <input [ngClass]="{'hidden': editMode || envFileMode}" type="text" #fileNameInput="matInput" matInput maxlength="50" placeholder="File Name" [formControl]="filename"/>
       <mat-error *ngIf="filename.hasError('required')">*Required</mat-error>

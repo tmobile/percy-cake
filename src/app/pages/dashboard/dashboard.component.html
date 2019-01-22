@@ -54,7 +54,8 @@
       <td mat-cell *matCellDef="let element">
         <div *ngIf="!element.appFile">
           <span class="folder-toggle" (click)="toggleApp(element.app)">{{(collapsedApps|async).indexOf(element.app) > -1 ? '+' : '-' }}</span>
-          <span >{{element.app}}</span>
+          <span>{{element.app}}</span>
+          <mat-icon matTooltip="{{(appConfigs|async)[element.app] | json}}" color="primary">info</mat-icon>
         </div>
       </td>
     </ng-container>

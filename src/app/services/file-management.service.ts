@@ -791,6 +791,13 @@ export class FileManagementService {
       });
     });
 
+    const appConfigs: {[app: string]: any} = {};
+    await Promise.all(draft.applications.map(async (app) => {
+      const appConfig = await this.loadAppPercyConfig(user, app);
+      const defaultAppConfig = _.pick(percyConfig, ['variablePrefix', 'variableSuffix', 'variableNamePrefix']);
+      appConfigs[app] = _.assign(defaultAppConfig, appConfig);
+    }));
+
     let canPullRequest = false;
     let canSyncMaster = false;
     if (branch !== 'master') {
@@ -813,7 +820,7 @@ export class FileManagementService {
       canSyncMaster = !!s.length || !!d.length || !!c.length;
     }
 
-    return { ...draft, canPullRequest, canSyncMaster };
+    return { ...draft, appConfigs, canPullRequest, canSyncMaster };
   }
 
   /**
