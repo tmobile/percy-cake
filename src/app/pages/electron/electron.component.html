@@ -44,7 +44,7 @@
           <button *ngIf="!node.isFile" mat-button class="btn-action-menu" color="primary" (click)="addNewFile(node)">
             Add New File
           </button>
-          <button *ngIf="!node.isFile" mat-button class="btn-action-menu" color="primary" (click)="addEnvironmentsFile(node)">
+          <button *ngIf="!node.isFile && !getEnvFile(node)" mat-button class="btn-action-menu" color="primary" (click)="addEnvironmentsFile(node)">
             Add Environments File
           </button>
           <button *ngIf="node.isFile" mat-button class="btn-action-menu" color="warn" (click)="editFile(node)">
