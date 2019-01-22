@@ -19,10 +19,10 @@ In general, the VSCode extension of Percy editor is also an Angular app running 
 # At first build & package the vscode extenstion
 ./vscode/build.sh
 
-# The extension will be packaged at ./vscode/percy-editor-extension-0.0.0.vsix
+# The extension will be packaged at ./vscode/percy-editor-extension-1.0.0.vsix
 ```
 
 After build, you can either:
 
 - Open the project in VSCode, Click "Debug -> Start Debugging", a new VSCode window will be opened with the extension activated.
-- Or install the extension in VScode: `code --install-extension ./vscode/percy-editor-extension-0.0.0.vsix`
+- Or install the extension in VScode: `code --install-extension ./vscode/percy-editor-extension-1.0.0.vsix`
