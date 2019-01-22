@@ -142,6 +142,7 @@ export class LoginComponent implements OnInit {
 
     if (this.username.valid && this.password.valid && this.repositoryURL.valid) {
       const url = new URL(this.repositoryURL.value);
+      url.pathname = url.pathname.replace(/(\/)+$/, '');
       url.pathname = url.pathname.replace(/(\.git)$/, '');
       this.store.dispatch(new AuthActions.Login({
         repositoryUrl: url.href,
