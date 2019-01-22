@@ -288,7 +288,7 @@ export class ElectronAppComponent implements OnInit, OnDestroy {
   private setBackendState() {
     const folders = this.fileDataSource.data;
     const allFiles = this.getAllFiles(folders);
-    this.store.dispatch(new LoadFilesSuccess({ files: allFiles, applications: [] }));
+    this.store.dispatch(new LoadFilesSuccess({ files: allFiles, applications: [], appConfigs: {} }));
   }
 
   /**

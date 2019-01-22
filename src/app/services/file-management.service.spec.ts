@@ -654,7 +654,17 @@ describe('FileManagementService', () => {
   it('should get files successfully', async () => {
     await fileService.accessRepo(TestUser);
 
-    readObjectStub.and.returnValues(...objectTree, ...objectTree, { object: { parent: [] } }, { object: { parent: [] } });
+    readObjectStub.and.returnValues(
+      ...objectTree,
+      { object: '{}', type: 'blob' },
+      { object: '{}', type: 'blob' },
+      { object: '{}', type: 'blob' },
+      { object: '{}', type: 'blob' },
+      { object: '{}', type: 'blob' },
+      { object: '{}', type: 'blob' },
+      ...objectTree,
+      { object: { parent: [] } },
+      { object: { parent: [] } });
 
     const draftPath = path.resolve(percyConfig.draftFolder, TestUser.repoFolder, TestUser.branchName);
     const draftAppsPath = path.resolve(draftPath, percyConfig.yamlAppsFolder);

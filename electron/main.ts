@@ -1,7 +1,7 @@
 import * as path from 'path';
 import * as url from 'url';
 
-import { app, screen, dialog, Menu, BrowserWindow, Event } from 'electron';
+import { app, screen, dialog, Menu, BrowserWindow, Event, shell } from 'electron';
 
 import * as WindowStateKeeper from 'electron-window-state';
 
@@ -195,6 +195,11 @@ function getMainWindow() {
       win.show();
     });
   }
+
+  win.webContents.on('new-window', (e: Event, link: string) => {
+    e.preventDefault();
+    shell.openExternal(link);
+  });
 
   win.webContents.on('will-prevent-unload', (e: Event) => {
     if (unloadAllowed) {

@@ -1,4 +1,7 @@
 .branches-dialog {
+  .mat-form-field {
+    width: 200px;
+  }
   .button-row {
       padding-top: 20px;
       display: flex;
@@ -8,14 +11,6 @@
       }
       button {
         text-transform: uppercase;
-
-        &.btn-submit {
-          width: 85px;
-        }
       }
   }
-}
-
-::ng-deep .mat-form-field-infix {
-  width: 200px !important;
 }

@@ -1,6 +1,7 @@
 import { Setup, assertDialogOpened, TestContext, utilService } from 'test/test-helper';
+import * as _ from 'lodash';
 
-import { PROPERTY_VALUE_TYPES } from 'config';
+import { PROPERTY_VALUE_TYPES, appPercyConfig } from 'config';
 import { TreeNode } from 'models/tree-node';
 import { Configuration } from 'models/config-file';
 import { Alert } from 'store/actions/common.actions';
@@ -38,6 +39,7 @@ describe('EditorComponent', () => {
 
   it('should create EditorComponent', () => {
     expect(ctx.component).toBeTruthy();
+    expect(ctx.component.getAppConfigTooltip()).toEqual(utilService.getAppConfigTooltip(appPercyConfig));
   });
 
   it('should init EditorComponent with edit file mode', () => {
@@ -98,7 +100,7 @@ describe('EditorComponent', () => {
     ctx.component.environments = ['dev'];
     ctx.component.configuration = new Configuration();
 
-    ctx.store.next(new LoadFilesSuccess({ files: [file], applications }));
+    ctx.store.next(new LoadFilesSuccess({ files: [file], applications, appConfigs: {} }));
     ctx.store.next(new PageLoadSuccess({ environments: ['dev'] }));
     ctx.store.next(new GetFileContentSuccess({file: newFile, newlyCreated: true}));
 

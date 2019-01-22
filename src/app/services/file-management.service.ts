@@ -398,10 +398,21 @@ export class FileManagementService {
     srcFiles = srcFiles || this.flatFiles(await this.findRepoYamlFiles(repoDir, srcCommitOid));
     targetFiles = targetFiles || this.flatFiles(await this.findRepoYamlFiles(repoDir, targetCommitOid));
 
-    if (mergeBase) {
-      // Changes in src branch
-      const baseFiles = mergeBase === targetCommitOid ? targetFiles : this.flatFiles(await this.findRepoYamlFiles(repoDir, mergeBase));
+    let baseFiles: { [key: string]: ConfigFile };
 
+    if (mergeBase) {
+      try {
+        baseFiles = mergeBase === targetCommitOid ? targetFiles : this.flatFiles(await this.findRepoYamlFiles(repoDir, mergeBase));
+      } catch (err) {
+        if (err.code !== git.E.ReadObjectFail) {
+          // We shallow clone, the commit history may be incomplete,
+          throw err;
+        }
+      }
+    }
+
+    if (baseFiles) {
+      // Changes in src branch
       const { onlyInLeft: srcCreated, onlyInRight: srcDeleted, modified: srcModified } = this.diffBranchFiles(srcFiles, baseFiles);
 
       // 3-way diff
@@ -780,6 +791,13 @@ export class FileManagementService {
       });
     });
 
+    const appConfigs: {[app: string]: any} = {};
+    await Promise.all(draft.applications.map(async (app) => {
+      const appConfig = await this.loadAppPercyConfig(user, app);
+      const defaultAppConfig = _.pick(percyConfig, ['variablePrefix', 'variableSuffix', 'variableNamePrefix']);
+      appConfigs[app] = _.assign(defaultAppConfig, appConfig);
+    }));
+
     let canPullRequest = false;
     let canSyncMaster = false;
     if (branch !== 'master') {
@@ -802,7 +820,7 @@ export class FileManagementService {
       canSyncMaster = !!s.length || !!d.length || !!c.length;
     }
 
-    return { ...draft, canPullRequest, canSyncMaster };
+    return { ...draft, appConfigs, canPullRequest, canSyncMaster };
   }
 
   /**

@@ -88,7 +88,7 @@ describe('EditorPageComponent', () => {
     const pageLoad = dispatchSpy.calls.argsFor(0)[0].payload;
     expect(pageLoad).toEqual({ fileName: null, applicationName: file.applicationName, editMode: false });
 
-    ctx.store.next(new LoadFilesSuccess({ files: [file], applications }));
+    ctx.store.next(new LoadFilesSuccess({ files: [file], applications, appConfigs: {} }));
     ctx.store.next(new PageLoadSuccess({ environments: ['dev'] }));
     ctx.store.next(new GetFileContentSuccess({file: newFile, newlyCreated: true}));
 

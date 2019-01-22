@@ -91,7 +91,7 @@ describe('Editor store action/effect/reducer', () => {
     const file: ConfigFile = {
       fileName: 'test.yaml', applicationName: 'app1', originalConfig: new Configuration()
     };
-    ctx.store.next(new BackendActions.LoadFilesSuccess({ files: [file], applications: ['app1'] }));
+    ctx.store.next(new BackendActions.LoadFilesSuccess({ files: [file], applications: ['app1'], appConfigs: {} }));
 
     const spy = spyOn(fileService, 'getEnvironments');
     spy.and.returnValue({ environments: ['dev', 'prod'], appPercyConfig: { key1: 'value1' } });

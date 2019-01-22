@@ -14,12 +14,12 @@
 
     <div class="btns-wrapper">
       <div matTooltip="Commit Changes">
-        <button type="button" mat-raised-button [disabled]="(disableCommit|async) || (currentUser|async)?.branchName === 'master'" color="primary" class="btn-icon" (click)="commitChanges()">
+        <button type="button" *ngIf="(currentUser|async)?.branchName !== 'master'" mat-raised-button [disabled]="(disableCommit|async)" color="primary" class="btn-icon" (click)="commitChanges()">
           <mat-icon svgIcon="commit"></mat-icon>
         </button>
       </div>
       <div matTooltip="Add New File">
-        <button type="button" mat-raised-button [disabled]="(currentUser|async)?.branchName === 'master'" color="primary" class="btn-icon" (click)="addNewFile()">
+        <button type="button" *ngIf="(currentUser|async)?.branchName !== 'master'" mat-raised-button color="primary" class="btn-icon" (click)="addNewFile()">
           <mat-icon svgIcon="add_file"></mat-icon>
         </button>
       </div>
@@ -28,7 +28,7 @@
           <mat-icon svgIcon="sync"></mat-icon>
         </button>
       </div>
-      <div matTooltip="Pull Request">
+      <div matTooltip="{{pullRequestTooltip}}">
         <a *ngIf="(currentUser|async)?.branchName !== 'master' && pullRequestUrl" mat-raised-button [disabled]="!(canPullRequest|async)" color="primary" class="btn-icon" href="{{pullRequestUrl}}" target="_blank">
           <mat-icon svgIcon="pull_request"></mat-icon>
         </a>
@@ -54,7 +54,8 @@
       <td mat-cell *matCellDef="let element">
         <div *ngIf="!element.appFile">
           <span class="folder-toggle" (click)="toggleApp(element.app)">{{(collapsedApps|async).indexOf(element.app) > -1 ? '+' : '-' }}</span>
-          <span >{{element.app}}</span>
+          <span>{{element.app}}</span>
+          <mat-icon matTooltip="{{getAppConfigTooltip((appConfigs|async)[element.app])}}" color="primary">info</mat-icon>
         </div>
       </td>
     </ng-container>

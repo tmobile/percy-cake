@@ -13,7 +13,7 @@ import * as appStore from 'store';
 import { Alert } from 'store/actions/common.actions';
 import { ConfigurationChange } from 'store/actions/editor.actions';
 
-import { percyConfig } from 'config';
+import { percyConfig, appPercyConfig } from 'config';
 
 import { TreeNode } from 'models/tree-node';
 import { Configuration } from 'models/config-file';
@@ -114,6 +114,13 @@ export class EditorComponent implements OnInit, OnDestroy, OnChanges {
    */
   ngOnDestroy() {
     this.sub.unsubscribe();
+  }
+
+  /**
+   * Get app's specific percy config
+   */
+  getAppConfigTooltip() {
+    return this.yamlService.getAppConfigTooltip(appPercyConfig);
   }
 
   /**

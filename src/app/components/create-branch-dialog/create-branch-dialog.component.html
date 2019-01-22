@@ -1,7 +1,7 @@
 <div class="branches-dialog">
   <form>
     <mat-form-field>
-      <mat-label>Create Branch</mat-label>
+      <mat-label>Branch Name</mat-label>
       <input type="text" matInput [name]="newBranchName" [formControl]="newBranchName" />
       <mat-error *ngIf="newBranchName.hasError('required')">*Required</mat-error>
       <mat-error *ngIf="newBranchName.hasError('duplicate')">Branch already exists</mat-error>

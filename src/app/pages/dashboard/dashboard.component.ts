@@ -17,6 +17,7 @@ import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.co
 import { SelectAppDialogComponent } from 'components/select-app-dialog/select-app-dialog.component';
 
 import * as _ from 'lodash';
+import { YamlService } from 'services/yaml.service';
 
 const commitIcon = require('../../../assets/icon-commit.svg');
 const addFileIcon = require('../../../assets/icon-add-file.svg');
@@ -39,6 +40,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   currentUser: Observable<User> = this.store.pipe(select(appStore.getCurrentUser));
   selectedApp: Observable<string> = this.store.pipe(select(appStore.getSelectedApp));
   applications: Observable<string[]> = this.store.pipe(select(appStore.getApplications));
+  appConfigs: Observable<{[app: string]: any}> = this.store.pipe(select(appStore.getAppConfigs));
   isDeleting: Observable<boolean> = this.store.pipe(select(appStore.getDashboardFileDeleting));
   isCommitting: Observable<boolean> = this.store.pipe(select(appStore.getDashboardCommittingFile));
   isRefreshing: Observable<boolean> = this.store.pipe(select(appStore.getDashboardRefreshing));
@@ -51,6 +53,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   displayedColumns: string[] = ['applicationName', 'fileName', 'actions'];
   pullRequestUrl: string;
+  pullRequestTooltip: string;
 
   /**
    * creates the component
@@ -63,7 +66,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private router: Router,
     private dialog: MatDialog,
     private matIconRegistry: MatIconRegistry,
-    private domSanitizer: DomSanitizer
+    private domSanitizer: DomSanitizer,
+    private yamlService: YamlService,
   ) {
     _.each({
       commit: commitIcon,
@@ -129,18 +133,27 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
       this.currentUser.subscribe((user) => {
         if (user) {
+          this.pullRequestTooltip = 'Pull Request';
           const url = new URL(user.repositoryUrl);
           if (url.host.endsWith('bitbucket.org')) {
             this.pullRequestUrl = `${url.href}/pull-requests/new?source=${user.branchName}&t=1#diff`;
           } else if (url.host.endsWith('github.com')) {
             this.pullRequestUrl = `${url.href}/pull/new/${user.branchName}`;
           } else if (url.host.endsWith('gitlab.com')) {
-            this.pullRequestUrl = `${url.href}/merge_requests/new`;
+            this.pullRequestTooltip = 'Merge Request';
+            this.pullRequestUrl = `${url.href}/merge_requests/new/diffs?merge_request%5Bsource_branch%5D=${user.branchName}`;
           } else {
             this.pullRequestUrl = null;
           }
         }
       });
+  }
+
+  /**
+   * Get app's specific percy config
+   */
+  getAppConfigTooltip(appConfig) {
+    return this.yamlService.getAppConfigTooltip(appConfig);
   }
 
   /**

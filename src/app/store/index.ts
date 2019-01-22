@@ -56,6 +56,7 @@ export const getLoginError = createSelector(authState, fromAuth.getError);
 export const backendState = createFeatureSelector<AppState, fromBackend.State>('backend');
 export const getPrincipal = createSelector(backendState, fromBackend.getPrincipal);
 export const getApplications = createSelector(backendState, fromBackend.getApplications);
+export const getAppConfigs = createSelector(backendState, fromBackend.getAppConfigs);
 export const getAllFiles = createSelector(backendState, fromBackend.getAllFiles);
 export const getCanPullRequest = createSelector(backendState, fromBackend.getCanPullRequest);
 export const getCanSyncMaster = createSelector(backendState, fromBackend.getCanSyncMaster);

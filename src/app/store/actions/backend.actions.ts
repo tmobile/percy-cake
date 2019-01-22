@@ -53,7 +53,8 @@ export class LoadFiles implements Action {
 export class LoadFilesSuccess implements Action {
   readonly type = BackendActionTypes.LoadFilesSuccess;
 
-  constructor(public payload: { files: ConfigFile[], applications: string[], canPullRequest?: boolean, canSyncMaster?: boolean }) { }
+  constructor(public payload: { files: ConfigFile[], applications: string[],
+    appConfigs: {[app: string]: any}, canPullRequest?: boolean, canSyncMaster?: boolean }) { }
 }
 
 export class LoadFilesFailure implements Action {
