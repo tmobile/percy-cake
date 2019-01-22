@@ -117,6 +117,7 @@ export function reducer(state = initialState, action: BackendActionsUnion): Stat
     case BackendActionTypes.CheckoutSuccess: {
       return {
         ...state,
+        files: initialState.files, // empty the files when checkout, later LoadFiles action will reload them
         principal: {
           user: {
             ...state.principal.user,
