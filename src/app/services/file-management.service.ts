@@ -112,7 +112,7 @@ export class FileManagementService {
         }
       } else {
         // Fetch new commits for all branches
-        await this.fetchAllBranches(auth, repoDir);
+        await this.fetchAllBranches(auth, repoDir, existingRepoMetadata);
       }
     } catch (error) {
       throw this.utilService.convertGitError(error);
@@ -154,10 +154,62 @@ export class FileManagementService {
    *
    * @param auth the authenticate
    * @param repoDir the repo dir
-   * @returns new master commit and flag indicates whether master is changed
+   * @param repoMetadata the repo metadata
+   * @returns flag indicates whether master is changed and flag indicates whether current branch is deleted in remote repo
    */
-  private async fetchAllBranches(auth: Authenticate, repoDir: string) {
-    return await this.fetchBranch(auth, repoDir, 'master', false);
+  private async fetchAllBranches(auth: Authenticate, repoDir: string, repoMetadata: RepoMetadata) {
+
+    const { changed: masterChanged } = await this.fetchBranch(auth, repoDir, 'master', false);
+
+    const fetchedBranches = await git.listBranches({
+      dir: repoDir,
+      remote: 'origin',
+    });
+
+    const remoteBranches = await this.getRemoteBranches(auth);
+
+    const currentBranchDeleted = remoteBranches.indexOf(repoMetadata.branchName) === -1;
+    const deletedBranches = _.difference(fetchedBranches, remoteBranches);
+
+    const fs = await this.utilService.getBrowserFS();
+
+    for (const deletedBranch of deletedBranches) {
+      await git.deleteRef({
+        dir: repoDir,
+        ref: `refs/heads/${deletedBranch}`,
+      });
+      await git.deleteRef({
+        dir: repoDir,
+        ref: `refs/remotes/origin/${deletedBranch}`,
+      });
+      await fs.remove(path.resolve(percyConfig.draftFolder, repoMetadata.repoFolder, deletedBranch));
+      await this.saveCommitBaseSHA(fs, repoMetadata, {}, deletedBranch);
+    }
+
+    return { masterChanged, currentBranchDeleted };
+  }
+
+  /**
+   * Get remote branches.
+   */
+  private async getRemoteBranches(auth: Authenticate) {
+
+    const remoteInfo = await git.getRemoteInfo({
+      url: auth.repositoryUrl,
+      username: auth.username,
+      password: auth.password,
+      corsProxy: percyConfig.corsProxy
+    });
+
+    const flat = (obj: any, paths = []) =>
+      !_.isObject(obj)
+        ? { [paths.join('/')]: obj }
+        : _.reduce(obj, (cum, next, key) => _.merge(cum, flat(next, [...paths, key])), {});
+
+    const remoteBranches = _.keys(flat(remoteInfo.refs.heads));
+    remoteBranches.push('HEAD');
+
+    return remoteBranches;
   }
 
   /**
@@ -236,11 +288,7 @@ export class FileManagementService {
 
     if (type === 'create') {
       // Refresh all branches
-      await this.fetchAllBranches(user, repoDir);
-      const remoteBranches = await git.listBranches({
-        dir: repoDir,
-        remote: 'origin',
-      });
+      const remoteBranches = await this.getRemoteBranches(user);
       if (remoteBranches.indexOf(branch) >= 0) {
         throw new Error(`${branch} already exists`);
       }
@@ -631,12 +679,18 @@ export class FileManagementService {
    * @param principal the logged in user principal
    */
   async refresh(principal: Principal) {
-    const { user } = await this.maintenanceService.checkSessionTimeout(principal);
+    const { user, repoMetadata } = await this.maintenanceService.checkSessionTimeout(principal);
 
     const repoDir = PathFinder.getRepoDir(user);
     const lastCommit = await this.getRemoteCommit(repoDir, user.branchName);
 
-    const { changed: masterChanged } = await this.fetchAllBranches(user, repoDir);
+    const { masterChanged, currentBranchDeleted } = await this.fetchAllBranches(user, repoDir, repoMetadata);
+
+    if (currentBranchDeleted) {
+      const err = new Error(`Branch ${repoMetadata.branchName} has been deleted in remote repo`);
+      err['currentBranchDeleted'] = true;
+      throw err;
+    }
 
     const pulledCommit = await this.syncHeadCommit(repoDir, user.branchName);
 
