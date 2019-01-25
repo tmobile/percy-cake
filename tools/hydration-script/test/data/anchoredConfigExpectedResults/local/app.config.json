@@ -1,15 +1,15 @@
 {
   "server.host": 1,
-  "mytmo.server.host": "https://default.my.t-mobile.com",
-  "middlewareapipath": "https://default.middleware.t-mobile.com/mw/api/path",
-  "middlewareurl": "https://default.middleware.t-mobile.com",
-  "dcphost": "https://default.api.t-mobile.com",
+  "mytx.server.host": "https://default.my.test.com",
+  "middlewareapipath": "https://default.middleware.test.com/mw/api/path",
+  "middlewareurl": "https://default.middleware.test.com",
+  "dcphost": "https://default.api.test.com",
   "api-path": "/path/to/api",
-  "apihost": "http://tmonext-gen.com/path/to/api",
+  "apihost": "http://txnext-gen.com/path/to/api",
   "dcpendpoints": {
-    "dcpcart": "https://default.api.t-mobile.com/api/cart",
-    "dcpupdate": "https://default.api.t-mobile.com/api/update",
-    "dcprefund": "https://default.api.t-mobile.com/api/refund"
+    "dcpcart": "https://default.api.test.com/api/cart",
+    "dcpupdate": "https://default.api.test.com/api/update",
+    "dcprefund": "https://default.api.test.com/api/refund"
   },
   "newProperty": "test",
   "httpCacheConfig": {

@@ -1,15 +1,15 @@
 {
   "server.host": 1,
-  "mytmo.server.host": "https://default.my.t-mobile.com",
-  "middlewareapipath": "https://tmo.tugs.qat.com/mw/api/path",
-  "middlewareurl": "https://tmo.tugs.qat.com",
-  "dcphost": "https://default.api.t-mobile.com",
+  "mytx.server.host": "https://default.my.test.com",
+  "middlewareapipath": "https://tx.tugs.qat.com/mw/api/path",
+  "middlewareurl": "https://tx.tugs.qat.com",
+  "dcphost": "https://default.api.test.com",
   "api-path": "/path/to/api",
-  "apihost": "http://t-mobile.com/path/to/api",
+  "apihost": "http://test.com/path/to/api",
   "dcpendpoints": {
-    "dcpcart": "https://default.api.t-mobile.com/api/cart",
-    "dcpupdate": "https://default.api.t-mobile.com/api/update",
-    "dcprefund": "https://default.api.t-mobile.com/api/refund"
+    "dcpcart": "https://default.api.test.com/api/cart",
+    "dcpupdate": "https://default.api.test.com/api/update",
+    "dcprefund": "https://default.api.test.com/api/refund"
   },
   "newProperty": "hello",
   "httpCacheConfig": {

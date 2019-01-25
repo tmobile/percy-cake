@@ -1,11 +1,11 @@
 invalid: !!map
-  server.host: !!int 1  # TMO server url
-  mytmo.server.host: !!str https://default.my.t-mobile.com  # MYTMO server url
+  server.host: !!int 1  # tx server url
+  mytx.server.host: !!str https://default.my.test.com  # MYtx server url
   middlewareapipath: !!str ${middlewareurl}/mw/api/path
-  middlewareurl: !!str https://default.middleware.t-mobile.com  # Backend MW url
-  dcphost: !!str https://default.api.t-mobile.com
+  middlewareurl: !!str https://default.middleware.test.com  # Backend MW url
+  dcphost: !!str https://default.api.test.com
   api-path: !!str /path/to/api
-  apihost: !!str http://tmonext-gen.com${api-path}
+  apihost: !!str http://txnext-gen.com${api-path}
   dcpendpoints: !!map
     dcpcart: !!str ${dcphost}/api/cart
     dcpupdate: !!str ${dcphost}/api/update
@@ -14,15 +14,15 @@ invalid: !!map
 environments: !!map
   prod: !!map
     inherits: !!str qat
-    apihost: !!str http://t-mobile.com${api-path}
+    apihost: !!str http://test.com${api-path}
     dcphost: !!str http://prod.dcp.com
     dcpendpoints: !!map
       dcpcart: !!str ${dcphost}/api/v2/cart
   dev: !!map
-    middlewareurl: !!str https://tmo.tugs.dev.com  # Production middleware endpoint
-    apihost: !!str http://t-mobile.com${api-path}
+    middlewareurl: !!str https://tx.tugs.dev.com  # Production middleware endpoint
+    apihost: !!str http://test.com${api-path}
     newProperty: !!str hello
   qat: !!map
     inherits: !!str dev
-    middlewareurl: !!str https://tmo.tugs.qat.com  # Production middleware endpoint
-    apihost: !!str http://t-mobile.com${api-path}
+    middlewareurl: !!str https://tx.tugs.qat.com  # Production middleware endpoint
+    apihost: !!str http://test.com${api-path}

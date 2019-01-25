@@ -4,8 +4,8 @@
     "port": 3000,
     "ssl": {
       "enabled": false,
-      "cert": "secrets/tmohapideploy.k8s.crt",
-      "key": "secrets/tmohapideploy.k8s.key",
+      "cert": "secrets/txhapideploy.k8s.crt",
+      "key": "secrets/txhapideploy.k8s.key",
       "ca": "secrets/cacerts.pem"
     }
   },
