@@ -1,0 +1,49 @@
+{
+  "server": {
+    "auth": true,
+    "port": 3000,
+    "ssl": {
+      "enabled": true,
+      "cert": "secrets/tmohapideploy.k8s.crt",
+      "key": "secrets/tmohapideploy.k8s.key",
+      "ca": "secrets/cacerts.pem"
+    }
+  },
+  "s3": {
+    "url": "http://localhost:8080"
+  },
+  "redis": {
+    "host": "10.5.0.10",
+    "port": 6379,
+    "defaultExpiration": 300,
+    "enabled": true
+  },
+  "logging": {
+    "level": "info",
+    "pattern": "%d %p %c %X{sessionId} %m%n"
+  },
+  "domain": {
+    "dcp": {
+      "baseURL": "https://qat03-pd.api.t-mobile.com",
+      "connectionTimeout": 5000,
+      "readTimeout": 30000,
+      "clientId": "regf2J8znJpfzOZjSijG9YiWwBtJc0BO",
+      "endpoints": {
+        "products": {
+          "path": "v2/products",
+          "cache": {
+            "enabled": true,
+            "stale": "12345",
+            "expired": "123456",
+            "key": "productCatalog"
+          }
+        }
+      }
+    },
+    "middleware": {
+      "baseURL": "https://qattbco533.unix.gsm1900.org:5116/genericesp/soap",
+      "connectionTimeout": 5000,
+      "readTimeout": 30000
+    }
+  }
+}
