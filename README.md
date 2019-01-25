@@ -57,31 +57,31 @@ When the `config.yaml` file is compiled it should create a separate `config.json
 Here is an example of a YAML file, and you can notice the `environments` node contains `prod`, `dev` and `qa` environment nodes.
 ```yaml
 default: !!map
-  server.host: !!int 1  # TMO server url
-  mytmo.server.host: !!str "https://default.my.t-mobile.com"  # MYTMO server url
+  server.host: !!int 1  # tx server url
+  mytx.server.host: !!str "https://default.my.test.com"  # MYtx server url
   middlewareapipath: !!str "_{$middlewareurl}_/mw/api/path"
-  $middlewareurl: !!str "https://default.middleware.t-mobile.com"  # Backend MW url
-  $dcphost: !!str "https://default.api.t-mobile.com"
+  $middlewareurl: !!str "https://default.middleware.test.com"  # Backend MW url
+  $dcphost: !!str "https://default.api.test.com"
   $api-path: !!str "/path/to/api"
-  apihost: !!str "http://tmonext-gen.com_{$api-path}_"
+  apihost: !!str "http://txnext-gen.com_{$api-path}_"
   dcpendpoints: !!map
     dcpcart: !!str "_{$dcphost}_/api/cart"
     dcpupdate: !!str "_{$dcphost}_/api/update"
     dcprefund: !!str "_{$dcphost}_/api/refund"
 environments: !!map
   prod: !!map
-    $middlewareurl: !!str "https://e3.my.t-mobile.com"  # Production middleware endpoint
-    apihost: !!str "http://t-mobile.com_{$api-path}_"
+    $middlewareurl: !!str "https://e3.my.test.com"  # Production middleware endpoint
+    apihost: !!str "http://test.com_{$api-path}_"
     $dcphost: !!str "http://prod.dcp.com"
     dcpendpoints: !!map
       dcpcart: !!str "_{$dcphost}_/api/v2/cart"
   dev: !!map
-    $middlewareurl: !!str "https://tmo.tugs.dev.com"  # Production middleware endpoint
-    apihost: !!str "http://t-mobile.com_{$api-path}_"
+    $middlewareurl: !!str "https://tx.tugs.dev.com"  # Production middleware endpoint
+    apihost: !!str "http://test.com_{$api-path}_"
     newProperty: !!str "hello"
   qa: !!map
-    $middlewareurl: !!str "https://tmo.tugs.qat.com"  # Production middleware endpoint
-    apihost: !!str "http://t-mobile.com_{$api-path}_"
+    $middlewareurl: !!str "https://tx.tugs.qat.com"  # Production middleware endpoint
+    apihost: !!str "http://test.com_{$api-path}_"
 ```
 
 
