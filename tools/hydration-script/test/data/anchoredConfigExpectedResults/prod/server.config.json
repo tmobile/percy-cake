@@ -4,8 +4,8 @@
     "port": 3000,
     "ssl": {
       "enabled": true,
-      "cert": "secrets/tmohapideploy.k8s.crt",
-      "key": "secrets/tmohapideploy.k8s.key",
+      "cert": "secrets/txhapideploy.k8s.crt",
+      "key": "secrets/txhapideploy.k8s.key",
       "ca": "secrets/cacerts.pem"
     }
   },
@@ -24,7 +24,7 @@
   },
   "domain": {
     "dcp": {
-      "baseURL": "https://qat03-pd.api.t-mobile.com",
+      "baseURL": "https://qat03-pd.api.test.com",
       "connectionTimeout": 5000,
       "readTimeout": 30000,
       "clientId": "regf2J8znJpfzOZjSijG9YiWwBtJc0BO",
@@ -41,7 +41,7 @@
       }
     },
     "middleware": {
-      "baseURL": "https://tugs-tmo.internal.t-mobile.com:443/genericesp/soap",
+      "baseURL": "https://tugs-tx.internal.test.com:443/genericesp/soap",
       "connectionTimeout": 5000,
       "readTimeout": 30000
     }
