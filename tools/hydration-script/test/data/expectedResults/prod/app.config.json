@@ -1,11 +1,11 @@
 {
   "server.host": 1,
-  "mytmo.server.host": "https://default.my.t-mobile.com",
-  "middlewareapipath": "https://tmo.tugs.qat.com/mw/api/path",
-  "middlewareurl": "https://tmo.tugs.qat.com",
+  "mytx.server.host": "https://default.my.test.com",
+  "middlewareapipath": "https://tx.tugs.qat.com/mw/api/path",
+  "middlewareurl": "https://tx.tugs.qat.com",
   "dcphost": "http://prod.dcp.com",
   "api-path": "/path/to/api",
-  "apihost": "http://t-mobile.com/path/to/api",
+  "apihost": "http://test.com/path/to/api",
   "dcpendpoints": {
     "dcpcart": "http://prod.dcp.com/api/v2/cart",
     "dcpupdate": "http://prod.dcp.com/api/update",
