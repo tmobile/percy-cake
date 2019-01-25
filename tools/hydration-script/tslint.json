@@ -1,0 +1,4 @@
+{
+  "extends": "tslint:recommended",
+  "arrow-parens": "tslint:recommended"
+}

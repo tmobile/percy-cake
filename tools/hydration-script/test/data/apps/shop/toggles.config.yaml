@@ -1,0 +1,8 @@
+default: !!map
+  jwt.enabled: false
+environments: !!map
+  prod: !!map
+    jwt.enabled: !!bool true
+  dev: !!map
+    server.url: !!bool true  # TMo dev url
+    host: !!bool false

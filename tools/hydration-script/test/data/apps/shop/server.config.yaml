@@ -1,0 +1,78 @@
+default: !!map
+  server:
+    auth: true
+    port: 3000
+    ssl:
+      enabled: true
+      cert: secrets/tmohapideploy.k8s.crt
+      key: secrets/tmohapideploy.k8s.key
+      ca: secrets/cacerts.pem
+
+  s3:
+    url: http://localhost:8080
+
+  redis:
+    host: 10.5.0.10
+    port: 6379
+    defaultExpiration: 300
+    enabled: true
+
+  logging:
+    level: info
+    pattern: '%d %p %c %X{sessionId} %m%n'
+
+  domain:
+    dcp:
+      baseURL: !!str https://qat03-pd.api.t-mobile.com  # dcp qat03 url
+      connectionTimeout: 5000
+      readTimeout: 30000
+      clientId: regf2J8znJpfzOZjSijG9YiWwBtJc0BO
+      endpoints:
+        products:
+          path: v2/products
+          cache: !!map # cache properties for this endpoints on this environment
+            enabled: !!bool true # caching is enabled for this endpoint
+            stale: !!str 12345 # duration time of cached response when it is first considered stale
+            expired: !!str 123456 # duration time of cached response when it is first considered expired
+            key: !!str productCatalog # the base redis key in which data will be stored
+
+    middleware:
+      baseURL: !!str https://qattbco533.unix.gsm1900.org:5116/genericesp/soap #middleware qlab03
+      connectionTimeout: 5000
+      readTimeout: 30000
+environments: !!map
+  prod: !!map
+    domain:
+      middleware:
+        baseURL: !!str https://tugs-tmo.internal.t-mobile.com:443/genericesp/soap  # Production middleware endpoint
+      dcp:
+        baseURL: !!str https://qat03-pd.api.t-mobile.com  # dcp qat03 url
+  dev: !!map
+    domain:
+      middleware:
+        baseURL: !!str https://qattbco533.unix.gsm1900.org:5116/genericesp/soap #middleware qlab03
+      dcp:
+        baseURL: !!str https://qat03-pd.api.t-mobile.com  # dcp qat03 url
+  local: !!map
+    s3:
+      url: http://localhost:8000
+    server:
+      auth: false
+      ssl:
+        enabled: false
+    logging:
+      level: info
+    domain:
+      middleware:
+        baseURL: !!str https://qattbco533.unix.gsm1900.org:5116/genericesp/soap #middleware qlab03
+      dcp:
+        baseURL: !!str http://localhost:3838 #mock-api-server
+        endpoints: !!map #collection of endpoints and their properties
+          products: !!map #the v2/products endpoint
+            path: !!str v2/products # path to endpoint - should we delete this and leave it hard-coded?
+            cache: !!map # cache properties for this endpoints on this environment
+              enabled: !!bool true # caching is enabled for this endpoint
+              stale: 12345 # duration time of cached response when it is first considered stale
+              expired: 123456 # duration time of cached response when it is first considered expired
+              key: !!str catalog # the base redis key in which data will be stored
+
