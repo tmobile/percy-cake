@@ -1,16 +1,19 @@
 <div class="col-container" appSplit [gutterWidth]="20">
   <!-- col which shows tree view -->
   <div class="col-default-env" appSplitArea [splitSize]="60" [minSize]="330">
+    <div class="fileinput-wrapper">
     <!-- filename input -->
     <mat-form-field class="filename" [floatLabel]="'always'">
-      <mat-icon matTooltip="{{getAppConfigTooltip()}}" color="primary">info</mat-icon>
-      <label>{{appName}}/{{editMode || envFileMode ? fileName : ''}}</label>
+      <label class="app-label">{{appName}}/{{editMode || envFileMode ? fileName : ''}}</label>
       <input [ngClass]="{'hidden': editMode || envFileMode}" type="text" #fileNameInput="matInput" matInput maxlength="50" placeholder="File Name" [formControl]="filename"/>
+      
       <mat-error *ngIf="filename.hasError('required')">*Required</mat-error>
       <mat-error *ngIf="filename.hasError('alreadyExists')">*The file name already exists</mat-error>
       <mat-error *ngIf="!filename.hasError('required') && filename.hasError('pattern')">The file name should only contain these characters:
         "0-9a-zA-Z-_."</mat-error>
     </mat-form-field>
+    <label class="settings-label" matTooltip="{{getAppConfigTooltip()}}" matTooltipClass="settings-tooltip">Settings</label>
+    </div>
     <!-- property tree -->
     <app-nested-config-view #nestedConfig [configuration]="configuration" [environments]="environments"
       [envFileMode]="envFileMode" (configurationChange)="onConfigChange($event)" (selectedNode)="onNodeSelected($event)"

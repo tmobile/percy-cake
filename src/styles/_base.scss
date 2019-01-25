@@ -101,6 +101,11 @@ a {
 mat-tooltip-component .mat-tooltip {
   white-space: pre-wrap;
   margin: 8px;
+
+  &.settings-tooltip {
+    font-size: 12px;
+    line-height: 14px;
+  }
 }
 .material-icons {
   font-family: 'Material Icons';

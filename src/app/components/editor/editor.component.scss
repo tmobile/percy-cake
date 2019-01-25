@@ -17,7 +17,12 @@
       .section-heading {
           margin-bottom: 20px;
       }
+      .fileinput-wrapper {
+        display: flex;
+        align-items: center;
+      }
       .filename {
+        flex: 1;
         ::ng-deep .mat-form-field-infix {
           display: flex;
           padding-top: 1em;
@@ -28,9 +33,10 @@
         ::ng-deep .mat-form-field-label-wrapper {
           top: 0;
         }
-        label {
+        .app-label {
           color: grey;
         }
+        
         input {
           width: auto;
           flex: 1;
@@ -39,6 +45,10 @@
           }
         }
       }
+      .settings-label {
+          margin-left: auto;
+          padding-left: 15px;
+        }
       app-nested-config-view {
         flex: 1;
       }
