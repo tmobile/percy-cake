@@ -81,7 +81,7 @@
               </button>
           </div>
         </div>
-        <label *ngIf="!element.appFile" matTooltip="{{getAppConfigTooltip((appConfigs|async)[element.app])}}" matTooltipClass="settings-tooltip">Settings</label>
+        <span *ngIf="!element.appFile" matTooltip="{{getAppConfigTooltip((appConfigs|async)[element.app])}}" matTooltipClass="settings-tooltip">Settings</span>
       </td>
     </ng-container>
 
