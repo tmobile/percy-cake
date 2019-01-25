@@ -55,7 +55,6 @@
         <div *ngIf="!element.appFile">
           <span class="folder-toggle" (click)="toggleApp(element.app)">{{(collapsedApps|async).indexOf(element.app) > -1 ? '+' : '-' }}</span>
           <span>{{element.app}}</span>
-          <mat-icon matTooltip="{{getAppConfigTooltip((appConfigs|async)[element.app])}}" color="primary">info</mat-icon>
         </div>
       </td>
     </ng-container>
@@ -82,6 +81,7 @@
               </button>
           </div>
         </div>
+        <span *ngIf="!element.appFile" matTooltip="{{getAppConfigTooltip((appConfigs|async)[element.app])}}" matTooltipClass="settings-tooltip">Settings</span>
       </td>
     </ng-container>
 

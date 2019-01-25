@@ -28,8 +28,12 @@
         ::ng-deep .mat-form-field-label-wrapper {
           top: 0;
         }
-        label {
+        .app-label {
           color: grey;
+        }
+        .settings-label {
+          margin-left: auto;
+          padding-left: 15px;
         }
         input {
           width: auto;
@@ -39,6 +43,7 @@
           }
         }
       }
+      
       app-nested-config-view {
         flex: 1;
       }
