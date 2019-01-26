@@ -297,7 +297,24 @@ function mergeEnvNode(mergedEnvNodes: object, env: string, appConfig: IAppConfig
     const mergedEnvNode = _.cloneDeep(parentEnvNode);
 
     mergeProperties(mergedEnvNode, currentEnvNode);
+
+    validateProperties(mergedEnvNode, appConfig.default, env, "");
+
     return mergedEnvNode;
+}
+
+function validateProperties(node: object, defaultNode: object, env: string, propertyName: string) {
+    for (const key of _.keys(node)) {
+        const name = propertyName ? `${propertyName}.${key}` : key;
+        if (!_.has(defaultNode, key)) {
+            throw new Error(`Cannot find property: ${name} in env node: ${env}.`);
+        }
+        const valueInDefault = _.get(defaultNode, key);
+        const value = _.get(node, key);
+        if (_.isPlainObject(value) && _.isPlainObject(valueInDefault)) {
+            validateProperties(value, valueInDefault, env, name);
+        }
+    }
 }
 
 /**
