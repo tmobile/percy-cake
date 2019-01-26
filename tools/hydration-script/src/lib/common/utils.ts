@@ -303,6 +303,13 @@ function mergeEnvNode(mergedEnvNodes: object, env: string, appConfig: IAppConfig
     return mergedEnvNode;
 }
 
+/**
+ * validates the properties
+ * @param {object} node the node to check.
+ * @param {object} defaultNode the values in default node.
+ * @param {string} env the env.
+ * @param {string} propertyName the property name.
+ */
 function validateProperties(node: object, defaultNode: object, env: string, propertyName: string) {
     for (const key of _.keys(node)) {
         const name = propertyName ? `${propertyName}.${key}` : key;
