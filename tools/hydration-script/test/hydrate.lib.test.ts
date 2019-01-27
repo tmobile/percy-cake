@@ -86,6 +86,18 @@ describe("hydrate", () => {
                     });
         });
 
+        test("Env Contains inconsistent type Property", async () => {
+            const inputFile = path.join(__dirname, "data/appWithNewPropertyInEnvNode/type-test.config.yaml");
+            const outputFile = path.join(outputFolder, "/appWithNewPropertyInEnvNode");
+            await expect(hydrate.hydrateFile(inputFile, undefined, undefined, outputFile))
+                .rejects.toMatchObject(
+                    {
+                        message: `Error in process file: ${inputFile}. Cause:\n`
+                        + `Type is different from default node of property: server.host in env node: qat.`,
+                    });
+        });
+
+
         test("Unresolvable variable", async () => {
             const inputFile = path.join(__dirname, "data/appWithInvalidConfig/invalid.variables.yaml");
             const outputFile = path.join(outputFolder, "/appWithInvalidConfig");

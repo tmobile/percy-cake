@@ -318,6 +318,9 @@ function validateProperties(node: object, defaultNode: object, env: string, prop
         }
         const valueInDefault = _.get(defaultNode, key);
         const value = _.get(node, key);
+        if (typeof valueInDefault !== typeof value) {
+            throw new Error(`Type is different from default node of property: ${name} in env node: ${env}.`);
+        }
         if (_.isPlainObject(value) && _.isPlainObject(valueInDefault)) {
             validateProperties(value, valueInDefault, env, name);
         }
