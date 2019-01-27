@@ -72,7 +72,7 @@ environments: !!map
             path: !!str v2/products # path to endpoint - should we delete this and leave it hard-coded?
             cache: !!map # cache properties for this endpoints on this environment
               enabled: !!bool true # caching is enabled for this endpoint
-              stale: 12345 # duration time of cached response when it is first considered stale
-              expired: 123456 # duration time of cached response when it is first considered expired
+              stale: !!str 12345 # duration time of cached response when it is first considered stale
+              expired: !!str 123456 # duration time of cached response when it is first considered expired
               key: !!str catalog # the base redis key in which data will be stored
 

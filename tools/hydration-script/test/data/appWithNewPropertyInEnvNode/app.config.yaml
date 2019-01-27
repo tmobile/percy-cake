@@ -1,0 +1,12 @@
+default: !!map
+  server.host: !!int 1  # tx server url
+environments: !!map
+  prod: !!map
+    inherits: !!str qat
+    server.host: !!int 1  # tx server url
+  dev: !!map
+    server.host: !!int 2  # tx server url
+  qat: !!map
+    inherits: !!str dev
+    envNewProperty: !!str CANNOT_HAVE_NEW_PROPERTY_IN_ENV
+
