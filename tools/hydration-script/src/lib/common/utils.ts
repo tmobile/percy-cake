@@ -301,7 +301,6 @@ function mergeEnvNode(mergedEnvNodes: object, env: string, appConfig: IAppConfig
     return mergedEnvNode;
 }
 
-
 /**
  * Merge properties
  *
@@ -324,7 +323,7 @@ function mergeProperties(dest: object, src: object, env: string, propertyName: s
             }
 
             if (_.isPlainObject(value) && _.isPlainObject(valueInDest)) {
-              mergeProperties(valueInDest, value, env, name);
+                mergeProperties(valueInDest, value, env, name);
             } else {
                 _.set(dest, key, value);
             }
