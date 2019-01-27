@@ -296,26 +296,39 @@ function mergeEnvNode(mergedEnvNodes: object, env: string, appConfig: IAppConfig
 
     const mergedEnvNode = _.cloneDeep(parentEnvNode);
 
-    mergeProperties(mergedEnvNode, currentEnvNode);
+    mergeProperties(mergedEnvNode, currentEnvNode, env, "");
+
     return mergedEnvNode;
 }
 
 /**
  * Merge properties
  *
- * @param dest the destination object
- * @param src the source object
+ * @param {object} dest the destination object
+ * @param {object} src the source object
+ * @param {string} env the env.
+ * @param {string} propertyName the property name.
  */
-function mergeProperties(dest: object, src: object) {
-    if (!_.isArray(dest) && !_.isArray(src) && _.isObject(dest) && _.isObject(src)) {
-      _.each(src, (value, key) => {
-          if (!_.isArray(value) && _.isObject(value)) {
-              mergeProperties(_.get(dest, key), value);
-          } else if (key !== "inherits") {
-              _.set(dest, key, value);
-          }
-      });
-    }
+function mergeProperties(dest: object, src: object, env: string, propertyName: string) {
+    _.each(src, (value, key) => {
+        // ignore inherits key
+        if (key !== "inherits") {
+            const name = propertyName ? `${propertyName}.${key}` : key;
+            if (!_.has(dest, key)) {
+                throw new Error(`Cannot find property: ${name} in env node: ${env}.`);
+            }
+            const valueInDest = _.get(dest, key);
+            if (typeof valueInDest !== typeof value) {
+                throw new Error(`Type is different from default node for property: ${name} in env node: ${env}.`);
+            }
+
+            if (_.isPlainObject(value) && _.isPlainObject(valueInDest)) {
+                mergeProperties(valueInDest, value, env, name);
+            } else {
+                _.set(dest, key, value);
+            }
+        }
+    });
 }
 
 /**

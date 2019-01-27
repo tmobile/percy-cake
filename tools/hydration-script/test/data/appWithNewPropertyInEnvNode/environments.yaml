@@ -1,0 +1,11 @@
+# What are the environment definitions where this application will be deployed ?
+default: !!map
+  pod: https://dev.kube.one.test.com
+environments: !!map
+  local: !!map
+      # `local` is used for local development workstations
+    pod: !!str localhost:3030
+  dev: !!map
+  prod: !!map
+    pod: !!str https://prod.kube.one.test.com
+  qat: !!map

@@ -1,4 +1,6 @@
 default: !!map
+  server.url: !!bool true
+  host: !!bool false
   jwt.enabled: false
 environments: !!map
   prod: !!map
