@@ -93,7 +93,7 @@ describe("hydrate", () => {
                 .rejects.toMatchObject(
                     {
                         message: `Error in process file: ${inputFile}. Cause:\n`
-                        + `Type is different from default node of property: server.host in env node: qat.`,
+                        + `Type is different from default node for property: server.host in env node: qat.`,
                     });
         });
 

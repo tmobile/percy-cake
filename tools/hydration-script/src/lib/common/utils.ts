@@ -296,53 +296,39 @@ function mergeEnvNode(mergedEnvNodes: object, env: string, appConfig: IAppConfig
 
     const mergedEnvNode = _.cloneDeep(parentEnvNode);
 
-    mergeProperties(mergedEnvNode, currentEnvNode);
-
-    validateProperties(mergedEnvNode, appConfig.default, env, "");
+    mergeProperties(mergedEnvNode, currentEnvNode, env, "");
 
     return mergedEnvNode;
 }
 
 /**
- * validates the properties
- * @param {object} node the node to check.
- * @param {object} defaultNode the values in default node.
+ * Merge properties
+ *
+ * @param {object} dest the destination object
+ * @param {object} src the source object
  * @param {string} env the env.
  * @param {string} propertyName the property name.
  */
-function validateProperties(node: object, defaultNode: object, env: string, propertyName: string) {
-    for (const key of _.keys(node)) {
-        const name = propertyName ? `${propertyName}.${key}` : key;
-        if (!_.has(defaultNode, key)) {
-            throw new Error(`Cannot find property: ${name} in env node: ${env}.`);
-        }
-        const valueInDefault = _.get(defaultNode, key);
-        const value = _.get(node, key);
-        if (typeof valueInDefault !== typeof value) {
-            throw new Error(`Type is different from default node of property: ${name} in env node: ${env}.`);
-        }
-        if (_.isPlainObject(value) && _.isPlainObject(valueInDefault)) {
-            validateProperties(value, valueInDefault, env, name);
-        }
-    }
-}
+function mergeProperties(dest: object, src: object, env: string, propertyName: string) {
+    _.each(src, (value, key) => {
+        // ignore inherits key
+        if (key !== "inherits") {
+            const name = propertyName ? `${propertyName}.${key}` : key;
+            if (!_.has(dest, key)) {
+                throw new Error(`Cannot find property: ${name} in env node: ${env}.`);
+            }
+            const valueInDest = _.get(dest, key);
+            if (typeof valueInDest !== typeof value) {
+                throw new Error(`Type is different from default node for property: ${name} in env node: ${env}.`);
+            }
 
-/**
- * Merge properties
- *
- * @param dest the destination object
- * @param src the source object
- */
-function mergeProperties(dest: object, src: object) {
-    if (!_.isArray(dest) && !_.isArray(src) && _.isObject(dest) && _.isObject(src)) {
-      _.each(src, (value, key) => {
-          if (!_.isArray(value) && _.isObject(value)) {
-              mergeProperties(_.get(dest, key), value);
-          } else if (key !== "inherits") {
-              _.set(dest, key, value);
-          }
-      });
-    }
+            if (_.isPlainObject(value) && _.isPlainObject(valueInDest)) {
+                mergeProperties(valueInDest, value, env, name);
+            } else {
+                _.set(dest, key, value);
+            }
+        }
+    });
 }
 
 /**
