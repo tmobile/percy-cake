@@ -35,6 +35,7 @@ export class EditorPageComponent implements OnInit, OnDestroy {
   fileName: string;
   editMode = false;
   envFileMode = false;
+  isViewOnly = false;
 
   environments = this.store.pipe(select(appStore.getEnvironments));
   configuration = this.store.pipe(select(appStore.getConfiguration));
@@ -77,6 +78,10 @@ export class EditorPageComponent implements OnInit, OnDestroy {
 
     this.isPageDirty$.subscribe(res => {
       this.isPageDirty = res;
+    });
+
+    this.currentUser.subscribe(res => {
+      this.isViewOnly = res && res.branchName === 'master';
     });
   }
 

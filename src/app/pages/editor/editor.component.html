@@ -2,7 +2,8 @@
 <div class="editor-page">
   <div class="breadcrumbs-wrapper">
     <a routerLink="/" color="primary">Dashboard</a>
-    <span>{{editMode ? 'Edit': 'Add'}} File</span>
+    <span *ngIf="!isViewOnly">{{editMode ? 'Edit': 'Add'}} File</span>
+    <span *ngIf="isViewOnly">View File</span>
   </div>
 
   <app-editor #editor *ngIf="(environments | async) && (configuration | async); else loader"
@@ -14,12 +15,12 @@
           Cancel
         </button>
 
-        <button *ngIf="(currentUser|async)?.branchName !== 'master'" type="button" mat-raised-button color="primary" [disabled]="(isSaving | async) || !isPageDirty" class="btn-save"
+        <button *ngIf="!isViewOnly" type="button" mat-raised-button color="primary" [disabled]="(isSaving | async) || !isPageDirty" class="btn-save"
           (click)="saveConfig()">
           Save As Draft
         </button>
 
-        <button *ngIf="(currentUser|async)?.branchName !== 'master'" type="button" mat-raised-button color="primary" [disabled]="(isCommitting | async) || !(configFile | async)?.modified"
+        <button *ngIf="!isViewOnly" type="button" mat-raised-button color="primary" [disabled]="(isCommitting | async) || !(configFile | async)?.modified"
           class="btn-save" (click)="commitFile()">
           Commit
         </button>
