@@ -7,6 +7,7 @@
       <mat-error *ngIf="newBranchName.hasError('duplicate')">Branch already exists</mat-error>
       <mat-error *ngIf="newBranchName.hasError('locked')">Branch is locked</mat-error>
       <mat-error *ngIf="newBranchName.hasError('pattern')">Branch should only contain: "a-zA-Z0-9_-"</mat-error>
+      <mat-error *ngIf="newBranchName.hasError('maxlength')">Branch name max length is 30</mat-error>
     </mat-form-field>
 
     <div class="button-row">
