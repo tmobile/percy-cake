@@ -76,7 +76,7 @@ export class MainHeaderComponent implements OnInit {
     });
     dialogRef.afterClosed().subscribe(newBranch => {
       if (newBranch) {
-        // creat new branch and checkout this branch
+        // create new branch and checkout this branch
         this.store.dispatch(new Checkout({ type: 'create', branch: newBranch}));
       }
     });
