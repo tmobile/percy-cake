@@ -1,0 +1,15 @@
+{
+  "$schema": "../../node_modules/@angular-devkit/architect/src/builders-schema.json",
+  "builders": {
+    "browser": {
+      "class": "./browser",
+      "schema": "../../node_modules/@angular-devkit/build-angular/src/browser/schema.json",
+      "description": "Build browser app extended with custom webpack config"
+    },
+    "karma": {
+      "class": "./karma",
+      "schema": "../../node_modules/@angular-devkit/build-angular/src/karma/schema.json",
+      "description": "Karma server extended with custom webpack config"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "outDir": "../dist",
+    "module": "commonjs",
+    "target": "es6",
+    "lib": [
+      "es6"
+    ],
+    "types": [
+      "node"
+    ],
+    "sourceMap": true,
+    "noUnusedLocals": true,
+    "noImplicitThis": true,
+    "noImplicitReturns": true,
+    "strictNullChecks": false,
+    "noUnusedParameters": true
+  },
+  "include": [
+    "./extension.ts",
+  ],
+  "exclude": [
+    "node_modules",
+  ]
+}

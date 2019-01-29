@@ -1,13 +1,11 @@
 # See http://help.github.com/ignore-files/ for more about ignoring files.
 
 # compiled output
-/dist
-/vscode/dist
-/vscode/*.vsix
-/electron/dist
-/electron/release
+dist
+out-tsc
+/packages/vscode/*.vsix
+/packages/electron/release
 /tmp
-/out-tsc
 
 # dependencies
 node_modules
@@ -31,7 +29,7 @@ node_modules
 # misc
 /.sass-cache
 /connect.lock
-/coverage
+coverage
 /libpeerconnection.log
 npm-debug.log
 yarn-error.log
