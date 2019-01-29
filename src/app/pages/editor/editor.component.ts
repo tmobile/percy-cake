@@ -18,6 +18,8 @@ import { EditorComponent } from 'components/editor/editor.component';
 
 import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
 import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.component';
+import {Observable} from 'rxjs';
+import {User} from '../../models/auth';
 
 /*
   Configurations editor page
@@ -42,6 +44,8 @@ export class EditorPageComponent implements OnInit, OnDestroy {
 
   isPageDirty$ = this.store.pipe(select(appStore.getIsPageDirty));
   isPageDirty = false;
+
+  currentUser: Observable<User> = this.store.pipe(select(appStore.getCurrentUser));
 
   @ViewChild('editor') editor: EditorComponent;
 
