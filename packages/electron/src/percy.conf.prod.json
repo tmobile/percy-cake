@@ -1,0 +1,22 @@
+{
+  "defaultRepositoryUrl": "",
+  "lockedBranches": [
+    "trunk"
+  ],
+  "storeName": "PercyGitRepo",
+  "reposFolder": "/percy-repo",
+  "draftFolder": "/percy-draft",
+  "metaFolder": "/percy-meta",
+  "repoMetadataVersion": "3.0",
+  "loggedInUsersMetaFile": "logged-in-users.json",
+  "yamlAppsFolder": "apps",
+  "environmentsFile": "environments.yaml",
+  "loginSessionTimeout": "1h",
+  "encryptKey": "&Ddf23&*Dksd",
+  "encryptSalt": "23E80(9Dls6$s",
+  "variablePrefix": "_{",
+  "variableSuffix": "}_",
+  "variableNamePrefix": "$",
+  "propertyNameRegex": "^[\\s]*[a-zA-Z0-9$_.-]*[\\s]*$",
+  "filenameRegex": "^[a-zA-Z0-9_.-]*$"
+}

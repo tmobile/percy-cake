@@ -143,13 +143,13 @@ To relieve the impact, we have adopted several ways to reduce file I/O:
 
 There are 3 configuration files:
 
-- [src/percy.conf.json](src/percy.conf.json): configuration used in development
-- [src/percy.conf.test.json](src/percy.conf.test.json): configuration used in Karma test
-- [src/percy.conf.prod.json](src/percy.conf.prod.json): for production configuration, it will be copied to `dist/build/percy.conf.json` in the production build
+- [packages/webapp/src/percy.conf.json](packages/webapp/src/percy.conf.json) and [packages/electron/src/percy.conf.json](packages/electron/src/percy.conf.json): configuration used in development
+- [packages/webapp/src/percy.conf.test.json](packages/webapp/src/percy.conf.test.json): configuration used in Karma test
+- [packages/webapp/src/percy.conf.prod.json](packages/webapp/src/percy.conf.prod.json) and [packages/electron/src/percy.conf.prod.json](packages/electron/src/percy.conf.prod.json): for production configuration, which will be copied to `packages/webapp/dist/percy.conf.json` and `packages/webapp/dist/build/percy.conf.json` in the production build
 
 | Variable              | Description                                                                                                                                                |
 |-----------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| corsProxy             | The cors proxy for isomorphic-git (This config is only used in webapp and irrelevant for Electron app, since Electron app does not need cors proxy server) |
+| corsProxy             | The cors proxy for isomorphic-git (This config is only useful in webapp and irrelevant for Electron app, since Electron app does not need cors proxy server) |
 | defaultRepositoryUrl  | Default repository url shown on login page                                                                                                                 |
 | lockedBranches        | Locked branches, you cannot checkout these branches on dashboard page                                                                                      |
 | storeName             | The browser indexeddb store name                                                                                                                           |
@@ -193,16 +193,17 @@ Prerequisite
 
 ```bash
 # Install dependencies
-npm i
+npm install -g lerna
+lerna bootstrap --hoist
 
 # Lint code
-npm run lint
+lerna run lint --stream
 
 # Run unit tests
-npm test
+lerna run test --stream
 
 # Start development server at http://localhost:4200
-npm start
+lerna run --scope=percy-web-app --stream start
 ```
 
 # Percy Runtime Modes:
@@ -215,7 +216,7 @@ the Percy editor can be run using the webpack development server for local testi
 
 ```bash
 # Build and Start development server at http://localhost:4200
-npm start
+lerna run --scope=percy-web-app --stream start
 ```
 
 
@@ -225,12 +226,12 @@ The Percy editor can be deployed as packaged static assets to any CDN or web ser
 
 ```bash
 # build the application
-npm run build:prod
+lerna run --scope=percy-web-app --stream build:prod
 
 ```
 ### static assets are located at
 
-`/dist/build/`
+`packages/webapp/dist/build/`
 - `favicon.png`
 - `index.html`
 - `percy.bundle.min.js`
@@ -240,17 +241,17 @@ npm run build:prod
 ## 3.  Docker container
 
 The Percy editor can be run as web application within a docker container;
-[click here](docker/readme.docker.md) for more information.
+[click here](packages/docker/readme.docker.md) for more information.
 
 
 ## 4.  VSCode editor extension
 
 The Percy editor can be run as a vscode extension that provides an IDE editor for app config files following the Percy yaml format;
-[click here](vscode/readme.vscode.md) for more information.
+[click here](packages/vscode/readme.vscode.md) for more information.
 
 
 ## 5. Percy Electron App
 
 The Percy editor can be run as a standalone desktop application;
-[click here](electron/readme.electron.md) for more information
+[click here](packages/electron/readme.electron.md) for more information
 
