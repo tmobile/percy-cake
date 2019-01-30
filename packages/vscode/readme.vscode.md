@@ -25,10 +25,10 @@ lerna run --scope=percy-vscode-extension --stream build:prod
 # Package vscode extension
 lerna run --scope=percy-vscode-extension --stream package
 
-# The extension will be packaged at vscode/percy-vscode-extension-1.0.0.vsix
+# The extension will be packaged at packages/vscode/percy-vscode-extension-1.0.0.vsix
 ```
 
 After build, you can either:
 
 - Open the project in VSCode, Click "Debug -> Start Debugging", a new VSCode window will be opened with the extension activated.
-- Or install the extension in VScode: `code --install-extension ./vscode/percy-vscode-extension-1.0.0.vsix`
+- Or install the extension in VScode: `code --install-extension ./packages/vscode/percy-vscode-extension-1.0.0.vsix`

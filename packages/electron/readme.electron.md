@@ -28,7 +28,7 @@ lerna run --scope=percy-electron-app --stream package:win
 
 
 # The app executables will be built at:
-# MacOS: ./electron/release/Percy-mac.dmg
-# Linux: ./electron/release/Percy-linux-x64.zip
-# Windows: ./electron/release/Percy-win-x64.zip
+# MacOS: ./packages/electron/release/Percy-mac.dmg
+# Linux: ./packages/electron/release/Percy-linux-x64.zip
+# Windows: ./packages/electron/release/Percy-win-x64.zip
 ```
