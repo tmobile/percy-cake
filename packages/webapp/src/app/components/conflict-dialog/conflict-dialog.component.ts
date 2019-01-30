@@ -25,6 +25,19 @@ export class ConflictDialogComponent {
     // private yamlService: YamlService,
     @Inject(MAT_DIALOG_DATA) public data) {
     dialogRef.disableClose = true;
+    data.conflictFiles = data.conflictFiles.sort((a, b) => {
+      if (a.applicationName < b.applicationName) {
+        return -1;
+      } else if (a.applicationName > b.applicationName) {
+        return 1;
+      } else if (a.fileName < b.fileName) {
+        return -1;
+      } else if (a.fileName > b.fileName) {
+        return 1;
+      } else {
+        return 0;
+      }
+    });
   }
 
   setFileIdx(_fileIdx: number) {
