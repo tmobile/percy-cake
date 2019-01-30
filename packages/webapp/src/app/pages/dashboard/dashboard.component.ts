@@ -278,7 +278,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   deleteFile(file: ConfigFile) {
     const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
       data: {
-        confirmationText: `Delete ${file.applicationName}/${file.fileName} ?`
+        confirmationText: `Delete ${file.applicationName}/${file.fileName} ?`,
+        delete: true,
       }
     });
 
