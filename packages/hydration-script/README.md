@@ -30,7 +30,7 @@ Script for comparing two json files and outputting their differences to stdout
 compare-json test/data/.percyrc test/data/modified.percyrc
 
 # To generate HTML report
-compare-json test/data/.percyrc test/data/modified.percyrc -- --out ./test/data/out/diff.html
+compare-json test/data/.percyrc test/data/modified.percyrc --out ./test/data/out/diff.html
 ```
 
 ### hydrate
