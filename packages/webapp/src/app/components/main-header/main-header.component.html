@@ -29,6 +29,14 @@
 
 <mat-menu #branchesMenu="matMenu" xPosition="before" class="branches-menu-container">
   <button
+    mat-button
+    color="primary"
+    class="btn-branch-menu btn-create-branch"
+    (click)="createBranch()"
+  >
+    + Create Branch
+  </button>
+  <button
     *ngFor="let branch of branches"
     mat-button
     class="btn-branch-menu"
@@ -36,13 +44,5 @@
     (click)="checkoutBranch(branch)"
   >
     {{branch}} <mat-icon *ngIf="currentBranchName === branch" color="primary">done</mat-icon>
-  </button>
-  <button
-    mat-button
-    color="primary"
-    class="btn-branch-menu btn-create-branch"
-    (click)="createBranch()"
-  >
-    + Create Branch
   </button>
 </mat-menu>
