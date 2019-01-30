@@ -40,9 +40,6 @@ const httpSpy = jasmine.createSpyObj('httpSpy', ['get']);
   if (url === 'percy.conf.json') {
     return of(percyConfig);
   }
-  if (url.startsWith('data:image/svg+xml,')) {
-    return of(decodeURIComponent(url.replace('data:image/svg+xml,', '')));
-  }
   return of(url);
 });
 const ngZoneSpy = jasmine.createSpyObj('ngZoneSpy', ['run']);

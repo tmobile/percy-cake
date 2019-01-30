@@ -76,9 +76,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
       pull_request: pullRequestIcon,
       refresh: refreshIcon,
     }, (icon, key) => {
-      this.matIconRegistry.addSvgIcon(
+      this.matIconRegistry.addSvgIconLiteral(
         key,
-        this.domSanitizer.bypassSecurityTrustResourceUrl('data:image/svg+xml,' + encodeURIComponent(icon))
+        this.domSanitizer.bypassSecurityTrustHtml(icon)
       );
     });
   }
@@ -135,11 +135,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
         if (user) {
           this.pullRequestTooltip = 'Pull Request';
           const url = new URL(user.repositoryUrl);
-          if (url.host.endsWith('bitbucket.org')) {
+          if (url.hostname.endsWith('bitbucket.org')) {
             this.pullRequestUrl = `${url.href}/pull-requests/new?source=${user.branchName}&t=1#diff`;
-          } else if (url.host.endsWith('github.com')) {
+          } else if (url.hostname.endsWith('github.com')) {
             this.pullRequestUrl = `${url.href}/pull/new/${user.branchName}`;
-          } else if (url.host.endsWith('gitlab.com')) {
+          } else if (url.hostname.endsWith('gitlab.com')) {
             this.pullRequestTooltip = 'Merge Request';
             this.pullRequestUrl = `${url.href}/merge_requests/new/diffs?merge_request%5Bsource_branch%5D=${user.branchName}`;
           } else {

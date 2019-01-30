@@ -5,7 +5,7 @@
     <h2>Files</h2>
 
     <label class="apps-label">Application:</label>
-    <mat-form-field>
+    <mat-form-field class="apps-selector-field">
       <mat-select class="apps-selector" [value]="selectedApp|async" (selectionChange)="onSelectApp($event)">
         <mat-option value="">Show All</mat-option>
         <mat-option *ngFor="let app of applications|async" [value]="app">{{app}}</mat-option>

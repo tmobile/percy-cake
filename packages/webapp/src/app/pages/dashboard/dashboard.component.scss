@@ -23,6 +23,12 @@
           margin-left: 100px;
           margin-right: 20px;
         }
+
+        .apps-selector-field {
+          ::ng-deep .mat-form-field-infix {
+            flex: none;
+          }
+        }
     }
     .files-table {
         width: 100%;
