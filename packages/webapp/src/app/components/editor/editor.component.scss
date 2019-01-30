@@ -28,6 +28,12 @@
         ::ng-deep .mat-form-field-label-wrapper {
           top: 0;
         }
+        .input-title {
+          position: absolute;
+          top: 0;
+          font-size: 12px;
+          opacity: 0.5;
+        }
         .app-label {
           color: grey;
         }
@@ -43,7 +49,7 @@
           }
         }
       }
-      
+
       app-nested-config-view {
         flex: 1;
       }

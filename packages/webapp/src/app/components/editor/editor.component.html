@@ -3,8 +3,9 @@
   <div class="col-default-env" appSplitArea [splitSize]="60" [minSize]="330">
     <!-- filename input -->
     <mat-form-field class="filename" [floatLabel]="'always'">
+      <label class="input-title">File Name</label>
       <label class="app-label">{{appName}}/{{editMode || envFileMode ? fileName : ''}}</label>
-      <input [ngClass]="{'hidden': editMode || envFileMode}" type="text" #fileNameInput="matInput" matInput maxlength="50" placeholder="File Name" [formControl]="filename"/>
+      <input [ngClass]="{'hidden': editMode || envFileMode}" type="text" #fileNameInput="matInput" matInput maxlength="50" [formControl]="filename"/>
       <label class="settings-label" matTooltip="{{getAppConfigTooltip()}}" matTooltipClass="settings-tooltip">Settings</label>
       <mat-error *ngIf="filename.hasError('required')">*Required</mat-error>
       <mat-error *ngIf="filename.hasError('alreadyExists')">*The file name already exists</mat-error>
