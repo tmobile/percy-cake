@@ -14,8 +14,15 @@
       padding-right: 10px;
       display: flex;
       flex-direction: column;
+      position: relative;
       .section-heading {
           margin-bottom: 20px;
+      }
+      .input-title {
+        position: absolute;
+        top: 0;
+        font-size: 10px;
+        opacity: 0.8;
       }
       .filename {
         ::ng-deep .mat-form-field-infix {
@@ -28,12 +35,7 @@
         ::ng-deep .mat-form-field-label-wrapper {
           top: 0;
         }
-        .input-title {
-          position: absolute;
-          top: 0;
-          font-size: 12px;
-          opacity: 0.5;
-        }
+
         .app-label {
           color: grey;
         }
@@ -49,7 +51,11 @@
           }
         }
       }
-
+      .filename.edit-mode {
+        ::ng-deep .mat-form-field-infix {
+          padding-top: 0;
+        }
+      }
       app-nested-config-view {
         flex: 1;
       }
