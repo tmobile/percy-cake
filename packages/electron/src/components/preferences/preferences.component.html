@@ -1,7 +1,7 @@
 <!-- preferences component -->
 <div class="preferences-component">
   <!-- preferences form -->
-  
+
   <form class="preferences-form" (ngSubmit)="save()">
       <h1 class="form-heading">Preferences</h1>
 
@@ -10,6 +10,7 @@
         <span matSuffix>{{envFileSuffix}}</span>
         <mat-error *ngIf="environmentsFile.hasError('required')">*Required</mat-error>
         <mat-error *ngIf="environmentsFile.hasError('pattern')">The file name should only contain these characters: "a-zA-Z0-9"</mat-error>
+        <mat-error *ngIf="environmentsFile.hasError('maxlength')">The file name should not contain more than 30 characters</mat-error>
       </mat-form-field>
 
       <mat-form-field class="form-field">
