@@ -47,7 +47,10 @@
     border-radius: 0;
     text-overflow: ellipsis;
     overflow: hidden;
-
+    > .mat-button-wrapper {
+      word-break: break-all;
+      white-space: normal;
+    }
     &.is-current {
       padding-right: 50px;
       position: relative;
