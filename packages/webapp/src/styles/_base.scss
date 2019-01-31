@@ -5,7 +5,7 @@
   outline: none;
   flex-shrink: 0;
   box-sizing: border-box;
-  
+
   &:focus {
     outline: none;
   }
@@ -21,13 +21,16 @@ body {
   background-color: $color-bg-body;
   overflow-x: hidden;
   -ms-overflow-style: scrollbar;  // to fix IE scrollbar issue
+  &.loading {
+    overflow-y: hidden;
+  }
 }
 
 a {
   text-decoration: none;
   outline: none;
   cursor: pointer;
-  
+
   &:hover,
   &:active,
   &:focus {
@@ -127,7 +130,7 @@ pre {
 }
 code.hljs {
   line-height: 18px;
-  
+
   .hljs-string { color: #a31515; } // string value
   .hljs-literal { color: #569cd6; } // boolean value
   .hljs-number { color: #569cd6; } // int value
