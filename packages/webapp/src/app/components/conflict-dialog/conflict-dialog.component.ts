@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import {Component, Inject, OnInit} from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import * as _ from 'lodash';
 
@@ -12,7 +12,7 @@ import { ConfigFile, ConflictFile } from 'models/config-file';
   templateUrl: './conflict-dialog.component.html',
   styleUrls: ['./conflict-dialog.component.scss']
 })
-export class ConflictDialogComponent {
+export class ConflictDialogComponent implements OnInit {
 
   fileIdx = 0;
 
@@ -25,7 +25,10 @@ export class ConflictDialogComponent {
     // private yamlService: YamlService,
     @Inject(MAT_DIALOG_DATA) public data) {
     dialogRef.disableClose = true;
-    data.conflictFiles = data.conflictFiles.sort((a, b) => {
+  }
+
+  ngOnInit() {
+    this.data.conflictFiles = this.data.conflictFiles.sort((a, b) => {
       if (a.applicationName < b.applicationName) {
         return -1;
       } else if (a.applicationName > b.applicationName) {
