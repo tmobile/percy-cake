@@ -18,7 +18,7 @@ export class PreferencesComponent implements OnInit {
 
   envFileSuffix = '.yaml';
 
-  environmentsFile = new FormControl('', [NotEmpty, Validators.pattern('^[\\s]*[a-zA-Z0-9]*[\\s]*$')]);
+  environmentsFile = new FormControl('', [NotEmpty, Validators.maxLength(30), Validators.pattern('^[\\s]*[a-zA-Z0-9]*[\\s]*$')]);
   variablePrefix = new FormControl('', [NotEmpty]);
   variableSuffix = new FormControl('', [NotEmpty]);
   variableNamePrefix = new FormControl('', [NotEmpty, Validators.pattern('^[\\s]*[\\S]*[\\s]*$')]);

@@ -1,3 +1,4 @@
 {
-  "name": "percy-docker"
+  "name": "percy-docker",
+  "version": "1.0.1"
 }

@@ -1,4 +1,5 @@
 {
   "name": "builders",
+  "version": "1.0.1",
   "builders": "builders.json"
 }

@@ -14,13 +14,11 @@
     /* Enable all strict type-checking options. */
     "sourceMap": true,
     "typeRoots": [
-      "node_modules/@types"
+      "../../node_modules/@types"
     ],
-    "baseUrl": ".",
-    "paths": {
-      "*": [
-        "node_modules/*"
-      ]
-    }
+    "types": [
+      "node"
+    ],
+    "baseUrl": "."
   }
 }

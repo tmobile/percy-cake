@@ -12,14 +12,15 @@ const hydrate = new Hydrate({
 const compareJson = new CompareJson({});
 
 async function demo() {
-    const testDataDir = path.join(__dirname, "../test/data");
+    const testDataDir = path.join(__dirname, "../../hydration-script/test/data");
     const inputFolder = path.join(testDataDir, "apps");
 
     const outputFolder = path.join(__dirname, "out");
     await hydrate.hydrateAllApps(inputFolder, outputFolder);
 
     // demo the compare json
-    await compareJson.compare(path.join(testDataDir, ".percyrc"), path.join(testDataDir, "modified.percyrc"));
+    const diff = await compareJson.compare(path.join(testDataDir, ".percyrc"), path.join(testDataDir, "modified.percyrc"));
+    console.log(diff);
 }
 
 demo().then(() => {

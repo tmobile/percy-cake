@@ -1,6 +1,6 @@
 {
   "name": "percy-vscode-extension",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "engines": {
     "vscode": "^1.26.0"
   },
@@ -17,10 +17,10 @@
   "devDependencies": {
     "@angular/cli": "^7.2.0",
     "cross-env": "^5.2.0",
-    "vsce": "^1.54.0",
-    "vscode": "^1.1.26",
     "rimraf": "^2.6.3",
-    "typescript": "^3.2.4"
+    "typescript": "^3.2.4",
+    "vsce": "^1.54.0",
+    "vscode": "^1.1.26"
   },
   "activationEvents": [
     "onCommand:vscode-percy-editor.new",

@@ -47,7 +47,10 @@
     border-radius: 0;
     text-overflow: ellipsis;
     overflow: hidden;
-
+    > .mat-button-wrapper {
+      word-break: break-all;
+      white-space: normal;
+    }
     &.is-current {
       padding-right: 50px;
       position: relative;
@@ -63,9 +66,9 @@
     }
 
     &.btn-create-branch {
-      border-top: 1px solid #c4c4c4;
-      border-top-right-radius: 0;
-      border-top-left-radius: 0;
+      border-bottom: 1px solid #c4c4c4;
+      border-bottom-right-radius: 0;
+      border-bottom-left-radius: 0;
       height: 45px;
     }
   }

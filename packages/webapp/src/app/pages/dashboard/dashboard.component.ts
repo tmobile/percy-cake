@@ -48,6 +48,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   canSyncMaster: Observable<boolean> = this.store.pipe(select(appStore.getCanSyncMaster));
 
   folders = new BehaviorSubject<any[]>(null);
+  modifiedFiles = new BehaviorSubject<any[]>(null);
   disableCommit = new BehaviorSubject<boolean>(true);
   foldersSubscription: Subscription;
 
@@ -76,9 +77,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
       pull_request: pullRequestIcon,
       refresh: refreshIcon,
     }, (icon, key) => {
-      this.matIconRegistry.addSvgIcon(
+      this.matIconRegistry.addSvgIconLiteral(
         key,
-        this.domSanitizer.bypassSecurityTrustResourceUrl('data:image/svg+xml,' + encodeURIComponent(icon))
+        this.domSanitizer.bypassSecurityTrustHtml(icon)
       );
     });
   }
@@ -127,6 +128,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           });
 
           this.disableCommit.next(!modified.length);
+          this.modifiedFiles.next(modified);
           return result;
         })
       ).subscribe(folders$);
@@ -135,11 +137,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
         if (user) {
           this.pullRequestTooltip = 'Pull Request';
           const url = new URL(user.repositoryUrl);
-          if (url.host.endsWith('bitbucket.org')) {
+          if (url.hostname.endsWith('bitbucket.org')) {
             this.pullRequestUrl = `${url.href}/pull-requests/new?source=${user.branchName}&t=1#diff`;
-          } else if (url.host.endsWith('github.com')) {
+          } else if (url.hostname.endsWith('github.com')) {
             this.pullRequestUrl = `${url.href}/pull/new/${user.branchName}`;
-          } else if (url.host.endsWith('gitlab.com')) {
+          } else if (url.hostname.endsWith('gitlab.com')) {
             this.pullRequestTooltip = 'Merge Request';
             this.pullRequestUrl = `${url.href}/merge_requests/new/diffs?merge_request%5Bsource_branch%5D=${user.branchName}`;
           } else {
@@ -256,11 +258,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
    * Commit changes.
    */
   commitChanges() {
-
-    const files = this.folders.value;
-    const modified = files.filter((f) => f.appFile && f.appFile.modified).map(f => ({ ...f.appFile }));
+    const modified = this.modifiedFiles.value;
     const dialogRef = this.dialog.open(CommitDialogComponent);
-
     dialogRef.afterClosed().subscribe(response => {
       if (response) {
         this.store.dispatch(new CommitChanges({
@@ -269,6 +268,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         }));
       }
     });
+
   }
 
   /**

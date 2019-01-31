@@ -3,7 +3,7 @@
 /**
  * Script for comparing two json files and outputting their differences to stdout
  */
-import * as fs from "fs";
+import * as fs from "fs-extra";
 import * as jsondiffpatch from "jsondiffpatch";
 import * as commandLineArgs from "minimist";
 import * as path from "path";
@@ -56,5 +56,6 @@ function writeHTML(file: string, diff: string) {
     const template: string = fs.readFileSync(
         path.join(__dirname, "..", "data", "diff-template.html"), {encoding: "utf-8"});
     const htmlContent = template.replace("$$DIFF_CONTENT$$", diff);
+    fs.ensureDirSync(path.dirname(file));
     fs.writeFileSync(file, htmlContent);
 }
