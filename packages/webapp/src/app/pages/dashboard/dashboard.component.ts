@@ -48,6 +48,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   canSyncMaster: Observable<boolean> = this.store.pipe(select(appStore.getCanSyncMaster));
 
   folders = new BehaviorSubject<any[]>(null);
+  modifiedFiles = new BehaviorSubject<any[]>(null);
   disableCommit = new BehaviorSubject<boolean>(true);
   foldersSubscription: Subscription;
 
@@ -127,6 +128,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           });
 
           this.disableCommit.next(!modified.length);
+          this.modifiedFiles.next(modified);
           return result;
         })
       ).subscribe(folders$);
@@ -256,11 +258,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
    * Commit changes.
    */
   commitChanges() {
-
-    const files = this.folders.value;
-    const modified = files.filter((f) => f.appFile && f.appFile.modified).map(f => ({ ...f.appFile }));
+    const modified = this.modifiedFiles.value;
     const dialogRef = this.dialog.open(CommitDialogComponent);
-
     dialogRef.afterClosed().subscribe(response => {
       if (response) {
         this.store.dispatch(new CommitChanges({
@@ -269,6 +268,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         }));
       }
     });
+
   }
 
   /**
