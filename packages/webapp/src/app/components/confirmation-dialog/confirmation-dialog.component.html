@@ -1,5 +1,5 @@
 <div class="confirmation-dialog">
-  <pre>{{data.confirmationText}}</pre>
+  <pre [ngClass]="data.delete ? 'delete' : ''">{{data.confirmationText}}</pre>
 
   <div class="buttons-row">
     <button tabindex="-1" type="button" mat-button color="primary" class="btn-cancel" mat-dialog-close>
