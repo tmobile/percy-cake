@@ -1,11 +1,11 @@
 {
-	"name": "percy-editor-app",
+  "name": "percy-editor-app",
   "version": "1.0.0",
-	"engines": {
+  "engines": {
     "lerna": "3",
-		"node": "10",
-		"npm": "6.4.1"
-	},
+    "node": "10",
+    "npm": "6.4.1"
+  },
   "dependencies": {
     "@angular/animations": "^7.2.0",
     "@angular/cdk": "^7.2.0",
