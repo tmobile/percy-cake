@@ -10,6 +10,9 @@
     font-weight: 700;
     line-height: 20px;
     text-align: center;
+    &.delete {
+      word-break: break-all;
+    }
   }
   .buttons-row {
     padding-top: 20px;

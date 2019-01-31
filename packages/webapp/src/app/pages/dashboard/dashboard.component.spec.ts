@@ -386,7 +386,8 @@ describe('DashboardComponent', () => {
     ctx.component.deleteFile(file);
     assertDialogOpened(ConfirmationDialogComponent, {
       data: {
-        confirmationText: `Delete ${file.applicationName}/${file.fileName} ?`
+        confirmationText: `Delete ${file.applicationName}/${file.fileName} ?`,
+        delete: true,
       }
     });
     ctx.dialogStub.output.next(false);
@@ -395,7 +396,8 @@ describe('DashboardComponent', () => {
     ctx.component.deleteFile(file);
     assertDialogOpened(ConfirmationDialogComponent, {
       data: {
-        confirmationText: `Delete ${file.applicationName}/${file.fileName} ?`
+        confirmationText: `Delete ${file.applicationName}/${file.fileName} ?`,
+        delete: true,
       }
     });
     ctx.dialogStub.output.next(true);
