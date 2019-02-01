@@ -27,6 +27,10 @@ export class AppEffects {
     ofType<Alert>(CommonActionTypes.Alert),
     map(action => action.payload),
     tap(data => {
+      // refine messages here
+      if (data.message === 'Failed to fetch') {
+        data.message = 'Failed to fetch data, please try again.';
+      }
       this.dialog.open(AlertDialogComponent, { data });
     })
   );
