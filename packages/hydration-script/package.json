@@ -2,6 +2,7 @@
   "name": "percy-hydration",
   "version": "1.0.1",
   "description": "Command line utility scripts for Percy",
+  "repository": "https://github.com/tmobile/percy",
   "main": "dist/index.js",
   "types": "dist/types/index.d.js",
   "bin": {

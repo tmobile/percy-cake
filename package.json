@@ -1,6 +1,7 @@
 {
   "name": "percy-editor-app",
   "version": "1.0.0",
+  "repository": "https://github.com/tmobile/percy",
   "engines": {
     "lerna": "3",
     "node": "10",

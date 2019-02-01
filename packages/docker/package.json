@@ -1,4 +1,5 @@
 {
   "name": "percy-docker",
-  "version": "1.0.1"
+  "version": "1.0.1",
+  "repository": "https://github.com/tmobile/percy"
 }
