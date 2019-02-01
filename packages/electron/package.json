@@ -3,6 +3,7 @@
   "productName": "Percy",
   "description": "Percy Electron App",
   "version": "1.0.1",
+  "repository": "https://github.com/tmobile/percy",
   "main": "dist/main.js",
   "scripts": {
     "postinstall": "electron-builder install-app-deps",

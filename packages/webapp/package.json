@@ -1,6 +1,7 @@
 {
   "name": "percy-web-app",
   "version": "1.0.1",
+  "repository": "https://github.com/tmobile/percy",
   "scripts": {
     "start": "cors-proxy stop && cors-proxy start -d -p 9999 && ng serve",
     "build:prod": "cross-env NODE_ENV=prod ng build --prod",

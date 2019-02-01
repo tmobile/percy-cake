@@ -2,6 +2,7 @@
   "name": "percy-hydration-example",
   "version": "1.0.1",
   "description": "",
+  "repository": "https://github.com/tmobile/percy",
   "scripts": {
     "tsc": "tsc",
     "demo": "tsc && node dist/demo.js"
