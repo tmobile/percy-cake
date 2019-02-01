@@ -4,7 +4,7 @@
   "engines": {
     "vscode": "^1.26.0"
   },
-  "repository": "https://gitlab.com/leviastan/yaml-editor",
+  "repository": "https://github.com/tmobile/percy",
   "publisher": "percy",
   "icon": "media/appicon.128x128.png",
   "main": "dist/extension",
