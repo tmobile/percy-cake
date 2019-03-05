@@ -75,6 +75,7 @@ Main configuration file can be found at `config/default.js`
 | DEFAULT_VARIABLE_PREFIX      | The YAML variable substitute prefix (default value: `_{`)         |
 | DEFAULT_VARIABLE_SUFFIX      | The YAML variable substitute suffix (default value: `}_`)         |
 | DEFAULT_VARIABLE_NAME_PREFIX | The YAML variable name prefix (default value: `$`)                |
+| COLORIZE_CONSOLE             | The flag whether to colorize the console output or not                |
 
 The app folder can contain optional `.percyrc` files, which provide repository-specific or application-specific configuration. The following properties are supported now:
 

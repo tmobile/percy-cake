@@ -20,11 +20,11 @@
 import * as fs from "fs-extra";
 import * as yaml from "js-yaml";
 // @ts-ignore
-import {Validator} from "jsonschema";
+import { Validator } from "jsonschema";
 import * as _ from "lodash";
 import * as path from "path";
-import {IAppConfig, IPercyConfig} from "../interfaces";
-import {logger} from "./index";
+import { IAppConfig, IPercyConfig } from "../interfaces";
+import { logger } from "./index";
 
 /**
  * Read and validate YAML config file
@@ -453,7 +453,7 @@ export async function writeJson(envNode: object, yamlFilePath: string, outputFol
     await Promise.all(
         environments.map(async (env) => {
             const outputFilepath = path.join(outputFolder, env, `${filename}.json`);
-            await fs.writeJSON(outputFilepath, _.get(envNode, env), {spaces: 2});
+            await fs.writeJSON(outputFilepath, _.get(envNode, env), { spaces: 2 });
         }),
     );
 }
@@ -484,4 +484,12 @@ export async function findSubFolders(folderPath: string): Promise<string[]> {
         }
     }
     return folders;
+}
+
+/**
+ * strips the ansi color from string
+ * @param str the string to strip
+ */
+export function stripColor(str: string) {
+    return str.replace(/\x1B[[(?);]{0,2}(;?\d)*./g, "");
 }

@@ -19,12 +19,13 @@
 /**
  * Script for comparing two json files and outputting their differences to stdout
  */
+import * as config from "config";
 import * as fs from "fs-extra";
 import * as jsondiffpatch from "jsondiffpatch";
 import * as commandLineArgs from "minimist";
 import * as path from "path";
-import {logger} from "./lib/common";
-import {CompareJson} from "./lib/compare-json.lib";
+import { logger, utils } from "./lib/common";
+import { CompareJson } from "./lib/compare-json.lib";
 
 // Define command line arguments
 const minimistOptions = {
@@ -56,7 +57,7 @@ async function main() {
             writeHTML(options.out, jsondiffpatch.formatters.html.format(diff, null));
             logger.info(`Html diff file is generated in: ${options.out}`);
         }
-        logger.info(formattedDiff);
+        logger.info(config.get("COLORIZE_CONSOLE") ? formattedDiff : utils.stripColor(formattedDiff));
     } else {
         logger.info(`${options.files[0]} and ${options.files[1]} are exactly same.`);
     }
@@ -70,7 +71,7 @@ async function main() {
 function writeHTML(file: string, diff: string) {
     // read the template
     const template: string = fs.readFileSync(
-        path.join(__dirname, "..", "data", "diff-template.html"), {encoding: "utf-8"});
+        path.join(__dirname, "..", "data", "diff-template.html"), { encoding: "utf-8" });
     const htmlContent = template.replace("$$DIFF_CONTENT$$", diff);
     fs.ensureDirSync(path.dirname(file));
     fs.writeFileSync(file, htmlContent);

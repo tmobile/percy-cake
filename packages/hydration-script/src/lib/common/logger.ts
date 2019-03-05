@@ -22,13 +22,18 @@ import * as winston from "winston";
 
 const transports = [];
 
-transports.push(new (winston.transports.Console)({level: config.get("LOG_LEVEL") || "info"}));
+transports.push(new (winston.transports.Console)({ level: config.get("LOG_LEVEL") || "info" }));
 
-const logger: winston.Logger = winston.createLogger({
-    format: winston.format.combine(
+let formats = winston.format.combine(winston.format.simple());
+if (config.get("COLORIZE_CONSOLE")) {
+    formats = winston.format.combine(
         winston.format.colorize(),
         winston.format.simple(),
-    ),
+    );
+}
+
+const logger: winston.Logger = winston.createLogger({
+    format: formats,
     level: "info",
     transports,
 });
