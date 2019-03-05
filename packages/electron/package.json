@@ -25,5 +25,12 @@
     "electron-builder": "^20.38.4",
     "rimraf": "^2.6.3",
     "typescript": "^3.2.4"
-  }
+  },
+  "license": "Apache-2.0",
+  "licenses": [
+    {
+      "type": "Apache-2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0"
+    }
+  ]
 }
