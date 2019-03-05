@@ -1,14 +1,31 @@
 #!/usr/bin/env node
 
 /**
+ *    Copyright 2019 T-Mobile
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
+
+/**
  * Script for comparing two json files and outputting their differences to stdout
  */
+import * as config from "config";
 import * as fs from "fs-extra";
 import * as jsondiffpatch from "jsondiffpatch";
 import * as commandLineArgs from "minimist";
 import * as path from "path";
-import {logger} from "./lib/common";
-import {CompareJson} from "./lib/compare-json.lib";
+import { logger, utils } from "./lib/common";
+import { CompareJson } from "./lib/compare-json.lib";
 
 // Define command line arguments
 const minimistOptions = {
@@ -40,7 +57,7 @@ async function main() {
             writeHTML(options.out, jsondiffpatch.formatters.html.format(diff, null));
             logger.info(`Html diff file is generated in: ${options.out}`);
         }
-        logger.info(formattedDiff);
+        logger.info(config.get("COLORIZE_CONSOLE") ? formattedDiff : utils.stripColor(formattedDiff));
     } else {
         logger.info(`${options.files[0]} and ${options.files[1]} are exactly same.`);
     }
@@ -54,7 +71,7 @@ async function main() {
 function writeHTML(file: string, diff: string) {
     // read the template
     const template: string = fs.readFileSync(
-        path.join(__dirname, "..", "data", "diff-template.html"), {encoding: "utf-8"});
+        path.join(__dirname, "..", "data", "diff-template.html"), { encoding: "utf-8" });
     const htmlContent = template.replace("$$DIFF_CONTENT$$", diff);
     fs.ensureDirSync(path.dirname(file));
     fs.writeFileSync(file, htmlContent);
