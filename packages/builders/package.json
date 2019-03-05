@@ -2,5 +2,12 @@
   "name": "builders",
   "version": "1.0.1",
   "builders": "builders.json",
-  "repository": "https://github.com/tmobile/percy"
+  "repository": "https://github.com/tmobile/percy",
+  "license": "Apache-2.0",
+  "licenses": [
+    {
+      "type": "Apache-2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0"
+    }
+  ]
 }

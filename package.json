@@ -86,5 +86,12 @@
     "tsconfig-paths": "^3.7.0",
     "tslint": "^5.12.1",
     "typescript": "^3.2.4"
-  }
+  },
+  "license": "Apache-2.0",
+  "licenses": [
+    {
+      "type": "Apache-2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0"
+    }
+  ]
 }
