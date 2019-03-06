@@ -47,11 +47,13 @@ const minimistOptions = {
 const getNumberOfOptionsSet = (opts: string[]) => opts.filter((o) => o).length;
 const options = commandLineArgs(process.argv.slice(2), minimistOptions);
 options.path = options._[0];
+
 if (options.colorConsole !== undefined) {
     options.colorConsole = options.colorConsole === "true";
 }
 let colorConsole: boolean = config.get("COLORIZE_CONSOLE");
-if (options.colorConsole) {
+
+if (typeof options.colorConsole === "boolean") {
     colorConsole = options.colorConsole;
 }
 const logger = getLogger(colorConsole);
