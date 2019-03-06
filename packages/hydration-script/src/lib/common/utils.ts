@@ -24,7 +24,7 @@ import { Validator } from "jsonschema";
 import * as _ from "lodash";
 import * as path from "path";
 import { IAppConfig, IPercyConfig } from "../interfaces";
-import { logger } from "./index";
+import { getLogger } from "./index";
 
 /**
  * Read and validate YAML config file
@@ -36,6 +36,7 @@ export async function readAppConfigYAML(
     filePath: string,
     environments: string[],
     percyConfig: IPercyConfig,
+    colorConsole?: boolean,
 ): Promise<object> {
     const appConfig = await readYAML(filePath);
     const validatedAppConfig = validateAppConfig(appConfig, filePath);
@@ -53,7 +54,7 @@ export async function readAppConfigYAML(
             try {
                 _.set(result, environment, resolveVariables(envNode, percyConfig));
             } catch (e) {
-                logger.error(e.message);
+                getLogger(colorConsole).error(e.message);
                 throw new Error(`Cannot resolve variables at (${filePath} env:${environment})`);
             }
         },
@@ -66,7 +67,8 @@ export async function readAppConfigYAML(
  * @param envFileFolderPath environment file path
  * @param configOptions the hydrate lib options.
  */
-export async function loadEnvironmentsFile(envFileFolderPath: string, configOptions: any): Promise<string[]> {
+export async function loadEnvironmentsFile(envFileFolderPath: string, configOptions: any,
+                                           colorConsole?: boolean): Promise<string[]> {
     const envFileName: string = configOptions.ENVIRONMENT_FILE_NAME;
     const envFilePath = path.join(envFileFolderPath, envFileName);
     const isFileExists = await fs.pathExists(envFilePath);
@@ -74,7 +76,7 @@ export async function loadEnvironmentsFile(envFileFolderPath: string, configOpti
         throw new Error(`Environment file '${envFilePath}' doesn't exist`);
     }
     const appConfig = await readYAML(envFilePath);
-    const validatedAppConfig = validateAppConfig(appConfig, envFilePath);
+    const validatedAppConfig = validateAppConfig(appConfig, envFilePath, colorConsole);
     return Object.keys(validatedAppConfig.environments);
 }
 
@@ -404,7 +406,8 @@ function sortEnvByInherits(environments: string[], envNodes: object): string[] {
  * @param appConfig app configuration object
  * @param configFilePath config file path for logging purposes (optional)
  */
-export function validateAppConfig(appConfig: object, configFilePath?: string): IAppConfig {
+export function validateAppConfig(appConfig: object, configFilePath?: string
+    ,                             colorConsole?: boolean): IAppConfig {
     const schema = {
         id: "/AppConfig",
         properties: {
@@ -421,7 +424,7 @@ export function validateAppConfig(appConfig: object, configFilePath?: string): I
     const v = new Validator();
     const result = v.validate(appConfig, schema);
     if (!result.valid) {
-        result.errors.forEach((e) => logger.error(
+        result.errors.forEach((e) => getLogger(colorConsole).error(
             e.message + `${configFilePath ? ` (${configFilePath})` : ""}`),
         );
         throw new Error(`Invalid config file format ${configFilePath ? `(${configFilePath})` : ""}`);

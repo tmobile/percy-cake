@@ -31,7 +31,11 @@ compare-json test/data/.percyrc test/data/modified.percyrc
 
 # To generate HTML report
 compare-json test/data/.percyrc test/data/modified.percyrc --out ./test/data/out/diff.html
+
+# to turn off/on the console color  pass --consoleColor false/true respectively
+compare-json test/data/.percyrc test/data/modified.percyrc --colorConsole=false
 ```
+
 
 ### hydrate
 
@@ -55,6 +59,9 @@ hydrate -a test/data/apps/shop --out test/data/out/dist/shop
 
 # Process single file
 hydrate -f test/data/apps/shop/app.config.yaml --out test/data/out/dist/shop
+
+# to turn off/on the console color  pass --consoleColor false/true respectively
+hydrate -r test/data/apps --out test/data/out/dist --colorConsole=false
 ```
 
 **_NOTE:_** if you are not installing globally, used the scripts like below instead:
