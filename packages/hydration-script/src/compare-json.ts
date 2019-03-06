@@ -24,21 +24,31 @@ import * as fs from "fs-extra";
 import * as jsondiffpatch from "jsondiffpatch";
 import * as commandLineArgs from "minimist";
 import * as path from "path";
-import { logger, utils } from "./lib/common";
+import { getLogger, utils } from "./lib/common";
 import { CompareJson } from "./lib/compare-json.lib";
 
 // Define command line arguments
 const minimistOptions = {
     alias: {
+        c: "colorConsole",
         f: "files",
         o: "out",
         p: "patates",
     },
-    string: ["files", "out", "patates"],
+    default: { colorConsole: undefined },
+    string: ["colorConsole", "files", "out", "patates"],
 };
 
 const options = commandLineArgs(process.argv.slice(2), minimistOptions);
 options.files = options._;
+if (options.colorConsole !== undefined) {
+    options.colorConsole = options.colorConsole === "true";
+}
+let colorConsole: boolean = config.get("COLORIZE_CONSOLE");
+if (typeof options.colorConsole === "boolean") {
+    colorConsole = options.colorConsole;
+}
+const logger = getLogger(colorConsole);
 if (!options.files || options.files.length !== 2) {
     logger.error("You should provide exactly 2 file names\n" +
         "Example: npm run compare-json firstFile.json secondFile.json");
@@ -57,7 +67,7 @@ async function main() {
             writeHTML(options.out, jsondiffpatch.formatters.html.format(diff, null));
             logger.info(`Html diff file is generated in: ${options.out}`);
         }
-        logger.info(config.get("COLORIZE_CONSOLE") ? formattedDiff : utils.stripColor(formattedDiff));
+        logger.info(colorConsole ? formattedDiff : utils.stripColor(formattedDiff));
     } else {
         logger.info(`${options.files[0]} and ${options.files[1]} are exactly same.`);
     }

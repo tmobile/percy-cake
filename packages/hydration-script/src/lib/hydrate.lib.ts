@@ -19,8 +19,9 @@
  */
 import * as fs from "fs-extra";
 import * as path from "path";
-import {logger, utils} from "./common";
-import {IPercyConfig} from "./interfaces";
+import * as winston from "winston";
+import { getLogger, utils } from "./common";
+import { IPercyConfig } from "./interfaces";
 
 /**
  * The hydrate methods.
@@ -28,13 +29,17 @@ import {IPercyConfig} from "./interfaces";
 export class Hydrate {
     // the options
     private readonly options: any = {};
+    private readonly logger: winston.Logger;
+    private readonly colorConsole?: boolean = undefined;
 
     /**
      * the constructor.
      * @param options the options.
      */
-    constructor(options: any) {
+    constructor(options: any, colorConsole?: boolean) {
         this.options = options;
+        this.colorConsole = colorConsole;
+        this.logger = getLogger(colorConsole);
     }
 
     /**
@@ -53,7 +58,7 @@ export class Hydrate {
             const appOutputFolder = path.join(outputFolder, folder);
             await this.hydrateApp(appFolder, percyConfig, appOutputFolder);
         }));
-        logger.info(`Successfully processed all apps in ${appsRootFolderPath}`);
+        this.logger.info(`Successfully processed all apps in ${appsRootFolderPath}`);
     }
 
     /**
@@ -79,12 +84,12 @@ export class Hydrate {
             );
         }
 
-        const environments = await utils.loadEnvironmentsFile(appFolderPath, this.options);
+        const environments = await utils.loadEnvironmentsFile(appFolderPath, this.options, this.colorConsole);
         const yamlFiles = await utils.findYamlFiles(appFolderPath);
         for (const filepath of yamlFiles) {
             await this.hydrateFile(filepath, environments, percyConfig, outputFolder);
         }
-        logger.info(`Successfully processed all yaml config files in ${appFolderPath}`);
+        this.logger.info(`Successfully processed all yaml config files in ${appFolderPath}`);
     }
 
     /**
@@ -103,14 +108,14 @@ export class Hydrate {
     ): Promise<void> {
         const directoryPath = path.dirname(yamlFilePath);
         if (!environments) {
-            environments = await utils.loadEnvironmentsFile(directoryPath, this.options);
+            environments = await utils.loadEnvironmentsFile(directoryPath, this.options, this.colorConsole);
         }
         if (!percyConfig) {
             percyConfig = await this.loadPercyConfig(directoryPath, true);
         }
         const result = await utils.readAppConfigYAML(yamlFilePath, environments, percyConfig);
         await utils.writeJson(result, yamlFilePath, outputFolder);
-        logger.info(`Successfully processed ${yamlFilePath}`);
+        this.logger.info(`Successfully processed ${yamlFilePath}`);
     }
 
     /**

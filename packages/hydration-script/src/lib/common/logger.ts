@@ -20,22 +20,22 @@
 import * as config from "config";
 import * as winston from "winston";
 
-const transports = [];
+export default function getLogger(colorize?: boolean): winston.Logger {
+    const transports = [];
+    colorize = colorize === undefined ? config.get("COLORIZE_CONSOLE") : colorize;
+    transports.push(new (winston.transports.Console)({ level: config.get("LOG_LEVEL") || "info" }));
+    let formats = winston.format.combine(winston.format.simple());
+    if (colorize) {
+        formats = winston.format.combine(
+            winston.format.colorize(),
+            winston.format.simple(),
+        );
+    }
 
-transports.push(new (winston.transports.Console)({ level: config.get("LOG_LEVEL") || "info" }));
-
-let formats = winston.format.combine(winston.format.simple());
-if (config.get("COLORIZE_CONSOLE")) {
-    formats = winston.format.combine(
-        winston.format.colorize(),
-        winston.format.simple(),
-    );
+    const logger: winston.Logger = winston.createLogger({
+        format: formats,
+        level: "info",
+        transports,
+    });
+    return logger;
 }
-
-const logger: winston.Logger = winston.createLogger({
-    format: formats,
-    level: "info",
-    transports,
-});
-
-export default logger;
