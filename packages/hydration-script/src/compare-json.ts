@@ -53,8 +53,11 @@ if (!options.files || options.files.length !== 2) {
     logger.error("You should provide exactly 2 file names\n" +
         "Example: npm run compare-json firstFile.json secondFile.json");
 } else {
-    main().catch((e) => {
+    main().then(() => {
+        process.exit(0);
+    }).catch((e) => {
         logger.error(e);
+        process.exit(1);
     });
 }
 

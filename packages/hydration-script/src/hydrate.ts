@@ -64,8 +64,15 @@ if (getNumberOfOptionsSet([options.root, options.app, options.file]) !== 1) {
 } else if (!options.out) {
     logger.error("--out option is required");
 } else {
-    main().catch((e) => {
-        logger.error(e.message);
+    main().then((isAllValid) => {
+        if (!isAllValid) {
+            process.exit(1);
+        } else {
+            process.exit(0);
+        }
+    }).catch((e) => {
+        logger.error(e);
+        process.exit(1);
     });
 }
 
