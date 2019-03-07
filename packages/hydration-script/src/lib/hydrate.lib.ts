@@ -147,7 +147,7 @@ export class Hydrate {
             this.logger.info(`Successfully processed ${yamlFilePath}`);
             return true;
         } catch (e) {
-            this.logger.error(e);
+            this.logger.error(`Error occurred while processing ${yamlFilePath}. `, e);
             return false;
         }
     }
