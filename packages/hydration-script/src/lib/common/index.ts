@@ -14,10 +14,10 @@
  *   limitations under the License.
  */
 
-import logger from "./logger";
+import getLogger from "./logger";
 import * as utils from "./utils";
 
 export {
-    logger,
+    getLogger,
     utils,
 };

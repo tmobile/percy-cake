@@ -19,22 +19,29 @@
  */
 import * as fs from "fs-extra";
 import * as path from "path";
-import {logger, utils} from "./common";
-import {IPercyConfig} from "./interfaces";
+import * as winston from "winston";
+import { getLogger, utils } from "./common";
+import { IPercyConfig } from "./interfaces";
 
 /**
  * The hydrate methods.
  */
 export class Hydrate {
+
+    public errors: any = {};
     // the options
     private readonly options: any = {};
+    private readonly logger: winston.Logger;
+    private readonly colorConsole?: boolean = undefined;
 
     /**
      * the constructor.
      * @param options the options.
      */
-    constructor(options: any) {
+    constructor(options: any, colorConsole?: boolean) {
         this.options = options;
+        this.colorConsole = colorConsole;
+        this.logger = getLogger(colorConsole);
     }
 
     /**
@@ -45,15 +52,27 @@ export class Hydrate {
     public async hydrateAllApps(
         appsRootFolderPath: string,
         outputFolder: string,
-    ): Promise<void> {
-        const percyConfig = await this.loadPercyConfig(appsRootFolderPath);
-        const appFolders = await utils.findSubFolders(appsRootFolderPath);
-        await Promise.all(appFolders.map(async (folder) => {
-            const appFolder = path.join(appsRootFolderPath, folder);
-            const appOutputFolder = path.join(outputFolder, folder);
-            await this.hydrateApp(appFolder, percyConfig, appOutputFolder);
-        }));
-        logger.info(`Successfully processed all apps in ${appsRootFolderPath}`);
+    ): Promise<boolean> {
+        try {
+            const percyConfig = await this.loadPercyConfig(appsRootFolderPath);
+            const appFolders = await utils.findSubFolders(appsRootFolderPath);
+            let isAnyFailed = false;
+            await Promise.all(appFolders.map(async (folder) => {
+                const appFolder = path.join(appsRootFolderPath, folder);
+                const appOutputFolder = path.join(outputFolder, folder);
+                const isPassed = await this.hydrateApp(appFolder, percyConfig, appOutputFolder);
+                if (!isAnyFailed && !isPassed) {
+                    isAnyFailed = true;
+                }
+            }));
+            if (!isAnyFailed) {
+                this.logger.info(`Successfully processed all apps in ${appsRootFolderPath}`);
+            }
+            return !isAnyFailed;
+        } catch (e) {
+            this.logger.error(e);
+            return false;
+        }
     }
 
     /**
@@ -66,25 +85,39 @@ export class Hydrate {
         appFolderPath: string,
         percyConfig: IPercyConfig | undefined,
         outputFolder: string,
-    ): Promise<void> {
-        // If percy config is not provided look for it in directory
-        if (!percyConfig) {
-            percyConfig = await this.loadPercyConfig(appFolderPath, true);
-        } else {
-            // Apply local percy config to the provided config
-            percyConfig = Object.assign(
-                {},
-                percyConfig,
-                await this.loadPercyConfig(appFolderPath, false, false),
-            );
-        }
+    ): Promise<boolean> {
+        try {
+            // If percy config is not provided look for it in directory
+            if (!percyConfig) {
+                percyConfig = await this.loadPercyConfig(appFolderPath, true);
+            } else {
+                // Apply local percy config to the provided config
+                percyConfig = Object.assign(
+                    {},
+                    percyConfig,
+                    await this.loadPercyConfig(appFolderPath, false, false),
+                );
+            }
 
-        const environments = await utils.loadEnvironmentsFile(appFolderPath, this.options);
-        const yamlFiles = await utils.findYamlFiles(appFolderPath);
-        for (const filepath of yamlFiles) {
-            await this.hydrateFile(filepath, environments, percyConfig, outputFolder);
+            const environments = await utils.loadEnvironmentsFile(appFolderPath, this.options, this.colorConsole);
+            const yamlFiles = await utils.findYamlFiles(appFolderPath);
+
+            let isAnyFailed = false;
+
+            for (const filepath of yamlFiles) {
+                const isPassed = await this.hydrateFile(filepath, environments, percyConfig, outputFolder);
+                if (!isAnyFailed && !isPassed) {
+                    isAnyFailed = true;
+                }
+            }
+            if (!isAnyFailed) {
+                this.logger.info(`Successfully processed all yaml config files in ${appFolderPath}`);
+            }
+            return !isAnyFailed;
+        } catch (e) {
+            this.logger.error(e);
+            return false;
         }
-        logger.info(`Successfully processed all yaml config files in ${appFolderPath}`);
     }
 
     /**
@@ -100,17 +133,23 @@ export class Hydrate {
         environments: string[] | undefined,
         percyConfig: IPercyConfig | undefined,
         outputFolder: string,
-    ): Promise<void> {
-        const directoryPath = path.dirname(yamlFilePath);
-        if (!environments) {
-            environments = await utils.loadEnvironmentsFile(directoryPath, this.options);
+    ): Promise<boolean> {
+        try {
+            const directoryPath = path.dirname(yamlFilePath);
+            if (!environments) {
+                environments = await utils.loadEnvironmentsFile(directoryPath, this.options, this.colorConsole);
+            }
+            if (!percyConfig) {
+                percyConfig = await this.loadPercyConfig(directoryPath, true);
+            }
+            const result = await utils.readAppConfigYAML(yamlFilePath, environments, percyConfig);
+            await utils.writeJson(result, yamlFilePath, outputFolder);
+            this.logger.info(`Successfully processed ${yamlFilePath}`);
+            return true;
+        } catch (e) {
+            this.logger.error(`Error occurred while processing ${yamlFilePath}. `, e);
+            return false;
         }
-        if (!percyConfig) {
-            percyConfig = await this.loadPercyConfig(directoryPath, true);
-        }
-        const result = await utils.readAppConfigYAML(yamlFilePath, environments, percyConfig);
-        await utils.writeJson(result, yamlFilePath, outputFolder);
-        logger.info(`Successfully processed ${yamlFilePath}`);
     }
 
     /**

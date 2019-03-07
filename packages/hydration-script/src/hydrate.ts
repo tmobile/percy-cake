@@ -21,14 +21,15 @@
  */
 import * as config from "config";
 import * as commandLineArgs from "minimist";
-import {logger} from "./lib/common";
-import {Hydrate} from "./lib/hydrate.lib";
+import { getLogger } from "./lib/common";
+import { Hydrate } from "./lib/hydrate.lib";
 
 // Define command line arguments
 
 const minimistOptions = {
     alias: {
         a: "app",
+        c: "colorConsole",
         f: "file",
         o: "out",
         r: "root",
@@ -36,15 +37,26 @@ const minimistOptions = {
     boolean: ["root", "app", "file"],
     default: {
         app: false,
+        colorConsole: undefined,
         file: false,
         root: false,
     },
-    string: ["out"],
+    string: ["out", "colorConsole"],
 };
 
 const getNumberOfOptionsSet = (opts: string[]) => opts.filter((o) => o).length;
 const options = commandLineArgs(process.argv.slice(2), minimistOptions);
 options.path = options._[0];
+
+if (options.colorConsole !== undefined) {
+    options.colorConsole = options.colorConsole === "true";
+}
+let colorConsole: boolean = config.get("COLORIZE_CONSOLE");
+
+if (typeof options.colorConsole === "boolean") {
+    colorConsole = options.colorConsole;
+}
+const logger = getLogger(colorConsole);
 if (getNumberOfOptionsSet([options.root, options.app, options.file]) !== 1) {
     logger.error("You should choose one of these options --root, --app, --file");
 } else if (!options.path) {
@@ -52,18 +64,26 @@ if (getNumberOfOptionsSet([options.root, options.app, options.file]) !== 1) {
 } else if (!options.out) {
     logger.error("--out option is required");
 } else {
-        main().catch((e) => {
-            logger.error(e.message);
-        });
-    }
+    main().then((isAllValid) => {
+        if (!isAllValid) {
+            process.exit(1);
+        } else {
+            process.exit(0);
+        }
+    }).catch((e) => {
+        logger.error(e);
+        process.exit(1);
+    });
+}
 
 async function main() {
     const hydrate = new Hydrate({
+        COLOR_CONSOLE: colorConsole,
         DEFAULT_PERCY_CONFIG: config.get("DEFAULT_PERCY_CONFIG"),
         ENVIRONMENT_FILE_NAME: config.get("ENVIRONMENT_FILE_NAME"),
         LOG_LEVEL: config.get("LOG_LEVEL"),
         PERCY_CONFIG_FILE_NAME: config.get("PERCY_CONFIG_FILE_NAME"),
-    });
+    }, colorConsole);
 
     if (options.root) {
         return hydrate.hydrateAllApps(options.path, options.out);
