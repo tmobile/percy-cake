@@ -51,7 +51,7 @@ options.path = options._[0];
 if (options.colorConsole !== undefined) {
     options.colorConsole = options.colorConsole === "true";
 }
-let colorConsole: boolean = config.get("COLORIZE_CONSOLE");
+let colorConsole: boolean = String(config.get("COLORIZE_CONSOLE")) === "true";
 
 if (typeof options.colorConsole === "boolean") {
     colorConsole = options.colorConsole;
