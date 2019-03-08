@@ -76,13 +76,13 @@ Main configuration file can be found at `config/default.js`
 
 | Variable                     | Description                                                                                                                                                |
 |------------------------------|-------------------------------------------------------------------|
-| LOG_LEVEL                    |                                                                   |
-| ENVIRONMENT_FILE_NAME        | Name of the environment file (default value: `environments.yaml`) |
+| PERCY_LOG_LEVEL              |                                                                   |
+| PERCY_ENVIRONMENT_FILE_NAME        | Name of the environment file (default value: `environments.yaml`) |
 | PERCY_CONFIG_FILE_NAME       | Name of the percy configuration file (default value: `.percyrc`)  |                                                                                               |
-| DEFAULT_VARIABLE_PREFIX      | The YAML variable substitute prefix (default value: `_{`)         |
-| DEFAULT_VARIABLE_SUFFIX      | The YAML variable substitute suffix (default value: `}_`)         |
-| DEFAULT_VARIABLE_NAME_PREFIX | The YAML variable name prefix (default value: `$`)                |
-| COLORIZE_CONSOLE             | The flag whether to colorize the console output or not                |
+| PERCY_DEFAULT_VARIABLE_PREFIX      | The YAML variable substitute prefix (default value: `_{`)         |
+| PERCY_DEFAULT_VARIABLE_SUFFIX      | The YAML variable substitute suffix (default value: `}_`)         |
+| PERCY_DEFAULT_VARIABLE_NAME_PREFIX | The YAML variable name prefix (default value: `$`)                |
+| PERCY_CONSOLE_COLORS             | The flag whether to colorize the console output or not                |
 
 The app folder can contain optional `.percyrc` files, which provide repository-specific or application-specific configuration. The following properties are supported now:
 
