@@ -19,6 +19,8 @@
 /**
  * Script for processing YAML configuration files and converting it to environment specific JSON configuration
  */
+import * as path from "path";
+process.env.NODE_CONFIG_DIR = path.resolve(__dirname , "../config");
 import * as config from "config";
 import * as commandLineArgs from "minimist";
 import { getLogger } from "./lib/common";
@@ -56,6 +58,7 @@ let colorConsole: boolean = String(config.get("COLORIZE_CONSOLE")) === "true";
 if (typeof options.colorConsole === "boolean") {
     colorConsole = options.colorConsole;
 }
+
 const logger = getLogger(colorConsole);
 if (getNumberOfOptionsSet([options.root, options.app, options.file]) !== 1) {
     logger.error("You should choose one of these options --root, --app, --file");
@@ -84,6 +87,9 @@ async function main() {
         LOG_LEVEL: config.get("LOG_LEVEL"),
         PERCY_CONFIG_FILE_NAME: config.get("PERCY_CONFIG_FILE_NAME"),
     }, colorConsole);
+
+    options.path = path.resolve(__dirname, options.path);
+    options.out = path.resolve(__dirname, options.out);
 
     if (options.root) {
         return hydrate.hydrateAllApps(options.path, options.out);

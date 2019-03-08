@@ -23,7 +23,8 @@ module.exports = {
     variableSuffix: process.env.DEFAULT_VARIABLE_SUFFIX || "}_",
     variableNamePrefix: process.env.DEFAULT_VARIABLE_NAME_PREFIX || "$",
   },
-  COLORIZE_CONSOLE: process.env.COLORIZE_CONSOLE || true
+  COLORIZE_CONSOLE: process.env.COLORIZE_CONSOLE ?
+        /(f(?:alse)?|0|off)/gi.test(process.env.COLORIZE_CONSOLE) ? false : true : true,
 
 
 };
