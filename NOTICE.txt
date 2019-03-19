@@ -1,0 +1,23 @@
+NOTICE.txt
+
+This is the NOTICE.txt file for the Percy configuration as code editor, per the terms and conditions under the Apache License Version 2.0, dated January 2004.
+See the license at http://www.apache.org/licenses/ for more details.  Attributions and additional notices pertaining to the source code are to be documented here.
+The original version of Percy was created by T-Mobile US and UST-Global and released on 2019-03-25.
+
+
+Attributions:
+
+  T-Mobile:
+    Kendrick Burson <kendrick.burson3@t-mobile.com>
+
+  Top Coder:
+    Author: standlove <stand4love@gmail.com>
+    Author: veshu <tcveshu@gmail.com>
+    Author: kinfkong <kinfkong@126.com>
+    Author: Liquan Liu <leviastan@gmail.com>
+    Author: sumitdaga <sumit.daga66@gmail.com>
+
+notices:
+
+    Do I have to list *Every* module and dependency package found in node_modules, including transitive dependencies, or just the direct dependencies listed in package.json ?
+
