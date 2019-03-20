@@ -389,6 +389,8 @@ foo: !!map
     config.default.addChild(new TreeNode('obj', PROPERTY_VALUE_TYPES.OBJECT, null, ['obj-comment']));
     config.default.findChild(['obj']).addChild(new TreeNode('subkey', PROPERTY_VALUE_TYPES.STRING, constructVar('key1')));
 
+    config.default.addChild(new TreeNode('envstr', PROPERTY_VALUE_TYPES.STRING, `${constructVar(percyConfig.envVariableName)}/file.json`));
+
     config.environments.addChild(new TreeNode('dev'));
     config.environments.addChild(new TreeNode('qat'));
     config.environments.addChild(new TreeNode('prod'));
@@ -433,7 +435,8 @@ arr3: !!seq  # arr3-comment
   - !!bool true
   - !!bool false
 obj: !!map  # obj-comment
-  subkey: !!str "dev-value"`);
+  subkey: !!str "dev-value"
+envstr: !!str "dev/file.json"`);
 
     expect(utilService.compileYAML('qat', config)).toEqual(
       `key1: !!str "dev-value"  # comment1
@@ -452,7 +455,8 @@ arr3: !!seq  # arr3-comment
   - !!bool true
   - !!bool false
 obj: !!map  # obj-comment
-  subkey: !!str "dev-value"`);
+  subkey: !!str "dev-value"
+envstr: !!str "qat/file.json"`);
 
     expect(utilService.compileYAML('prod', config)).toEqual(
       `key1: !!str "dev-value"  # comment1
@@ -471,7 +475,8 @@ arr3: !!seq  # arr3-comment
   - !!bool false  # prod-item1-comment
   - !!bool true  # prod-item2-comment
 obj: !!map  # prod-obj-comment
-  subkey: !!str "dev-value/false"`);
+  subkey: !!str "dev-value/false"
+envstr: !!str "prod/file.json"`);
   });
 
   it('should encrypt/decrypt', () => {

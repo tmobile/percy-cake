@@ -52,26 +52,29 @@ export class Hydrate {
     public async hydrateAllApps(
         appsRootFolderPath: string,
         outputFolder: string,
-    ): Promise<boolean> {
+    ): Promise<void> {
         try {
             const percyConfig = await this.loadPercyConfig(appsRootFolderPath);
             const appFolders = await utils.findSubFolders(appsRootFolderPath);
-            let isAnyFailed = false;
+
+            const errorApps: string[] = [];
             await Promise.all(appFolders.map(async (folder) => {
                 const appFolder = path.join(appsRootFolderPath, folder);
                 const appOutputFolder = path.join(outputFolder, folder);
-                const isPassed = await this.hydrateApp(appFolder, percyConfig, appOutputFolder);
-                if (!isAnyFailed && !isPassed) {
-                    isAnyFailed = true;
+                try {
+                  await this.hydrateApp(appFolder, percyConfig, appOutputFolder);
+                } catch (e) {
+                  errorApps.push(appFolder);
                 }
             }));
-            if (!isAnyFailed) {
+            if (!errorApps.length) {
                 this.logger.info(`Successfully processed all apps in ${appsRootFolderPath}`);
+            } else {
+              throw new Error("Error occurred while processing app folders: " + errorApps);
             }
-            return !isAnyFailed;
         } catch (e) {
             this.logger.error(e);
-            return false;
+            throw e;
         }
     }
 
@@ -85,7 +88,7 @@ export class Hydrate {
         appFolderPath: string,
         percyConfig: IPercyConfig | undefined,
         outputFolder: string,
-    ): Promise<boolean> {
+    ): Promise<void> {
         try {
             // If percy config is not provided look for it in directory
             if (!percyConfig) {
@@ -102,21 +105,23 @@ export class Hydrate {
             const environments = await utils.loadEnvironmentsFile(appFolderPath, this.options, this.colorConsole);
             const yamlFiles = await utils.findYamlFiles(appFolderPath);
 
-            let isAnyFailed = false;
+            const errorFiles: string[] = [];
 
             for (const filepath of yamlFiles) {
-                const isPassed = await this.hydrateFile(filepath, environments, percyConfig, outputFolder);
-                if (!isAnyFailed && !isPassed) {
-                    isAnyFailed = true;
+                try {
+                  await this.hydrateFile(filepath, environments, percyConfig, outputFolder);
+                } catch (e) {
+                  errorFiles.push(filepath);
                 }
             }
-            if (!isAnyFailed) {
+            if (!errorFiles.length) {
                 this.logger.info(`Successfully processed all yaml config files in ${appFolderPath}`);
+            } else {
+              throw new Error("Error occurred while processing files: " + errorFiles);
             }
-            return !isAnyFailed;
         } catch (e) {
             this.logger.error(e);
-            return false;
+            throw e;
         }
     }
 
@@ -133,7 +138,7 @@ export class Hydrate {
         environments: string[] | undefined,
         percyConfig: IPercyConfig | undefined,
         outputFolder: string,
-    ): Promise<boolean> {
+    ): Promise<void> {
         try {
             const directoryPath = path.dirname(yamlFilePath);
             if (!environments) {
@@ -145,10 +150,9 @@ export class Hydrate {
             const result = await utils.readAppConfigYAML(yamlFilePath, environments, percyConfig);
             await utils.writeJson(result, yamlFilePath, outputFolder);
             this.logger.info(`Successfully processed ${yamlFilePath}`);
-            return true;
         } catch (e) {
             this.logger.error(`Error occurred while processing ${yamlFilePath}. `, e);
-            return false;
+            throw e;
         }
     }
 
@@ -189,6 +193,9 @@ export class Hydrate {
             defaultPercyConfig,
             parentFolderPercyConfig,
             currentFolderPercyConfig,
+            {
+              envVariableName: this.options.PERCY_ENV_VARIABLE_NAME,
+            },
         ) as IPercyConfig;
 
     }

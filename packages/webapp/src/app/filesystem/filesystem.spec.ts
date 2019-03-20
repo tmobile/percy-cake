@@ -23,7 +23,7 @@ import { MemoryPool } from './storage';
 describe('File System', () => {
 
   // The count of concurrency for stress test
-  const count = 50;
+  const count = 10;
 
   let fs: FS;
 

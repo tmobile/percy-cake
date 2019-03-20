@@ -78,7 +78,8 @@ Main configuration file can be found at `config/default.js`
 |------------------------------|-------------------------------------------------------------------|
 | PERCY_LOG_LEVEL              |                                                                   |
 | PERCY_ENVIRONMENT_FILE_NAME        | Name of the environment file (default value: `environments.yaml`) |
-| PERCY_CONFIG_FILE_NAME       | Name of the percy configuration file (default value: `.percyrc`)  |                                                                                               |
+| PERCY_CONFIG_FILE_NAME       | Name of the percy configuration file (default value: `.percyrc`)  |
+| PERCY_ENV_VARIABLE_NAME | The YAML environment variable name |
 | PERCY_DEFAULT_VARIABLE_PREFIX      | The YAML variable substitute prefix (default value: `_{`)         |
 | PERCY_DEFAULT_VARIABLE_SUFFIX      | The YAML variable substitute suffix (default value: `}_`)         |
 | PERCY_DEFAULT_VARIABLE_NAME_PREFIX | The YAML variable name prefix (default value: `$`)                |
@@ -162,19 +163,19 @@ You should specify one of these three options.
 # Examples
 
 # Process all apps
-npm run hydrate -- -r test/data/apps --out test/data/out/dist
+npm run hydrate -- -r ../test/data/apps --out ../test/data/out/dist
 
-lerna run --scope=percy-hydration --stream hydrate -- -- -r test/data/apps --out test/data/out/dist
+lerna run --scope=percy-hydration --stream hydrate -- -- -r ../test/data/apps --out ../test/data/out/dist
 
 # Process single app
-npm run hydrate -- -a test/data/apps/shop --out test/data/out/dist/shop
+npm run hydrate -- -a ../test/data/apps/shop --out ../test/data/out/dist/shop
 
-lerna run --scope=percy-hydration --stream hydrate -- -- -a test/data/apps/shop --out test/data/out/dist/shop
+lerna run --scope=percy-hydration --stream hydrate -- -- -a ../test/data/apps/shop --out ../test/data/out/dist/shop
 
 # Process single file
-npm run hydrate -- -f test/data/apps/shop/app.config.yaml --out test/data/out/dist/shop
+npm run hydrate -- -f ../test/data/apps/shop/app.config.yaml --out ../test/data/out/dist/shop
 
-lerna run --scope=percy-hydration --stream hydrate -- -- -f test/data/apps/shop/app.config.yaml --out test/data/out/dist/shop
+lerna run --scope=percy-hydration --stream hydrate -- -- -f ../test/data/apps/shop/app.config.yaml --out ../test/data/out/dist/shop
 ```
 
 
@@ -190,19 +191,19 @@ then run the js files using these script:
 # hydrate Examples
 
 # Process all apps
-npm run hydrate.js -- -r test/data/apps --out test/data/out/dist
+npm run hydrate.js -- -r ../test/data/apps --out ../test/data/out/dist
 
-lerna run --scope=percy-hydration --stream hydrate.js -- -- -r test/data/apps --out test/data/out/dist
+lerna run --scope=percy-hydration --stream hydrate.js -- -- -r ../test/data/apps --out ../test/data/out/dist
 
 # Process single app
-npm run hydrate.js -- -a test/data/apps/shop --out test/data/out/dist/shop
+npm run hydrate.js -- -a ../test/data/apps/shop --out ../test/data/out/dist/shop
 
-lerna run --scope=percy-hydration --stream hydrate.js -- -- -a test/data/apps/shop --out test/data/out/dist/shop
+lerna run --scope=percy-hydration --stream hydrate.js -- -- -a ../test/data/apps/shop --out ../test/data/out/dist/shop
 
 # Process single file
-npm run hydrate.js -- -f test/data/apps/shop/app.config.yaml --out test/data/out/dist/shop
+npm run hydrate.js -- -f ../test/data/apps/shop/app.config.yaml --out ../test/data/out/dist/shop
 
-lerna run --scope=percy-hydration --stream hydrate.js -- -- -f test/data/apps/shop/app.config.yaml --out test/data/out/dist/shop
+lerna run --scope=percy-hydration --stream hydrate.js -- -- -f ../test/data/apps/shop/app.config.yaml --out ../test/data/out/dist/shop
 
 # compare-json Example
 npm run compare-json.js test/data/.percyrc test/data/modified.percyrc

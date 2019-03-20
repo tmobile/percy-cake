@@ -80,24 +80,28 @@ if (getNumberOfOptionsSet([options.root, options.app, options.file]) !== 1) {
 }
 
 async function main() {
+  try {
     const hydrate = new Hydrate({
-        COLOR_CONSOLE: colorConsole,
-        DEFAULT_PERCY_CONFIG: config.get("DEFAULT_PERCY_CONFIG"),
-        ENVIRONMENT_FILE_NAME: config.get("ENVIRONMENT_FILE_NAME"),
-        LOG_LEVEL: config.get("LOG_LEVEL"),
-        PERCY_CONFIG_FILE_NAME: config.get("PERCY_CONFIG_FILE_NAME"),
+      COLOR_CONSOLE: colorConsole,
+      DEFAULT_PERCY_CONFIG: config.get("DEFAULT_PERCY_CONFIG"),
+      ENVIRONMENT_FILE_NAME: config.get("ENVIRONMENT_FILE_NAME"),
+      LOG_LEVEL: config.get("LOG_LEVEL"),
+      PERCY_CONFIG_FILE_NAME: config.get("PERCY_CONFIG_FILE_NAME"),
+      PERCY_ENV_VARIABLE_NAME: config.get("PERCY_ENV_VARIABLE_NAME"),
     }, colorConsole);
 
     options.path = path.resolve(__dirname, options.path);
     options.out = path.resolve(__dirname, options.out);
 
     if (options.root) {
-        return hydrate.hydrateAllApps(options.path, options.out);
+        await hydrate.hydrateAllApps(options.path, options.out);
+    } else if (options.app) {
+        await hydrate.hydrateApp(options.path, undefined, options.out);
+    } else if (options.file) {
+        await hydrate.hydrateFile(options.path, undefined, undefined, options.out);
     }
-    if (options.app) {
-        return hydrate.hydrateApp(options.path, undefined, options.out);
-    }
-    if (options.file) {
-        return hydrate.hydrateFile(options.path, undefined, undefined, options.out);
-    }
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
