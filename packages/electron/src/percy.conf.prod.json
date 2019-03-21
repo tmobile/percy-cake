@@ -17,6 +17,7 @@
   "variablePrefix": "_{",
   "variableSuffix": "}_",
   "variableNamePrefix": "$",
+  "envVariableName": "env",
   "propertyNameRegex": "^[\\s]*[a-zA-Z0-9$_.-]*[\\s]*$",
   "filenameRegex": "^[a-zA-Z0-9_.-]*$"
 }

@@ -684,10 +684,13 @@ export class YamlService {
    * This method resolves them.
    *
    * @param tokens the tokens to resolves
+   * @param env the environment name
    * @returns the resolved tokens
    */
-  private resolveTokens(tokens) {
+  private resolveTokens(tokens, env: string) {
     const result = _.cloneDeep(tokens);
+    result[percyConfig.envVariableName] = env;
+
     const referenceLinks = [];
 
     while (true) {
@@ -858,7 +861,7 @@ export class YamlService {
       }
     });
 
-    tokens = this.resolveTokens(tokens);
+    tokens = this.resolveTokens(tokens, env);
 
     // Step 3, substitute variable reference with tokens
     const substituted = this.substitute(merged, tokens, 0);

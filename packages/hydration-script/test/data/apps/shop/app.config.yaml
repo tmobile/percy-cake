@@ -1,5 +1,6 @@
 default: !!map
   server.host: !!int 1  # tx server url
+  path: !!str ${env}/file.json
   mytx.server.host: !!str https://default.my.test.com  # MYtx server url
   middlewareapipath: !!str ${middlewareurl}/mw/api/path
   middlewareurl: !!str https://default.middleware.test.com  # Backend MW url

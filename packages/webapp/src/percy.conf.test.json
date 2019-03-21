@@ -17,5 +17,6 @@
   "encryptSalt": "23E80(9Dls6$s",
   "variablePrefix": "${",
   "variableSuffix": "}$",
-  "variableNamePrefix": "_"
+  "variableNamePrefix": "_",
+  "envVariableName": "env"
 }

@@ -1,5 +1,6 @@
 {
   "server.host": 1,
+  "path": "qat/file.json",
   "mytx.server.host": "https://default.my.test.com",
   "middlewareapipath": "https://tx.tugs.qat.com/mw/api/path",
   "middlewareurl": "https://tx.tugs.qat.com",

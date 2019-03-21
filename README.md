@@ -147,24 +147,26 @@ There are 3 configuration files:
 - [packages/webapp/src/percy.conf.test.json](packages/webapp/src/percy.conf.test.json): configuration used in Karma test
 - [packages/webapp/src/percy.conf.prod.json](packages/webapp/src/percy.conf.prod.json) and [packages/electron/src/percy.conf.prod.json](packages/electron/src/percy.conf.prod.json): for production configuration, which will be copied to `packages/webapp/dist/percy.conf.json` and `packages/webapp/dist/build/percy.conf.json` in the production build
 
-| Variable              | Description                                                                                                                                                |
-|-----------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Variable              | Description                                                  |
+| --------------------- | ------------------------------------------------------------ |
 | corsProxy             | The cors proxy for isomorphic-git (This config is only useful in webapp and irrelevant for Electron app, since Electron app does not need cors proxy server) |
-| defaultRepositoryUrl  | Default repository url shown on login page                                                                                                                 |
-| lockedBranches        | Locked branches, you cannot checkout these branches on dashboard page                                                                                      |
-| storeName             | The browser indexeddb store name                                                                                                                           |
-| reposFolder           | The browserfs folder to clone repos into                                                                                                                   |
-| draftFolder           | The browserfs folder to store draft files                                                                                                                  |
-| metaFolder            | The browserfs folder contains metadata file                                                                                                                |
-| repoMetadataVersion   | The repo metdata version (in case the structrure of repo metadata changes, update this version)                                                            |
-| loggedInUsersMetaFile | The file name which contains logged in user names                                                                                                          |
-| yamlAppsFolder        | The folder name which contains apps' yaml config                                                                                                           |
-| environmentsFile      | The environments file name (JUST file name)                                                                                                                |
-| loginSessionTimeout   | The login session timeout, like "1m", "2.5 hrs", "2 days". Default to 30m.                                                                                 |
-| encryptKey            | The key used to encrypt security information like password                                                                                                 |
-| encryptSalt           | The salt used to encrypt security information like password                                                                                                |
-| variablePrefix        | The YAML variable substitute prefix                                                                                                                        |
-| variableSuffix        | The YAML variable substitute suffix                                                                                                                        |
+| defaultRepositoryUrl  | Default repository url shown on login page                   |
+| lockedBranches        | Locked branches, you cannot checkout these branches on dashboard page |
+| storeName             | The browser indexeddb store name                             |
+| reposFolder           | The browserfs folder to clone repos into                     |
+| draftFolder           | The browserfs folder to store draft files                    |
+| metaFolder            | The browserfs folder contains metadata file                  |
+| repoMetadataVersion   | The repo metdata version (in case the structrure of repo metadata changes, update this version) |
+| loggedInUsersMetaFile | The file name which contains logged in user names            |
+| yamlAppsFolder        | The folder name which contains apps' yaml config             |
+| environmentsFile      | The environments file name (JUST file name)                  |
+| loginSessionTimeout   | The login session timeout, like "1m", "2.5 hrs", "2 days". Default to 30m. |
+| encryptKey            | The key used to encrypt security information like password   |
+| encryptSalt           | The salt used to encrypt security information like password  |
+| variablePrefix        | The YAML variable substitute prefix                          |
+| variableSuffix        | The YAML variable substitute suffix                          |
+| variableNamePrefix    | The YAML variable variable name prefix                       |
+| envVariableName       | The YAML environment variable name                           |
 
 
 The git repository can contain optional `.percyrc` files, which provide repository-specific or application-specific configuration. The following properties are supported now:

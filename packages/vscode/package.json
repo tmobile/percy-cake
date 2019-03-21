@@ -144,6 +144,11 @@
           "type": "string",
           "default": "$",
           "description": "Variable name prefix"
+        },
+        "vscode-percy-editor.envVariableName": {
+          "type": "string",
+          "default": "env",
+          "description": "Default build-int env variable name"
         }
       }
     }

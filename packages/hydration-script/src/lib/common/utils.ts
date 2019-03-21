@@ -52,7 +52,7 @@ export async function readAppConfigYAML(
         envNodes,
         (envNode, environment) => {
             try {
-                _.set(result, environment, resolveVariables(envNode, percyConfig));
+                _.set(result, environment, resolveVariables(envNode, environment, percyConfig));
             } catch (e) {
                 getLogger(colorConsole).error(e.message);
                 throw new Error(`Cannot resolve variables at (${filePath} env:${environment})`);
@@ -93,9 +93,10 @@ export async function readYAML(filepath: string): Promise<object> {
  * Resolve variable references of an object
  * @param envNode input object
  * @param percyConfig percy configuration
+ * @param env the environment name
  */
-export function resolveVariables(envNode: object, percyConfig: IPercyConfig): object {
-    const tokens = resolveTokens(envNode, percyConfig);
+export function resolveVariables(envNode: object, env: string, percyConfig: IPercyConfig): object {
+    const tokens = resolveTokens(envNode, env, percyConfig);
     // substitute
     let result = substitute(envNode, tokens, percyConfig);
 
@@ -112,11 +113,13 @@ export function resolveVariables(envNode: object, percyConfig: IPercyConfig): ob
  * This method resolves them.
  *
  * @param envNode the env node data
+ * @param env the environment name
  * @param percyConfig the percy config
  * @returns the resolved tokens
  */
-function resolveTokens(envNode: object, percyConfig: IPercyConfig): object {
+function resolveTokens(envNode: object, env: string, percyConfig: IPercyConfig): object {
     const tokens: any = {};
+    tokens[percyConfig.envVariableName] = env;
     _.each(envNode, (value, key) => {
         if (!_.isArray(value) && !_.isObject(value)) {
             tokens[key] = value;
