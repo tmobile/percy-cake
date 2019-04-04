@@ -253,3 +253,7 @@ The Percy editor can be run as a standalone desktop application;
 ## License
 
 Percy is open-sourced under the terms of section 7 of the Apache 2.0 license and is released AS-IS WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND.
+
+## DISCLAIMER
+
+T-Mobile® has made every reasonable effort to test the code for its intended purpose, as anticipated by T-Mobile®. T-Mobile® further acknowledges that the code may be used on a wide range of platforms and in many different contexts. Accordingly, it is likely that the code will need to be modified. Please have your IT team validate the code prior to any production use.
