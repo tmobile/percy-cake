@@ -34,16 +34,16 @@ While working on one of our projects I saw a great deal of duplication in our ap
 	"removeAccessoryFromCart":    "https://pd01.api.t-mobile.com/v1/carts/",
 	"addAccessoryToCart":         "https://pd01.api.t-mobile.com/v1/carts/",
 
-   "storeLocator": {
-	   "search":            "kkcdrrnxwk.execute-api.us-west-2.amazonaws.com/dev/prod/getStoresByCoordinates",
-	   "stateSearch": 	    "kcdrrnxwk.execute-api.us-west-2.amazonaws.com/prod/getStoresInState",
-	   "citySearch": 	      "kcdrrnxwk.execute-api.us-west-2.amazonaws.com/prod/getStoresInCity",
-	   "storeSearch": 	    "kcdrrnxwk.execute-api.us-west-2.amazonaws.com/prod/getStoreByName",
-	   "getInLineReasons":  "kcdrrnxwk.execute-api.us-west-2.amazonaws.com/dev/prod/getReasons",
+  "storeLocator": {
+    "search":            "kkcdrrnxwk.execute-api.us-west-2.amazonaws.com/dev/prod/getStoresByCoordinates",
+    "stateSearch":       "kcdrrnxwk.execute-api.us-west-2.amazonaws.com/prod/getStoresInState",
+    "citySearch":        "kcdrrnxwk.execute-api.us-west-2.amazonaws.com/prod/getStoresInCity",
+    "storeSearch":       "kcdrrnxwk.execute-api.us-west-2.amazonaws.com/prod/getStoreByName",
+    "getInLineReasons":  "kcdrrnxwk.execute-api.us-west-2.amazonaws.com/dev/prod/getReasons",
 
-	   "addCustomerV2": "https://api.t-mobile.com/add-customer/v1/addCustomer",
-	   "getLeadInfo": 	"https://api.t-mobile.com/customer-interaction/v1/get-lead?leadId={{leadId}}",
-     ...
+    "addCustomerV2": "https://api.t-mobile.com/add-customer/v1/addCustomer",
+    "getLeadInfo":   "https://api.t-mobile.com/customer-interaction/v1/get-lead?leadId={{leadId}}",
+    ...
 ```
 
 This became a problem when we started creating more lower environments for testing and such. As the list of snowflake environments grew so did the effort to maintain all the proper configurations. If you needed to add a new configuration property you would have to add a copy to every environment specific configuration file. If you needed to change or add a property you would have to duplicate it in all environments, and possibly have different values in different environments. These permutations of configuration property settings made management of the various application deployment configurations fraught with human error.
@@ -69,7 +69,7 @@ This required the application to have the smarts to ‘compile’ these objects 
 ```javascript
   getPhoneCatalogUrl = config.urls.product.host +
                        config.urls.product.browse.service +
-	                     config.urls.productbrowse.parameters.phone;
+                       config.urls.productbrowse.parameters.phone;
 ```
 
 // https://pd01.api.t-mobile.com/raptor/v1/search-promote/?type=browse&ps=handset/search-promote/?type=browse&ps=handset
@@ -90,12 +90,12 @@ With Percy I was able to take 5 configuration files, like the one shown above, a
 default: !!map
   _apiHost: !!str                 "pd01.api.t-mobile.com"
   _storeLocatorAPIHost: !!str     "pd03.api.t-mobile.com"
-  _storeLocatorAWSAPIHost: !!str 	"kkcdrrnxwk.execute-api.us-west-2.amazonaws.com/dev"
+  _storeLocatorAWSAPIHost: !!str  "kkcdrrnxwk.execute-api.us-west-2.amazonaws.com/dev"
 
   url: !!map
     mostPopularDevices: !!str 	      "https://${_apiHost}/raptor/v1/search-promote/?type=browse&"
-    productBrowseDetailsLive: !!str	  "https://${_apiHost}/raptor/v1/search-promote/?type=browse&pt=Device&ps=Handset"
-    accessoryBrowseDetailsLive: !!str	"https://${_apiHost}/raptor/v1/search-promote/?type=browse&pt=Accessory"
+    productBrowseDetailsLive: !!str   "https://${_apiHost}/raptor/v1/search-promote/?type=browse&pt=Device&ps=Handset"
+    accessoryBrowseDetailsLive: !!str "https://${_apiHost}/raptor/v1/search-promote/?type=browse&pt=Accessory"
     accessories: !!str                "https://${_apiHost}/raptor/v1/search-promote/?type=browse&pt=Accessory&o="
     compatibleAccessory: !!str        "https://${_apiHost}/raptor/v1/search-promote/?type=browse&pt=Accessory&facets=true"
     authorization: !!str              "https://${_apiHost}/raptor/v1/oauth/v1/access"
@@ -107,7 +107,7 @@ default: !!map
     creditCardInfo: !!str             "https://${_apiHost}/creditcards/orders"
 
     checkoutSetAddress: !!str         "https://${_apiHost}/v1/orders/{{orderID}}/address"
-  	creditcheckUrl: !!str             "https://${_apiHost}/v1/orders/creditcheck/"
+    creditcheckUrl: !!str             "https://${_apiHost}/v1/orders/creditcheck/"
     creditcardUrl: !!str              "https://${_apiHost}/v1/orders/creditcards/"
 
     getProfile: !!str                 "https://${_apiHost}/v1/profile"
