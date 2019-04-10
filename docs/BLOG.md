@@ -130,7 +130,7 @@ default: !!map
 
 There is still duplication in this file but it uses variable substitution, so I can edit the value of \_apiHost in one location at the top of the file to modify every reference.
 
-Then to modify specific attributes for various deployed envirnments we append an `environments` map with sub properties for every environment that wants to change the default settings.
+Then to modify specific attributes for various deployed environments we append an `environments` map with sub properties for every environment that wants to change the default settings.
 
 ```yaml
 environments: !!map
