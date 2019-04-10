@@ -8,7 +8,7 @@ Percy facilitates editing configuration files in a terse (de-hydrated) format th
 
 While working on one of our projects I saw a great deal of duplication in our application configuration files. Not only did we have duplication across a single environment configuration (base urls) but we had the same duplication across the 21 different environments — often only the base urls would change.
 
-```
+```json
 "url": {
 	"mostPopularDevices": 	"https://pd01.api.t-mobile.com/raptor/v1/search-promote/?type=browse&",
 	"productBrowseDetailsLive": 	"https://pd01.api.t-mobile.com/raptor/v1/search-promote/?type=browse&pt=Device&ps=Handset",
@@ -25,21 +25,21 @@ While working on one of our projects I saw a great deal of duplication in our ap
 
 	"checkoutSetAddress": 	"https://pd01.api.t-mobile.com/v1/orders/{{orderID}}/address",
 	"creditcheckUrl": 	"https://pd01.api.t-mobile.com/v1/orders/creditcheck/",
-	"creditcardUrl": 	“https://pd01.api.t-mobile.com/v1/orders/creditcards/",
+	"creditcardUrl": 	"https://pd01.api.t-mobile.com/v1/orders/creditcards/",
 
 	"getProfile": 	"https://pd01.api.t-mobile.com/v1/profile",
 	"authorableCarousel": 	"https://pd01.api.t-mobile.com/v1/products",
 
 	"getDefaultCart": 	"https://pd01.api.t-mobile.com/v1/carts",
 	"removeAccessoryFromCart": 	"https://pd01.api.t-mobile.com/v1/carts/",
-	"addAccessoryToCart": 	“https://pd01.api.t-mobile.com/v1/carts/",
+	"addAccessoryToCart": 	"https://pd01.api.t-mobile.com/v1/carts/",
 
    "storeLocator": {
 	   "search": 	"kkcdrrnxwk.execute-api.us-west-2.amazonaws.com/dev/prod/getStoresByCoordinates",
 	   "stateSearch": 	"kcdrrnxwk.execute-api.us-west-2.amazonaws.com/prod/getStoresInState",
 	   "citySearch": 	"kcdrrnxwk.execute-api.us-west-2.amazonaws.com/prod/getStoresInCity",
 	   "storeSearch": 	"kcdrrnxwk.execute-api.us-west-2.amazonaws.com/prod/getStoreByName",
-	   "getInLineReasons": 	“kcdrrnxwk.execute-api.us-west-2.amazonaws.com/dev/prod/getReasons",
+	   "getInLineReasons": 	"kcdrrnxwk.execute-api.us-west-2.amazonaws.com/dev/prod/getReasons",
 
 	   "addCustomerV2": 	"https://api.t-mobile.com/add-customer/v1/addCustomer",
 	   "getLeadInfo": 	"https://api.t-mobile.com/customer-interaction/v1/get-lead?leadId={{leadId}}",
@@ -50,7 +50,7 @@ This became a problem when we started creating more lower environments for testi
 
 I tried to solve this problem by creating a hierarchical format to dry the config so that I could change a value in one place and have it apply across the app.
 
-```
+```json
     "product": {
       "stage": "http://stage.sp10050e1e.guided.ss-omtrdc.net",
       "host": "https://pd01.api.t-mobile.com/raptor/v1",
@@ -66,7 +66,7 @@ I tried to solve this problem by creating a hierarchical format to dry the confi
 
 This required the application to have the smarts to ‘compile’ these objects into complete urls.
 
-```
+```javascript
   getPhoneCatalogUrl = config.urls.product.host +
                        config.urls.product.browse.service +
 	                     config.urls.productbrowse.parameters.phone;
@@ -86,7 +86,7 @@ While YAML turned out to be a great format for editing and storing the configura
 
 With Percy I was able to take 5 configuration files, like the one shown above, across 21 different environments for a total of 105 files, 1 copy for every deployed environment- each with only slight variations - all having a combined total of 980 KB of JSON, and de-hydrate them down to only 5 files with combined 56KB of dehydrated (DRY) yaml properties:
 
-```
+```yaml
 default: !!map
   _apiHost: !!str 	"pd01.api.t-mobile.com"
   _storeLocatorAPIHost: !!str 	"pd03.api.t-mobile.com"
@@ -98,33 +98,33 @@ default: !!map
     accessoryBrowseDetailsLive: !!str	"https://${_apiHost}/raptor/v1/search-promote/?type=browse&pt=Accessory"
     accessories: !!str	"https://${_apiHost}/raptor/v1/search-promote/?type=browse&pt=Accessory&o="
     compatibleAccessory: !!str	"https://${_apiHost}/raptor/v1/search-promote/?type=browse&pt=Accessory&facets=true"
-    authorization: !!str	“https://${_apiHost}/raptor/v1/oauth/v1/access”
-	  updateProfile: !!str	“https://${_apiHost}/raptor/v1/update-profile",
-	  ShippingOrderFees: !!str	“https://${_apiHost}/raptor/v1/order/fees",
+    authorization: !!str	"https://${_apiHost}/raptor/v1/oauth/v1/access"
+    updateProfile: !!str	"https://${_apiHost}/raptor/v1/update-profile",
+    ShippingOrderFees: !!str	“https://${_apiHost}/raptor/v1/order/fees",
     simKitDetails: !!str	"https://${_apiHost}/raptor/v1/productDetails/i-739C46ADBDEE4AE9ADE7BF05D984EAE1"
-    shippingOptionsUrl: !!str	“https://${_apiHost}/raptor/v1/shipping-option/"
+    shippingOptionsUrl: !!str	"https://${_apiHost}/raptor/v1/shipping-option/"
 
-    creditCardInfo: !!str	“https://${_apiHost}/creditcards/orders"
+    creditCardInfo: !!str	"https://${_apiHost}/creditcards/orders"
 
     checkoutSetAddress: !!str	"https://${_apiHost}/v1/orders/{{orderID}}/address"
   	creditcheckUrl: !!str	"https://${_apiHost}/v1/orders/creditcheck/"
     creditcardUrl: !!str	"https://${_apiHost}/v1/orders/creditcards/"
 
-    getProfile: !!str	“https://${_apiHost}/v1/profile"
-	  authorableCarousel: !!str	"https://${_apiHost}/v1/products"
+    getProfile: !!str	"https://${_apiHost}/v1/profile"
+    authorableCarousel: !!str	"https://${_apiHost}/v1/products"
 
     getDefaultCart: !!str	"https://${_apiHost}/v1/carts"
     removeAccessoryFromCart: !!str	"https://${_apiHost}/v1/carts/"
     addAccessoryToCart: !!str	"https://${_apiHost}/v1/carts/"
 
-	storeLocator: !!map
-		search: !!str 	"https://${_storeLocatorAWSAPIHost}/getStoresByCoordinates"
-		stateSearch: !!str	"https://${_storeLocatorAWSAPIHost}/getStoresInState"
-		citySearch: !!str	"https://${_storeLocatorAWSAPIHost}/getStoresInCity"
-		storeSearch: !!str	"https://${_storeLocatorAWSAPIHost}/getStoreByName"
-		getInLineReasons: !!str	"https://${_storeLocatorAWSAPIHost}/getReasons"
-		addCustomerV2: !!str	"https://${_storeLocatorAPIHost}/add-customer/v1/addCustomer"
-		getLeadInfo: !!str	"https://${_storeLocatorAPIHost}/customer-interaction/v1/get-lead?leadId={{leadId}}"
+  storeLocator: !!map
+    search: !!str 	"https://${_storeLocatorAWSAPIHost}/getStoresByCoordinates"
+    stateSearch: !!str	"https://${_storeLocatorAWSAPIHost}/getStoresInState"
+    citySearch: !!str	"https://${_storeLocatorAWSAPIHost}/getStoresInCity"
+    storeSearch: !!str	"https://${_storeLocatorAWSAPIHost}/getStoreByName"
+    getInLineReasons: !!str	"https://${_storeLocatorAWSAPIHost}/getReasons"
+    addCustomerV2: !!str	"https://${_storeLocatorAPIHost}/add-customer/v1/addCustomer"
+    getLeadInfo: !!str	"https://${_storeLocatorAPIHost}/customer-interaction/v1/get-lead?leadId={{leadId}}"
   ...
 ```
 
@@ -132,7 +132,7 @@ There is still duplication in this file but it uses variable substitution, so I 
 
 Then to modify specific attributes for various deployed envirnments we append an `environments` map with sub properties for every environment that wants to change the default settings.
 
-```
+```yaml
 environments: !!map
 
   dailydev: !!map
@@ -175,15 +175,15 @@ This allows me to show a simple list of every deployed environment and how each 
 
 The Percy project comes in 2 parts:
 
-    -	*Configuration Editor*
-    -	*Hydration Tools*
+ - **Configuration Editor**
+ - **Hydration Tools**
 
 The editor can be deployed one of 4 ways, all from the same code base:
 
-    -	Static web assets served from a CDN.
-    -	Docker image
-    -	Cross platform Desktop Application (Electron)
-    -	VSCode Editor extension
+ - Static web assets served from a CDN.
+ - Docker image
+ - Cross platform Desktop Application (Electron)
+ - VSCode Editor extension
 
 The hydration tools, which are node.js based script files, can be deployed as an npm package to include in your projects package.json.
 
@@ -232,10 +232,10 @@ My applications’ `environments.yaml`, shown on the right, states that my appli
 
 The default section of the environments file lists all the deployment settings for the application in a single environment, the default environment: e.g.
 
-    -	AWS accounts
-    -	IP addresses
-    -	Namespaces
-    -	…
+ - AWS accounts
+ - IP addresses
+ - Namespaces
+ - …
 
 This includes any properties or values that are required to define where are all the assets and services that are deployed in an environment, and how access them. This file can be used by a CI processor to automate deployments and maintenance tasks for any environment.
 
@@ -247,14 +247,14 @@ The default section of any configuration file, including the `environments.yaml`
 
 To help with normalization of this file, to DRY the contents, we utilize 3 features:
 
-    -	Variable Substitution
-    -	Anchors and Aliases
-    -	Environment Inheritance
+- Variable Substitution
+- Anchors and Aliases
+- Environment Inheritance
 
 In the image to the above you can see several properties that show variable substitution inside interpolated strings (the orange highlighted strings). In this example we define the \_dcphost up top, then refer to that value in other properties:
 
-    -	`dcpendpoints.dcpcart`
-    -	`dcpendpoints.dcpupdate`
+ - `dcpendpoints.dcpcart`
+ - `dcpendpoints.dcpupdate`
 
 Values in the `.percyrc` file determine what characters are used to wrap string interpolated values (when using variable substitution). Above we use `${ … }` to wrap a variable inside a string value. We also prefix the variable name with `_` to identify this as a transient variable (a key that is not to appear by itself in the hydrated file.)
 
@@ -266,24 +266,24 @@ To enforce that configuration files only define environment settings for pre-def
 
 The editor follows a set of strict rules including:
 
-• Only environments listed in the `environments.yaml` file can be listed in any other config.yaml file.
-• Only properties listed in the config.yaml default node can be substituted (overridden) in any listed environment. You cannot add a different property key to an environment that is not listed in default.
-• Properties defined in the default node will include type definition for the property value
+- Only environments listed in the `environments.yaml` file can be listed in any other config.yaml file.
+- Only properties listed in the config.yaml default node can be substituted (overridden) in any listed environment. You cannot add a different property key to an environment that is not listed in default.
+- Properties defined in the default node will include type definition for the property value
 
 1. `string || string array`
 2. `boolean || boolean array`
 3. `number || number array`
 4. `object || object array`
-   • Property override values in environment nodes must be of the same type as the default property
-   • All environments inherit all values from the default node
-   • All environments can inherit from another environment
-   • Only one inheritance per environment, other than default.  
-   • Chained inheritance is allowed.
-   • Inheritance Cycles are not allowed
-   • Property keys that are prefixed with the ‘variableNamePrefix’ as defined in the compiled .percyrc will not be included in the final hydrated file, although their values will be interpolated into any variable substitutions defined in the config properties.
-   • Property values that are an Array type will have anchors applied to the default array elements.
-   • When an environment wants to override the array property they can list any or all of the default properties using the alias form of the corresponding anchor.
-   • environments that want to substitute a property within an array element can list the substituted element property names with the substituted values.
+   - Property override values in environment nodes must be of the same type as the default property
+   - All environments inherit all values from the default node
+   - All environments can inherit from another environment
+   - Only one inheritance per environment, other than default.  
+   - Chained inheritance is allowed.
+   - Inheritance Cycles are not allowed
+   - Property keys that are prefixed with the ‘variableNamePrefix’ as defined in the compiled .percyrc will not be included in the final hydrated file, although their values will be interpolated into any variable substitutions defined in the config properties.
+   - Property values that are an Array type will have anchors applied to the default array elements.
+   - When an environment wants to override the array property they can list any or all of the default properties using the alias form of the corresponding anchor.
+   - environments that want to substitute a property within an array element can list the substituted element property names with the substituted values.
 
 ```yaml
 environments: !!map
