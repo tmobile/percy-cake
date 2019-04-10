@@ -10,38 +10,38 @@ While working on one of our projects I saw a great deal of duplication in our ap
 
 ```json
 "url": {
-	"mostPopularDevices": 	"https://pd01.api.t-mobile.com/raptor/v1/search-promote/?type=browse&",
-	"productBrowseDetailsLive": 	"https://pd01.api.t-mobile.com/raptor/v1/search-promote/?type=browse&pt=Device&ps=Handset",
+	"mostPopularDevices":         "https://pd01.api.t-mobile.com/raptor/v1/search-promote/?type=browse&",
+	"productBrowseDetailsLive":   "https://pd01.api.t-mobile.com/raptor/v1/search-promote/?type=browse&pt=Device&ps=Handset",
 	"accessoryBrowseDetailsLive": "https://pd01.api.t-mobile.com/raptor/v1/search-promote/?type=browse&pt=Accessory",
-	"accessories": 	"https://pd01.api.t-mobile.com/raptor/v1/search-promote/?type=browse&pt=Accessory&o=",
-	"compatibleAccessory": 	"https://pd01.api.t-mobile.com/raptor/v1/search-promote/?type=browse&pt=Accessory&facets=true",
-	"authorization": 	"https://pd01.api.t-mobile.com/raptor/v1/oauth/v1/access",
-	"updateProfile": 	"https://pd01.api.t-mobile.com/raptor/v1/update-profile",
-	"ShippingOrderFees": 	"https://pd01.api.t-mobile.com/raptor/v1/order/fees",
-	"simKitDetails": 	"https://pd01.api.t-mobile.com/raptor/v1/productDetails/i-739C46ADBDEE4AE9ADE7BF05D984EAE1",
-	"shippingOptionsUrl": 	"https://pd01.api.t-mobile.com/raptor/v1/shipping-option/",
+	"accessories":                "https://pd01.api.t-mobile.com/raptor/v1/search-promote/?type=browse&pt=Accessory&o=",
+	"compatibleAccessory":        "https://pd01.api.t-mobile.com/raptor/v1/search-promote/?type=browse&pt=Accessory&facets=true",
+	"authorization":              "https://pd01.api.t-mobile.com/raptor/v1/oauth/v1/access",
+	"updateProfile":              "https://pd01.api.t-mobile.com/raptor/v1/update-profile",
+	"ShippingOrderFees":          "https://pd01.api.t-mobile.com/raptor/v1/order/fees",
+	"simKitDetails":              "https://pd01.api.t-mobile.com/raptor/v1/productDetails/i-739C46ADBDEE4AE9ADE7BF05D984EAE1",
+	"shippingOptionsUrl":         "https://pd01.api.t-mobile.com/raptor/v1/shipping-option/",
 
-	"creditCardInfo": 	"https://pd01.api.t-mobile.com/creditcards/orders",
+	"creditCardInfo":             "https://pd01.api.t-mobile.com/creditcards/orders",
 
-	"checkoutSetAddress": 	"https://pd01.api.t-mobile.com/v1/orders/{{orderID}}/address",
-	"creditcheckUrl": 	"https://pd01.api.t-mobile.com/v1/orders/creditcheck/",
-	"creditcardUrl": 	"https://pd01.api.t-mobile.com/v1/orders/creditcards/",
+	"checkoutSetAddress":         "https://pd01.api.t-mobile.com/v1/orders/{{orderID}}/address",
+	"creditcheckUrl":             "https://pd01.api.t-mobile.com/v1/orders/creditcheck/",
+	"creditcardUrl":              "https://pd01.api.t-mobile.com/v1/orders/creditcards/",
 
-	"getProfile": 	"https://pd01.api.t-mobile.com/v1/profile",
-	"authorableCarousel": 	"https://pd01.api.t-mobile.com/v1/products",
+	"getProfile":                 "https://pd01.api.t-mobile.com/v1/profile",
+	"authorableCarousel":         "https://pd01.api.t-mobile.com/v1/products",
 
-	"getDefaultCart": 	"https://pd01.api.t-mobile.com/v1/carts",
-	"removeAccessoryFromCart": 	"https://pd01.api.t-mobile.com/v1/carts/",
-	"addAccessoryToCart": 	"https://pd01.api.t-mobile.com/v1/carts/",
+	"getDefaultCart":             "https://pd01.api.t-mobile.com/v1/carts",
+	"removeAccessoryFromCart":    "https://pd01.api.t-mobile.com/v1/carts/",
+	"addAccessoryToCart":         "https://pd01.api.t-mobile.com/v1/carts/",
 
    "storeLocator": {
-	   "search": 	"kkcdrrnxwk.execute-api.us-west-2.amazonaws.com/dev/prod/getStoresByCoordinates",
-	   "stateSearch": 	"kcdrrnxwk.execute-api.us-west-2.amazonaws.com/prod/getStoresInState",
-	   "citySearch": 	"kcdrrnxwk.execute-api.us-west-2.amazonaws.com/prod/getStoresInCity",
-	   "storeSearch": 	"kcdrrnxwk.execute-api.us-west-2.amazonaws.com/prod/getStoreByName",
-	   "getInLineReasons": 	"kcdrrnxwk.execute-api.us-west-2.amazonaws.com/dev/prod/getReasons",
+	   "search":            "kkcdrrnxwk.execute-api.us-west-2.amazonaws.com/dev/prod/getStoresByCoordinates",
+	   "stateSearch": 	    "kcdrrnxwk.execute-api.us-west-2.amazonaws.com/prod/getStoresInState",
+	   "citySearch": 	      "kcdrrnxwk.execute-api.us-west-2.amazonaws.com/prod/getStoresInCity",
+	   "storeSearch": 	    "kcdrrnxwk.execute-api.us-west-2.amazonaws.com/prod/getStoreByName",
+	   "getInLineReasons":  "kcdrrnxwk.execute-api.us-west-2.amazonaws.com/dev/prod/getReasons",
 
-	   "addCustomerV2": 	"https://api.t-mobile.com/add-customer/v1/addCustomer",
+	   "addCustomerV2": "https://api.t-mobile.com/add-customer/v1/addCustomer",
 	   "getLeadInfo": 	"https://api.t-mobile.com/customer-interaction/v1/get-lead?leadId={{leadId}}",
      ...
 ```
@@ -88,43 +88,43 @@ With Percy I was able to take 5 configuration files, like the one shown above, a
 
 ```yaml
 default: !!map
-  _apiHost: !!str 	"pd01.api.t-mobile.com"
-  _storeLocatorAPIHost: !!str 	"pd03.api.t-mobile.com"
+  _apiHost: !!str                 "pd01.api.t-mobile.com"
+  _storeLocatorAPIHost: !!str     "pd03.api.t-mobile.com"
   _storeLocatorAWSAPIHost: !!str 	"kkcdrrnxwk.execute-api.us-west-2.amazonaws.com/dev"
 
   url: !!map
-    mostPopularDevices: !!str 	"https://${_apiHost}/raptor/v1/search-promote/?type=browse&"
-    productBrowseDetailsLive: !!str	"https://${_apiHost}/raptor/v1/search-promote/?type=browse&pt=Device&ps=Handset"
+    mostPopularDevices: !!str 	      "https://${_apiHost}/raptor/v1/search-promote/?type=browse&"
+    productBrowseDetailsLive: !!str	  "https://${_apiHost}/raptor/v1/search-promote/?type=browse&pt=Device&ps=Handset"
     accessoryBrowseDetailsLive: !!str	"https://${_apiHost}/raptor/v1/search-promote/?type=browse&pt=Accessory"
-    accessories: !!str	"https://${_apiHost}/raptor/v1/search-promote/?type=browse&pt=Accessory&o="
-    compatibleAccessory: !!str	"https://${_apiHost}/raptor/v1/search-promote/?type=browse&pt=Accessory&facets=true"
-    authorization: !!str	"https://${_apiHost}/raptor/v1/oauth/v1/access"
-    updateProfile: !!str	"https://${_apiHost}/raptor/v1/update-profile",
-    ShippingOrderFees: !!str	“https://${_apiHost}/raptor/v1/order/fees",
-    simKitDetails: !!str	"https://${_apiHost}/raptor/v1/productDetails/i-739C46ADBDEE4AE9ADE7BF05D984EAE1"
-    shippingOptionsUrl: !!str	"https://${_apiHost}/raptor/v1/shipping-option/"
+    accessories: !!str                "https://${_apiHost}/raptor/v1/search-promote/?type=browse&pt=Accessory&o="
+    compatibleAccessory: !!str        "https://${_apiHost}/raptor/v1/search-promote/?type=browse&pt=Accessory&facets=true"
+    authorization: !!str              "https://${_apiHost}/raptor/v1/oauth/v1/access"
+    updateProfile: !!str              "https://${_apiHost}/raptor/v1/update-profile",
+    ShippingOrderFees: !!str          "https://${_apiHost}/raptor/v1/order/fees",
+    simKitDetails: !!str              "https://${_apiHost}/raptor/v1/productDetails/i-739C46ADBDEE4AE9ADE7BF05D984EAE1"
+    shippingOptionsUrl: !!str         "https://${_apiHost}/raptor/v1/shipping-option/"
 
-    creditCardInfo: !!str	"https://${_apiHost}/creditcards/orders"
+    creditCardInfo: !!str             "https://${_apiHost}/creditcards/orders"
 
-    checkoutSetAddress: !!str	"https://${_apiHost}/v1/orders/{{orderID}}/address"
-  	creditcheckUrl: !!str	"https://${_apiHost}/v1/orders/creditcheck/"
-    creditcardUrl: !!str	"https://${_apiHost}/v1/orders/creditcards/"
+    checkoutSetAddress: !!str         "https://${_apiHost}/v1/orders/{{orderID}}/address"
+  	creditcheckUrl: !!str             "https://${_apiHost}/v1/orders/creditcheck/"
+    creditcardUrl: !!str              "https://${_apiHost}/v1/orders/creditcards/"
 
-    getProfile: !!str	"https://${_apiHost}/v1/profile"
-    authorableCarousel: !!str	"https://${_apiHost}/v1/products"
+    getProfile: !!str                 "https://${_apiHost}/v1/profile"
+    authorableCarousel: !!str         "https://${_apiHost}/v1/products"
 
-    getDefaultCart: !!str	"https://${_apiHost}/v1/carts"
-    removeAccessoryFromCart: !!str	"https://${_apiHost}/v1/carts/"
-    addAccessoryToCart: !!str	"https://${_apiHost}/v1/carts/"
+    getDefaultCart: !!str             "https://${_apiHost}/v1/carts"
+    removeAccessoryFromCart: !!str    "https://${_apiHost}/v1/carts/"
+    addAccessoryToCart: !!str         "https://${_apiHost}/v1/carts/"
 
   storeLocator: !!map
-    search: !!str 	"https://${_storeLocatorAWSAPIHost}/getStoresByCoordinates"
-    stateSearch: !!str	"https://${_storeLocatorAWSAPIHost}/getStoresInState"
-    citySearch: !!str	"https://${_storeLocatorAWSAPIHost}/getStoresInCity"
-    storeSearch: !!str	"https://${_storeLocatorAWSAPIHost}/getStoreByName"
-    getInLineReasons: !!str	"https://${_storeLocatorAWSAPIHost}/getReasons"
-    addCustomerV2: !!str	"https://${_storeLocatorAPIHost}/add-customer/v1/addCustomer"
-    getLeadInfo: !!str	"https://${_storeLocatorAPIHost}/customer-interaction/v1/get-lead?leadId={{leadId}}"
+    search: !!str                     "https://${_storeLocatorAWSAPIHost}/getStoresByCoordinates"
+    stateSearch: !!str                "https://${_storeLocatorAWSAPIHost}/getStoresInState"
+    citySearch: !!str                 "https://${_storeLocatorAWSAPIHost}/getStoresInCity"
+    storeSearch: !!str                "https://${_storeLocatorAWSAPIHost}/getStoreByName"
+    getInLineReasons: !!str           "https://${_storeLocatorAWSAPIHost}/getReasons"
+    addCustomerV2: !!str              "https://${_storeLocatorAPIHost}/add-customer/v1/addCustomer"
+    getLeadInfo: !!str                "https://${_storeLocatorAPIHost}/customer-interaction/v1/get-lead?leadId={{leadId}}"
   ...
 ```
 
@@ -136,36 +136,36 @@ Then to modify specific attributes for various deployed environments we append a
 environments: !!map
 
   dailydev: !!map
-    _storeLocatorAPIHost: "pd03.api.t-mobile.com"
+    _storeLocatorAPIHost:         "pd03.api.t-mobile.com"
 
   demo: !!map
-    _apiHost: !!str "pd02.api.t-mobile.com"
-    _storeLocatorAPIHost: !!str "pd03.api.t-mobile.com"
+    _apiHost: !!str               "pd02.api.t-mobile.com"
+    _storeLocatorAPIHost: !!str   "pd03.api.t-mobile.com"
 
   devprd: !!map
+    _apiHost: !!str                "qat03-pd.api.t-mobile.com"
     _storeLocatorAWSAPIHost: !!str "md14ltwri9.execute-api.us-west-2.amazonaws.com/dev"
-    _apiHost: !!str "qat03-pd.api.t-mobile.com"
 
   local: !!map
-    _apiHost: !!str "pd02.api.t-mobile.com"
-    _storeLocatorAPIHost: !!str "qat03-pd.api.t-mobile.com"
+    _apiHost: !!str               "pd02.api.t-mobile.com"
+    _storeLocatorAPIHost: !!str   "qat03-pd.api.t-mobile.com"
 
   prod: !!map
-    _apiHost: !!str "api.t-mobile.com"
-    _storeLocatorAPIHost: !!str "api.t-mobile.com"
+    _apiHost: !!str                "api.t-mobile.com"
+    _storeLocatorAPIHost: !!str    "api.t-mobile.com"
     _storeLocatorAWSAPIHost: !!str "onmyj41p3c.execute-api.us-west-2.amazonaws.com/prod"
 
   qat: !!map
-    _apiHost: !!str "api.t-mobile.com"
-    _storeLocatorAPIHost: !!str "qat03-pd.api.t-mobile.com"
+    _apiHost: !!str                "api.t-mobile.com"
+    _storeLocatorAPIHost: !!str    "qat03-pd.api.t-mobile.com"
 
   qatprd: !!map
+    _apiHost: !!str                "pd03.api.t-mobile.com"
     _storeLocatorAWSAPIHost: !!str "md14ltwri9.execute-api.us-west-2.amazonaws.com/dev"
-    _apiHost: !!str "pd03.api.t-mobile.com"
 
   stage: !!map
-    _apiHost: !!str "api.t-mobile.com"
-    _storeLocatorAPIHost: !!str "api.t-mobile.com"
+    _apiHost: !!str                "api.t-mobile.com"
+    _storeLocatorAPIHost: !!str    "api.t-mobile.com"
   ...
 ```
 
