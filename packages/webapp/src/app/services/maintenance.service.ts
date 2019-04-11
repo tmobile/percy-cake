@@ -1,37 +1,42 @@
-/**
- *   Copyright 2019 T-Mobile
- *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- */
+/** ========================================================================
+Copyright 2019 T-Mobile, USA
 
-import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
-import * as path from 'path';
-import * as HttpErrors from 'http-errors';
-import * as ms from 'ms';
-import * as _ from 'lodash';
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-import { percyConfig } from 'config';
-import { UtilService } from './util.service';
-import { Principal } from 'models/auth';
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+See the LICENSE file for additional language around disclaimer of warranties.
+
+Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
+its contributors may be used to endorse or promote products derived from this
+software without specific prior written permission.
+=========================================================================== 
+*/
+
+import { Injectable } from "@angular/core";
+import { BehaviorSubject } from "rxjs";
+import { debounceTime } from "rxjs/operators";
+import * as path from "path";
+import * as HttpErrors from "http-errors";
+import * as ms from "ms";
+import * as _ from "lodash";
+
+import { percyConfig } from "config";
+import { UtilService } from "./util.service";
+import { Principal } from "models/auth";
 
 /**
  * This service provides the methods around the maintenance API endpoints
  */
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: "root" })
 export class MaintenanceService {
-
   /**
    * the user names cache variable
    */
@@ -52,7 +57,10 @@ export class MaintenanceService {
       if (this.userSessionsCache) {
         try {
           const fs = await this.utilService.getBrowserFS();
-          const sessionsMetaFile = path.resolve(percyConfig.metaFolder, 'user-session.json');
+          const sessionsMetaFile = path.resolve(
+            percyConfig.metaFolder,
+            "user-session.json"
+          );
           await fs.outputJson(sessionsMetaFile, this.userSessionsCache);
         } catch (err) {
           console.warn(err);
@@ -72,24 +80,34 @@ export class MaintenanceService {
     const username = user.username;
 
     if (!this.userSessionsCache) {
-      const sessionsMetaFile = path.resolve(percyConfig.metaFolder, 'user-session.json');
+      const sessionsMetaFile = path.resolve(
+        percyConfig.metaFolder,
+        "user-session.json"
+      );
       if (await fs.pathExists(sessionsMetaFile)) {
         try {
           this.userSessionsCache = await fs.readJson(sessionsMetaFile);
         } catch (err) {
-          console.warn('Invalid user session file: ' + (await fs.readFile(sessionsMetaFile)).toString());
+          console.warn(
+            "Invalid user session file: " +
+              (await fs.readFile(sessionsMetaFile)).toString()
+          );
         }
       }
     }
 
     this.userSessionsCache = this.userSessionsCache || {};
-    if (this.userSessionsCache[username] && this.userSessionsCache[username] < Date.now()) {
+    if (
+      this.userSessionsCache[username] &&
+      this.userSessionsCache[username] < Date.now()
+    ) {
       delete this.userSessionsCache[username];
       this.userSessions$.next(this.userSessionsCache);
-      throw new HttpErrors.Unauthorized('Session expired, please re-login');
+      throw new HttpErrors.Unauthorized("Session expired, please re-login");
     }
 
-    this.userSessionsCache[username] = Date.now() + ms(percyConfig.loginSessionTimeout);
+    this.userSessionsCache[username] =
+      Date.now() + ms(percyConfig.loginSessionTimeout);
     this.userSessions$.next(this.userSessionsCache);
 
     return principal;
@@ -103,14 +121,20 @@ export class MaintenanceService {
   async getUserTypeAhead(prefix: string) {
     if (!this.userNamesCache) {
       const fs = await this.utilService.getBrowserFS();
-      const loggedInUsersMetaFile = path.resolve(percyConfig.metaFolder, percyConfig.loggedInUsersMetaFile);
+      const loggedInUsersMetaFile = path.resolve(
+        percyConfig.metaFolder,
+        percyConfig.loggedInUsersMetaFile
+      );
       if (await fs.pathExists(loggedInUsersMetaFile)) {
         this.userNamesCache = await fs.readJson(loggedInUsersMetaFile);
       } else {
         this.userNamesCache = [];
       }
     }
-    return _.filter(this.userNamesCache, (i) => i.toUpperCase().indexOf(prefix.toUpperCase()) !== -1);
+    return _.filter(
+      this.userNamesCache,
+      i => i.toUpperCase().indexOf(prefix.toUpperCase()) !== -1
+    );
   }
 
   /**
@@ -120,13 +144,17 @@ export class MaintenanceService {
   async addUserName(username: string) {
     // Update user sessions cache
     this.userSessionsCache = this.userSessionsCache || {};
-    this.userSessionsCache[username] = Date.now() + ms(percyConfig.loginSessionTimeout);
+    this.userSessionsCache[username] =
+      Date.now() + ms(percyConfig.loginSessionTimeout);
     this.userSessions$.next(this.userSessionsCache);
 
     // Update user names cache
     const fs = await this.utilService.getBrowserFS();
     this.userNamesCache = _.union(this.userNamesCache || [], [username]);
-    const loggedInUsersMetaFile = path.resolve(percyConfig.metaFolder, percyConfig.loggedInUsersMetaFile);
+    const loggedInUsersMetaFile = path.resolve(
+      percyConfig.metaFolder,
+      percyConfig.loggedInUsersMetaFile
+    );
 
     await fs.outputJson(loggedInUsersMetaFile, this.userNamesCache);
   }

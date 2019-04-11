@@ -1,36 +1,49 @@
-/**
- *   Copyright 2019 T-Mobile
- *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- */
+/** ========================================================================
+Copyright 2019 T-Mobile, USA
 
-import { Component, OnInit, ViewChild, Inject } from '@angular/core';
-import { Router } from '@angular/router';
-import { DOCUMENT } from '@angular/common';
-import { FormControl, Validators } from '@angular/forms';
-import { MatAutocompleteTrigger } from '@angular/material';
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-import { Store, select } from '@ngrx/store';
-import { BehaviorSubject } from 'rxjs';
-import { startWith, debounceTime, distinctUntilChanged, switchMap, withLatestFrom, tap } from 'rxjs/operators';
+   http://www.apache.org/licenses/LICENSE-2.0
 
-import * as _ from 'lodash';
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+See the LICENSE file for additional language around disclaimer of warranties.
 
-import { electronApi, percyConfig } from 'config';
-import * as appStore from 'store';
-import * as AuthActions from 'store/actions/auth.actions';
-import { MaintenanceService } from 'services/maintenance.service';
-import { NotEmpty } from 'services/validators';
+Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
+its contributors may be used to endorse or promote products derived from this
+software without specific prior written permission.
+=========================================================================== 
+*/
+
+import { Component, OnInit, ViewChild, Inject } from "@angular/core";
+import { Router } from "@angular/router";
+import { DOCUMENT } from "@angular/common";
+import { FormControl, Validators } from "@angular/forms";
+import { MatAutocompleteTrigger } from "@angular/material";
+
+import { Store, select } from "@ngrx/store";
+import { BehaviorSubject } from "rxjs";
+import {
+  startWith,
+  debounceTime,
+  distinctUntilChanged,
+  switchMap,
+  withLatestFrom,
+  tap
+} from "rxjs/operators";
+
+import * as _ from "lodash";
+
+import { electronApi, percyConfig } from "config";
+import * as appStore from "store";
+import * as AuthActions from "store/actions/auth.actions";
+import { MaintenanceService } from "services/maintenance.service";
+import { NotEmpty } from "services/validators";
 
 const urlFormat = /^\s*(http[s]?:\/\/){0,1}(www\.){0,1}[a-zA-Z0-9\.\-]+\.[a-zA-Z]{2,5}[\.]{0,1}/;
 
@@ -38,15 +51,17 @@ const urlFormat = /^\s*(http[s]?:\/\/){0,1}(www\.){0,1}[a-zA-Z0-9\.\-]+\.[a-zA-Z
   Login page
  */
 @Component({
-  selector: 'app-login',
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.scss']
+  selector: "app-login",
+  templateUrl: "./login.component.html",
+  styleUrls: ["./login.component.scss"]
 })
 export class LoginComponent implements OnInit {
-
-  username = new FormControl('', [NotEmpty]);
-  password = new FormControl('', [NotEmpty]);
-  repositoryURL = new FormControl('', [NotEmpty, Validators.pattern(urlFormat)]);
+  username = new FormControl("", [NotEmpty]);
+  password = new FormControl("", [NotEmpty]);
+  repositoryURL = new FormControl("", [
+    NotEmpty,
+    Validators.pattern(urlFormat)
+  ]);
   loginError: string = null;
   formProcessing = this.store.pipe(select(appStore.getFormProcessing));
 
@@ -54,9 +69,9 @@ export class LoginComponent implements OnInit {
   filteredUsernames = new BehaviorSubject<string[]>([]);
 
   // use to trigger the change in the input from browser auto fill
-  @ViewChild('autoTrigger') private autoTrigger: MatAutocompleteTrigger;
+  @ViewChild("autoTrigger") private autoTrigger: MatAutocompleteTrigger;
 
-  openMode = '';
+  openMode = "";
 
   /**
    * constructs the component
@@ -70,7 +85,7 @@ export class LoginComponent implements OnInit {
     private router: Router,
     private maintenanceService: MaintenanceService,
     @Inject(DOCUMENT) private _document: Document
-  ) { }
+  ) {}
 
   /**
    * Check if is running electron.
@@ -92,7 +107,7 @@ export class LoginComponent implements OnInit {
    * @param openMode the open mode
    */
   setOpenMode(openMode: string) {
-    window['openMode'].next(openMode);
+    window["openMode"].next(openMode);
   }
 
   /**
@@ -100,22 +115,25 @@ export class LoginComponent implements OnInit {
    */
   ngOnInit() {
     if (!this.isElectron()) {
-      this.openMode = 'remote';
+      this.openMode = "remote";
     } else {
-      window['openMode'].subscribe(res => {
+      window["openMode"].subscribe(res => {
         this.openMode = res;
       });
     }
 
     // if currentURL is login then route depending on whether user is logged-in or not
-    this.store.pipe(select(appStore.getCurrentUser)).pipe(
-      withLatestFrom(this.store.pipe(select(appStore.getRedirectUrl))),
-      tap(([isAuthenticated, redirectUrl]) => {
-        if (isAuthenticated) {
-          return this.router.navigate([redirectUrl || '/dashboard']);
-        }
-      })
-    ).subscribe();
+    this.store
+      .pipe(select(appStore.getCurrentUser))
+      .pipe(
+        withLatestFrom(this.store.pipe(select(appStore.getRedirectUrl))),
+        tap(([isAuthenticated, redirectUrl]) => {
+          if (isAuthenticated) {
+            return this.router.navigate([redirectUrl || "/dashboard"]);
+          }
+        })
+      )
+      .subscribe();
 
     this.username.valueChanges
       .pipe(
@@ -123,29 +141,35 @@ export class LoginComponent implements OnInit {
         debounceTime(200),
         distinctUntilChanged(),
         switchMap(value => this._filter(value))
-      ).subscribe(this.filteredUsernames);
+      )
+      .subscribe(this.filteredUsernames);
 
     this.repositoryURL.setValue(percyConfig.defaultRepositoryUrl);
 
-    this.store.pipe(select(appStore.getLoginError), tap((le) => {
-      this.loginError = null;
+    this.store
+      .pipe(
+        select(appStore.getLoginError),
+        tap(le => {
+          this.loginError = null;
 
-      if (!le) {
-        return;
-      }
+          if (!le) {
+            return;
+          }
 
-      // Show the error in form field
-      if (le['statusCode'] === 401) {
-        this.password.setErrors({ invalid: true });
-        return this.username.setErrors({ invalid: true });
-      } else if (le['statusCode'] === 403) {
-        return this.repositoryURL.setErrors({ forbidden: true });
-      } else if (le.message === 'Repository not found') {
-        return this.repositoryURL.setErrors({ notFound: true });
-      }
+          // Show the error in form field
+          if (le["statusCode"] === 401) {
+            this.password.setErrors({ invalid: true });
+            return this.username.setErrors({ invalid: true });
+          } else if (le["statusCode"] === 403) {
+            return this.repositoryURL.setErrors({ forbidden: true });
+          } else if (le.message === "Repository not found") {
+            return this.repositoryURL.setErrors({ notFound: true });
+          }
 
-      this.loginError = 'Login failed';
-    })).subscribe();
+          this.loginError = "Login failed";
+        })
+      )
+      .subscribe();
   }
 
   /*
@@ -156,15 +180,21 @@ export class LoginComponent implements OnInit {
     this.username.setValue(_.trim(this.username.value));
     this.repositoryURL.setValue(_.trim(this.repositoryURL.value));
 
-    if (this.username.valid && this.password.valid && this.repositoryURL.valid) {
+    if (
+      this.username.valid &&
+      this.password.valid &&
+      this.repositoryURL.valid
+    ) {
       const url = new URL(this.repositoryURL.value);
-      url.pathname = url.pathname.replace(/(\/)+$/, '');
-      url.pathname = url.pathname.replace(/(\.git)$/, '');
-      this.store.dispatch(new AuthActions.Login({
-        repositoryUrl: url.href,
-        username: this.username.value,
-        password: this.password.value
-      }));
+      url.pathname = url.pathname.replace(/(\/)+$/, "");
+      url.pathname = url.pathname.replace(/(\.git)$/, "");
+      this.store.dispatch(
+        new AuthActions.Login({
+          repositoryUrl: url.href,
+          username: this.username.value,
+          password: this.password.value
+        })
+      );
     }
   }
 
@@ -174,12 +204,12 @@ export class LoginComponent implements OnInit {
   inputChange(field?: string) {
     this.loginError = null;
 
-    if (field === 'user-pass') {
-      if (_.trim(this.username.value) !== '') {
+    if (field === "user-pass") {
+      if (_.trim(this.username.value) !== "") {
         this.username.setErrors(null);
       }
 
-      if (this.password.value !== '') {
+      if (this.password.value !== "") {
         this.password.setErrors(null);
       }
     }
@@ -198,7 +228,7 @@ export class LoginComponent implements OnInit {
     if (this._document.activeElement !== target) {
       this.autoTrigger._onChange(target.value);
     }
-  }
+  };
 
   /**
    * filters the usernames with given prefix
@@ -208,11 +238,17 @@ export class LoginComponent implements OnInit {
     const filterValue = _.trim(value).toLowerCase();
     // only call API if first character else filter from cache value
     if (filterValue.length === 1) {
-      const typeAhead = await this.maintenanceService.getUserTypeAhead(filterValue);
+      const typeAhead = await this.maintenanceService.getUserTypeAhead(
+        filterValue
+      );
       this.usernameTypeAhead = typeAhead;
-      return this.usernameTypeAhead.filter(option => _.startsWith(option.toLowerCase(), filterValue));
+      return this.usernameTypeAhead.filter(option =>
+        _.startsWith(option.toLowerCase(), filterValue)
+      );
     } else {
-      return this.usernameTypeAhead.filter(option => _.startsWith(option.toLowerCase(), filterValue));
+      return this.usernameTypeAhead.filter(option =>
+        _.startsWith(option.toLowerCase(), filterValue)
+      );
     }
   }
 }

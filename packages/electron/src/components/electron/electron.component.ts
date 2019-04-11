@@ -1,53 +1,64 @@
 /**
- *   Copyright 2019 T-Mobile
- *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- */
+=========================================================================
+Copyright 2019 T-Mobile, USA
 
-import * as _ from 'lodash';
-import { Subscription } from 'rxjs';
-import { map } from 'rxjs/operators';
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-import { FormControl } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
-import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
-import { NestedTreeControl } from '@angular/cdk/tree';
-import { MatTreeNestedDataSource, MatDialog, MatDialogRef } from '@angular/material';
-import { Store, select } from '@ngrx/store';
+   http://www.apache.org/licenses/LICENSE-2.0
 
-import { electronApi, percyConfig, appPercyConfig } from 'config';
-import { TreeNode } from 'models/tree-node';
-import { Configuration } from 'models/config-file';
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+See the LICENSE file for additional language around disclaimer of warranties.
 
-import * as appStore from 'store';
-import { PageRestore } from 'store/actions/editor.actions';
-import { LoadFilesSuccess, Initialize } from 'store/actions/backend.actions';
-import { State as EditorState } from 'store/reducers/editor.reducer';
-import { UtilService } from 'services/util.service';
+Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
+its contributors may be used to endorse or promote products derived from this
+software without specific prior written permission.
+=========================================================================== 
+*/
 
-import { EditorComponent } from 'components/editor/editor.component';
-import { AlertDialogComponent } from 'components/alert-dialog/alert-dialog.component';
-import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
+import * as _ from "lodash";
+import { Subscription } from "rxjs";
+import { map } from "rxjs/operators";
 
-import { File } from '../../../app/File';
+import { FormControl } from "@angular/forms";
+import { ActivatedRoute } from "@angular/router";
+import { Component, OnInit, OnDestroy, HostListener } from "@angular/core";
+import { NestedTreeControl } from "@angular/cdk/tree";
+import {
+  MatTreeNestedDataSource,
+  MatDialog,
+  MatDialogRef
+} from "@angular/material";
+import { Store, select } from "@ngrx/store";
+
+import { electronApi, percyConfig, appPercyConfig } from "config";
+import { TreeNode } from "models/tree-node";
+import { Configuration } from "models/config-file";
+
+import * as appStore from "store";
+import { PageRestore } from "store/actions/editor.actions";
+import { LoadFilesSuccess, Initialize } from "store/actions/backend.actions";
+import { State as EditorState } from "store/reducers/editor.reducer";
+import { UtilService } from "services/util.service";
+
+import { EditorComponent } from "components/editor/editor.component";
+import { AlertDialogComponent } from "components/alert-dialog/alert-dialog.component";
+import { ConfirmationDialogComponent } from "components/confirmation-dialog/confirmation-dialog.component";
+
+import { File } from "../../../app/File";
 
 /**
  * Electron local folder/files editor compoent. It supports multiple editors for multiple files.
  */
 @Component({
-  selector: 'app-electron',
-  templateUrl: './electron.component.html',
-  styleUrls: ['./electron.component.scss']
+  selector: "app-electron",
+  templateUrl: "./electron.component.html",
+  styleUrls: ["./electron.component.scss"]
 })
 export class ElectronPageComponent implements OnInit, OnDestroy {
   fileTreeControl: NestedTreeControl<File>;
@@ -57,7 +68,9 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
   selectedEditor = new FormControl(0);
 
   editorStates: { [key: number]: EditorState } = {};
-  changedDialogRef: { [key: string]: MatDialogRef<ConfirmationDialogComponent> } = {};
+  changedDialogRef: {
+    [key: string]: MatDialogRef<ConfirmationDialogComponent>;
+  } = {};
 
   newFileIno = -1;
 
@@ -74,8 +87,8 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private store: Store<appStore.AppState>,
     private dialog: MatDialog,
-    private utilService: UtilService,
-  ) { }
+    private utilService: UtilService
+  ) {}
 
   /**
    * Initialize component.
@@ -83,28 +96,30 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.utilService.initConfig();
 
-    this.sub = this.store.pipe(select(appStore.editorState)).subscribe((editorState) => {
-      if (!editorState.configFile) {
-        return;
-      }
-      const filePath = editorState.configFile['path'];
-      if (!filePath) {
-        return;
-      }
+    this.sub = this.store
+      .pipe(select(appStore.editorState))
+      .subscribe(editorState => {
+        if (!editorState.configFile) {
+          return;
+        }
+        const filePath = editorState.configFile["path"];
+        if (!filePath) {
+          return;
+        }
 
-      // Align editor state
-      const state = this.editorStates[filePath];
-      if (state) {
-        state.configuration = editorState.configuration;
-      }
+        // Align editor state
+        const state = this.editorStates[filePath];
+        if (state) {
+          state.configuration = editorState.configuration;
+        }
 
-      // Align file state
-      const file = this.findOpenedFile(filePath);
-      if (file) {
-        file.modified = editorState.configFile.modified;
-        file.configuration = editorState.configuration;
-      }
-    });
+        // Align file state
+        const file = this.findOpenedFile(filePath);
+        if (file) {
+          file.modified = editorState.configFile.modified;
+          file.configuration = editorState.configuration;
+        }
+      });
 
     this.route.params.subscribe(() => {
       this.onRouteChange();
@@ -123,7 +138,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
     _.keys(appPercyConfig).forEach(key => delete appPercyConfig[key]);
 
     // Clear backend state
-    this.store.dispatch(new Initialize({ redirectUrl: '' }));
+    this.store.dispatch(new Initialize({ redirectUrl: "" }));
   }
 
   /**
@@ -147,7 +162,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
     this.editorStates = {};
 
     const routeSnapshot = this.route.snapshot;
-    const folderPath = routeSnapshot.paramMap.get('folder');
+    const folderPath = routeSnapshot.paramMap.get("folder");
 
     this.fileDataSource = new MatTreeNestedDataSource();
 
@@ -163,7 +178,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
   /**
    * Prevent window unload when there is any change.
    */
-  @HostListener('window:beforeunload', ['$event'])
+  @HostListener("window:beforeunload", ["$event"])
   onLeavePage($event: any) {
     if (this.hasChange()) {
       $event.returnValue = true;
@@ -176,7 +191,9 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
    */
   canDeactivate() {
     if (this.hasChange()) {
-      return this.showUnsaveDialog('Are you sure you want to navigate away from the page?').pipe(map(response => response));
+      return this.showUnsaveDialog(
+        "Are you sure you want to navigate away from the page?"
+      ).pipe(map(response => response));
     }
     return true;
   }
@@ -188,7 +205,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
     // When drag splitter between file explorer and editors,
     // dispatch window resize event, so that the MAT tabs component
     // will recaculate width to show/hide scroll header
-    window.dispatchEvent(new Event('resize'));
+    window.dispatchEvent(new Event("resize"));
   }
 
   /*
@@ -228,7 +245,6 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
    * @param folderPath the folder path
    */
   refreshFolder(folderPath: string) {
-
     const expandFolders = (_folders: File[]) => {
       _folders.forEach(_folder => {
         if (!_folder.isFile) {
@@ -271,16 +287,24 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
    * @param folder The folder to sort its children
    */
   private sortFolderChildren(folder: File) {
-
     folder.children = folder.children.sort((a, b) => {
-      if (a.path < b.path) { return -1; }
-      if (a.path > b.path) { return 1; }
+      if (a.path < b.path) {
+        return -1;
+      }
+      if (a.path > b.path) {
+        return 1;
+      }
       return 0;
     });
 
     const envFile = this.getEnvFile(folder);
     if (envFile) {
-      folder.children = [envFile, ...folder.children.filter(f => f.fileName !== percyConfig.environmentsFile)];
+      folder.children = [
+        envFile,
+        ...folder.children.filter(
+          f => f.fileName !== percyConfig.environmentsFile
+        )
+      ];
     }
   }
 
@@ -304,7 +328,13 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
   private setBackendState() {
     const folders = this.fileDataSource.data;
     const allFiles = this.getAllFiles(folders);
-    this.store.dispatch(new LoadFilesSuccess({ files: allFiles, applications: [], appConfigs: {} }));
+    this.store.dispatch(
+      new LoadFilesSuccess({
+        files: allFiles,
+        applications: [],
+        appConfigs: {}
+      })
+    );
   }
 
   /**
@@ -332,10 +362,10 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
    * @returns file title
    */
   getFileTitle(file: File) {
-    let result = file.modified ? '*' + file.fileName : file.fileName;
+    let result = file.modified ? "*" + file.fileName : file.fileName;
 
     if (file.editMode && !file.parent.hasChild(file.path)) {
-      result += ' (deleted from disk)';
+      result += " (deleted from disk)";
     }
 
     return result;
@@ -370,11 +400,17 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
    */
   private getEnvironments(folderPath: string) {
     // Parse environments
-    const envPath = electronApi.path.resolve(folderPath, percyConfig.environmentsFile);
+    const envPath = electronApi.path.resolve(
+      folderPath,
+      percyConfig.environmentsFile
+    );
     const envContent = electronApi.readFile(envPath);
     if (envContent) {
       const envConfig = this.parseYaml(envContent, envPath);
-      return _.map(_.get(envConfig.environments, 'children', <TreeNode[]>[]), child => child.key);
+      return _.map(
+        _.get(envConfig.environments, "children", <TreeNode[]>[]),
+        child => child.key
+      );
     } else {
       return [];
     }
@@ -393,7 +429,9 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
     const opened = this.findOpenedFile(file.path);
     if (!opened) {
       // Parse environments
-      file.environments = this.getEnvironments(electronApi.path.dirname(file.path));
+      file.environments = this.getEnvironments(
+        electronApi.path.dirname(file.path)
+      );
 
       // Parse file content
       const fileContent = electronApi.readFile(file.path);
@@ -419,45 +457,48 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
    * @param file the file to watch
    */
   private watchFile(file: File) {
-
     const filePath = file.path;
-    electronApi.watchFile(filePath, this.utilService.wrapInZone((event) => {
-      if (event === 'deleted') {
-        file.parent.removeChild(filePath);
-        this.refreshFileExplorer();
-      } else if (event === 'changed') {
+    electronApi.watchFile(
+      filePath,
+      this.utilService.wrapInZone(event => {
+        if (event === "deleted") {
+          file.parent.removeChild(filePath);
+          this.refreshFileExplorer();
+        } else if (event === "changed") {
+          const _file = this.findOpenedFile(file.path);
+          if (_file) {
+            const _fileContent = electronApi.readFile(filePath);
+            const originalConfig = this.parseYaml(_fileContent, filePath);
+            if (!_.isEqual(originalConfig, _file.originalConfig)) {
+              if (this.changedDialogRef[filePath]) {
+                this.changedDialogRef[
+                  filePath
+                ].componentInstance.data.originalConfig = originalConfig;
+                return;
+              }
 
-        const _file = this.findOpenedFile(file.path);
-        if (_file) {
-
-          const _fileContent = electronApi.readFile(filePath);
-          const originalConfig = this.parseYaml(_fileContent, filePath);
-          if (!_.isEqual(originalConfig, _file.originalConfig)) {
-            if (this.changedDialogRef[filePath]) {
-              this.changedDialogRef[filePath].componentInstance.data.originalConfig = originalConfig;
-              return;
+              const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+                data: {
+                  originalConfig,
+                  confirmationText: `${filePath} is changed externally. Do you want to reload the file?`
+                }
+              });
+              dialogRef.afterClosed().subscribe(res => {
+                delete this.changedDialogRef[filePath];
+                if (res) {
+                  _file.originalConfig =
+                    dialogRef.componentInstance.data.originalConfig;
+                  _file.configuration = _.cloneDeep(_file.originalConfig);
+                  _file.modified = false;
+                  this.setEditorState(_file);
+                }
+              });
+              this.changedDialogRef[filePath] = dialogRef;
             }
-
-            const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
-              data: {
-                originalConfig,
-                confirmationText: `${filePath} is changed externally. Do you want to reload the file?`
-              }
-            });
-            dialogRef.afterClosed().subscribe(res => {
-              delete this.changedDialogRef[filePath];
-              if (res) {
-                _file.originalConfig = dialogRef.componentInstance.data.originalConfig;
-                _file.configuration = _.cloneDeep(_file.originalConfig);
-                _file.modified = false;
-                this.setEditorState(_file);
-              }
-            });
-            this.changedDialogRef[filePath] = dialogRef;
           }
         }
-      }
-    }));
+      })
+    );
   }
 
   /**
@@ -473,7 +514,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
       configuration: file.configuration,
       isCommitting: false,
       isSaving: false,
-      isPageDirty: false,
+      isPageDirty: false
     };
     this.editorStates[file.path] = state;
     if (dispath) {
@@ -529,7 +570,9 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
       const editMode = file.editMode;
       const fileName = editor.getFileName();
-      const filePath = editMode ? file.path : electronApi.path.resolve(file.parent.path, fileName);
+      const filePath = editMode
+        ? file.path
+        : electronApi.path.resolve(file.parent.path, fileName);
 
       const fileContent = this.utilService.convertTreeToYaml(configuration);
       electronApi.saveFile(filePath, fileContent);
@@ -580,7 +623,9 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
    * @returns folder's env file
    */
   getEnvFile(folder: File) {
-    return folder.children.find(f => f.fileName === percyConfig.environmentsFile);
+    return folder.children.find(
+      f => f.fileName === percyConfig.environmentsFile
+    );
   }
 
   /**
@@ -600,8 +645,13 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
     if (!folder.folderPopulated) {
       this.populateFolder(folder);
     }
-    const fileName = 'Untitled' + this.newFileIno;
-    const newFile = new File(electronApi.path.resolve(folder.path, fileName), fileName, true, folder);
+    const fileName = "Untitled" + this.newFileIno;
+    const newFile = new File(
+      electronApi.path.resolve(folder.path, fileName),
+      fileName,
+      true,
+      folder
+    );
     newFile.ino = this.newFileIno;
     newFile.applicationName = folder.applicationName;
     newFile.editMode = false;
@@ -632,7 +682,12 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
     }
 
     const fileName = percyConfig.environmentsFile;
-    const newFile = new File(electronApi.path.resolve(folder.path, fileName), fileName, true, folder);
+    const newFile = new File(
+      electronApi.path.resolve(folder.path, fileName),
+      fileName,
+      true,
+      folder
+    );
     newFile.applicationName = folder.applicationName;
     newFile.editMode = false;
     newFile.envFileMode = true;
@@ -657,7 +712,9 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
     const index = this.openedFiles.indexOf(found);
     if (file.modified && !force) {
       this.selectTab(index);
-      this.showUnsaveDialog('Are you sure you want to close the file?').subscribe((res) => {
+      this.showUnsaveDialog(
+        "Are you sure you want to close the file?"
+      ).subscribe(res => {
         if (res) {
           this.doCloseFile(file, index);
         }
@@ -672,7 +729,6 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
    * @param message the message to show
    */
   private showUnsaveDialog(message: string) {
-
     const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
       data: {
         confirmationText: `There may be unsaved changes.\n${message}`
@@ -757,8 +813,9 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
    */
   openMenu(event, menuTrigger) {
     event.preventDefault();
-    menuTrigger.style.left = event.layerX + 'px';
-    menuTrigger.style.top = (event.layerY + menuTrigger.offsetParent.scrollTop) + 'px';
+    menuTrigger.style.left = event.layerX + "px";
+    menuTrigger.style.top =
+      event.layerY + menuTrigger.offsetParent.scrollTop + "px";
     menuTrigger.click();
   }
 

@@ -1,22 +1,28 @@
-/**
- *   Copyright 2019 T-Mobile
- *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- */
+/** ========================================================================
+Copyright 2019 T-Mobile, USA
 
-import * as _ from 'lodash';
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-import { PROPERTY_VALUE_TYPES } from 'config';
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+See the LICENSE file for additional language around disclaimer of warranties.
+
+Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
+its contributors may be used to endorse or promote products derived from this
+software without specific prior written permission.
+=========================================================================== 
+*/
+
+import * as _ from "lodash";
+
+import { PROPERTY_VALUE_TYPES } from "config";
 
 /**
  * Tree node data with nested structure. Each node has a key and value type, and depends on value type
@@ -36,7 +42,12 @@ export class TreeNode {
    * @param value the value of node
    * @param comment the comment of node
    */
-  constructor(public key: string, public valueType: string = PROPERTY_VALUE_TYPES.OBJECT, public value?: any, public comment?: string[]) {
+  constructor(
+    public key: string,
+    public valueType: string = PROPERTY_VALUE_TYPES.OBJECT,
+    public value?: any,
+    public comment?: string[]
+  ) {
     if (!this.isLeaf()) {
       this.children = [];
     }
@@ -48,9 +59,11 @@ export class TreeNode {
    * @returns true if given type is string/boolean/number, false otherwise
    */
   static isLeafType(type: string) {
-    return type === PROPERTY_VALUE_TYPES.STRING
-      || type === PROPERTY_VALUE_TYPES.BOOLEAN
-      || type === PROPERTY_VALUE_TYPES.NUMBER;
+    return (
+      type === PROPERTY_VALUE_TYPES.STRING ||
+      type === PROPERTY_VALUE_TYPES.BOOLEAN ||
+      type === PROPERTY_VALUE_TYPES.NUMBER
+    );
   }
 
   /**
@@ -113,7 +126,11 @@ export class TreeNode {
    * @returns true if this represetns an object item in array, false otherwise
    */
   isObjectInArray() {
-    return this.valueType === PROPERTY_VALUE_TYPES.OBJECT && this.parent && this.parent.isArray();
+    return (
+      this.valueType === PROPERTY_VALUE_TYPES.OBJECT &&
+      this.parent &&
+      this.parent.isArray()
+    );
   }
 
   /**
@@ -121,11 +138,13 @@ export class TreeNode {
    * @returns true if this node's type is string[]/boolean[]/number[]/object[]/array, false otherwise
    */
   isArray() {
-    return this.valueType === PROPERTY_VALUE_TYPES.STRING_ARRAY
-      || this.valueType === PROPERTY_VALUE_TYPES.BOOLEAN_ARRAY
-      || this.valueType === PROPERTY_VALUE_TYPES.NUMBER_ARRAY
-      || this.valueType === PROPERTY_VALUE_TYPES.OBJECT_ARRAY
-      || this.valueType === 'array';
+    return (
+      this.valueType === PROPERTY_VALUE_TYPES.STRING_ARRAY ||
+      this.valueType === PROPERTY_VALUE_TYPES.BOOLEAN_ARRAY ||
+      this.valueType === PROPERTY_VALUE_TYPES.NUMBER_ARRAY ||
+      this.valueType === PROPERTY_VALUE_TYPES.OBJECT_ARRAY ||
+      this.valueType === "array"
+    );
   }
 
   /**
@@ -152,8 +171,10 @@ export class TreeNode {
    */
   getCommentStr(truncated?: boolean) {
     if (this.comment && this.comment.length) {
-      const commentString = this.comment.join('\n');
-      return (truncated && commentString.length > 300) ? (commentString.substring(0, 300) + ' ...') : commentString;
+      const commentString = this.comment.join("\n");
+      return truncated && commentString.length > 300
+        ? commentString.substring(0, 300) + " ..."
+        : commentString;
     }
     return undefined;
   }
@@ -199,7 +220,7 @@ export class TreeNode {
    * @returns string repsentation of paths
    */
   getPathsString() {
-    return this.getPaths().join('.');
+    return this.getPaths().join(".");
   }
 
   /**
@@ -208,12 +229,16 @@ export class TreeNode {
    * @returns child found or null
    */
   findChild(paths: string[]) {
-    return _.reduce(paths, (node, path) => {
-      if (!node) {
-        return null;
-      }
-      return _.find(node.children, (child) => child.key === path);
-    }, this);
+    return _.reduce(
+      paths,
+      (node, path) => {
+        if (!node) {
+          return null;
+        }
+        return _.find(node.children, child => child.key === path);
+      },
+      this
+    );
   }
 
   /**
@@ -236,7 +261,7 @@ export class TreeNode {
    * @returns true if this node is in 'default' tree, false otherwise
    */
   isDefaultNode() {
-    return this.getTopParent().key === 'default';
+    return this.getTopParent().key === "default";
   }
 
   /**

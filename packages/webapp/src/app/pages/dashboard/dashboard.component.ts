@@ -1,74 +1,118 @@
-/**
- *   Copyright 2019 T-Mobile
- *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- */
+/** ========================================================================
+Copyright 2019 T-Mobile, USA
 
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { MatDialog, Sort, MatIconRegistry } from '@angular/material';
-import { Router } from '@angular/router';
-import { DomSanitizer } from '@angular/platform-browser';
-import { Store, select } from '@ngrx/store';
-import { Observable, combineLatest, Subject, BehaviorSubject, Subscription } from 'rxjs';
-import { take, map, withLatestFrom } from 'rxjs/operators';
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-import { percyConfig } from 'config';
-import { User } from 'models/auth';
-import { ConfigFile } from 'models/config-file';
-import * as appStore from 'store';
-import { SelectApp, CollapseApps, ToggleApp, TableSort } from 'store/actions/dashboard.actions';
-import { DeleteFile, CommitChanges, Refresh, MergeBranch } from 'store/actions/backend.actions';
-import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
-import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.component';
-import { SelectAppDialogComponent } from 'components/select-app-dialog/select-app-dialog.component';
+   http://www.apache.org/licenses/LICENSE-2.0
 
-import * as _ from 'lodash';
-import { YamlService } from 'services/yaml.service';
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+See the LICENSE file for additional language around disclaimer of warranties.
 
-const commitIcon = require('../../../assets/icon-commit.svg');
-const addFileIcon = require('../../../assets/icon-add-file.svg');
-const syncIcon = require('../../../assets/icon-sync.svg');
-const pullRequestIcon = require('../../../assets/icon-pull-request.svg');
-const refreshIcon = require('../../../assets/icon-refresh.svg');
+Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
+its contributors may be used to endorse or promote products derived from this
+software without specific prior written permission.
+=========================================================================== 
+*/
+
+import { Component, OnInit, OnDestroy } from "@angular/core";
+import { MatDialog, Sort, MatIconRegistry } from "@angular/material";
+import { Router } from "@angular/router";
+import { DomSanitizer } from "@angular/platform-browser";
+import { Store, select } from "@ngrx/store";
+import {
+  Observable,
+  combineLatest,
+  Subject,
+  BehaviorSubject,
+  Subscription
+} from "rxjs";
+import { take, map, withLatestFrom } from "rxjs/operators";
+
+import { percyConfig } from "config";
+import { User } from "models/auth";
+import { ConfigFile } from "models/config-file";
+import * as appStore from "store";
+import {
+  SelectApp,
+  CollapseApps,
+  ToggleApp,
+  TableSort
+} from "store/actions/dashboard.actions";
+import {
+  DeleteFile,
+  CommitChanges,
+  Refresh,
+  MergeBranch
+} from "store/actions/backend.actions";
+import { ConfirmationDialogComponent } from "components/confirmation-dialog/confirmation-dialog.component";
+import { CommitDialogComponent } from "components/commit-dialog/commit-dialog.component";
+import { SelectAppDialogComponent } from "components/select-app-dialog/select-app-dialog.component";
+
+import * as _ from "lodash";
+import { YamlService } from "services/yaml.service";
+
+const commitIcon = require("../../../assets/icon-commit.svg");
+const addFileIcon = require("../../../assets/icon-add-file.svg");
+const syncIcon = require("../../../assets/icon-sync.svg");
+const pullRequestIcon = require("../../../assets/icon-pull-request.svg");
+const refreshIcon = require("../../../assets/icon-refresh.svg");
 
 /*
   Dashboard page
  */
 @Component({
-  selector: 'app-dashboard',
-  templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss']
+  selector: "app-dashboard",
+  templateUrl: "./dashboard.component.html",
+  styleUrls: ["./dashboard.component.scss"]
 })
 export class DashboardComponent implements OnInit, OnDestroy {
-  collapsedApps: Observable<string[]> = this.store.pipe(select(appStore.getCollapsedApps));
-  allAppsExpanded: Observable<boolean> = this.collapsedApps.pipe(map(c => !c.length));
+  collapsedApps: Observable<string[]> = this.store.pipe(
+    select(appStore.getCollapsedApps)
+  );
+  allAppsExpanded: Observable<boolean> = this.collapsedApps.pipe(
+    map(c => !c.length)
+  );
   tableSort: Observable<any> = this.store.pipe(select(appStore.getTableSort));
-  currentUser: Observable<User> = this.store.pipe(select(appStore.getCurrentUser));
-  selectedApp: Observable<string> = this.store.pipe(select(appStore.getSelectedApp));
-  applications: Observable<string[]> = this.store.pipe(select(appStore.getApplications));
-  appConfigs: Observable<{[app: string]: any}> = this.store.pipe(select(appStore.getAppConfigs));
-  isDeleting: Observable<boolean> = this.store.pipe(select(appStore.getDashboardFileDeleting));
-  isCommitting: Observable<boolean> = this.store.pipe(select(appStore.getDashboardCommittingFile));
-  isRefreshing: Observable<boolean> = this.store.pipe(select(appStore.getDashboardRefreshing));
-  canPullRequest: Observable<boolean> = this.store.pipe(select(appStore.getCanPullRequest));
-  canSyncMaster: Observable<boolean> = this.store.pipe(select(appStore.getCanSyncMaster));
+  currentUser: Observable<User> = this.store.pipe(
+    select(appStore.getCurrentUser)
+  );
+  selectedApp: Observable<string> = this.store.pipe(
+    select(appStore.getSelectedApp)
+  );
+  applications: Observable<string[]> = this.store.pipe(
+    select(appStore.getApplications)
+  );
+  appConfigs: Observable<{ [app: string]: any }> = this.store.pipe(
+    select(appStore.getAppConfigs)
+  );
+  isDeleting: Observable<boolean> = this.store.pipe(
+    select(appStore.getDashboardFileDeleting)
+  );
+  isCommitting: Observable<boolean> = this.store.pipe(
+    select(appStore.getDashboardCommittingFile)
+  );
+  isRefreshing: Observable<boolean> = this.store.pipe(
+    select(appStore.getDashboardRefreshing)
+  );
+  canPullRequest: Observable<boolean> = this.store.pipe(
+    select(appStore.getCanPullRequest)
+  );
+  canSyncMaster: Observable<boolean> = this.store.pipe(
+    select(appStore.getCanSyncMaster)
+  );
 
   folders = new BehaviorSubject<any[]>(null);
   modifiedFiles = new BehaviorSubject<any[]>(null);
   disableCommit = new BehaviorSubject<boolean>(true);
   foldersSubscription: Subscription;
 
-  displayedColumns: string[] = ['applicationName', 'fileName', 'actions'];
+  displayedColumns: string[] = ["applicationName", "fileName", "actions"];
   pullRequestUrl: string;
   pullRequestTooltip: string;
 
@@ -84,20 +128,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private dialog: MatDialog,
     private matIconRegistry: MatIconRegistry,
     private domSanitizer: DomSanitizer,
-    private yamlService: YamlService,
+    private yamlService: YamlService
   ) {
-    _.each({
-      commit: commitIcon,
-      add_file: addFileIcon,
-      sync: syncIcon,
-      pull_request: pullRequestIcon,
-      refresh: refreshIcon,
-    }, (icon, key) => {
-      this.matIconRegistry.addSvgIconLiteral(
-        key,
-        this.domSanitizer.bypassSecurityTrustHtml(icon)
-      );
-    });
+    _.each(
+      {
+        commit: commitIcon,
+        add_file: addFileIcon,
+        sync: syncIcon,
+        pull_request: pullRequestIcon,
+        refresh: refreshIcon
+      },
+      (icon, key) => {
+        this.matIconRegistry.addSvgIconLiteral(
+          key,
+          this.domSanitizer.bypassSecurityTrustHtml(icon)
+        );
+      }
+    );
   }
 
   /**
@@ -108,27 +155,47 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     folders$.subscribe(this.folders);
 
-    this.foldersSubscription = combineLatest(this.store.pipe(select(appStore.getAllFiles)),
-      this.store.pipe(select(appStore.dashboardState))).pipe(
+    this.foldersSubscription = combineLatest(
+      this.store.pipe(select(appStore.getAllFiles)),
+      this.store.pipe(select(appStore.dashboardState))
+    )
+      .pipe(
         map(([grouped, dashboardState]) => {
-
           const apps = _.keys(grouped);
 
           const result = [];
           let modified = [];
 
-          _.orderBy(apps, [], [dashboardState.tableSort.applicationName]).forEach(app => {
-            if (dashboardState.selectedApp && dashboardState.selectedApp !== app) {
+          _.orderBy(
+            apps,
+            [],
+            [dashboardState.tableSort.applicationName]
+          ).forEach(app => {
+            if (
+              dashboardState.selectedApp &&
+              dashboardState.selectedApp !== app
+            ) {
               return;
             }
 
-            let appFiles = _.orderBy(grouped[app], ['fileName'], [dashboardState.tableSort.fileName]);
-            const envFile = appFiles.find(f => f.fileName === percyConfig.environmentsFile);
+            let appFiles = _.orderBy(
+              grouped[app],
+              ["fileName"],
+              [dashboardState.tableSort.fileName]
+            );
+            const envFile = appFiles.find(
+              f => f.fileName === percyConfig.environmentsFile
+            );
             if (envFile) {
-              appFiles = [envFile, ...appFiles.filter(f => f.fileName !== percyConfig.environmentsFile)];
+              appFiles = [
+                envFile,
+                ...appFiles.filter(
+                  f => f.fileName !== percyConfig.environmentsFile
+                )
+              ];
             }
 
-            modified = _.concat(modified, appFiles.filter((f) => f.modified));
+            modified = _.concat(modified, appFiles.filter(f => f.modified));
 
             result.push({
               app
@@ -147,24 +214,31 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.modifiedFiles.next(modified);
           return result;
         })
-      ).subscribe(folders$);
+      )
+      .subscribe(folders$);
 
-      this.currentUser.subscribe((user) => {
-        if (user) {
-          this.pullRequestTooltip = 'Pull Request';
-          const url = new URL(user.repositoryUrl);
-          if (url.hostname.endsWith('bitbucket.org')) {
-            this.pullRequestUrl = `${url.href}/pull-requests/new?source=${user.branchName}&t=1#diff`;
-          } else if (url.hostname.endsWith('github.com')) {
-            this.pullRequestUrl = `${url.href}/pull/new/${user.branchName}`;
-          } else if (url.hostname.endsWith('gitlab.com')) {
-            this.pullRequestTooltip = 'Merge Request';
-            this.pullRequestUrl = `${url.href}/merge_requests/new/diffs?merge_request%5Bsource_branch%5D=${user.branchName}`;
-          } else {
-            this.pullRequestUrl = null;
-          }
+    this.currentUser.subscribe(user => {
+      if (user) {
+        this.pullRequestTooltip = "Pull Request";
+        const url = new URL(user.repositoryUrl);
+        if (url.hostname.endsWith("bitbucket.org")) {
+          this.pullRequestUrl = `${url.href}/pull-requests/new?source=${
+            user.branchName
+          }&t=1#diff`;
+        } else if (url.hostname.endsWith("github.com")) {
+          this.pullRequestUrl = `${url.href}/pull/new/${user.branchName}`;
+        } else if (url.hostname.endsWith("gitlab.com")) {
+          this.pullRequestTooltip = "Merge Request";
+          this.pullRequestUrl = `${
+            url.href
+          }/merge_requests/new/diffs?merge_request%5Bsource_branch%5D=${
+            user.branchName
+          }`;
+        } else {
+          this.pullRequestUrl = null;
         }
-      });
+      }
+    });
   }
 
   /**
@@ -204,15 +278,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
    */
   toggleAllApps($event) {
     $event.stopPropagation();
-    this.allAppsExpanded.pipe(take(1), withLatestFrom(this.applications)).subscribe(([allExpanded, apps]) => {
-      const result = [];
-      if (allExpanded) {
-        apps.forEach(app => {
-          result.push(app);
-        });
-      }
-      this.store.dispatch(new CollapseApps(result));
-    });
+    this.allAppsExpanded
+      .pipe(
+        take(1),
+        withLatestFrom(this.applications)
+      )
+      .subscribe(([allExpanded, apps]) => {
+        const result = [];
+        if (allExpanded) {
+          apps.forEach(app => {
+            result.push(app);
+          });
+        }
+        this.store.dispatch(new CollapseApps(result));
+      });
   }
 
   /**
@@ -235,30 +314,36 @@ export class DashboardComponent implements OnInit, OnDestroy {
    * Add new file.
    */
   addNewFile() {
-    this.store.pipe(select(appStore.getAppState)).pipe(take(1)).subscribe(appState => {
+    this.store
+      .pipe(select(appStore.getAppState))
+      .pipe(take(1))
+      .subscribe(appState => {
+        const envFileName = percyConfig.environmentsFile;
 
-      const envFileName = percyConfig.environmentsFile;
+        const dialogRef = this.dialog.open(SelectAppDialogComponent, {
+          data: {
+            envFileName,
+            applications: appState.backend.applications,
+            selectedApp: appState.dashboard.selectedApp,
+            files: _.values(appState.backend.files.entities)
+          },
+          autoFocus: false
+        });
 
-      const dialogRef = this.dialog.open(SelectAppDialogComponent, {
-        data: {
-          envFileName,
-          applications: appState.backend.applications,
-          selectedApp: appState.dashboard.selectedApp,
-          files: _.values(appState.backend.files.entities)
-        },
-        autoFocus: false
-      });
-
-      dialogRef.afterClosed().subscribe(data => {
-        if (data) {
-          if (data.createEnv) {
-            this.router.navigate(['/files/newenv', data.appName, envFileName]);
-          } else {
-            this.router.navigate(['/files/new', data.appName]);
+        dialogRef.afterClosed().subscribe(data => {
+          if (data) {
+            if (data.createEnv) {
+              this.router.navigate([
+                "/files/newenv",
+                data.appName,
+                envFileName
+              ]);
+            } else {
+              this.router.navigate(["/files/new", data.appName]);
+            }
           }
-        }
+        });
       });
-    });
   }
 
   /**
@@ -266,8 +351,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
    * @param file the file to edit
    */
   editFile(file: ConfigFile) {
-    this.router.navigate([file.fileName === percyConfig.environmentsFile ? '/files/editenv' : '/files/edit',
-      file.applicationName, file.fileName]);
+    this.router.navigate([
+      file.fileName === percyConfig.environmentsFile
+        ? "/files/editenv"
+        : "/files/edit",
+      file.applicationName,
+      file.fileName
+    ]);
   }
 
   /**
@@ -278,13 +368,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const dialogRef = this.dialog.open(CommitDialogComponent);
     dialogRef.afterClosed().subscribe(response => {
       if (response) {
-        this.store.dispatch(new CommitChanges({
-          files: modified,
-          message: response,
-        }));
+        this.store.dispatch(
+          new CommitChanges({
+            files: modified,
+            message: response
+          })
+        );
       }
     });
-
   }
 
   /**
@@ -295,7 +386,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
       data: {
         confirmationText: `Delete ${file.applicationName}/${file.fileName} ?`,
-        delete: true,
+        delete: true
       }
     });
 
@@ -318,10 +409,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
    */
   syncMaster() {
     this.currentUser.pipe(take(1)).subscribe(user => {
-      this.store.dispatch(new MergeBranch({
-        srcBranch: 'master',
-        targetBranch: user.branchName,
-      }));
+      this.store.dispatch(
+        new MergeBranch({
+          srcBranch: "master",
+          targetBranch: user.branchName
+        })
+      );
     });
   }
 }

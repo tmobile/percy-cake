@@ -252,7 +252,7 @@ The Percy editor can be run as a standalone desktop application;
 
 ## License
 
-Percy is open-sourced under the terms of section 7 of the Apache 2.0 license and is released AS-IS WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND.
+Percy is open-sourced under Apache 2.0 and is released AS-IS WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND under the terms of Section 7 of the Apache license.
 
 ## DISCLAIMER
 

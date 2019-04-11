@@ -1,33 +1,40 @@
-/**
- *   Copyright 2019 T-Mobile
- *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- */
+/** ========================================================================
+Copyright 2019 T-Mobile, USA
 
-import { FileSystem } from 'filer/src';
-import * as _ from 'lodash';
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+See the LICENSE file for additional language around disclaimer of warranties.
+
+Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
+its contributors may be used to endorse or promote products derived from this
+software without specific prior written permission.
+=========================================================================== 
+*/
+
+import { FileSystem } from "filer/src";
+import * as _ from "lodash";
 
 // Used to define IndexedDB version.
 // Filer does not pass the version option, so shim the indexedDB.open function.
-if (!navigator.userAgent.includes('Trident/')) {
-  const BrowserIndexedDB = window.indexedDB ||
-  window['mozIndexedDB'] ||
-  window['webkitIndexedDB'] ||
-  window['msIndexedDB'];
+if (!navigator.userAgent.includes("Trident/")) {
+  const BrowserIndexedDB =
+    window.indexedDB ||
+    window["mozIndexedDB"] ||
+    window["webkitIndexedDB"] ||
+    window["msIndexedDB"];
 
-  const indexedDBVersion = '2.0';
+  const indexedDBVersion = "2.0";
   const $open = BrowserIndexedDB.open;
-  BrowserIndexedDB.open = (name) => {
+  BrowserIndexedDB.open = name => {
     return $open.apply(BrowserIndexedDB, [name, indexedDBVersion]);
   };
 }
@@ -36,7 +43,6 @@ if (!navigator.userAgent.includes('Trident/')) {
  * A simple in-memory key/value cache.
  */
 class MemoryCache {
-
   // The cache
   private cache = {};
 
@@ -44,7 +50,7 @@ class MemoryCache {
    * Creates memory cache.
    * @param name the cache name
    */
-  constructor(public name: string) { }
+  constructor(public name: string) {}
 
   /**
    * Get value form memory cache.
@@ -99,13 +105,12 @@ function createMemoryCache(name: string) {
  * For write operations, write-through strategy is used to ensure data updates are safely stored on.
  */
 class CacheStorageContext {
-
   /**
    * Creates the context.
    * @param indexedDB the IndexedDB storage
    * @param memoryCache the memory cache
    */
-  constructor(private indexedDB, private memoryCache: MemoryCache) { }
+  constructor(private indexedDB, private memoryCache: MemoryCache) {}
 
   /**
    * Call IndexedDB.
@@ -114,7 +119,6 @@ class CacheStorageContext {
    * @param callback the callback
    */
   private callIndexedDB(method, args, callback) {
-
     this.indexedDB.getReadWriteContext()[method](...args, (_err, result) => {
       Promise.resolve().then(() => {
         callback(_err, result);
@@ -154,7 +158,7 @@ class CacheStorageContext {
    * @param callback the callback
    */
   getObject(key, callback) {
-    this.readCache(key, 'getObject', callback);
+    this.readCache(key, "getObject", callback);
   }
 
   /**
@@ -163,7 +167,7 @@ class CacheStorageContext {
    * @param callback the callback
    */
   getBuffer(key, callback) {
-    this.readCache(key, 'getBuffer', callback);
+    this.readCache(key, "getBuffer", callback);
   }
 
   /**
@@ -174,7 +178,7 @@ class CacheStorageContext {
    */
   putObject(key, value, callback) {
     const _memoryCache = this.memoryCache;
-    this.callIndexedDB('putObject', [key, value], (err, result) => {
+    this.callIndexedDB("putObject", [key, value], (err, result) => {
       if (!err) {
         _memoryCache.put(key, value);
       }
@@ -190,7 +194,7 @@ class CacheStorageContext {
    */
   putBuffer(key, value, callback) {
     const _memoryCache = this.memoryCache;
-    this.callIndexedDB('putBuffer', [key, value], (err, result) => {
+    this.callIndexedDB("putBuffer", [key, value], (err, result) => {
       if (!err) {
         _memoryCache.put(key, value);
       }
@@ -205,7 +209,7 @@ class CacheStorageContext {
    */
   delete(key, callback) {
     const _memoryCache = this.memoryCache;
-    this.callIndexedDB('delete', [key], (err, result) => {
+    this.callIndexedDB("delete", [key], (err, result) => {
       if (!err) {
         _memoryCache.delete(key);
       }
@@ -218,7 +222,6 @@ class CacheStorageContext {
  * The storage use IndexedDB as underlying storage and provides an in-memory cached layer for performance.
  */
 export class CacheStorage {
-
   /**
    * The underlying IndexedDB storage.
    */
@@ -238,7 +241,7 @@ export class CacheStorage {
    * Creates storage.
    * @param name the storage name.
    */
-  constructor(private name: string) { }
+  constructor(private name: string) {}
 
   /**
    * Open the storage.

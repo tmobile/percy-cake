@@ -1,38 +1,47 @@
 /**
- *   Copyright 2019 T-Mobile
- *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- */
+=========================================================================
+Copyright 2019 T-Mobile, USA
 
-import { Component, OnInit, Inject } from '@angular/core';
-import { FormControl, Validators } from '@angular/forms';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
-import * as _ from 'lodash';
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-import { percyConfig } from 'config';
-import { TrimPattern } from 'services/validators';
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+See the LICENSE file for additional language around disclaimer of warranties.
+
+Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
+its contributors may be used to endorse or promote products derived from this
+software without specific prior written permission.
+=========================================================================== 
+*/
+
+import { Component, OnInit, Inject } from "@angular/core";
+import { FormControl, Validators } from "@angular/forms";
+import { MatDialogRef, MAT_DIALOG_DATA } from "@angular/material";
+import * as _ from "lodash";
+
+import { percyConfig } from "config";
+import { TrimPattern } from "services/validators";
 
 /**
  * Create new branch dialog
  */
 @Component({
-  selector: 'app-create-branch-dialog',
-  templateUrl: './create-branch-dialog.component.html',
-  styleUrls: ['./create-branch-dialog.component.scss']
+  selector: "app-create-branch-dialog",
+  templateUrl: "./create-branch-dialog.component.html",
+  styleUrls: ["./create-branch-dialog.component.scss"]
 })
 export class CreateBranchDialogComponent implements OnInit {
-
-  newBranchName = new FormControl('', [TrimPattern('^[a-zA-Z0-9_-]*$'), Validators.maxLength(30)]);
+  newBranchName = new FormControl("", [
+    TrimPattern("^[a-zA-Z0-9_-]*$"),
+    Validators.maxLength(30)
+  ]);
 
   /**
    * creates the component
@@ -40,11 +49,12 @@ export class CreateBranchDialogComponent implements OnInit {
    * @param store the state store instance
    * @param data the injection token that can be used to access the data that was passed in to a dialog
    */
-  constructor(public dialogRef: MatDialogRef<CreateBranchDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data) { }
+  constructor(
+    public dialogRef: MatDialogRef<CreateBranchDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data
+  ) {}
 
-  ngOnInit() {
-  }
+  ngOnInit() {}
 
   /**
    * create new branch
@@ -65,5 +75,4 @@ export class CreateBranchDialogComponent implements OnInit {
       this.dialogRef.close(newBranch);
     }
   }
-
 }

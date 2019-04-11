@@ -1,33 +1,39 @@
-/**
- *   Copyright 2019 T-Mobile
- *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- */
+/** ========================================================================
+Copyright 2019 T-Mobile, USA
 
-import { Injectable, NgZone } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import * as fs from 'fs-extra';
-import * as aesjs from 'aes-js';
-import * as pbkdf2 from 'pbkdf2';
-import * as path from 'path';
-import * as HttpErrors from 'http-errors';
-import * as _ from 'lodash';
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-import { percyConfig, electronApi } from 'config';
-import { Authenticate } from 'models/auth';
-import * as filesystem from 'filesystem';
+   http://www.apache.org/licenses/LICENSE-2.0
 
-import { YamlService } from './yaml.service';
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+See the LICENSE file for additional language around disclaimer of warranties.
+
+Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
+its contributors may be used to endorse or promote products derived from this
+software without specific prior written permission.
+=========================================================================== 
+*/
+
+import { Injectable, NgZone } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+import * as fs from "fs-extra";
+import * as aesjs from "aes-js";
+import * as pbkdf2 from "pbkdf2";
+import * as path from "path";
+import * as HttpErrors from "http-errors";
+import * as _ from "lodash";
+
+import { percyConfig, electronApi } from "config";
+import { Authenticate } from "models/auth";
+import * as filesystem from "filesystem";
+
+import { YamlService } from "./yaml.service";
 
 export const git = filesystem.git;
 export type FS = typeof fs;
@@ -35,14 +41,12 @@ export type FS = typeof fs;
 /**
  * This service provides the utility methods
  */
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: "root" })
 export class UtilService extends YamlService {
-
   /**
    * initializes the service
    */
-  constructor(private http: HttpClient,
-    private ngZone: NgZone) {
+  constructor(private http: HttpClient, private ngZone: NgZone) {
     super();
   }
 
@@ -63,7 +67,7 @@ export class UtilService extends YamlService {
    */
   async initConfig() {
     if (_.isEmpty(percyConfig)) {
-      const config = await this.http.get('percy.conf.json').toPromise();
+      const config = await this.http.get("percy.conf.json").toPromise();
       _.assign(percyConfig, config);
       if (electronApi) {
         _.assign(percyConfig, electronApi.getPreferences());
@@ -75,7 +79,6 @@ export class UtilService extends YamlService {
    * Get browser filesytem.
    */
   async getBrowserFS() {
-
     if (filesystem.initialized()) {
       return fs;
     }
@@ -88,7 +91,7 @@ export class UtilService extends YamlService {
     await fs.ensureDir(percyConfig.draftFolder);
     await fs.ensureDir(percyConfig.metaFolder);
 
-    console.info('Browser Git initialized'); // tslint:disable-line
+    console.info("Browser Git initialized"); // tslint:disable-line
     return fs;
   }
 
@@ -99,7 +102,12 @@ export class UtilService extends YamlService {
    */
   encrypt(text: string): string {
     const textBytes = aesjs.utils.utf8.toBytes(text);
-    const aesKey = pbkdf2.pbkdf2Sync(percyConfig.encryptKey, percyConfig.encryptSalt, 1, 32);
+    const aesKey = pbkdf2.pbkdf2Sync(
+      percyConfig.encryptKey,
+      percyConfig.encryptSalt,
+      1,
+      32
+    );
 
     const aesCtr = new aesjs.ModeOfOperation.ctr(aesKey);
     const encryptedBytes = aesCtr.encrypt(textBytes);
@@ -114,7 +122,12 @@ export class UtilService extends YamlService {
    */
   decrypt(encrypted: string): string {
     const encryptedBytes = aesjs.utils.hex.toBytes(encrypted);
-    const aesKey = pbkdf2.pbkdf2Sync(percyConfig.encryptKey, percyConfig.encryptSalt, 1, 32);
+    const aesKey = pbkdf2.pbkdf2Sync(
+      percyConfig.encryptKey,
+      percyConfig.encryptSalt,
+      1,
+      32
+    );
 
     const aesCtr = new aesjs.ModeOfOperation.ctr(aesKey);
     const decryptedBytes = aesCtr.decrypt(encryptedBytes);
@@ -128,17 +141,16 @@ export class UtilService extends YamlService {
    * @returns converted error
    */
   convertGitError(err) {
-
     if (err && err.data && err.data.statusCode === 401) {
-      return new HttpErrors.Unauthorized('Invalid username or password');
+      return new HttpErrors.Unauthorized("Invalid username or password");
     }
 
     if (err && err.data && err.data.statusCode === 403) {
-      return new HttpErrors.Forbidden('Git authorization forbidden');
+      return new HttpErrors.Forbidden("Git authorization forbidden");
     }
 
     if (err && err.data && err.data.statusCode === 404) {
-      return new HttpErrors.NotFound('Repository not found');
+      return new HttpErrors.NotFound("Repository not found");
     }
 
     const resultErr = new HttpErrors.InternalServerError(err.message);
@@ -154,8 +166,8 @@ export class UtilService extends YamlService {
    * @returns the repo name
    */
   private getRepoName(url: URL) {
-    const split = url.pathname.split('/');
-    return split.filter((e) => e).join('/');
+    const split = url.pathname.split("/");
+    return split.filter(e => e).join("/");
   }
 
   /**

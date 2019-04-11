@@ -1,31 +1,38 @@
 /**
- *    Copyright 2019 T-Mobile
- *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- */
+=========================================================================
+Copyright 2019 T-Mobile, USA
 
-import * as fs from 'fs';
-import * as _path from 'path';
-import * as electron from 'electron';
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-import { File } from './File';
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+See the LICENSE file for additional language around disclaimer of warranties.
+
+Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
+its contributors may be used to endorse or promote products derived from this
+software without specific prior written permission.
+=========================================================================== 
+*/
+
+import * as fs from "fs";
+import * as _path from "path";
+import * as electron from "electron";
+
+import { File } from "./File";
 
 export const path = _path;
 
 export const CHANNELS = {
-  OPEN_FOLER: 'percy-open-folder',
-  OPEN_REPO: 'percy-open-repo',
-  SHOW_PREFERENCES: 'percy-show-perferences',
+  OPEN_FOLER: "percy-open-folder",
+  OPEN_REPO: "percy-open-repo",
+  SHOW_PREFERENCES: "percy-show-perferences"
 };
 
 /**
@@ -33,9 +40,12 @@ export const CHANNELS = {
  * @param listeners the ipc events listeners.
  */
 export function registerRendererListeners(listeners) {
-  electron.ipcRenderer.on(CHANNELS.OPEN_FOLER, (_event: any, folder: string) => {
-    listeners.openFolder(folder);
-  });
+  electron.ipcRenderer.on(
+    CHANNELS.OPEN_FOLER,
+    (_event: any, folder: string) => {
+      listeners.openFolder(folder);
+    }
+  );
 
   electron.ipcRenderer.on(CHANNELS.OPEN_REPO, () => {
     listeners.openRepo();
@@ -59,7 +69,7 @@ function getApp() {
  * @returns state file path
  */
 function getStateFile() {
-  return path.resolve(getApp().getPath('userData'), 'state.json');
+  return path.resolve(getApp().getPath("userData"), "state.json");
 }
 
 /**
@@ -67,7 +77,6 @@ function getStateFile() {
  * @returns state
  */
 function getState() {
-
   const statFile = getStateFile();
 
   const result = readFile(statFile);
@@ -129,12 +138,15 @@ export function openFolder(folerPath: string, win?: Electron.BrowserWindow) {
   win = getBrowserWindow(win);
 
   if (!fs.existsSync(folerPath)) {
-    (electron.dialog || electron.remote.dialog).showErrorBox('Folder not found', `Folder ${folerPath} does not exist`);
+    (electron.dialog || electron.remote.dialog).showErrorBox(
+      "Folder not found",
+      `Folder ${folerPath} does not exist`
+    );
     return;
   }
   addRecentFolder(folerPath);
   win.webContents.send(CHANNELS.OPEN_FOLER, folerPath);
-  win['setupMenu']();
+  win["setupMenu"]();
 }
 
 /**
@@ -144,11 +156,15 @@ export function openFolder(folerPath: string, win?: Electron.BrowserWindow) {
 export function openFolderDialog(win?: Electron.BrowserWindow) {
   win = getBrowserWindow(win);
 
-  (electron.dialog || electron.remote.dialog).showOpenDialog(win, { properties: ['openDirectory'] }, (result) => {
-    if (result && result[0]) {
-      openFolder(result[0], win);
+  (electron.dialog || electron.remote.dialog).showOpenDialog(
+    win,
+    { properties: ["openDirectory"] },
+    result => {
+      if (result && result[0]) {
+        openFolder(result[0], win);
+      }
     }
-  });
+  );
 }
 
 /**
@@ -165,7 +181,7 @@ export function openRepo(win?: Electron.BrowserWindow) {
  * @returns the preferences file path
  */
 function getPreferencesFile() {
-  return path.resolve(getApp().getPath('userData'), 'preferences.json');
+  return path.resolve(getApp().getPath("userData"), "preferences.json");
 }
 
 /**
@@ -181,7 +197,9 @@ export function getPreferences() {
   }
 
   // Return default settings.
-  const defaultConf = readFile(path.resolve(getApp().getAppPath(), 'dist/percy.conf.json'));
+  const defaultConf = readFile(
+    path.resolve(getApp().getAppPath(), "dist/percy.conf.json")
+  );
   return JSON.parse(defaultConf);
 }
 
@@ -211,7 +229,7 @@ export function getAppPercyConfig(file: File) {
   let appPercyConfig = {};
   let parent = file.parent;
   while (parent) {
-    const rcpath = path.resolve(parent.path, '.percyrc');
+    const rcpath = path.resolve(parent.path, ".percyrc");
 
     const result = readFile(rcpath);
     if (result) {
@@ -233,8 +251,15 @@ export function getAppPercyConfig(file: File) {
  * @returns new folder instance
  */
 export function constructFolder(folderPath: string, parent?: File) {
-  const folder = new File(path.normalize(folderPath), path.basename(folderPath), false, parent);
-  folder.applicationName = parent ? parent.applicationName + '/' + folder.fileName : folder.fileName;
+  const folder = new File(
+    path.normalize(folderPath),
+    path.basename(folderPath),
+    false,
+    parent
+  );
+  folder.applicationName = parent
+    ? parent.applicationName + "/" + folder.fileName
+    : folder.fileName;
   return folder;
 }
 
@@ -253,12 +278,17 @@ export function populateFolder(folder: File) {
     const filePath = path.resolve(folder.path, fileName);
     const stat = fs.statSync(filePath);
 
-    if (stat.isDirectory() && fileName !== '.git' && fileName !== '.vscode' && fileName !== 'node_modules') {
+    if (
+      stat.isDirectory() &&
+      fileName !== ".git" &&
+      fileName !== ".vscode" &&
+      fileName !== "node_modules"
+    ) {
       // ignore some well-know folders
       folder.addChild(constructFolder(filePath, folder));
     } else if (stat.isFile()) {
       const ext = path.extname(fileName).toLowerCase();
-      if (ext === '.yaml' || ext === '.yml') {
+      if (ext === ".yaml" || ext === ".yml") {
         const file = new File(filePath, fileName, true, folder);
         file.applicationName = folder.applicationName;
         folder.addChild(file);
@@ -276,7 +306,7 @@ export function populateFolder(folder: File) {
  */
 export function readFile(filePath: string) {
   if (fs.existsSync(filePath)) {
-    return fs.readFileSync(filePath, 'utf8');
+    return fs.readFileSync(filePath, "utf8");
   }
   return null;
 }
@@ -306,9 +336,9 @@ export function removeFile(filePath: string) {
 export function watchFile(filePath: string, callback) {
   fs.watchFile(filePath, { interval: 1000 }, (curr, prev) => {
     if (!fs.existsSync(filePath)) {
-      callback('deleted');
+      callback("deleted");
     } else if (curr.mtimeMs !== prev.mtimeMs) {
-      callback('changed');
+      callback("changed");
     }
   });
 }

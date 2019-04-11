@@ -1,49 +1,58 @@
 /**
- *   Copyright 2019 T-Mobile
- *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- */
+=========================================================================
+Copyright 2019 T-Mobile, USA
 
-import { Component, ViewChild, HostListener, OnInit } from '@angular/core';
-import { MatDialog } from '@angular/material';
-import { Store, select } from '@ngrx/store';
-import * as _ from 'lodash';
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-import { percyConfig, appPercyConfig } from 'config';
-import { TreeNode } from 'models/tree-node';
-import { ConfigFile, Configuration } from 'models/config-file';
+   http://www.apache.org/licenses/LICENSE-2.0
 
-import * as appStore from 'store';
-import { PageLoad } from 'store/actions/editor.actions';
-import { GetFileContentSuccess, SaveDraftSuccess } from 'store/actions/backend.actions';
-import { YamlService } from 'services/yaml.service';
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+See the LICENSE file for additional language around disclaimer of warranties.
 
-import { EditorComponent } from 'components/editor/editor.component';
-import { AlertDialogComponent } from 'components/alert-dialog/alert-dialog.component';
-import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
+Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
+its contributors may be used to endorse or promote products derived from this
+software without specific prior written permission.
+=========================================================================== 
+*/
 
-import { MESSAGE_TYPES } from '../extension/constants';
+import { Component, ViewChild, HostListener, OnInit } from "@angular/core";
+import { MatDialog } from "@angular/material";
+import { Store, select } from "@ngrx/store";
+import * as _ from "lodash";
+
+import { percyConfig, appPercyConfig } from "config";
+import { TreeNode } from "models/tree-node";
+import { ConfigFile, Configuration } from "models/config-file";
+
+import * as appStore from "store";
+import { PageLoad } from "store/actions/editor.actions";
+import {
+  GetFileContentSuccess,
+  SaveDraftSuccess
+} from "store/actions/backend.actions";
+import { YamlService } from "services/yaml.service";
+
+import { EditorComponent } from "components/editor/editor.component";
+import { AlertDialogComponent } from "components/alert-dialog/alert-dialog.component";
+import { ConfirmationDialogComponent } from "components/confirmation-dialog/confirmation-dialog.component";
+
+import { MESSAGE_TYPES } from "../extension/constants";
 
 declare var acquireVsCodeApi;
 const vscode = acquireVsCodeApi();
 
 @Component({
-  selector: 'app-vscode-root',
-  templateUrl: './vsapp.component.html',
-  styleUrls: ['./vsapp.component.scss']
+  selector: "app-vscode-root",
+  templateUrl: "./vsapp.component.html",
+  styleUrls: ["./vsapp.component.scss"]
 })
 export class VSAppComponent implements OnInit {
-
   pathSep: string;
 
   appName: string;
@@ -59,7 +68,7 @@ export class VSAppComponent implements OnInit {
   isPageDirty$ = this.store.pipe(select(appStore.getIsPageDirty));
   isPageDirty = false;
 
-  @ViewChild('editor') editor: EditorComponent;
+  @ViewChild("editor") editor: EditorComponent;
 
   fileContent: string;
 
@@ -72,8 +81,8 @@ export class VSAppComponent implements OnInit {
   constructor(
     private store: Store<appStore.AppState>,
     private dialog: MatDialog,
-    private yamlService: YamlService,
-  ) { }
+    private yamlService: YamlService
+  ) {}
 
   /**
    * Initialize component.
@@ -99,7 +108,7 @@ export class VSAppComponent implements OnInit {
    * Listener for post message from extension.
    * @param $event post message event
    */
-  @HostListener('window:message', ['$event'])
+  @HostListener("window:message", ["$event"])
   onMessage($event: any) {
     const message = $event.data; // The JSON data our extension sent
 
@@ -126,7 +135,9 @@ export class VSAppComponent implements OnInit {
       this.isPageDirty = false;
       this.fileContent = message.fileContent;
       this.fileName = this.fileSaving.fileName = message.newFileName;
-      this.store.dispatch(new PageLoad({ ...this.fileSaving, editMode: this.editMode }));
+      this.store.dispatch(
+        new PageLoad({ ...this.fileSaving, editMode: this.editMode })
+      );
       this.store.dispatch(new SaveDraftSuccess(this.fileSaving));
       this.fileSaving = null;
       return;
@@ -139,7 +150,8 @@ export class VSAppComponent implements OnInit {
 
         const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
           data: {
-            confirmationText: 'File is changed externally.\nDo you want to reload the file?'
+            confirmationText:
+              "File is changed externally.\nDo you want to reload the file?"
           }
         });
         dialogRef.afterClosed().subscribe(res => {
@@ -170,8 +182,14 @@ export class VSAppComponent implements OnInit {
 
     this.environments = [];
     if (message.envFileContent) {
-      const envConfig = this.parseYaml(message.envFileContent, `${this.appName}${this.pathSep}${percyConfig.environmentsFile}`);
-      this.environments = _.map(_.get(envConfig.environments, 'children', <TreeNode[]>[]), child => child.key);
+      const envConfig = this.parseYaml(
+        message.envFileContent,
+        `${this.appName}${this.pathSep}${percyConfig.environmentsFile}`
+      );
+      this.environments = _.map(
+        _.get(envConfig.environments, "children", <TreeNode[]>[]),
+        child => child.key
+      );
     }
 
     this.fileContent = message.fileContent;
@@ -204,9 +222,14 @@ export class VSAppComponent implements OnInit {
       // Add new file, set an initial config
       file.modified = true;
       file.draftConfig = new Configuration();
-      this.store.dispatch(new GetFileContentSuccess({ file, newlyCreated: true }));
+      this.store.dispatch(
+        new GetFileContentSuccess({ file, newlyCreated: true })
+      );
     } else {
-      file.originalConfig = this.parseYaml(this.fileContent, `${this.appName}${this.pathSep}${this.fileName}`);
+      file.originalConfig = this.parseYaml(
+        this.fileContent,
+        `${this.appName}${this.pathSep}${this.fileName}`
+      );
       this.store.dispatch(new GetFileContentSuccess({ file }));
     }
   }
@@ -252,7 +275,9 @@ export class VSAppComponent implements OnInit {
         type: MESSAGE_TYPES.SAVE,
         editMode: this.editMode,
         envFileMode: this.envFileMode,
-        fileContent: this.yamlService.convertTreeToYaml(editorState.configuration)
+        fileContent: this.yamlService.convertTreeToYaml(
+          editorState.configuration
+        )
       });
     });
   }

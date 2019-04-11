@@ -1,42 +1,55 @@
 /**
- *   Copyright 2019 T-Mobile
- *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- */
+=========================================================================
+Copyright 2019 T-Mobile, USA
 
-import { NgModule } from '@angular/core';
-import { LocationStrategy, HashLocationStrategy } from '@angular/common';
-import { BrowserModule } from '@angular/platform-browser';
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-import { MaterialComponentsModule } from 'material-components/material-components.module';
+   http://www.apache.org/licenses/LICENSE-2.0
 
-import { HIGHLIGHT_OPTIONS } from 'ngx-highlightjs';
-import * as yaml from 'highlight.js/lib/languages/yaml';
-import * as json from 'highlight.js/lib/languages/json';
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+See the LICENSE file for additional language around disclaimer of warranties.
+
+Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
+its contributors may be used to endorse or promote products derived from this
+software without specific prior written permission.
+=========================================================================== 
+*/
+
+import { NgModule } from "@angular/core";
+import { LocationStrategy, HashLocationStrategy } from "@angular/common";
+import { BrowserModule } from "@angular/platform-browser";
+
+import { MaterialComponentsModule } from "material-components/material-components.module";
+
+import { HIGHLIGHT_OPTIONS } from "ngx-highlightjs";
+import * as yaml from "highlight.js/lib/languages/yaml";
+import * as json from "highlight.js/lib/languages/json";
 
 // components
-import { LoaderComponent } from 'components/loader/loader.component';
-import { AlertDialogComponent } from 'components/alert-dialog/alert-dialog.component';
-import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
-import { EditorComponent } from 'components/editor/editor.component';
-import { AddEditPropertyDialogComponent } from 'components/add-edit-property-dialog/add-edit-property-dialog.component';
-import { NestedConfigViewComponent } from 'components/nested-config-view/nested-config-view.component';
+import { LoaderComponent } from "components/loader/loader.component";
+import { AlertDialogComponent } from "components/alert-dialog/alert-dialog.component";
+import { ConfirmationDialogComponent } from "components/confirmation-dialog/confirmation-dialog.component";
+import { EditorComponent } from "components/editor/editor.component";
+import { AddEditPropertyDialogComponent } from "components/add-edit-property-dialog/add-edit-property-dialog.component";
+import { NestedConfigViewComponent } from "components/nested-config-view/nested-config-view.component";
 
 // directives
-import { SplitDirective, SplitAreaDirective } from 'directives/splitter.directive';
-import { HighlightDirective } from 'directives/highlight.directive';
+import {
+  SplitDirective,
+  SplitAreaDirective
+} from "directives/splitter.directive";
+import { HighlightDirective } from "directives/highlight.directive";
 
-export const hljsLanguages = () => [{ name: 'yaml', func: yaml }, { name: 'json', func: json }];
+export const hljsLanguages = () => [
+  { name: "yaml", func: yaml },
+  { name: "json", func: json }
+];
 
 @NgModule({
   declarations: [
@@ -48,12 +61,9 @@ export const hljsLanguages = () => [{ name: 'yaml', func: yaml }, { name: 'json'
     AddEditPropertyDialogComponent,
     SplitDirective,
     SplitAreaDirective,
-    HighlightDirective,
+    HighlightDirective
   ],
-  imports: [
-    BrowserModule,
-    MaterialComponentsModule,
-  ],
+  imports: [BrowserModule, MaterialComponentsModule],
   exports: [
     LoaderComponent,
     AlertDialogComponent,
@@ -65,15 +75,12 @@ export const hljsLanguages = () => [{ name: 'yaml', func: yaml }, { name: 'json'
     SplitAreaDirective,
     HighlightDirective,
     BrowserModule,
-    MaterialComponentsModule,
+    MaterialComponentsModule
   ],
-  entryComponents: [
-    ConfirmationDialogComponent,
-    AlertDialogComponent,
-  ],
+  entryComponents: [ConfirmationDialogComponent, AlertDialogComponent],
   providers: [
     { provide: HIGHLIGHT_OPTIONS, useValue: { languages: hljsLanguages } },
     { provide: LocationStrategy, useClass: HashLocationStrategy }
   ]
 })
-export class CommonModule { }
+export class CommonModule {}

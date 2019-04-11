@@ -1,44 +1,58 @@
 /**
- *   Copyright 2019 T-Mobile
- *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- */
+=========================================================================
+Copyright 2019 T-Mobile, USA
 
-import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
-import { NestedTreeControl } from '@angular/cdk/tree';
-import { MatTreeNestedDataSource } from '@angular/material/tree';
-import { MatDialog } from '@angular/material';
-import { Observable } from 'rxjs';
-import { select, Store } from '@ngrx/store';
-import * as _ from 'lodash';
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-import { PROPERTY_VALUE_TYPES } from 'config';
-import { User } from 'models/auth';
-import { Configuration } from 'models/config-file';
-import { TreeNode } from 'models/tree-node';
-import { ConfigProperty } from 'models/config-property';
+   http://www.apache.org/licenses/LICENSE-2.0
 
-import * as appStore from 'store';
-import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
-import { YamlService } from 'services/yaml.service';
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+See the LICENSE file for additional language around disclaimer of warranties.
+
+Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
+its contributors may be used to endorse or promote products derived from this
+software without specific prior written permission.
+=========================================================================== 
+*/
+
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  OnChanges,
+  SimpleChanges
+} from "@angular/core";
+import { NestedTreeControl } from "@angular/cdk/tree";
+import { MatTreeNestedDataSource } from "@angular/material/tree";
+import { MatDialog } from "@angular/material";
+import { Observable } from "rxjs";
+import { select, Store } from "@ngrx/store";
+import * as _ from "lodash";
+
+import { PROPERTY_VALUE_TYPES } from "config";
+import { User } from "models/auth";
+import { Configuration } from "models/config-file";
+import { TreeNode } from "models/tree-node";
+import { ConfigProperty } from "models/config-property";
+
+import * as appStore from "store";
+import { ConfirmationDialogComponent } from "../confirmation-dialog/confirmation-dialog.component";
+import { YamlService } from "services/yaml.service";
 
 /**
  *  Tree with nested nodes
  */
 @Component({
-  selector: 'app-nested-config-view',
-  templateUrl: './nested-config-view.component.html',
-  styleUrls: ['./nested-config-view.component.scss']
+  selector: "app-nested-config-view",
+  templateUrl: "./nested-config-view.component.html",
+  styleUrls: ["./nested-config-view.component.scss"]
 })
 export class NestedConfigViewComponent implements OnChanges {
   currentConfigProperty: ConfigProperty;
@@ -52,7 +66,9 @@ export class NestedConfigViewComponent implements OnChanges {
   @Output() cancelAddEditPropertyChange = new EventEmitter<any>();
   @Output() viewCompiledYAMLEvent = new EventEmitter<string>();
 
-  currentUser: Observable<User> = this.store.pipe(select(appStore.getCurrentUser));
+  currentUser: Observable<User> = this.store.pipe(
+    select(appStore.getCurrentUser)
+  );
 
   defaultTreeControl: NestedTreeControl<TreeNode>;
   defaultDataSource: MatTreeNestedDataSource<TreeNode>;
@@ -65,7 +81,11 @@ export class NestedConfigViewComponent implements OnChanges {
    * @param dialog the material dialog instance
    * @param yamlService the yaml service
    */
-  constructor(private store: Store<appStore.AppState>, private dialog: MatDialog, private yamlService: YamlService) {
+  constructor(
+    private store: Store<appStore.AppState>,
+    private dialog: MatDialog,
+    private yamlService: YamlService
+  ) {
     const _getChildren = (node: TreeNode) => node.children;
     this.defaultTreeControl = new NestedTreeControl<TreeNode>(_getChildren);
     this.defaultDataSource = new MatTreeNestedDataSource();
@@ -78,14 +98,19 @@ export class NestedConfigViewComponent implements OnChanges {
    * @param changes the changes
    */
   ngOnChanges(changes: SimpleChanges) {
-    const configurationChanged = changes['configuration'];
+    const configurationChanged = changes["configuration"];
     if (configurationChanged) {
       const defaultTree = this.configuration.default;
       this.defaultDataSource.data = [defaultTree];
 
       const environmentsTree = this.configuration.environments;
       this.envDataSource.data = [environmentsTree];
-      this.toggle(this.defaultTreeControl, this.defaultDataSource.data[0], true, true);
+      this.toggle(
+        this.defaultTreeControl,
+        this.defaultDataSource.data[0],
+        true,
+        true
+      );
       this.toggle(this.envTreeControl, this.envDataSource.data[0], true, true);
     }
   }
@@ -117,7 +142,6 @@ export class NestedConfigViewComponent implements OnChanges {
    * prepare the dropdown options based node and mode
    */
   private getKeyOptions(node: TreeNode, editMode: boolean) {
-
     if (node.isDefaultNode()) {
       // Only cares env nodes
       return [];
@@ -140,12 +164,20 @@ export class NestedConfigViewComponent implements OnChanges {
         return { key: environment, type: PROPERTY_VALUE_TYPES.OBJECT };
       });
 
-      const existingKeys = _.map(this.configuration.environments.children, c => c.key);
-      keyOptions = _.filter(keyOptions, option => !_.includes(existingKeys, option.key));
+      const existingKeys = _.map(
+        this.configuration.environments.children,
+        c => c.key
+      );
+      keyOptions = _.filter(
+        keyOptions,
+        option => !_.includes(existingKeys, option.key)
+      );
     } else {
-
       if (node.isArray()) {
-        keyOptions.push({ key: `[${node.children.length}]`, type: node.getArrayItemType() });
+        keyOptions.push({
+          key: `[${node.children.length}]`,
+          type: node.getArrayItemType()
+        });
         return keyOptions;
       }
 
@@ -154,8 +186,8 @@ export class NestedConfigViewComponent implements OnChanges {
         existingKeys.push(child.key);
       });
 
-      if (node.getLevel() === 1 && !_.includes(existingKeys, 'inherits')) {
-        keyOptions.push({ key: 'inherits', type: 'string' });
+      if (node.getLevel() === 1 && !_.includes(existingKeys, "inherits")) {
+        keyOptions.push({ key: "inherits", type: "string" });
       }
 
       // Find the respective defalut node
@@ -171,7 +203,7 @@ export class NestedConfigViewComponent implements OnChanges {
         while (parentNode && parentNode.getLevel() > 1) {
           if (parentNode.isObjectInArray()) {
             // object in array, use first child
-            keyHierarchy.unshift('[0]');
+            keyHierarchy.unshift("[0]");
           } else {
             keyHierarchy.unshift(parentNode.key);
           }
@@ -184,7 +216,9 @@ export class NestedConfigViewComponent implements OnChanges {
       }
 
       if (defaultNode) {
-        const childNodes = defaultNode.children.filter(child => !_.includes(existingKeys, child.key));
+        const childNodes = defaultNode.children.filter(
+          child => !_.includes(existingKeys, child.key)
+        );
         childNodes.forEach(childNode => {
           keyOptions.push({ key: childNode.key, type: childNode.valueType });
         });
@@ -217,7 +251,7 @@ export class NestedConfigViewComponent implements OnChanges {
       envFileMode: this.envFileMode,
       keyOptions: this.getKeyOptions(node, true),
       node,
-      defaultTree: this.defaultDataSource.data[0],
+      defaultTree: this.defaultDataSource.data[0]
     };
     this.addEditProperty.emit(this.currentConfigProperty);
   }
@@ -248,16 +282,26 @@ export class NestedConfigViewComponent implements OnChanges {
       if (node.valueType !== PROPERTY_VALUE_TYPES.STRING) {
         return;
       }
-      const regExp = new RegExp(this.yamlService.escapeRegExp(this.yamlService.constructVariable(oldName)), 'g');
+      const regExp = new RegExp(
+        this.yamlService.escapeRegExp(
+          this.yamlService.constructVariable(oldName)
+        ),
+        "g"
+      );
       let regExpResult;
       let retVal: string = node.value;
-      while (regExpResult = regExp.exec(_.defaultTo(node.value, ''))) {
+      while ((regExpResult = regExp.exec(_.defaultTo(node.value, "")))) {
         const fullMatch = regExpResult[0];
-        retVal = retVal.replace(fullMatch, this.yamlService.constructVariable(newName));
+        retVal = retVal.replace(
+          fullMatch,
+          this.yamlService.constructVariable(newName)
+        );
       }
       node.value = retVal;
     } else {
-      _.each(node.children, child => this.renameReference(child, oldName, newName));
+      _.each(node.children, child =>
+        this.renameReference(child, oldName, newName)
+      );
     }
   }
 
@@ -280,7 +324,6 @@ export class NestedConfigViewComponent implements OnChanges {
    * @param node the added/edited node
    */
   private doSaveAddEditProperty(node: TreeNode) {
-
     const currentNode = this.currentConfigProperty.node;
 
     if (this.currentConfigProperty.editMode) {
@@ -299,16 +342,32 @@ export class NestedConfigViewComponent implements OnChanges {
           this.alignEnvironmentProperties(currentNode, envNode => {
             envNode.key = node.key;
           });
-          this.renameReference(this.defaultDataSource.data[0], currentNode.key, node.key);
-          this.renameReference(this.envDataSource.data[0], currentNode.key, node.key);
+          this.renameReference(
+            this.defaultDataSource.data[0],
+            currentNode.key,
+            node.key
+          );
+          this.renameReference(
+            this.envDataSource.data[0],
+            currentNode.key,
+            node.key
+          );
         }
       } else {
         // for environments tree, value types can not be changed
         node.valueType = currentNode.valueType;
       }
 
-      if (currentNode.anchor && node.anchor && currentNode.anchor !== node.anchor) {
-        this.renameAlias(this.envDataSource.data[0], currentNode.anchor, node.anchor);
+      if (
+        currentNode.anchor &&
+        node.anchor &&
+        currentNode.anchor !== node.anchor
+      ) {
+        this.renameAlias(
+          this.envDataSource.data[0],
+          currentNode.anchor,
+          node.anchor
+        );
       }
 
       currentNode.key = node.key;
@@ -321,13 +380,14 @@ export class NestedConfigViewComponent implements OnChanges {
       if (node.isLeaf()) {
         currentNode.children = undefined;
       } else {
-        currentNode.children = node.children && node.children.length ?
-          node.children : _.defaultTo(currentNode.children, []);
+        currentNode.children =
+          node.children && node.children.length
+            ? node.children
+            : _.defaultTo(currentNode.children, []);
         _.each(currentNode.children, child => {
           child.parent = currentNode;
         });
       }
-
     } else {
       node.parent = currentNode;
 
@@ -348,7 +408,6 @@ export class NestedConfigViewComponent implements OnChanges {
    * @param node the added/edited node
    */
   saveAddEditProperty(node: TreeNode) {
-
     this.doSaveAddEditProperty(node);
 
     if (!this.currentConfigProperty.editMode) {
@@ -360,14 +419,18 @@ export class NestedConfigViewComponent implements OnChanges {
     }
 
     this.refreshTree();
-    this.showDetail(this.currentConfigProperty.editMode ? this.currentConfigProperty.node : node);
+    this.showDetail(
+      this.currentConfigProperty.editMode
+        ? this.currentConfigProperty.node
+        : node
+    );
   }
-
 
   openMenu(event, menuTrigger) {
     event.preventDefault();
-    menuTrigger.style.left = event.layerX + 'px';
-    menuTrigger.style.top = (event.layerY + menuTrigger.offsetParent.scrollTop) + 'px';
+    menuTrigger.style.left = event.layerX + "px";
+    menuTrigger.style.top =
+      event.layerY + menuTrigger.offsetParent.scrollTop + "px";
     menuTrigger.click();
   }
 
@@ -392,13 +455,14 @@ export class NestedConfigViewComponent implements OnChanges {
     const isEnvironmentNode = !node.isDefaultNode() && node.getLevel() === 1;
     const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
       data: {
-        confirmationText: `Are you sure you want to delete this ${isEnvironmentNode ? 'environment' : 'property'}?`
+        confirmationText: `Are you sure you want to delete this ${
+          isEnvironmentNode ? "environment" : "property"
+        }?`
       }
     });
 
     dialogRef.afterClosed().subscribe(response => {
       if (response) {
-
         this.doDeleteProperty(node);
         this.refreshTree();
         this.cancelAddEditProperty();
@@ -411,16 +475,15 @@ export class NestedConfigViewComponent implements OnChanges {
    * @param node the deleted node
    */
   private doDeleteProperty(node: TreeNode) {
-
     const parent = node.parent;
     parent.removeChildren([node.key]);
 
     if (!node.isDefaultNode() && node.getLevel() === 1) {
       // Delete inherit if any
       _.each(parent.children, child => {
-        const inherits = child.findChild(['inherits']);
+        const inherits = child.findChild(["inherits"]);
         if (inherits && inherits.value === node.key) {
-          child.removeChildren(['inherits']);
+          child.removeChildren(["inherits"]);
         }
       });
     }
@@ -472,7 +535,10 @@ export class NestedConfigViewComponent implements OnChanges {
    * @param node node which is modified/deleted
    * @param action the alignment action
    */
-  private alignEnvironmentProperties(node: TreeNode, action: (envNode: TreeNode) => void) {
+  private alignEnvironmentProperties(
+    node: TreeNode,
+    action: (envNode: TreeNode) => void
+  ) {
     const envsTree = this.envDataSource.data[0];
 
     const paths = node.getPathsWithoutRoot(); // Without the root 'default' part

@@ -1,32 +1,47 @@
 /**
- *   Copyright 2019 T-Mobile
- *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- */
+=========================================================================
+Copyright 2019 T-Mobile, USA
 
-import { Component, Input, Output, EventEmitter, OnChanges, ViewChild, ElementRef } from '@angular/core';
-import { FormControl, Validators } from '@angular/forms';
-import { MatDialog } from '@angular/material';
-import { Store } from '@ngrx/store';
-import * as _ from 'lodash';
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-import { PROPERTY_VALUE_TYPES, percyConfig } from 'config';
-import * as appStore from 'store';
-import { TreeNode } from 'models/tree-node';
-import { ConfigProperty } from 'models/config-property';
-import { Alert } from 'store/actions/common.actions';
-import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
-import { NotEmpty } from 'services/validators';
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+See the LICENSE file for additional language around disclaimer of warranties.
+
+Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
+its contributors may be used to endorse or promote products derived from this
+software without specific prior written permission.
+=========================================================================== 
+*/
+
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  OnChanges,
+  ViewChild,
+  ElementRef
+} from "@angular/core";
+import { FormControl, Validators } from "@angular/forms";
+import { MatDialog } from "@angular/material";
+import { Store } from "@ngrx/store";
+import * as _ from "lodash";
+
+import { PROPERTY_VALUE_TYPES, percyConfig } from "config";
+import * as appStore from "store";
+import { TreeNode } from "models/tree-node";
+import { ConfigProperty } from "models/config-property";
+import { Alert } from "store/actions/common.actions";
+import { ConfirmationDialogComponent } from "../confirmation-dialog/confirmation-dialog.component";
+import { NotEmpty } from "services/validators";
 
 /*
   add or edit new property in the environment configuration
@@ -34,9 +49,9 @@ import { NotEmpty } from 'services/validators';
   and if its a custom environment then its a select dropdown
  */
 @Component({
-  selector: 'app-add-edit-property-dialog',
-  templateUrl: './add-edit-property-dialog.component.html',
-  styleUrls: ['./add-edit-property-dialog.component.scss']
+  selector: "app-add-edit-property-dialog",
+  templateUrl: "./add-edit-property-dialog.component.html",
+  styleUrls: ["./add-edit-property-dialog.component.scss"]
 })
 export class AddEditPropertyDialogComponent implements OnChanges {
   @Input() data: ConfigProperty;
@@ -50,7 +65,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
   comment: FormControl;
   anchor: FormControl;
   alias: FormControl;
-  @ViewChild('numberInput') numberInput: ElementRef;
+  @ViewChild("numberInput") numberInput: ElementRef;
 
   inheritsOptions: string[];
   anchorsOptions: string[];
@@ -66,30 +81,37 @@ export class AddEditPropertyDialogComponent implements OnChanges {
    */
   constructor(
     private store: Store<appStore.AppState>,
-    private dialog: MatDialog) {
-
-    this.key = new FormControl('', [NotEmpty, Validators.pattern(percyConfig.propertyNameRegex)]);
-    this.valueType = new FormControl('', [NotEmpty]);
-    this.value = new FormControl('', [NotEmpty]);
-    this.alias = new FormControl('', [NotEmpty]);
-    this.anchor = new FormControl('', [NotEmpty, Validators.pattern('^[a-zA-Z0-9_-]*$'), Validators.maxLength(40)]);
-    this.comment = new FormControl('');
+    private dialog: MatDialog
+  ) {
+    this.key = new FormControl("", [
+      NotEmpty,
+      Validators.pattern(percyConfig.propertyNameRegex)
+    ]);
+    this.valueType = new FormControl("", [NotEmpty]);
+    this.value = new FormControl("", [NotEmpty]);
+    this.alias = new FormControl("", [NotEmpty]);
+    this.anchor = new FormControl("", [
+      NotEmpty,
+      Validators.pattern("^[a-zA-Z0-9_-]*$"),
+      Validators.maxLength(40)
+    ]);
+    this.comment = new FormControl("");
   }
 
   /**
    * Called when component bound data changes.
    */
   ngOnChanges() {
-
     const { editMode, node } = this.data;
 
     if (editMode) {
-
       this.key.setValue(node.key);
       this.valueType.setValue(node.valueType);
 
       if (node.valueType === PROPERTY_VALUE_TYPES.NUMBER) {
-        this.value.setValue(_.isNumber(node.value) || _.isString(node.value) ? node.value : '');
+        this.value.setValue(
+          _.isNumber(node.value) || _.isString(node.value) ? node.value : ""
+        );
       } else {
         this.value.setValue(_.toString(node.value));
       }
@@ -125,8 +147,16 @@ export class AddEditPropertyDialogComponent implements OnChanges {
 
     if (this.showAnchor() && !this.anchor.value) {
       // Set default anchor
-      const nodePaths = editMode ? node.getPathsWithoutRoot().join('-') : `${node.getPathsWithoutRoot().join('-')}-${node.children.length}`;
-      this.anchor.setValue(nodePaths.replace(/\[/g, '').replace(/\]/g, '').replace(/$/g, '').replace(/\./g, ''));
+      const nodePaths = editMode
+        ? node.getPathsWithoutRoot().join("-")
+        : `${node.getPathsWithoutRoot().join("-")}-${node.children.length}`;
+      this.anchor.setValue(
+        nodePaths
+          .replace(/\[/g, "")
+          .replace(/\]/g, "")
+          .replace(/$/g, "")
+          .replace(/\./g, "")
+      );
     }
   }
 
@@ -135,8 +165,13 @@ export class AddEditPropertyDialogComponent implements OnChanges {
    * @returns true if key should be disabled, false otherwise
    */
   keyDisabled() {
-    return this.isEditRootNode() || this.isEditArrayItem() ||
-      (this.data.editMode && !this.data.node.isDefaultNode() && !this.isDefineEnv());
+    return (
+      this.isEditRootNode() ||
+      this.isEditArrayItem() ||
+      (this.data.editMode &&
+        !this.data.node.isDefaultNode() &&
+        !this.isDefineEnv())
+    );
   }
 
   /**
@@ -144,7 +179,11 @@ export class AddEditPropertyDialogComponent implements OnChanges {
    * @returns true if key should be disabled, false otherwise
    */
   valueTypeDisabled() {
-    return this.isEditRootNode() || this.isEditArrayItem() || !this.data.node.isDefaultNode();
+    return (
+      this.isEditRootNode() ||
+      this.isEditArrayItem() ||
+      !this.data.node.isDefaultNode()
+    );
   }
 
   /**
@@ -155,7 +194,10 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     if (!this.data.envFileMode || this.data.node.isDefaultNode()) {
       return false;
     }
-    return (this.data.editMode && this.data.node.getLevel() === 1) || (!this.data.editMode && this.data.node.getLevel() === 0);
+    return (
+      (this.data.editMode && this.data.node.getLevel() === 1) ||
+      (!this.data.editMode && this.data.node.getLevel() === 0)
+    );
   }
 
   /**
@@ -165,7 +207,10 @@ export class AddEditPropertyDialogComponent implements OnChanges {
   isEditArrayItem() {
     const node: TreeNode = this.data.node;
 
-    return (this.data.editMode && node.parent && node.parent.isArray()) || (!this.data.editMode && node.isArray());
+    return (
+      (this.data.editMode && node.parent && node.parent.isArray()) ||
+      (!this.data.editMode && node.isArray())
+    );
   }
 
   /**
@@ -175,8 +220,14 @@ export class AddEditPropertyDialogComponent implements OnChanges {
   isNonFirstObjectInArray() {
     const node: TreeNode = this.data.node;
 
-    return (this.data.editMode && node.isObjectInArray() && node.parent.children.indexOf(node) > 0)
-      || (!this.data.editMode && node.valueType === PROPERTY_VALUE_TYPES.OBJECT_ARRAY && node.children.length > 0);
+    return (
+      (this.data.editMode &&
+        node.isObjectInArray() &&
+        node.parent.children.indexOf(node) > 0) ||
+      (!this.data.editMode &&
+        node.valueType === PROPERTY_VALUE_TYPES.OBJECT_ARRAY &&
+        node.children.length > 0)
+    );
   }
 
   /**
@@ -195,8 +246,11 @@ export class AddEditPropertyDialogComponent implements OnChanges {
    */
   showAnchor() {
     const node = this.data.node;
-    const result = node.isDefaultNode() &&
-      ((this.data.editMode && node.isObjectInArray()) || (!this.data.editMode && node.valueType === PROPERTY_VALUE_TYPES.OBJECT_ARRAY));
+    const result =
+      node.isDefaultNode() &&
+      ((this.data.editMode && node.isObjectInArray()) ||
+        (!this.data.editMode &&
+          node.valueType === PROPERTY_VALUE_TYPES.OBJECT_ARRAY));
 
     return result;
   }
@@ -209,8 +263,11 @@ export class AddEditPropertyDialogComponent implements OnChanges {
    */
   showAlias() {
     let node = this.data.node;
-    const result = !node.isDefaultNode() &&
-      ((this.data.editMode && node.isObjectInArray()) || (!this.data.editMode && node.valueType === PROPERTY_VALUE_TYPES.OBJECT_ARRAY));
+    const result =
+      !node.isDefaultNode() &&
+      ((this.data.editMode && node.isObjectInArray()) ||
+        (!this.data.editMode &&
+          node.valueType === PROPERTY_VALUE_TYPES.OBJECT_ARRAY));
 
     if (result) {
       if (!this.anchorsOptions) {
@@ -228,7 +285,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
           });
         }
         if (this.anchorsOptions.length) {
-          this.anchorsOptions.unshift('');
+          this.anchorsOptions.unshift("");
         }
       }
     }
@@ -242,8 +299,11 @@ export class AddEditPropertyDialogComponent implements OnChanges {
    * @returns true if user is inherits options should be shown, false otherwise
    */
   showInherits() {
-    const result = !this.data.node.isDefaultNode() && this.key.value === 'inherits'
-      && ((!this.data.editMode && this.data.node.getLevel() === 1) || (this.data.editMode && this.data.node.getLevel() === 2));
+    const result =
+      !this.data.node.isDefaultNode() &&
+      this.key.value === "inherits" &&
+      ((!this.data.editMode && this.data.node.getLevel() === 1) ||
+        (this.data.editMode && this.data.node.getLevel() === 2));
 
     if (result) {
       if (!this.inheritsOptions) {
@@ -271,10 +331,13 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     }
 
     // Used to exclude the cylic options
-    const hasCylic = (child) => {
+    const hasCylic = child => {
       let inherited = child;
       while (inherited) {
-        const inheritedEnv = _.find(inherited.children, c => c.key === 'inherits');
+        const inheritedEnv = _.find(
+          inherited.children,
+          c => c.key === "inherits"
+        );
         if (!inheritedEnv) {
           break;
         }
@@ -284,7 +347,9 @@ export class AddEditPropertyDialogComponent implements OnChanges {
         inherited = _.find(envsRoot.children, { key: inheritedEnv.value });
       }
     };
-    return envsRoot.children.filter(child => child.key !== thisEnv && !hasCylic(child)).map(child => child.key);
+    return envsRoot.children
+      .filter(child => child.key !== thisEnv && !hasCylic(child))
+      .map(child => child.key);
   }
 
   /**
@@ -294,9 +359,13 @@ export class AddEditPropertyDialogComponent implements OnChanges {
   getBreadCrumb() {
     const node: TreeNode = this.data.node;
     if (this.data.editMode) {
-      return `${node.parent ? node.parent.getPathsString() + '.' : ''}${this.key.value}`;
+      return `${node.parent ? node.parent.getPathsString() + "." : ""}${
+        this.key.value
+      }`;
     }
-    return `${node.getPathsString()}${this.key.value ? '.' + this.key.value : ''}`;
+    return `${node.getPathsString()}${
+      this.key.value ? "." + this.key.value : ""
+    }`;
   }
 
   /*
@@ -304,7 +373,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
    * @param key the selected key
    */
   setValueTypeOption(key: string) {
-    this.valueType.setValue(_.find(this.data.keyOptions, { key })['type']);
+    this.valueType.setValue(_.find(this.data.keyOptions, { key })["type"]);
   }
 
   /**
@@ -364,7 +433,9 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     const formValid =
       (this.key.disabled ? true : this.key.valid) &&
       (this.valueType.disabled ? true : this.valueType.valid) &&
-      (!TreeNode.isLeafType(this.valueType.value) || this.value.disabled ? true : this.value.valid) &&
+      (!TreeNode.isLeafType(this.valueType.value) || this.value.disabled
+        ? true
+        : this.value.valid) &&
       (!this.showAnchor() ? true : this.anchor.valid);
 
     if (!formValid) {
@@ -374,34 +445,42 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     // Validate number is in range
     if (this.valueType.value === PROPERTY_VALUE_TYPES.NUMBER) {
       const num = this.value.value;
-      if ((_.isInteger(num) && !_.isSafeInteger(num)) ||
-        (num >= Number.MAX_SAFE_INTEGER || num <= Number.MIN_SAFE_INTEGER)) {
+      if (
+        (_.isInteger(num) && !_.isSafeInteger(num)) ||
+        (num >= Number.MAX_SAFE_INTEGER || num <= Number.MIN_SAFE_INTEGER)
+      ) {
         this.value.setErrors({ range: true });
         return;
       }
     }
 
     // Validate key is unique
-    if (!this.data.editMode || this.data.node.isDefaultNode() || this.isDefineEnv()) {
+    if (
+      !this.data.editMode ||
+      this.data.node.isDefaultNode() ||
+      this.isDefineEnv()
+    ) {
       const existingKeys = [];
       if (!this.data.editMode) {
         const parent = this.data.node;
-        _.each(parent.children, (child) => {
+        _.each(parent.children, child => {
           existingKeys.push(child.key);
         });
       } else if (this.key.value !== this.data.node.key) {
         const parent = this.data.node.parent;
-        _.each(parent.children, (child) => {
+        _.each(parent.children, child => {
           if (child !== this.data.node) {
             existingKeys.push(child.key);
           }
         });
       }
       if (existingKeys.indexOf(this.key.value) > -1) {
-        this.store.dispatch(new Alert({
-          message: `Property key '${this.key.value}' already exists`,
-          alertType: 'error'
-        }));
+        this.store.dispatch(
+          new Alert({
+            message: `Property key '${this.key.value}' already exists`,
+            alertType: "error"
+          })
+        );
         return;
       }
     }
@@ -413,19 +492,24 @@ export class AddEditPropertyDialogComponent implements OnChanges {
         existingAnchors.push(...this.data.defaultTree.getAnchors());
       }
       if (existingAnchors.indexOf(this.anchor.value) > -1) {
-        this.store.dispatch(new Alert({
-          message: `Anchor name '${this.anchor.value}' already exists`,
-          alertType: 'error'
-        }));
+        this.store.dispatch(
+          new Alert({
+            message: `Anchor name '${this.anchor.value}' already exists`,
+            alertType: "error"
+          })
+        );
         return;
       }
     }
 
-    if (this.data.editMode && this.valueType.value !== this.data.node.valueType) {
-
+    if (
+      this.data.editMode &&
+      this.valueType.value !== this.data.node.valueType
+    ) {
       const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
         data: {
-          confirmationText: 'You have changed the value type, the corresponding property will be removed from all environments. Do you still want to make the change?' // tslint:disable-line
+          confirmationText:
+            "You have changed the value type, the corresponding property will be removed from all environments. Do you still want to make the change?" // tslint:disable-line
         }
       });
 
@@ -445,7 +529,6 @@ export class AddEditPropertyDialogComponent implements OnChanges {
    * Do submit.
    */
   private doSubmit() {
-
     let node: TreeNode;
 
     if (!this.duplicateDefault && !this.duplicateFirstSibling) {
@@ -453,10 +536,14 @@ export class AddEditPropertyDialogComponent implements OnChanges {
 
       if (node.isLeaf()) {
         if (node.valueType === PROPERTY_VALUE_TYPES.BOOLEAN) {
-          node.value = this.value.value === 'true' || this.value.value === true;
+          node.value = this.value.value === "true" || this.value.value === true;
         } else if (node.valueType === PROPERTY_VALUE_TYPES.NUMBER) {
           node.value = this.numberInput.nativeElement.value;
-          if (node.value && node.value.indexOf('.') < 0 && node.value.indexOf('e') < 0) {
+          if (
+            node.value &&
+            node.value.indexOf(".") < 0 &&
+            node.value.indexOf("e") < 0
+          ) {
             node.value = parseInt(node.value, 10);
           }
         } else {
@@ -465,9 +552,8 @@ export class AddEditPropertyDialogComponent implements OnChanges {
       }
 
       if (this.comment.value) {
-        node.comment = this.comment.value.split('\n');
+        node.comment = this.comment.value.split("\n");
       }
-
     } else if (this.duplicateDefault) {
       // Clone default node
       let defaultNode: TreeNode;
@@ -496,10 +582,11 @@ export class AddEditPropertyDialogComponent implements OnChanges {
         node = this.cloneWithoutParent(defaultNode);
         node.key = this.key.value;
       }
-
     } else {
       // Clone first sibling
-      const firstSibling = this.data.editMode ? this.data.node.parent.children[0] : this.data.node.children[0];
+      const firstSibling = this.data.editMode
+        ? this.data.node.parent.children[0]
+        : this.data.node.children[0];
       node = this.cloneWithoutParent(firstSibling);
       node.key = this.key.value;
     }
@@ -519,14 +606,13 @@ export class AddEditPropertyDialogComponent implements OnChanges {
    * @return default node to duplicate
    */
   private getDefaultNodeToDuplicate() {
-
     // Build key hierarchy
     const keyHierarchy = [];
     let node = this.data.node;
     while (node && node.getLevel() > 1) {
       if (node.isObjectInArray()) {
         // object in array, use first child
-        keyHierarchy.unshift('[0]');
+        keyHierarchy.unshift("[0]");
       } else {
         keyHierarchy.unshift(node.key);
       }
@@ -536,7 +622,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     const keyValue = this.key.value;
     if (!this.data.editMode && this.data.node.getLevel() >= 1) {
       if (this.isNonFirstObjectInArray()) {
-        keyHierarchy.push('[0]');
+        keyHierarchy.push("[0]");
       } else {
         keyHierarchy.push(keyValue);
       }
@@ -545,7 +631,10 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     // Find the respective defalut node
     let defaultNode = this.data.defaultTree;
     for (let i = 0; i < keyHierarchy.length; i++) {
-      defaultNode = _.find(defaultNode.children, child => child.key === keyHierarchy[i]);
+      defaultNode = _.find(
+        defaultNode.children,
+        child => child.key === keyHierarchy[i]
+      );
     }
     return defaultNode;
   }
@@ -555,8 +644,12 @@ export class AddEditPropertyDialogComponent implements OnChanges {
    * @return true if can duplicate default, false otherwise
    */
   canDuplicateDefault() {
-    return !this.data.node.isDefaultNode() && this.key.value !== 'inherits' && (!this.data.editMode || this.data.node.getLevel() > 0)
-      && !!this.getDefaultNodeToDuplicate();
+    return (
+      !this.data.node.isDefaultNode() &&
+      this.key.value !== "inherits" &&
+      (!this.data.editMode || this.data.node.getLevel() > 0) &&
+      !!this.getDefaultNodeToDuplicate()
+    );
   }
 
   /**
@@ -565,11 +658,10 @@ export class AddEditPropertyDialogComponent implements OnChanges {
    * @return cloned node
    */
   private cloneWithoutParent(node: TreeNode) {
-
     const parent = node.parent;
     node.parent = undefined;
     const result = _.cloneDeepWith(node, (_value, key) => {
-      if (key === 'anchor') {
+      if (key === "anchor") {
         // Don't clone anchor since anchor name must be unique
         return null;
       }

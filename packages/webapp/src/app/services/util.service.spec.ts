@@ -1,33 +1,38 @@
-/**
- *   Copyright 2019 T-Mobile
- *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- */
+/** ========================================================================
+Copyright 2019 T-Mobile, USA
 
-import * as cheerio from 'cheerio';
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-import { TreeNode } from 'models/tree-node';
-import { Configuration } from 'models/config-file';
-import { PROPERTY_VALUE_TYPES, percyConfig } from 'config';
-import { TestUser, utilService } from 'test/test-helper';
+   http://www.apache.org/licenses/LICENSE-2.0
 
-import { git } from './util.service';
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+See the LICENSE file for additional language around disclaimer of warranties.
+
+Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
+its contributors may be used to endorse or promote products derived from this
+software without specific prior written permission.
+=========================================================================== 
+*/
+
+import * as cheerio from "cheerio";
+
+import { TreeNode } from "models/tree-node";
+import { Configuration } from "models/config-file";
+import { PROPERTY_VALUE_TYPES, percyConfig } from "config";
+import { TestUser, utilService } from "test/test-helper";
+
+import { git } from "./util.service";
 
 const constructVar = utilService.constructVariable;
 
-describe('UtilService', () => {
-
-  it('should initialize git and browser fs', async () => {
+describe("UtilService", () => {
+  it("should initialize git and browser fs", async () => {
     const fs = await utilService.getBrowserFS();
 
     expect(git.version()).toBeDefined();
@@ -39,8 +44,7 @@ describe('UtilService', () => {
     expect(await fs.pathExists(percyConfig.draftFolder)).toBeTruthy();
   });
 
-  const sampleYaml =
-    `###
+  const sampleYaml = `###
 # Sample yaml.
 #
 # @author TCSCODER
@@ -98,8 +102,7 @@ environments: !!map  # specific environments can override the default values 1 p
     host: !!str "staging.mobilex.com"  # host comment line1
       # host comment line2`;
 
-  it('should convert between Yaml and TreeNode', () => {
-
+  it("should convert between Yaml and TreeNode", () => {
     const tree = utilService.convertYamlToTree(sampleYaml, false);
 
     const yaml2 = utilService.convertTreeToYaml(tree);
@@ -107,8 +110,7 @@ environments: !!map  # specific environments can override the default values 1 p
     expect(yaml2).toEqual(sampleYaml);
   });
 
-  it('should parse and render anchor and aliase', () => {
-
+  it("should parse and render anchor and aliase", () => {
     const anchorYaml = `
 foo: !!map
   <<: !!map &anchor1  # anchor1 comment
@@ -151,11 +153,9 @@ joe: !!map  # comment line1
     const yaml2 = utilService.convertTreeToYaml(tree);
 
     expect(yaml2).toEqual(anchorYaml.trim());
-
   });
 
-  it('should parse and render number correctly', () => {
-
+  it("should parse and render number correctly", () => {
     const numberYaml = `
 floats: !!map
   f1: !!float .inf  # positive inifinity
@@ -177,48 +177,59 @@ ints: !!map
     const yaml2 = utilService.convertTreeToYaml(tree);
 
     expect(yaml2).toEqual(numberYaml.trim());
-
   });
 
-  it('duplicate anchor should fail', () => {
-
+  it("duplicate anchor should fail", () => {
     const anchorYaml = `
 foo: !!map &anchor1
   <<: !!map &anchor1
 `;
     try {
       utilService.convertYamlToTree(anchorYaml, false);
-      fail('duplicate anchor should fail');
+      fail("duplicate anchor should fail");
     } catch (err) {
-      expect(err.message).toEqual('Found duplicate anchor: anchor1');
+      expect(err.message).toEqual("Found duplicate anchor: anchor1");
     }
   });
 
-  it('undefined anchor should fail', () => {
-
+  it("undefined anchor should fail", () => {
     const anchorYaml = `
 foo: !!map
   <<: *NoSuchAnchor
 `;
     try {
       utilService.convertYamlToTree(anchorYaml, false);
-      fail('undefined anchor should fail');
+      fail("undefined anchor should fail");
     } catch (err) {
-      expect(err.message).toEqual('Found undefined anchor: NoSuchAnchor');
+      expect(err.message).toEqual("Found undefined anchor: NoSuchAnchor");
     }
   });
 
-  it('simple value type should be converted', () => {
-
+  it("simple value type should be converted", () => {
     const yaml = 'host: !!str "staging.mobilex.com"  # host comment line1';
     const tree = utilService.convertYamlToTree(yaml);
     let yaml2 = utilService.convertTreeToYaml(tree);
     expect(yaml2).toEqual(yaml);
 
     const config = new Configuration();
-    config.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, 'value', ['comment1', 'comment2']));
-    config.default.addChild(new TreeNode('key2', PROPERTY_VALUE_TYPES.BOOLEAN, true, ['comment1', 'comment2']));
-    config.default.addChild(new TreeNode('key3', PROPERTY_VALUE_TYPES.NUMBER, 10, ['comment1', 'comment2']));
+    config.default.addChild(
+      new TreeNode("key1", PROPERTY_VALUE_TYPES.STRING, "value", [
+        "comment1",
+        "comment2"
+      ])
+    );
+    config.default.addChild(
+      new TreeNode("key2", PROPERTY_VALUE_TYPES.BOOLEAN, true, [
+        "comment1",
+        "comment2"
+      ])
+    );
+    config.default.addChild(
+      new TreeNode("key3", PROPERTY_VALUE_TYPES.NUMBER, 10, [
+        "comment1",
+        "comment2"
+      ])
+    );
 
     yaml2 = utilService.convertTreeToYaml(config);
     const config2 = utilService.parseYamlConfig(yaml2, true);
@@ -226,12 +237,16 @@ foo: !!map
     expect(config2).toEqual(config);
   });
 
-  it('empty array with comment should be converted', () => {
-
+  it("empty array with comment should be converted", () => {
     const config = new Configuration();
-    config.default.addChild(new TreeNode('array', PROPERTY_VALUE_TYPES.STRING_ARRAY, undefined, ['comment1', 'comment2']));
-    config.environments.addChild(new TreeNode('dev'));
-    config.environments.addChild(new TreeNode('qat'));
+    config.default.addChild(
+      new TreeNode("array", PROPERTY_VALUE_TYPES.STRING_ARRAY, undefined, [
+        "comment1",
+        "comment2"
+      ])
+    );
+    config.environments.addChild(new TreeNode("dev"));
+    config.environments.addChild(new TreeNode("qat"));
 
     const yaml = utilService.convertTreeToYaml(config);
     const config2 = utilService.parseYamlConfig(yaml, true);
@@ -239,187 +254,416 @@ foo: !!map
     expect(config2).toEqual(config);
   });
 
-  it('empty TreeNode should be converted', () => {
+  it("empty TreeNode should be converted", () => {
+    const emptyObj = new TreeNode("", PROPERTY_VALUE_TYPES.OBJECT);
+    expect(utilService.convertTreeToYaml(emptyObj)).toEqual("{}");
 
-    const emptyObj = new TreeNode('', PROPERTY_VALUE_TYPES.OBJECT);
-    expect(utilService.convertTreeToYaml(emptyObj)).toEqual('{}');
-
-    const emptyArray = new TreeNode('', PROPERTY_VALUE_TYPES.STRING_ARRAY);
-    expect(utilService.convertTreeToYaml(emptyArray)).toEqual('[]');
+    const emptyArray = new TreeNode("", PROPERTY_VALUE_TYPES.STRING_ARRAY);
+    expect(utilService.convertTreeToYaml(emptyArray)).toEqual("[]");
   });
 
-  it('array with same simple type should be supported', () => {
-
+  it("array with same simple type should be supported", () => {
     const tree: TreeNode = utilService.convertYamlToTree(sampleYaml, true);
 
-    expect(tree.findChild(['environments', 'staging', 'staging-items1']).children.length).toEqual(3);
-    expect(tree.findChild(['environments', 'staging', 'staging-items2']).children.length).toEqual(3);
-    expect(tree.findChild(['environments', 'staging', 'staging-items3']).children.length).toEqual(3);
+    expect(
+      tree.findChild(["environments", "staging", "staging-items1"]).children
+        .length
+    ).toEqual(3);
+    expect(
+      tree.findChild(["environments", "staging", "staging-items2"]).children
+        .length
+    ).toEqual(3);
+    expect(
+      tree.findChild(["environments", "staging", "staging-items3"]).children
+        .length
+    ).toEqual(3);
   });
 
-  it('should ignore array item which is not same type', () => {
-
+  it("should ignore array item which is not same type", () => {
     const tree: TreeNode = utilService.convertYamlToTree(sampleYaml, true);
 
-    expect(tree.findChild(['environments', 'dev', 'dev-items']).children.length).toEqual(1);
+    expect(
+      tree.findChild(["environments", "dev", "dev-items"]).children.length
+    ).toEqual(1);
   });
 
-  it('error expected when tree contains invalid yaml content', () => {
-    const tree = new TreeNode('');
+  it("error expected when tree contains invalid yaml content", () => {
+    const tree = new TreeNode("");
 
-    tree.addChild(new TreeNode('@invalidkey', PROPERTY_VALUE_TYPES.STRING, 'value'));
+    tree.addChild(
+      new TreeNode("@invalidkey", PROPERTY_VALUE_TYPES.STRING, "value")
+    );
     try {
       utilService.convertTreeToYaml(tree);
-      fail('error expected');
+      fail("error expected");
     } catch (err) {
-      expect(err.message.indexOf('@invalidkey') > -1).toBeTruthy();
+      expect(err.message.indexOf("@invalidkey") > -1).toBeTruthy();
     }
   });
 
-  it('error expected when compile yaml with loop inherits', () => {
+  it("error expected when compile yaml with loop inherits", () => {
     const config = new Configuration();
-    config.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, 'value', ['comment1']));
-    config.environments.addChild(new TreeNode('dev'));
-    config.environments.addChild(new TreeNode('qat'));
-    config.environments.addChild(new TreeNode('prod'));
-    config.environments.findChild(['qat']).addChild(new TreeNode('inherits', PROPERTY_VALUE_TYPES.STRING, 'dev'));
-    config.environments.findChild(['dev']).addChild(new TreeNode('inherits', PROPERTY_VALUE_TYPES.STRING, 'prod'));
-    config.environments.findChild(['prod']).addChild(new TreeNode('inherits', PROPERTY_VALUE_TYPES.STRING, 'dev'));
+    config.default.addChild(
+      new TreeNode("key1", PROPERTY_VALUE_TYPES.STRING, "value", ["comment1"])
+    );
+    config.environments.addChild(new TreeNode("dev"));
+    config.environments.addChild(new TreeNode("qat"));
+    config.environments.addChild(new TreeNode("prod"));
+    config.environments
+      .findChild(["qat"])
+      .addChild(new TreeNode("inherits", PROPERTY_VALUE_TYPES.STRING, "dev"));
+    config.environments
+      .findChild(["dev"])
+      .addChild(new TreeNode("inherits", PROPERTY_VALUE_TYPES.STRING, "prod"));
+    config.environments
+      .findChild(["prod"])
+      .addChild(new TreeNode("inherits", PROPERTY_VALUE_TYPES.STRING, "dev"));
 
     try {
-      utilService.compileYAML('qat', config);
-      fail('error expected');
+      utilService.compileYAML("qat", config);
+      fail("error expected");
     } catch (err) {
-      expect(err.message.indexOf('Cylic env inherits detected') > -1).toBeTruthy();
+      expect(
+        err.message.indexOf("Cylic env inherits detected") > -1
+      ).toBeTruthy();
     }
 
-    config.environments.findChild(['qat', 'inherits']).value = 'qat';
+    config.environments.findChild(["qat", "inherits"]).value = "qat";
     try {
-      utilService.compileYAML('qat', config);
-      fail('error expected');
+      utilService.compileYAML("qat", config);
+      fail("error expected");
     } catch (err) {
-      expect(err.message.indexOf('Cylic env inherits detected') > -1).toBeTruthy();
+      expect(
+        err.message.indexOf("Cylic env inherits detected") > -1
+      ).toBeTruthy();
     }
   });
 
-  it('error expected when compile yaml with loop variable reference', () => {
+  it("error expected when compile yaml with loop variable reference", () => {
     const config = new Configuration();
-    config.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, 'value', ['comment1']));
-    config.default.addChild(new TreeNode('key2', PROPERTY_VALUE_TYPES.NUMBER, 10, ['comment2']));
-    config.default.addChild(new TreeNode('key3', PROPERTY_VALUE_TYPES.BOOLEAN, true));
-    config.default.addChild(new TreeNode('var3', PROPERTY_VALUE_TYPES.STRING,
-      `${constructVar('var1')}/${constructVar('var2')}/${constructVar('key3')}`));
-    config.default.addChild(new TreeNode('var2', PROPERTY_VALUE_TYPES.STRING, `${constructVar('var1')}/${constructVar('key2')}`));
-    config.default.addChild(new TreeNode('var1', PROPERTY_VALUE_TYPES.STRING, constructVar('var3')));
+    config.default.addChild(
+      new TreeNode("key1", PROPERTY_VALUE_TYPES.STRING, "value", ["comment1"])
+    );
+    config.default.addChild(
+      new TreeNode("key2", PROPERTY_VALUE_TYPES.NUMBER, 10, ["comment2"])
+    );
+    config.default.addChild(
+      new TreeNode("key3", PROPERTY_VALUE_TYPES.BOOLEAN, true)
+    );
+    config.default.addChild(
+      new TreeNode(
+        "var3",
+        PROPERTY_VALUE_TYPES.STRING,
+        `${constructVar("var1")}/${constructVar("var2")}/${constructVar(
+          "key3"
+        )}`
+      )
+    );
+    config.default.addChild(
+      new TreeNode(
+        "var2",
+        PROPERTY_VALUE_TYPES.STRING,
+        `${constructVar("var1")}/${constructVar("key2")}`
+      )
+    );
+    config.default.addChild(
+      new TreeNode("var1", PROPERTY_VALUE_TYPES.STRING, constructVar("var3"))
+    );
 
-    config.environments.addChild(new TreeNode('dev'));
+    config.environments.addChild(new TreeNode("dev"));
     try {
-      console.log(utilService.compileYAML('dev', config));
-      fail('error expected');
+      console.log(utilService.compileYAML("dev", config));
+      fail("error expected");
     } catch (err) {
-      expect(err.message.indexOf('Loop variable reference') > -1).toBeTruthy();
+      expect(err.message.indexOf("Loop variable reference") > -1).toBeTruthy();
     }
 
-    config.default.findChild(['var1']).value = constructVar('var1');
+    config.default.findChild(["var1"]).value = constructVar("var1");
     try {
-      utilService.compileYAML('dev', config);
-      fail('error expected');
+      utilService.compileYAML("dev", config);
+      fail("error expected");
     } catch (err) {
-      expect(err.message.indexOf('Loop variable reference') > -1).toBeTruthy();
+      expect(err.message.indexOf("Loop variable reference") > -1).toBeTruthy();
     }
   });
 
-  it('should compile yaml, anchor/alias should be merged', () => {
+  it("should compile yaml, anchor/alias should be merged", () => {
     const config = new Configuration();
-    config.default.addChild(new TreeNode('oarr', PROPERTY_VALUE_TYPES.OBJECT_ARRAY, null, ['oarr-comment']));
-    config.default.findChild(['oarr']).addChild(new TreeNode('[0]', PROPERTY_VALUE_TYPES.OBJECT, null, ['item0']));
-    config.default.findChild(['oarr', '[0]']).anchor = 'oarr-0';
-    config.default.findChild(['oarr', '[0]']).addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, 'value1', ['comment1']));
-    config.default.findChild(['oarr', '[0]']).addChild(new TreeNode('key2', PROPERTY_VALUE_TYPES.STRING, 'value2', ['comment2']));
-    config.default.findChild(['oarr']).addChild(new TreeNode('[1]', PROPERTY_VALUE_TYPES.OBJECT, null, ['item1']));
-    config.default.findChild(['oarr', '[1]']).anchor = 'oarr-1';
-    config.default.findChild(['oarr', '[1]']).addChild(new TreeNode('key3', PROPERTY_VALUE_TYPES.STRING, 'value3', ['comment3']));
-    config.default.findChild(['oarr', '[1]']).addChild(new TreeNode('key4', PROPERTY_VALUE_TYPES.STRING, 'value4', ['comment4']));
+    config.default.addChild(
+      new TreeNode("oarr", PROPERTY_VALUE_TYPES.OBJECT_ARRAY, null, [
+        "oarr-comment"
+      ])
+    );
+    config.default
+      .findChild(["oarr"])
+      .addChild(
+        new TreeNode("[0]", PROPERTY_VALUE_TYPES.OBJECT, null, ["item0"])
+      );
+    config.default.findChild(["oarr", "[0]"]).anchor = "oarr-0";
+    config.default
+      .findChild(["oarr", "[0]"])
+      .addChild(
+        new TreeNode("key1", PROPERTY_VALUE_TYPES.STRING, "value1", [
+          "comment1"
+        ])
+      );
+    config.default
+      .findChild(["oarr", "[0]"])
+      .addChild(
+        new TreeNode("key2", PROPERTY_VALUE_TYPES.STRING, "value2", [
+          "comment2"
+        ])
+      );
+    config.default
+      .findChild(["oarr"])
+      .addChild(
+        new TreeNode("[1]", PROPERTY_VALUE_TYPES.OBJECT, null, ["item1"])
+      );
+    config.default.findChild(["oarr", "[1]"]).anchor = "oarr-1";
+    config.default
+      .findChild(["oarr", "[1]"])
+      .addChild(
+        new TreeNode("key3", PROPERTY_VALUE_TYPES.STRING, "value3", [
+          "comment3"
+        ])
+      );
+    config.default
+      .findChild(["oarr", "[1]"])
+      .addChild(
+        new TreeNode("key4", PROPERTY_VALUE_TYPES.STRING, "value4", [
+          "comment4"
+        ])
+      );
 
-    config.environments.addChild(new TreeNode('dev'));
+    config.environments.addChild(new TreeNode("dev"));
 
-    config.environments.findChild(['dev']).addChild(new TreeNode('oarr', PROPERTY_VALUE_TYPES.OBJECT_ARRAY));
-    config.environments.findChild(['dev', 'oarr']).addChild(new TreeNode('[0]', PROPERTY_VALUE_TYPES.OBJECT, null, ['devitem0']));
-    config.environments.findChild(['dev', 'oarr', '[0]']).aliases = ['oarr-0'];
-    config.environments.findChild(['dev', 'oarr', '[0]']).addChild(
-      new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, 'devvalue1', ['devcomment1']));
-    config.environments.findChild(['dev', 'oarr', '[0]']).addChild(
-      new TreeNode('key2', PROPERTY_VALUE_TYPES.STRING, 'devvalue2', ['devcomment2']));
-    config.environments.findChild(['dev', 'oarr']).addChild(new TreeNode('[1]', PROPERTY_VALUE_TYPES.OBJECT));
-    config.environments.findChild(['dev', 'oarr', '[1]']).aliases = ['oarr-1'];
+    config.environments
+      .findChild(["dev"])
+      .addChild(new TreeNode("oarr", PROPERTY_VALUE_TYPES.OBJECT_ARRAY));
+    config.environments
+      .findChild(["dev", "oarr"])
+      .addChild(
+        new TreeNode("[0]", PROPERTY_VALUE_TYPES.OBJECT, null, ["devitem0"])
+      );
+    config.environments.findChild(["dev", "oarr", "[0]"]).aliases = ["oarr-0"];
+    config.environments
+      .findChild(["dev", "oarr", "[0]"])
+      .addChild(
+        new TreeNode("key1", PROPERTY_VALUE_TYPES.STRING, "devvalue1", [
+          "devcomment1"
+        ])
+      );
+    config.environments
+      .findChild(["dev", "oarr", "[0]"])
+      .addChild(
+        new TreeNode("key2", PROPERTY_VALUE_TYPES.STRING, "devvalue2", [
+          "devcomment2"
+        ])
+      );
+    config.environments
+      .findChild(["dev", "oarr"])
+      .addChild(new TreeNode("[1]", PROPERTY_VALUE_TYPES.OBJECT));
+    config.environments.findChild(["dev", "oarr", "[1]"]).aliases = ["oarr-1"];
 
-
-    expect(utilService.compileYAML('dev', config)).toEqual(
-`oarr: !!seq  # oarr-comment
+    expect(utilService.compileYAML("dev", config)).toEqual(
+      `oarr: !!seq  # oarr-comment
   - !!map  # devitem0
     key1: !!str "devvalue1"  # devcomment1
     key2: !!str "devvalue2"  # devcomment2
   - !!map
     key3: !!str "value3"  # comment3
-    key4: !!str "value4"  # comment4`);
+    key4: !!str "value4"  # comment4`
+    );
   });
 
-  it('should compile yaml', () => {
+  it("should compile yaml", () => {
     const config = new Configuration();
-    config.default.addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, 'value', ['comment1']));
-    config.default.addChild(new TreeNode('key2', PROPERTY_VALUE_TYPES.NUMBER, 10, ['comment2']));
-    config.default.addChild(new TreeNode('key3', PROPERTY_VALUE_TYPES.BOOLEAN, true));
-    config.default.addChild(new TreeNode('var3', PROPERTY_VALUE_TYPES.STRING,
-      `${constructVar('var1')}/${constructVar('var2')}/${constructVar('key3')}`));
-    config.default.addChild(new TreeNode('var2', PROPERTY_VALUE_TYPES.STRING, `${constructVar('var1')}/${constructVar('key2')}`));
-    config.default.addChild(new TreeNode('var1', PROPERTY_VALUE_TYPES.STRING, constructVar('key1')));
+    config.default.addChild(
+      new TreeNode("key1", PROPERTY_VALUE_TYPES.STRING, "value", ["comment1"])
+    );
+    config.default.addChild(
+      new TreeNode("key2", PROPERTY_VALUE_TYPES.NUMBER, 10, ["comment2"])
+    );
+    config.default.addChild(
+      new TreeNode("key3", PROPERTY_VALUE_TYPES.BOOLEAN, true)
+    );
+    config.default.addChild(
+      new TreeNode(
+        "var3",
+        PROPERTY_VALUE_TYPES.STRING,
+        `${constructVar("var1")}/${constructVar("var2")}/${constructVar(
+          "key3"
+        )}`
+      )
+    );
+    config.default.addChild(
+      new TreeNode(
+        "var2",
+        PROPERTY_VALUE_TYPES.STRING,
+        `${constructVar("var1")}/${constructVar("key2")}`
+      )
+    );
+    config.default.addChild(
+      new TreeNode("var1", PROPERTY_VALUE_TYPES.STRING, constructVar("key1"))
+    );
 
-    config.default.addChild(new TreeNode('arr1', PROPERTY_VALUE_TYPES.STRING_ARRAY, null, ['arr1-comment']));
-    config.default.findChild(['arr1']).addChild(new TreeNode('[0]', PROPERTY_VALUE_TYPES.STRING, 'value1'));
-    config.default.findChild(['arr1']).addChild(new TreeNode('[1]', PROPERTY_VALUE_TYPES.STRING, 'value2'));
+    config.default.addChild(
+      new TreeNode("arr1", PROPERTY_VALUE_TYPES.STRING_ARRAY, null, [
+        "arr1-comment"
+      ])
+    );
+    config.default
+      .findChild(["arr1"])
+      .addChild(new TreeNode("[0]", PROPERTY_VALUE_TYPES.STRING, "value1"));
+    config.default
+      .findChild(["arr1"])
+      .addChild(new TreeNode("[1]", PROPERTY_VALUE_TYPES.STRING, "value2"));
 
-    config.default.addChild(new TreeNode('arr2', PROPERTY_VALUE_TYPES.NUMBER_ARRAY, null, ['arr2-comment']));
-    config.default.findChild(['arr2']).addChild(new TreeNode('[0]', PROPERTY_VALUE_TYPES.NUMBER, 100));
-    config.default.findChild(['arr2']).addChild(new TreeNode('[1]', PROPERTY_VALUE_TYPES.NUMBER, 200));
+    config.default.addChild(
+      new TreeNode("arr2", PROPERTY_VALUE_TYPES.NUMBER_ARRAY, null, [
+        "arr2-comment"
+      ])
+    );
+    config.default
+      .findChild(["arr2"])
+      .addChild(new TreeNode("[0]", PROPERTY_VALUE_TYPES.NUMBER, 100));
+    config.default
+      .findChild(["arr2"])
+      .addChild(new TreeNode("[1]", PROPERTY_VALUE_TYPES.NUMBER, 200));
 
-    config.default.addChild(new TreeNode('arr3', PROPERTY_VALUE_TYPES.BOOLEAN_ARRAY, null, ['arr3-comment']));
-    config.default.findChild(['arr3']).addChild(new TreeNode('[0]', PROPERTY_VALUE_TYPES.BOOLEAN, true));
-    config.default.findChild(['arr3']).addChild(new TreeNode('[1]', PROPERTY_VALUE_TYPES.BOOLEAN, false));
+    config.default.addChild(
+      new TreeNode("arr3", PROPERTY_VALUE_TYPES.BOOLEAN_ARRAY, null, [
+        "arr3-comment"
+      ])
+    );
+    config.default
+      .findChild(["arr3"])
+      .addChild(new TreeNode("[0]", PROPERTY_VALUE_TYPES.BOOLEAN, true));
+    config.default
+      .findChild(["arr3"])
+      .addChild(new TreeNode("[1]", PROPERTY_VALUE_TYPES.BOOLEAN, false));
 
-    config.default.addChild(new TreeNode('obj', PROPERTY_VALUE_TYPES.OBJECT, null, ['obj-comment']));
-    config.default.findChild(['obj']).addChild(new TreeNode('subkey', PROPERTY_VALUE_TYPES.STRING, constructVar('key1')));
+    config.default.addChild(
+      new TreeNode("obj", PROPERTY_VALUE_TYPES.OBJECT, null, ["obj-comment"])
+    );
+    config.default
+      .findChild(["obj"])
+      .addChild(
+        new TreeNode(
+          "subkey",
+          PROPERTY_VALUE_TYPES.STRING,
+          constructVar("key1")
+        )
+      );
 
-    config.default.addChild(new TreeNode('envstr', PROPERTY_VALUE_TYPES.STRING, `${constructVar(percyConfig.envVariableName)}/file.json`));
+    config.default.addChild(
+      new TreeNode(
+        "envstr",
+        PROPERTY_VALUE_TYPES.STRING,
+        `${constructVar(percyConfig.envVariableName)}/file.json`
+      )
+    );
 
-    config.environments.addChild(new TreeNode('dev'));
-    config.environments.addChild(new TreeNode('qat'));
-    config.environments.addChild(new TreeNode('prod'));
+    config.environments.addChild(new TreeNode("dev"));
+    config.environments.addChild(new TreeNode("qat"));
+    config.environments.addChild(new TreeNode("prod"));
 
-    config.environments.findChild(['dev']).addChild(new TreeNode('key1', PROPERTY_VALUE_TYPES.STRING, 'dev-value'));
-    config.environments.findChild(['dev']).addChild(new TreeNode('arr1', PROPERTY_VALUE_TYPES.STRING_ARRAY, null, ['dev-arr1-comment']));
-    config.environments.findChild(['dev', 'arr1']).addChild(
-      new TreeNode('[0]', PROPERTY_VALUE_TYPES.STRING, 'dev-item1-value', ['dev-item1-comment']));
+    config.environments
+      .findChild(["dev"])
+      .addChild(new TreeNode("key1", PROPERTY_VALUE_TYPES.STRING, "dev-value"));
+    config.environments
+      .findChild(["dev"])
+      .addChild(
+        new TreeNode("arr1", PROPERTY_VALUE_TYPES.STRING_ARRAY, null, [
+          "dev-arr1-comment"
+        ])
+      );
+    config.environments
+      .findChild(["dev", "arr1"])
+      .addChild(
+        new TreeNode("[0]", PROPERTY_VALUE_TYPES.STRING, "dev-item1-value", [
+          "dev-item1-comment"
+        ])
+      );
 
-    config.environments.findChild(['qat']).addChild(new TreeNode('inherits', PROPERTY_VALUE_TYPES.STRING, 'dev'));
-    config.environments.findChild(['qat']).addChild(new TreeNode('key2', PROPERTY_VALUE_TYPES.NUMBER, 50, ['qat-comment2']));
-    config.environments.findChild(['qat']).addChild(new TreeNode('arr2', PROPERTY_VALUE_TYPES.NUMBER_ARRAY, null, ['dev-arr2-comment']));
-    config.environments.findChild(['qat', 'arr2']).addChild(new TreeNode('[0]', PROPERTY_VALUE_TYPES.NUMBER, 1000, ['qat-item1-comment']));
-    config.environments.findChild(['qat', 'arr2']).addChild(new TreeNode('[1]', PROPERTY_VALUE_TYPES.NUMBER, 2000, ['qat-item2-comment']));
-    config.environments.findChild(['qat', 'arr2']).addChild(new TreeNode('[2]', PROPERTY_VALUE_TYPES.NUMBER, 3000, ['qat-item3-comment']));
+    config.environments
+      .findChild(["qat"])
+      .addChild(new TreeNode("inherits", PROPERTY_VALUE_TYPES.STRING, "dev"));
+    config.environments
+      .findChild(["qat"])
+      .addChild(
+        new TreeNode("key2", PROPERTY_VALUE_TYPES.NUMBER, 50, ["qat-comment2"])
+      );
+    config.environments
+      .findChild(["qat"])
+      .addChild(
+        new TreeNode("arr2", PROPERTY_VALUE_TYPES.NUMBER_ARRAY, null, [
+          "dev-arr2-comment"
+        ])
+      );
+    config.environments
+      .findChild(["qat", "arr2"])
+      .addChild(
+        new TreeNode("[0]", PROPERTY_VALUE_TYPES.NUMBER, 1000, [
+          "qat-item1-comment"
+        ])
+      );
+    config.environments
+      .findChild(["qat", "arr2"])
+      .addChild(
+        new TreeNode("[1]", PROPERTY_VALUE_TYPES.NUMBER, 2000, [
+          "qat-item2-comment"
+        ])
+      );
+    config.environments
+      .findChild(["qat", "arr2"])
+      .addChild(
+        new TreeNode("[2]", PROPERTY_VALUE_TYPES.NUMBER, 3000, [
+          "qat-item3-comment"
+        ])
+      );
 
-    config.environments.findChild(['prod']).addChild(new TreeNode('inherits', PROPERTY_VALUE_TYPES.STRING, 'qat'));
-    config.environments.findChild(['prod']).addChild(new TreeNode('key3', PROPERTY_VALUE_TYPES.BOOLEAN, false));
-    config.environments.findChild(['prod']).addChild(new TreeNode('arr3', PROPERTY_VALUE_TYPES.BOOLEAN_ARRAY));
-    config.environments.findChild(['prod', 'arr3']).addChild(
-      new TreeNode('[0]', PROPERTY_VALUE_TYPES.BOOLEAN, false, ['prod-item1-comment']));
-    config.environments.findChild(['prod', 'arr3']).addChild(
-      new TreeNode('[1]', PROPERTY_VALUE_TYPES.BOOLEAN, true, ['prod-item2-comment']));
-    config.environments.findChild(['prod']).addChild(
-      new TreeNode('obj', PROPERTY_VALUE_TYPES.OBJECT, null, ['prod-obj-comment']));
-    config.environments.findChild(['prod', 'obj']).addChild(
-      new TreeNode('subkey', PROPERTY_VALUE_TYPES.STRING, `${constructVar('key1')}/${constructVar('key3')}`));
+    config.environments
+      .findChild(["prod"])
+      .addChild(new TreeNode("inherits", PROPERTY_VALUE_TYPES.STRING, "qat"));
+    config.environments
+      .findChild(["prod"])
+      .addChild(new TreeNode("key3", PROPERTY_VALUE_TYPES.BOOLEAN, false));
+    config.environments
+      .findChild(["prod"])
+      .addChild(new TreeNode("arr3", PROPERTY_VALUE_TYPES.BOOLEAN_ARRAY));
+    config.environments
+      .findChild(["prod", "arr3"])
+      .addChild(
+        new TreeNode("[0]", PROPERTY_VALUE_TYPES.BOOLEAN, false, [
+          "prod-item1-comment"
+        ])
+      );
+    config.environments
+      .findChild(["prod", "arr3"])
+      .addChild(
+        new TreeNode("[1]", PROPERTY_VALUE_TYPES.BOOLEAN, true, [
+          "prod-item2-comment"
+        ])
+      );
+    config.environments
+      .findChild(["prod"])
+      .addChild(
+        new TreeNode("obj", PROPERTY_VALUE_TYPES.OBJECT, null, [
+          "prod-obj-comment"
+        ])
+      );
+    config.environments
+      .findChild(["prod", "obj"])
+      .addChild(
+        new TreeNode(
+          "subkey",
+          PROPERTY_VALUE_TYPES.STRING,
+          `${constructVar("key1")}/${constructVar("key3")}`
+        )
+      );
 
-    expect(utilService.compileYAML('dev', config)).toEqual(
+    expect(utilService.compileYAML("dev", config)).toEqual(
       `key1: !!str "dev-value"  # comment1
 key2: !!int 10  # comment2
 key3: !!bool true
@@ -436,9 +680,10 @@ arr3: !!seq  # arr3-comment
   - !!bool false
 obj: !!map  # obj-comment
   subkey: !!str "dev-value"
-envstr: !!str "dev/file.json"`);
+envstr: !!str "dev/file.json"`
+    );
 
-    expect(utilService.compileYAML('qat', config)).toEqual(
+    expect(utilService.compileYAML("qat", config)).toEqual(
       `key1: !!str "dev-value"  # comment1
 key2: !!int 50  # qat-comment2
 key3: !!bool true
@@ -456,9 +701,10 @@ arr3: !!seq  # arr3-comment
   - !!bool false
 obj: !!map  # obj-comment
   subkey: !!str "dev-value"
-envstr: !!str "qat/file.json"`);
+envstr: !!str "qat/file.json"`
+    );
 
-    expect(utilService.compileYAML('prod', config)).toEqual(
+    expect(utilService.compileYAML("prod", config)).toEqual(
       `key1: !!str "dev-value"  # comment1
 key2: !!int 50  # qat-comment2
 key3: !!bool false
@@ -476,12 +722,13 @@ arr3: !!seq  # arr3-comment
   - !!bool true  # prod-item2-comment
 obj: !!map  # prod-obj-comment
   subkey: !!str "dev-value/false"
-envstr: !!str "prod/file.json"`);
+envstr: !!str "prod/file.json"`
+    );
   });
 
-  it('should encrypt/decrypt', () => {
+  it("should encrypt/decrypt", () => {
     const obj = {
-      key: 'value',
+      key: "value",
       valid: true,
       time: Date.now()
     };
@@ -492,7 +739,7 @@ envstr: !!str "prod/file.json"`);
     expect(decrypted).toEqual(obj);
   });
 
-  it('should convert git error', () => {
+  it("should convert git error", () => {
     const err: any = new Error();
     err.data = { statusCode: 401 };
     expect(utilService.convertGitError(err).statusCode).toEqual(401);
@@ -507,30 +754,50 @@ envstr: !!str "prod/file.json"`);
     expect(utilService.convertGitError(err).statusCode).toEqual(500);
   });
 
-  it('should get metadata file path', () => {
-    expect(utilService.getMetadataPath('folderName')).toEqual(`${percyConfig.metaFolder}/folderName.meta`);
+  it("should get metadata file path", () => {
+    expect(utilService.getMetadataPath("folderName")).toEqual(
+      `${percyConfig.metaFolder}/folderName.meta`
+    );
   });
 
-  it('should get repo folder', () => {
+  it("should get repo folder", () => {
     const { repoName, repoFolder } = utilService.getRepoFolder(TestUser);
 
     expect(repoName).toEqual(TestUser.repoName);
     expect(repoFolder).toEqual(TestUser.repoFolder);
   });
 
-  it('should highlight variable correctly', () => {
-    expect(utilService.highlightNodeVariable(new TreeNode('key', PROPERTY_VALUE_TYPES.BOOLEAN, true))).toEqual(true);
-    expect(utilService.highlightNodeVariable(new TreeNode('key', PROPERTY_VALUE_TYPES.NUMBER, 10))).toEqual(10);
-    expect(utilService.highlightNodeVariable(new TreeNode('key', PROPERTY_VALUE_TYPES.STRING, '\\aa"bb"cc')))
-      .toEqual('\\aa&quot;bb&quot;cc');
-    expect(utilService.highlightNodeVariable(new TreeNode('key', PROPERTY_VALUE_TYPES.STRING, '<span></span>')))
-      .toEqual('&lt;span&gt;&lt;/span&gt;');
+  it("should highlight variable correctly", () => {
+    expect(
+      utilService.highlightNodeVariable(
+        new TreeNode("key", PROPERTY_VALUE_TYPES.BOOLEAN, true)
+      )
+    ).toEqual(true);
+    expect(
+      utilService.highlightNodeVariable(
+        new TreeNode("key", PROPERTY_VALUE_TYPES.NUMBER, 10)
+      )
+    ).toEqual(10);
+    expect(
+      utilService.highlightNodeVariable(
+        new TreeNode("key", PROPERTY_VALUE_TYPES.STRING, '\\aa"bb"cc')
+      )
+    ).toEqual("\\aa&quot;bb&quot;cc");
+    expect(
+      utilService.highlightNodeVariable(
+        new TreeNode("key", PROPERTY_VALUE_TYPES.STRING, "<span></span>")
+      )
+    ).toEqual("&lt;span&gt;&lt;/span&gt;");
 
-    const $ = cheerio.load('<span></span>');
-    const span = $('span');
-    span.append($('<span></span>').text(percyConfig.variablePrefix));
-    span.append($('<span class="yaml-var"></span>').text('name'));
-    span.append($('<span></span>').text(percyConfig.variableSuffix));
-    expect(utilService.highlightNodeVariable(new TreeNode('key', PROPERTY_VALUE_TYPES.STRING, constructVar('name')))).toEqual(span.html());
+    const $ = cheerio.load("<span></span>");
+    const span = $("span");
+    span.append($("<span></span>").text(percyConfig.variablePrefix));
+    span.append($('<span class="yaml-var"></span>').text("name"));
+    span.append($("<span></span>").text(percyConfig.variableSuffix));
+    expect(
+      utilService.highlightNodeVariable(
+        new TreeNode("key", PROPERTY_VALUE_TYPES.STRING, constructVar("name"))
+      )
+    ).toEqual(span.html());
   });
 });

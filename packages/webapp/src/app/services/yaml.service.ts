@@ -1,41 +1,45 @@
-/**
- *   Copyright 2019 T-Mobile
- *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- */
+/** ========================================================================
+Copyright 2019 T-Mobile, USA
 
-import * as jsYaml from 'js-yaml';
-import * as yamlJS from 'yaml-js';
-import * as _ from 'lodash';
-import * as cheerio from 'cheerio';
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-import { PROPERTY_VALUE_TYPES, percyConfig, appPercyConfig } from 'config';
-import { TreeNode } from 'models/tree-node';
-import { Configuration } from 'models/config-file';
-import { Injectable } from '@angular/core';
+   http://www.apache.org/licenses/LICENSE-2.0
 
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+See the LICENSE file for additional language around disclaimer of warranties.
+
+Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
+its contributors may be used to endorse or promote products derived from this
+software without specific prior written permission.
+=========================================================================== 
+*/
+
+import * as jsYaml from "js-yaml";
+import * as yamlJS from "yaml-js";
+import * as _ from "lodash";
+import * as cheerio from "cheerio";
+
+import { PROPERTY_VALUE_TYPES, percyConfig, appPercyConfig } from "config";
+import { TreeNode } from "models/tree-node";
+import { Configuration } from "models/config-file";
+import { Injectable } from "@angular/core";
 
 class YamlParser {
-
   // mapping of type from YAML to JSON
   private typeMap = {
-    str: 'string',
-    int: 'number',
-    float: 'number',
-    map: 'object',
-    seq: 'array',
-    bool: 'boolean',
-    null: 'string',
+    str: "string",
+    int: "number",
+    float: "number",
+    map: "object",
+    seq: "array",
+    bool: "boolean",
+    null: "string"
   };
 
   // The cursor of events
@@ -59,8 +63,7 @@ class YamlParser {
   /**
    * Constructor.
    */
-  constructor() {
-  }
+  constructor() {}
 
   /**
    * Get event and forward cursor to next.
@@ -91,7 +94,10 @@ class YamlParser {
     try {
       this.events = yamlJS.parse(yaml);
     } catch (err) {
-      throw new Error(`${err.problem} ${err.context} on line ${err.problem_mark.line + 1}, column ${err.problem_mark.column + 1}`);
+      throw new Error(
+        `${err.problem} ${err.context} on line ${err.problem_mark.line +
+          1}, column ${err.problem_mark.column + 1}`
+      );
     }
     this.lines = yaml.split(/\r?\n/);
     this.cursor = 0;
@@ -111,7 +117,6 @@ class YamlParser {
    * @returns TreeNode parsed.
    */
   private parseEvent() {
-
     const event = this.peekEvent();
     if (event instanceof yamlJS.events.AliasEvent) {
       return this.parseAliasEvent();
@@ -151,7 +156,7 @@ class YamlParser {
       throw new Error(`Found undefined anchor: ${anchor}`);
     }
 
-    const result = new TreeNode('', anchorNode.valueType);
+    const result = new TreeNode("", anchorNode.valueType);
     result.aliases = [anchor];
     this.parseComment(result, event.start_mark);
     return result;
@@ -162,7 +167,7 @@ class YamlParser {
    * @returns TreeNode parsed.
    */
   private parseMappingEvent() {
-    const result = new TreeNode('');
+    const result = new TreeNode("");
     let event = this.getEvent();
     this.parseComment(result, event.start_mark);
 
@@ -173,7 +178,7 @@ class YamlParser {
 
       valueNode.key = keyNode.value;
 
-      if (valueNode.key === '<<' && valueNode.aliases) {
+      if (valueNode.key === "<<" && valueNode.aliases) {
         result.aliases = result.aliases || [];
         result.aliases.push(...valueNode.aliases);
       } else {
@@ -192,7 +197,7 @@ class YamlParser {
    * @returns TreeNode parsed.
    */
   private parseSequenceEvent() {
-    const result = new TreeNode('', 'array');
+    const result = new TreeNode("", "array");
     let event = this.getEvent();
     this.parseComment(result, event.start_mark);
 
@@ -214,7 +219,9 @@ class YamlParser {
         }
 
         if (itemType !== valueType) {
-          console.warn(`Only support array of items with same type, ${itemType} already detected, and got: ${valueType}`);
+          console.warn(
+            `Only support array of items with same type, ${itemType} already detected, and got: ${valueType}`
+          );
         } else {
           result.addChild(child);
         }
@@ -253,16 +260,31 @@ class YamlParser {
     const event = this.getEvent();
     const yamlType = this.extractYamlDataType(event.tag);
     let type = this.convertYamlDataType(yamlType);
-    if (!forKeyNode && (!type || type === 'number') && !event.style && event.value) {
+    if (
+      !forKeyNode &&
+      (!type || type === "number") &&
+      !event.style &&
+      event.value
+    ) {
       try {
-        const loaded = yamlJS.load(`value: ${yamlType ? '!!' + yamlType + ' ' : ''}${event.value}`);
-        const value = loaded['value'];
+        const loaded = yamlJS.load(
+          `value: ${yamlType ? "!!" + yamlType + " " : ""}${event.value}`
+        );
+        const value = loaded["value"];
         if (_.isNumber(value)) {
-          type = 'number';
+          type = "number";
 
-          if (value === Number.POSITIVE_INFINITY || value === Number.NEGATIVE_INFINITY || _.isNaN(value)) {
+          if (
+            value === Number.POSITIVE_INFINITY ||
+            value === Number.NEGATIVE_INFINITY ||
+            _.isNaN(value)
+          ) {
             event.value = value;
-          } else if (_.isInteger(value) && event.value.indexOf('e') < 0 && event.value.indexOf('.') < 0) {
+          } else if (
+            _.isInteger(value) &&
+            event.value.indexOf("e") < 0 &&
+            event.value.indexOf(".") < 0
+          ) {
             event.value = value;
           }
         }
@@ -270,21 +292,21 @@ class YamlParser {
         console.error(err); // ignore it
       }
     }
-    type = type || 'string';
-    const result = new TreeNode('', type);
+    type = type || "string";
+    const result = new TreeNode("", type);
 
     // Parse number if possible
-    if (result.valueType === 'number') {
+    if (result.valueType === "number") {
       result.value = event.value;
-    } else if (result.valueType === 'boolean') {
+    } else if (result.valueType === "boolean") {
       result.value = JSON.parse(event.value);
-    } else if (result.valueType === 'string') {
+    } else if (result.valueType === "string") {
       result.value = event.value;
     }
 
-    if (result.valueType === 'array') {
+    if (result.valueType === "array") {
       // This happens for an empty array
-      result.valueType = 'string[]';
+      result.valueType = "string[]";
     }
 
     if (!forKeyNode) {
@@ -301,10 +323,10 @@ class YamlParser {
   private extractYamlDataType(tag: string) {
     const trimmed = _.trim(tag);
     // Extract the data type
-    const extracted = trimmed.replace(/^tag:yaml.org,2002:/, '');
+    const extracted = trimmed.replace(/^tag:yaml.org,2002:/, "");
 
     // Return extracted data type
-    return extracted || '';
+    return extracted || "";
   }
 
   /**
@@ -348,12 +370,13 @@ class YamlParser {
    * @returns parsed comments or undefined if there is not any
    */
   private parseYamlCommentLines(startMark) {
-
     const comments = [];
 
     let lineNum = startMark.line;
     const startLine = this.lines[lineNum];
-    const inlineComment = this.extractYamlComment(startLine.substring(startMark.column + 1));
+    const inlineComment = this.extractYamlComment(
+      startLine.substring(startMark.column + 1)
+    );
     if (_.isString(inlineComment)) {
       comments.push(inlineComment);
     }
@@ -382,12 +405,12 @@ class YamlParser {
    */
   private extractYamlComment(comment: string) {
     const trimmed = _.trim(comment);
-    const idx = _.indexOf(trimmed, '#');
+    const idx = _.indexOf(trimmed, "#");
     if (!trimmed || idx === -1) {
       // Does not contain '#', it's not a comment, return undefined
       return;
     }
-    if (trimmed[idx + 1] === '#') {
+    if (trimmed[idx + 1] === "#") {
       return _.trim(trimmed.substring(idx));
     }
     return _.trim(trimmed.substring(idx + 1));
@@ -395,14 +418,13 @@ class YamlParser {
 }
 
 class YamlRender {
-
   // mapping of type from JSON to YAML
   private typeMapReverse = {
-    string: 'str',
-    number: 'float',
-    object: 'map',
-    boolean: 'bool',
-    array: 'seq',
+    string: "str",
+    number: "float",
+    object: "map",
+    boolean: "bool",
+    array: "seq"
   };
 
   /**
@@ -412,16 +434,16 @@ class YamlRender {
    */
   render(tree: TreeNode) {
     if (_.isEmpty(tree.children)) {
-      return tree.isArray() ? '[]' : '{}';
+      return tree.isArray() ? "[]" : "{}";
     }
 
-    let result = '';
+    let result = "";
 
     if (tree.comment) {
       // Add root comments
-      _.each(tree.comment, (comment) => {
+      _.each(tree.comment, comment => {
         if (/^(\s)*(#.*)/.test(comment) || _.isEmpty(comment)) {
-          result += comment + '\n';
+          result += comment + "\n";
         }
       });
     }
@@ -439,10 +461,10 @@ class YamlRender {
    */
   private renderYamlComment(comment: string) {
     if (!comment) {
-      return '  #';
+      return "  #";
     }
 
-    if (comment[0] === '#' && comment[1] === '#') {
+    if (comment[0] === "#" && comment[1] === "#") {
       // For multiple consecutive '#', like: '###...'
       // return it as is
       return `  ${comment}`;
@@ -459,11 +481,10 @@ class YamlRender {
    * @returns render result
    */
   private renderComments(comments: string[], result: string, indent: string) {
-
     result += this.renderYamlComment(comments[0]);
 
     for (let i = 1; i < comments.length; i++) {
-      result += '\n' + indent + this.renderYamlComment(comments[i]);
+      result += "\n" + indent + this.renderYamlComment(comments[i]);
     }
     return result;
   }
@@ -474,16 +495,14 @@ class YamlRender {
    * @param indent The indent spaces
    * @returns Yaml format string
    */
-  private walkTreeNode(treeNode: TreeNode, indent: string = '') {
+  private walkTreeNode(treeNode: TreeNode, indent: string = "") {
+    let result = "";
 
-    let result = '';
-
-    _.each(treeNode.children, (child) => {
-
+    _.each(treeNode.children, child => {
       if (treeNode.isArray()) {
-        result += indent + '-';
+        result += indent + "-";
       } else {
-        result += indent + child.key + ':';
+        result += indent + child.key + ":";
       }
 
       // Extract comment
@@ -492,8 +511,11 @@ class YamlRender {
 
       let type = child.valueType;
 
-      const aliasOnly = child.aliases && child.aliases.length && (child.valueType !== PROPERTY_VALUE_TYPES.OBJECT
-        || (!child.anchor && (!child.children || !child.children.length)));
+      const aliasOnly =
+        child.aliases &&
+        child.aliases.length &&
+        (child.valueType !== PROPERTY_VALUE_TYPES.OBJECT ||
+          (!child.anchor && (!child.children || !child.children.length)));
 
       if (aliasOnly) {
         result += ` *${child.aliases[0]}`;
@@ -502,27 +524,26 @@ class YamlRender {
           result = this.renderComments(comment, result, indent);
         }
 
-        result += '\n';
+        result += "\n";
         return;
       }
 
       if (child.isArray()) {
-        result += ' !!seq';
+        result += " !!seq";
       } else {
         if (type === PROPERTY_VALUE_TYPES.NUMBER && _.isInteger(child.value)) {
-          type = 'int';
+          type = "int";
         } else {
           type = this.typeMapReverse[type];
         }
-        result += ' !!' + type;
+        result += " !!" + type;
       }
 
       if (child.anchor) {
-        result += ' &' + child.anchor;
+        result += " &" + child.anchor;
       }
 
       if (!child.isLeaf()) {
-
         // Append inline comment and multiple lines comments
         if (hasComment) {
           result = this.renderComments(comment, result, indent);
@@ -530,36 +551,36 @@ class YamlRender {
 
         if (child.aliases && child.valueType === PROPERTY_VALUE_TYPES.OBJECT) {
           child.aliases.forEach(alias => {
-            result += '\n' + indent + '  <<: *' + alias;
+            result += "\n" + indent + "  <<: *" + alias;
           });
         }
 
         // Recursively walk the children nodes
-        const nestResult = this.walkTreeNode(child, indent + '  ');
-        result += '\n' + nestResult;
+        const nestResult = this.walkTreeNode(child, indent + "  ");
+        result += "\n" + nestResult;
       } else {
         let value = child.value;
 
         // Append simple value and inline comment
-        if (type === 'str') {
-          value = value.replace(/\\/g, '\\\\');
+        if (type === "str") {
+          value = value.replace(/\\/g, "\\\\");
           value = value.replace(/\"/g, '\\"');
           result += ' "' + value + '"';
         } else if (value === Number.POSITIVE_INFINITY) {
-          result += ' .inf';
+          result += " .inf";
         } else if (value === Number.NEGATIVE_INFINITY) {
-          result += ' -.inf';
+          result += " -.inf";
         } else if (Number.isNaN(value)) {
-          result += ' .nan';
+          result += " .nan";
         } else {
-          result += ' ' + value;
+          result += " " + value;
         }
 
         if (hasComment) {
           result = this.renderComments(comment, result, indent);
         }
 
-        result += '\n';
+        result += "\n";
       }
     });
 
@@ -567,9 +588,8 @@ class YamlRender {
   }
 }
 
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: "root" })
 export class YamlService {
-
   /**
    * Convert yaml to TreeNode object.
    * @param yaml The yaml string
@@ -587,7 +607,9 @@ export class YamlService {
    * @returns Configuration object
    */
   parseYamlConfig(yaml: string, simpleArray: boolean = true) {
-    return Configuration.fromTreeNode(this.convertYamlToTree(yaml, simpleArray));
+    return Configuration.fromTreeNode(
+      this.convertYamlToTree(yaml, simpleArray)
+    );
   }
 
   /**
@@ -618,7 +640,7 @@ export class YamlService {
    * @returns escaped text
    */
   escapeRegExp(text) {
-    return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+    return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
   }
 
   /**
@@ -627,10 +649,18 @@ export class YamlService {
    * @returns regexp for variable reference
    */
   createRegExp() {
-    const prefix = _.defaultTo(appPercyConfig.variablePrefix, percyConfig.variablePrefix);
-    const suffix = _.defaultTo(appPercyConfig.variableSuffix, percyConfig.variableSuffix);
-    const regexPattern = `${this.escapeRegExp(prefix)}(.+?)${this.escapeRegExp(suffix)}`;
-    return new RegExp(regexPattern, 'g');
+    const prefix = _.defaultTo(
+      appPercyConfig.variablePrefix,
+      percyConfig.variablePrefix
+    );
+    const suffix = _.defaultTo(
+      appPercyConfig.variableSuffix,
+      percyConfig.variableSuffix
+    );
+    const regexPattern = `${this.escapeRegExp(prefix)}(.+?)${this.escapeRegExp(
+      suffix
+    )}`;
+    return new RegExp(regexPattern, "g");
   }
 
   /**
@@ -640,8 +670,14 @@ export class YamlService {
    * @returns variable reference
    */
   constructVariable(variable: string) {
-    const prefix = _.defaultTo(appPercyConfig.variablePrefix, percyConfig.variablePrefix);
-    const suffix = _.defaultTo(appPercyConfig.variableSuffix, percyConfig.variableSuffix);
+    const prefix = _.defaultTo(
+      appPercyConfig.variablePrefix,
+      percyConfig.variablePrefix
+    );
+    const suffix = _.defaultTo(
+      appPercyConfig.variableSuffix,
+      percyConfig.variableSuffix
+    );
     return `${prefix}${variable}${suffix}`;
   }
 
@@ -654,7 +690,9 @@ export class YamlService {
    */
   private addTokenReference(referenceLinks, refFrom, refTo) {
     if (refFrom === refTo) {
-      throw new Error('Loop variable reference: ' + [refFrom, refTo].join('->'));
+      throw new Error(
+        "Loop variable reference: " + [refFrom, refTo].join("->")
+      );
     }
 
     let added = false;
@@ -668,7 +706,7 @@ export class YamlService {
       if (idx > -1) {
         const cyclic = referenceLink.slice(idx);
         cyclic.push(refTo);
-        throw new Error('Loop variable reference: ' + cyclic.join('->'));
+        throw new Error("Loop variable reference: " + cyclic.join("->"));
       }
       referenceLink.push(refTo);
       added = true;
@@ -697,7 +735,7 @@ export class YamlService {
       let referenceFound = false;
 
       _.each(result, (value, key) => {
-        if (typeof value !== 'string') {
+        if (typeof value !== "string") {
           return;
         }
 
@@ -706,13 +744,12 @@ export class YamlService {
         const regExp = this.createRegExp();
         let regExpResult;
 
-        while (regExpResult = regExp.exec(value)) {
-
+        while ((regExpResult = regExp.exec(value))) {
           const fullMatch = regExpResult[0];
           const tokenName = regExpResult[1];
           const tokenValue = result[tokenName];
 
-          if (typeof tokenValue === 'string') {
+          if (typeof tokenValue === "string") {
             if (this.createRegExp().exec(tokenValue)) {
               referenceFound = true;
               this.addTokenReference(referenceLinks, key, tokenName);
@@ -745,7 +782,7 @@ export class YamlService {
    */
   private substitute(target: TreeNode, tokens, depth) {
     if (target.valueType === PROPERTY_VALUE_TYPES.OBJECT) {
-      _.each(target.children, (child) => {
+      _.each(target.children, child => {
         if (depth === 0 && child.isLeaf() && _.has(tokens, child.key)) {
           child.value = tokens[child.key];
         } else {
@@ -755,10 +792,12 @@ export class YamlService {
       return target;
     }
 
-    if (target.valueType === PROPERTY_VALUE_TYPES.STRING_ARRAY
-      || target.valueType === PROPERTY_VALUE_TYPES.OBJECT_ARRAY
-      || target.valueType === 'array') {
-      _.each(target.children, (child) => {
+    if (
+      target.valueType === PROPERTY_VALUE_TYPES.STRING_ARRAY ||
+      target.valueType === PROPERTY_VALUE_TYPES.OBJECT_ARRAY ||
+      target.valueType === "array"
+    ) {
+      _.each(target.children, child => {
         this.substitute(child, tokens, depth++);
       });
       return target;
@@ -773,7 +812,7 @@ export class YamlService {
 
     const regExp = this.createRegExp();
     let regExpResult;
-    while (regExpResult = regExp.exec(text)) {
+    while ((regExpResult = regExp.exec(text))) {
       const fullMatch = regExpResult[0];
       const tokenName = regExpResult[1];
       const tokenValue = tokens[tokenName];
@@ -833,13 +872,13 @@ export class YamlService {
     let envNode = config.environments.findChild([env]);
     while (envNode) {
       const deepCopy = _.cloneDeep(envNode);
-      const inherits = deepCopy.findChild(['inherits']);
+      const inherits = deepCopy.findChild(["inherits"]);
       mergeStack.unshift(deepCopy);
       if (inherits) {
         _.remove(deepCopy.children, v => v === inherits);
         const inheritEnv = inherits.value;
         if (inheritedEnvs.indexOf(inheritEnv) > -1) {
-          throw new Error('Cylic env inherits detected!');
+          throw new Error("Cylic env inherits detected!");
         }
         inheritedEnvs.push(inheritEnv);
         envNode = config.environments.findChild([inheritEnv]);
@@ -855,7 +894,7 @@ export class YamlService {
 
     // Step 2, resolve tokens
     let tokens = {};
-    _.each(merged.children, (child) => {
+    _.each(merged.children, child => {
       if (child.isLeaf()) {
         tokens[child.key] = child.value;
       }
@@ -869,15 +908,20 @@ export class YamlService {
 
     // Step 4, merge anchor/alias
     const mergeAnchor = (node: TreeNode) => {
-      _.each(node.children, (child) => {
+      _.each(node.children, child => {
         if (child.children) {
           mergeAnchor(child);
         }
         if (child.isObjectInArray() && child.aliases && child.aliases.length) {
-          const anchorNode = _.cloneDeep(config.default.findAnchorNode(child.aliases[0]));
+          const anchorNode = _.cloneDeep(
+            config.default.findAnchorNode(child.aliases[0])
+          );
           if (anchorNode) {
             const childKeys = _.map(child.children, c => c.key);
-            const anchorChildren = _.filter(anchorNode.children, c => childKeys.indexOf(c.key) < 0);
+            const anchorChildren = _.filter(
+              anchorNode.children,
+              c => childKeys.indexOf(c.key) < 0
+            );
             _.each(anchorChildren, item => {
               item.parent = null;
               child.addChild(item);
@@ -890,7 +934,10 @@ export class YamlService {
     mergeAnchor(substituted);
 
     // Step 5, omit variable
-    const variableNamePrefix = _.defaultTo(appPercyConfig.variableNamePrefix, percyConfig.variableNamePrefix);
+    const variableNamePrefix = _.defaultTo(
+      appPercyConfig.variableNamePrefix,
+      percyConfig.variableNamePrefix
+    );
     if (variableNamePrefix) {
       substituted.children = _.filter(substituted.children, c => {
         return !c.isLeaf() || !c.key.startsWith(variableNamePrefix);
@@ -907,22 +954,29 @@ export class YamlService {
    * @returns span element with variable highlighted, or given parent span if there is no variable found
    */
   highlightVariable(text: string, parentSpan?: Cheerio) {
-    const prefix = _.defaultTo(appPercyConfig.variablePrefix, percyConfig.variablePrefix);
+    const prefix = _.defaultTo(
+      appPercyConfig.variablePrefix,
+      percyConfig.variablePrefix
+    );
 
     // Find out the variable token, wrap it in '<span class="yaml-var">${tokenName}</span>'
     let leftIdx = 0;
     let regExpResult;
     let newSpan: Cheerio = null;
-    const $ = cheerio.load('');
+    const $ = cheerio.load("");
     const regExp = this.createRegExp();
-    while (regExpResult = regExp.exec(text)) {
+    while ((regExpResult = regExp.exec(text))) {
       if (!newSpan) {
         newSpan = $('<span class="hljs-string"></span>');
       }
       const tokenName = regExpResult[1];
 
       // Append left side plus variable substitute prefix
-      newSpan.append($('<span></span>').text(text.slice(leftIdx, regExpResult.index) + prefix));
+      newSpan.append(
+        $("<span></span>").text(
+          text.slice(leftIdx, regExpResult.index) + prefix
+        )
+      );
       // Append variable token name
       newSpan.append($('<span class="yaml-var"></span>').text(tokenName));
       // Update index
@@ -931,10 +985,10 @@ export class YamlService {
 
     if (newSpan) {
       // Append string left
-      newSpan.append($('<span></span>').text(text.slice(leftIdx)));
+      newSpan.append($("<span></span>").text(text.slice(leftIdx)));
       return newSpan;
     }
-    return parentSpan ? parentSpan : $('<span></span>').text(text);
+    return parentSpan ? parentSpan : $("<span></span>").text(text);
   }
 
   /**
@@ -946,7 +1000,7 @@ export class YamlService {
     if (node.valueType !== PROPERTY_VALUE_TYPES.STRING) {
       return node.value;
     }
-    const span = this.highlightVariable(_.defaultTo(node.value, ''));
+    const span = this.highlightVariable(_.defaultTo(node.value, ""));
     return span.html();
   }
 
@@ -956,8 +1010,16 @@ export class YamlService {
    * @returns tooltip for app's specific percy config
    */
   getAppConfigTooltip(appConfig) {
-    const defaultAppConfig = _.pick(percyConfig, ['variablePrefix', 'variableSuffix', 'variableNamePrefix']);
+    const defaultAppConfig = _.pick(percyConfig, [
+      "variablePrefix",
+      "variableSuffix",
+      "variableNamePrefix"
+    ]);
     const overridden = _.assign(defaultAppConfig, appConfig);
-    return _.reduce(overridden, (_result, value, key) => _result + key + ': ' + value + '\n', '');
+    return _.reduce(
+      overridden,
+      (_result, value, key) => _result + key + ": " + value + "\n",
+      ""
+    );
   }
 }

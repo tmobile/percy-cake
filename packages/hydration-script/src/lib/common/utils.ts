@@ -1,18 +1,25 @@
 /**
- *    Copyright 2019 T-Mobile
- *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- */
+=========================================================================
+Copyright 2019 T-Mobile, USA
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+See the LICENSE file for additional language around disclaimer of warranties.
+
+Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
+its contributors may be used to endorse or promote products derived from this
+software without specific prior written permission.
+=========================================================================== 
+*/
 
 /**
  * Utility functions
@@ -33,33 +40,36 @@ import { getLogger } from "./index";
  * @param percyConfig the percy config
  */
 export async function readAppConfigYAML(
-    filePath: string,
-    environments: string[],
-    percyConfig: IPercyConfig,
-    colorConsole?: boolean,
+  filePath: string,
+  environments: string[],
+  percyConfig: IPercyConfig,
+  colorConsole?: boolean
 ): Promise<object> {
-    const appConfig = await readYAML(filePath);
-    const validatedAppConfig = validateAppConfig(appConfig, filePath);
-    let envNodes;
+  const appConfig = await readYAML(filePath);
+  const validatedAppConfig = validateAppConfig(appConfig, filePath);
+  let envNodes;
+  try {
+    envNodes = mergeEnvNodes(validatedAppConfig, environments);
+  } catch (e) {
+    throw new Error(`Error in process file: ${filePath}. Cause:\n${e.message}`);
+  }
+  const result: object = {};
+  // Resolve variables of each environment
+  _.each(envNodes, (envNode, environment) => {
     try {
-        envNodes = mergeEnvNodes(validatedAppConfig, environments);
+      _.set(
+        result,
+        environment,
+        resolveVariables(envNode, environment, percyConfig)
+      );
     } catch (e) {
-        throw new Error(`Error in process file: ${filePath}. Cause:\n${e.message}`);
+      getLogger(colorConsole).error(e.message);
+      throw new Error(
+        `Cannot resolve variables at (${filePath} env:${environment})`
+      );
     }
-    const result: object = {};
-    // Resolve variables of each environment
-    _.each(
-        envNodes,
-        (envNode, environment) => {
-            try {
-                _.set(result, environment, resolveVariables(envNode, environment, percyConfig));
-            } catch (e) {
-                getLogger(colorConsole).error(e.message);
-                throw new Error(`Cannot resolve variables at (${filePath} env:${environment})`);
-            }
-        },
-    );
-    return result;
+  });
+  return result;
 }
 
 /**
@@ -67,17 +77,24 @@ export async function readAppConfigYAML(
  * @param envFileFolderPath environment file path
  * @param configOptions the hydrate lib options.
  */
-export async function loadEnvironmentsFile(envFileFolderPath: string, configOptions: any,
-                                           colorConsole?: boolean): Promise<string[]> {
-    const envFileName: string = configOptions.ENVIRONMENT_FILE_NAME;
-    const envFilePath = path.join(envFileFolderPath, envFileName);
-    const isFileExists = await fs.pathExists(envFilePath);
-    if (!isFileExists) {
-        throw new Error(`Environment file '${envFilePath}' doesn't exist`);
-    }
-    const appConfig = await readYAML(envFilePath);
-    const validatedAppConfig = validateAppConfig(appConfig, envFilePath, colorConsole);
-    return Object.keys(validatedAppConfig.environments);
+export async function loadEnvironmentsFile(
+  envFileFolderPath: string,
+  configOptions: any,
+  colorConsole?: boolean
+): Promise<string[]> {
+  const envFileName: string = configOptions.ENVIRONMENT_FILE_NAME;
+  const envFilePath = path.join(envFileFolderPath, envFileName);
+  const isFileExists = await fs.pathExists(envFilePath);
+  if (!isFileExists) {
+    throw new Error(`Environment file '${envFilePath}' doesn't exist`);
+  }
+  const appConfig = await readYAML(envFilePath);
+  const validatedAppConfig = validateAppConfig(
+    appConfig,
+    envFilePath,
+    colorConsole
+  );
+  return Object.keys(validatedAppConfig.environments);
 }
 
 /**
@@ -85,8 +102,8 @@ export async function loadEnvironmentsFile(envFileFolderPath: string, configOpti
  * @param filepath filepath
  */
 export async function readYAML(filepath: string): Promise<object> {
-    const file = await fs.readFile(filepath, "utf8");
-    return yaml.safeLoad(file);
+  const file = await fs.readFile(filepath, "utf8");
+  return yaml.safeLoad(file);
 }
 
 /**
@@ -95,17 +112,23 @@ export async function readYAML(filepath: string): Promise<object> {
  * @param percyConfig percy configuration
  * @param env the environment name
  */
-export function resolveVariables(envNode: object, env: string, percyConfig: IPercyConfig): object {
-    const tokens = resolveTokens(envNode, env, percyConfig);
-    // substitute
-    let result = substitute(envNode, tokens, percyConfig);
+export function resolveVariables(
+  envNode: object,
+  env: string,
+  percyConfig: IPercyConfig
+): object {
+  const tokens = resolveTokens(envNode, env, percyConfig);
+  // substitute
+  let result = substitute(envNode, tokens, percyConfig);
 
-    // remove those starts with variableNamePrefix
-    if (percyConfig.variableNamePrefix) {
-        const validKeys = _.keys(result).filter((key) => !key.startsWith(percyConfig.variableNamePrefix));
-        result = _.pick(result, validKeys);
-    }
-    return result;
+  // remove those starts with variableNamePrefix
+  if (percyConfig.variableNamePrefix) {
+    const validKeys = _.keys(result).filter(
+      key => !key.startsWith(percyConfig.variableNamePrefix)
+    );
+    result = _.pick(result, validKeys);
+  }
+  return result;
 }
 
 /**
@@ -117,49 +140,53 @@ export function resolveVariables(envNode: object, env: string, percyConfig: IPer
  * @param percyConfig the percy config
  * @returns the resolved tokens
  */
-function resolveTokens(envNode: object, env: string, percyConfig: IPercyConfig): object {
-    const tokens: any = {};
-    tokens[percyConfig.envVariableName] = env;
-    _.each(envNode, (value, key) => {
-        if (!_.isArray(value) && !_.isObject(value)) {
-            tokens[key] = value;
-        }
-    });
-    const result: any = _.cloneDeep(tokens);
-    const referenceLinks: any[] = [];
-    while (true) {
-        let referenceFound = false;
-        _.each(result, (value, key) => {
-            if (typeof value !== "string") {
-                return;
-            }
-            let retValue = value;
-            const regExp = createRegExp(percyConfig);
-            while (true) {
-                const regExpResult = regExp.exec(value);
-                if (!regExpResult) {
-                    break;
-                }
-                const fullMatch = regExpResult[0];
-                const tokenName = regExpResult[1];
-                const tokenValue = result[tokenName];
-                if (typeof tokenValue === "string") {
-                    if (createRegExp(percyConfig).exec(tokenValue)) {
-                        referenceFound = true;
-                        addTokenReference(referenceLinks, key, tokenName);
-                        continue;
-                    }
-                    retValue = retValue.replace(fullMatch, tokenValue);
-                }
-            }
-            result[key] = retValue;
-        });
-        if (!referenceFound) {
-            break;
-        }
+function resolveTokens(
+  envNode: object,
+  env: string,
+  percyConfig: IPercyConfig
+): object {
+  const tokens: any = {};
+  tokens[percyConfig.envVariableName] = env;
+  _.each(envNode, (value, key) => {
+    if (!_.isArray(value) && !_.isObject(value)) {
+      tokens[key] = value;
     }
+  });
+  const result: any = _.cloneDeep(tokens);
+  const referenceLinks: any[] = [];
+  while (true) {
+    let referenceFound = false;
+    _.each(result, (value, key) => {
+      if (typeof value !== "string") {
+        return;
+      }
+      let retValue = value;
+      const regExp = createRegExp(percyConfig);
+      while (true) {
+        const regExpResult = regExp.exec(value);
+        if (!regExpResult) {
+          break;
+        }
+        const fullMatch = regExpResult[0];
+        const tokenName = regExpResult[1];
+        const tokenValue = result[tokenName];
+        if (typeof tokenValue === "string") {
+          if (createRegExp(percyConfig).exec(tokenValue)) {
+            referenceFound = true;
+            addTokenReference(referenceLinks, key, tokenName);
+            continue;
+          }
+          retValue = retValue.replace(fullMatch, tokenValue);
+        }
+      }
+      result[key] = retValue;
+    });
+    if (!referenceFound) {
+      break;
+    }
+  }
 
-    return result;
+  return result;
 }
 
 /**
@@ -169,17 +196,21 @@ function resolveTokens(envNode: object, env: string, percyConfig: IPercyConfig):
  * @param {IPercyConfigInterface} percyConfig the percy config.
  * @returns {object} the substitute object.
  */
-function substitute(obj: object, tokens: object, percyConfig: IPercyConfig): object {
-    _.each(obj, (value, key) => {
-        if (_.isArray(value)) {
-            _.set(obj, key, substituteArray(value, tokens, percyConfig));
-        } else if (_.isObject(value)) {
-            _.set(obj, key, substitute(value, tokens, percyConfig));
-        } else if (_.isString(value)) {
-            _.set(obj, key, substituteString(value, tokens, percyConfig));
-        }
-    });
-    return obj;
+function substitute(
+  obj: object,
+  tokens: object,
+  percyConfig: IPercyConfig
+): object {
+  _.each(obj, (value, key) => {
+    if (_.isArray(value)) {
+      _.set(obj, key, substituteArray(value, tokens, percyConfig));
+    } else if (_.isObject(value)) {
+      _.set(obj, key, substitute(value, tokens, percyConfig));
+    } else if (_.isString(value)) {
+      _.set(obj, key, substituteString(value, tokens, percyConfig));
+    }
+  });
+  return obj;
 }
 
 /**
@@ -189,18 +220,22 @@ function substitute(obj: object, tokens: object, percyConfig: IPercyConfig): obj
  * @param {IPercyConfigInterface} percyConfig the percy config.
  * @returns {object} the substitute object.
  */
-function substituteArray(items: any[], tokens: object, percyConfig: IPercyConfig): any[] {
-    for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        if (_.isArray(item)) {
-            items[i] = substituteArray(item, tokens, percyConfig);
-        } else if (_.isObject(item)) {
-            items[i] = substitute(item, tokens, percyConfig);
-        } else if (_.isString(item)) {
-            items[i] = substituteString(item, tokens, percyConfig);
-        }
+function substituteArray(
+  items: any[],
+  tokens: object,
+  percyConfig: IPercyConfig
+): any[] {
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (_.isArray(item)) {
+      items[i] = substituteArray(item, tokens, percyConfig);
+    } else if (_.isObject(item)) {
+      items[i] = substitute(item, tokens, percyConfig);
+    } else if (_.isString(item)) {
+      items[i] = substituteString(item, tokens, percyConfig);
     }
-    return items;
+  }
+  return items;
 }
 
 /**
@@ -210,24 +245,28 @@ function substituteArray(items: any[], tokens: object, percyConfig: IPercyConfig
  * @param {IPercyConfigInterface} percyConfig the percy config.
  * @returns {object} the substitute object.
  */
-function substituteString(str: string, tokens: object, percyConfig: IPercyConfig): string {
-    let retValue = str;
-    const regExp = createRegExp(percyConfig);
-    while (true) {
-        const regExpResult = regExp.exec(str);
-        if (!regExpResult) {
-            break;
-        }
-        const fullMatch = regExpResult[0];
-        const tokenName = regExpResult[1];
-        const tokenValue = _.get(tokens, tokenName);
-        if (tokenValue) {
-            retValue = retValue.replace(fullMatch, tokenValue);
-        } else {
-            throw new Error(`Cannot resolve variables for: ${tokenName}`);
-        }
+function substituteString(
+  str: string,
+  tokens: object,
+  percyConfig: IPercyConfig
+): string {
+  let retValue = str;
+  const regExp = createRegExp(percyConfig);
+  while (true) {
+    const regExpResult = regExp.exec(str);
+    if (!regExpResult) {
+      break;
     }
-    return retValue;
+    const fullMatch = regExpResult[0];
+    const tokenName = regExpResult[1];
+    const tokenValue = _.get(tokens, tokenName);
+    if (tokenValue) {
+      retValue = retValue.replace(fullMatch, tokenValue);
+    } else {
+      throw new Error(`Cannot resolve variables for: ${tokenName}`);
+    }
+  }
+  return retValue;
 }
 /**
  * Escape reg exp.
@@ -236,7 +275,7 @@ function substituteString(str: string, tokens: object, percyConfig: IPercyConfig
  * @returns escaped text
  */
 function escapeRegExp(text: string) {
-    return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+  return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
 }
 
 /**
@@ -245,10 +284,10 @@ function escapeRegExp(text: string) {
  * @returns regexp for variable reference
  */
 function createRegExp(percyConfig: IPercyConfig) {
-    const prefix = percyConfig.variablePrefix;
-    const suffix = percyConfig.variableSuffix;
-    const regexPattern = `${escapeRegExp(prefix)}(.+?)${escapeRegExp(suffix)}`;
-    return new RegExp(regexPattern, "g");
+  const prefix = percyConfig.variablePrefix;
+  const suffix = percyConfig.variableSuffix;
+  const regexPattern = `${escapeRegExp(prefix)}(.+?)${escapeRegExp(suffix)}`;
+  return new RegExp(regexPattern, "g");
 }
 
 /**
@@ -258,29 +297,35 @@ function createRegExp(percyConfig: IPercyConfig) {
  * @param refTo the reference to (right side)
  * @throws Error if loop reference detected
  */
-function addTokenReference(referenceLinks: any[], refFrom: string, refTo: string) {
-    if (refFrom === refTo) {
-        throw new Error("Loop variable reference: " + [refFrom, refTo].join("->"));
+function addTokenReference(
+  referenceLinks: any[],
+  refFrom: string,
+  refTo: string
+) {
+  if (refFrom === refTo) {
+    throw new Error("Loop variable reference: " + [refFrom, refTo].join("->"));
+  }
+  let added = false;
+  _.each(referenceLinks, referenceLink => {
+    if (referenceLink[referenceLink.length - 1] !== refFrom) {
+      return;
     }
-    let added = false;
-    _.each(referenceLinks, (referenceLink) => {
-        if (referenceLink[referenceLink.length - 1] !== refFrom) {
-            return;
-        }
 
-        const idx = referenceLink.indexOf(refTo);
-        if (idx > -1) {
-            const cyclic = referenceLink.slice(idx);
-            cyclic.push(refTo);
-            throw new Error("Cyclic variable reference detected: " + cyclic.join("->"));
-        }
-        referenceLink.push(refTo);
-        added = true;
-    });
-
-    if (!added) {
-        referenceLinks.push([refFrom, refTo]);
+    const idx = referenceLink.indexOf(refTo);
+    if (idx > -1) {
+      const cyclic = referenceLink.slice(idx);
+      cyclic.push(refTo);
+      throw new Error(
+        "Cyclic variable reference detected: " + cyclic.join("->")
+      );
     }
+    referenceLink.push(refTo);
+    added = true;
+  });
+
+  if (!added) {
+    referenceLinks.push([refFrom, refTo]);
+  }
 }
 
 /**
@@ -288,20 +333,23 @@ function addTokenReference(referenceLinks: any[], refFrom: string, refTo: string
  * @param appConfig app configuration object
  * @param environments environment list
  */
-export function mergeEnvNodes(appConfig: IAppConfig, environments: string[]): object {
-    const mergedEnvNodes: object = {};
-    // calculate the env in inherits order
-    const sortedEnv = sortEnvByInherits(environments, appConfig.environments);
-    // Apply default values to each environment
-    sortedEnv.forEach(
-        (e) => _.set(
-            mergedEnvNodes,
-            e,
-            // Merge default values and environment specific values
-            mergeEnvNode(mergedEnvNodes, e, appConfig),
-        ),
-    );
-    return mergedEnvNodes;
+export function mergeEnvNodes(
+  appConfig: IAppConfig,
+  environments: string[]
+): object {
+  const mergedEnvNodes: object = {};
+  // calculate the env in inherits order
+  const sortedEnv = sortEnvByInherits(environments, appConfig.environments);
+  // Apply default values to each environment
+  sortedEnv.forEach(e =>
+    _.set(
+      mergedEnvNodes,
+      e,
+      // Merge default values and environment specific values
+      mergeEnvNode(mergedEnvNodes, e, appConfig)
+    )
+  );
+  return mergedEnvNodes;
 }
 
 /**
@@ -311,15 +359,19 @@ export function mergeEnvNodes(appConfig: IAppConfig, environments: string[]): ob
  * @param env the environment name
  * @param appConfig app configuration object
  */
-function mergeEnvNode(mergedEnvNodes: object, env: string, appConfig: IAppConfig) {
-    const parentEnvNode = getParentEnvNode(mergedEnvNodes, env, appConfig);
-    const currentEnvNode = _.get(appConfig.environments, env);
+function mergeEnvNode(
+  mergedEnvNodes: object,
+  env: string,
+  appConfig: IAppConfig
+) {
+  const parentEnvNode = getParentEnvNode(mergedEnvNodes, env, appConfig);
+  const currentEnvNode = _.get(appConfig.environments, env);
 
-    const mergedEnvNode = _.cloneDeep(parentEnvNode);
+  const mergedEnvNode = _.cloneDeep(parentEnvNode);
 
-    mergeProperties(mergedEnvNode, currentEnvNode, env, "");
+  mergeProperties(mergedEnvNode, currentEnvNode, env, "");
 
-    return mergedEnvNode;
+  return mergedEnvNode;
 }
 
 /**
@@ -330,26 +382,33 @@ function mergeEnvNode(mergedEnvNodes: object, env: string, appConfig: IAppConfig
  * @param {string} env the env.
  * @param {string} propertyName the property name.
  */
-function mergeProperties(dest: object, src: object, env: string, propertyName: string) {
-    _.each(src, (value, key) => {
-        // ignore inherits key
-        if (key !== "inherits") {
-            const name = propertyName ? `${propertyName}.${key}` : key;
-            if (!_.has(dest, key)) {
-                throw new Error(`Cannot find property: ${name} in env node: ${env}.`);
-            }
-            const valueInDest = _.get(dest, key);
-            if (typeof valueInDest !== typeof value) {
-                throw new Error(`Type is different from default node for property: ${name} in env node: ${env}.`);
-            }
+function mergeProperties(
+  dest: object,
+  src: object,
+  env: string,
+  propertyName: string
+) {
+  _.each(src, (value, key) => {
+    // ignore inherits key
+    if (key !== "inherits") {
+      const name = propertyName ? `${propertyName}.${key}` : key;
+      if (!_.has(dest, key)) {
+        throw new Error(`Cannot find property: ${name} in env node: ${env}.`);
+      }
+      const valueInDest = _.get(dest, key);
+      if (typeof valueInDest !== typeof value) {
+        throw new Error(
+          `Type is different from default node for property: ${name} in env node: ${env}.`
+        );
+      }
 
-            if (_.isPlainObject(value) && _.isPlainObject(valueInDest)) {
-                mergeProperties(valueInDest, value, env, name);
-            } else {
-                _.set(dest, key, value);
-            }
-        }
-    });
+      if (_.isPlainObject(value) && _.isPlainObject(valueInDest)) {
+        mergeProperties(valueInDest, value, env, name);
+      } else {
+        _.set(dest, key, value);
+      }
+    }
+  });
 }
 
 /**
@@ -359,13 +418,17 @@ function mergeProperties(dest: object, src: object, env: string, propertyName: s
  * @param {object} appConfig the env config.
  * @returns {object} the inherited value.
  */
-function getParentEnvNode(mergedEnvNodes: object, env: string, appConfig: IAppConfig): object {
-    const inherits = _.get(_.get(appConfig.environments, env), "inherits");
-    if (inherits) {
-        return _.get(mergedEnvNodes, inherits);
-    }
-    // no inherits, return default node
-    return appConfig.default;
+function getParentEnvNode(
+  mergedEnvNodes: object,
+  env: string,
+  appConfig: IAppConfig
+): object {
+  const inherits = _.get(_.get(appConfig.environments, env), "inherits");
+  if (inherits) {
+    return _.get(mergedEnvNodes, inherits);
+  }
+  // no inherits, return default node
+  return appConfig.default;
 }
 
 /**
@@ -375,33 +438,35 @@ function getParentEnvNode(mergedEnvNodes: object, env: string, appConfig: IAppCo
  * @returns {string[]} the calculated order.
  */
 function sortEnvByInherits(environments: string[], envNodes: object): string[] {
-    const orderedEnv: string[] = [];
-    for (const env of environments) {
-        if (orderedEnv.indexOf(env) >= 0) {
-            continue;
-        }
-        const stack: string[] = [];
-        let current = env;
-        while (true) {
-            stack.push(current);
-            const inherits = _.get(_.get(envNodes, current), "inherits");
-            if (!inherits) {
-                // leaf
-                break;
-            } else {
-                if (stack.indexOf(inherits) >= 0) {
-                    stack.push(inherits);
-                    throw new Error("Cyclic env inherits detected: " + stack.join(" -> "));
-                } else {
-                    current = inherits;
-                }
-            }
-        }
-        for (let i = stack.length - 1; i >= 0; i--) {
-            orderedEnv.push(stack[i]);
-        }
+  const orderedEnv: string[] = [];
+  for (const env of environments) {
+    if (orderedEnv.indexOf(env) >= 0) {
+      continue;
     }
-    return orderedEnv;
+    const stack: string[] = [];
+    let current = env;
+    while (true) {
+      stack.push(current);
+      const inherits = _.get(_.get(envNodes, current), "inherits");
+      if (!inherits) {
+        // leaf
+        break;
+      } else {
+        if (stack.indexOf(inherits) >= 0) {
+          stack.push(inherits);
+          throw new Error(
+            "Cyclic env inherits detected: " + stack.join(" -> ")
+          );
+        } else {
+          current = inherits;
+        }
+      }
+    }
+    for (let i = stack.length - 1; i >= 0; i--) {
+      orderedEnv.push(stack[i]);
+    }
+  }
+  return orderedEnv;
 }
 
 /**
@@ -409,30 +474,39 @@ function sortEnvByInherits(environments: string[], envNodes: object): string[] {
  * @param appConfig app configuration object
  * @param configFilePath config file path for logging purposes (optional)
  */
-export function validateAppConfig(appConfig: object, configFilePath?: string
-    ,                             colorConsole?: boolean): IAppConfig {
-    const schema = {
-        id: "/AppConfig",
-        properties: {
-            default: {
-                type: "object",
-            },
-            environments: {
-                type: "object",
-            },
-        },
-        required: ["default", "environments"],
-        type: "object",
-    };
-    const v = new Validator();
-    const result = v.validate(appConfig, schema);
-    if (!result.valid) {
-        result.errors.forEach((e) => getLogger(colorConsole).error(
-            e.message + `${configFilePath ? ` (${configFilePath})` : ""}`),
-        );
-        throw new Error(`Invalid config file format ${configFilePath ? `(${configFilePath})` : ""}`);
-    }
-    return appConfig as IAppConfig;
+export function validateAppConfig(
+  appConfig: object,
+  configFilePath?: string,
+  colorConsole?: boolean
+): IAppConfig {
+  const schema = {
+    id: "/AppConfig",
+    properties: {
+      default: {
+        type: "object"
+      },
+      environments: {
+        type: "object"
+      }
+    },
+    required: ["default", "environments"],
+    type: "object"
+  };
+  const v = new Validator();
+  const result = v.validate(appConfig, schema);
+  if (!result.valid) {
+    result.errors.forEach(e =>
+      getLogger(colorConsole).error(
+        e.message + `${configFilePath ? ` (${configFilePath})` : ""}`
+      )
+    );
+    throw new Error(
+      `Invalid config file format ${
+        configFilePath ? `(${configFilePath})` : ""
+      }`
+    );
+  }
+  return appConfig as IAppConfig;
 }
 
 /**
@@ -440,10 +514,13 @@ export function validateAppConfig(appConfig: object, configFilePath?: string
  * @param environments environment list
  * @param outputFolder output folder
  */
-export async function ensureEnvironmentFolders(environments: string[], outputFolder: string): Promise<void> {
-    for (const env of environments) {
-        await fs.ensureDir(path.join(outputFolder, env));
-    }
+export async function ensureEnvironmentFolders(
+  environments: string[],
+  outputFolder: string
+): Promise<void> {
+  for (const env of environments) {
+    await fs.ensureDir(path.join(outputFolder, env));
+  }
 }
 
 /**
@@ -452,16 +529,20 @@ export async function ensureEnvironmentFolders(environments: string[], outputFol
  * @param yamlFilePath file path of the input yaml file
  * @param outputFolder output folder
  */
-export async function writeJson(envNode: object, yamlFilePath: string, outputFolder: string): Promise<void> {
-    const environments = Object.keys(envNode);
-    await ensureEnvironmentFolders(environments, outputFolder);
-    const filename = path.basename(yamlFilePath, ".yaml");
-    await Promise.all(
-        environments.map(async (env) => {
-            const outputFilepath = path.join(outputFolder, env, `${filename}.json`);
-            await fs.writeJSON(outputFilepath, _.get(envNode, env), { spaces: 2 });
-        }),
-    );
+export async function writeJson(
+  envNode: object,
+  yamlFilePath: string,
+  outputFolder: string
+): Promise<void> {
+  const environments = Object.keys(envNode);
+  await ensureEnvironmentFolders(environments, outputFolder);
+  const filename = path.basename(yamlFilePath, ".yaml");
+  await Promise.all(
+    environments.map(async env => {
+      const outputFilepath = path.join(outputFolder, env, `${filename}.json`);
+      await fs.writeJSON(outputFilepath, _.get(envNode, env), { spaces: 2 });
+    })
+  );
 }
 
 /**
@@ -469,10 +550,10 @@ export async function writeJson(envNode: object, yamlFilePath: string, outputFol
  * @param folderPath folder path
  */
 export async function findYamlFiles(folderPath: string): Promise<string[]> {
-    const files = await fs.readdir(folderPath);
-    return files
-        .filter((f) => path.extname(f) === ".yaml")
-        .map((f) => path.join(folderPath, f));
+  const files = await fs.readdir(folderPath);
+  return files
+    .filter(f => path.extname(f) === ".yaml")
+    .map(f => path.join(folderPath, f));
 }
 
 /**
@@ -480,16 +561,16 @@ export async function findYamlFiles(folderPath: string): Promise<string[]> {
  * @param folderPath folder path
  */
 export async function findSubFolders(folderPath: string): Promise<string[]> {
-    const files = await fs.readdir(folderPath);
-    const folders: string[] = [];
-    for (const file of files) {
-        const filePath = path.join(folderPath, file);
-        const stat = await fs.lstat(filePath);
-        if (stat.isDirectory()) {
-            folders.push(file);
-        }
+  const files = await fs.readdir(folderPath);
+  const folders: string[] = [];
+  for (const file of files) {
+    const filePath = path.join(folderPath, file);
+    const stat = await fs.lstat(filePath);
+    if (stat.isDirectory()) {
+      folders.push(file);
     }
-    return folders;
+  }
+  return folders;
 }
 
 /**
@@ -497,5 +578,5 @@ export async function findSubFolders(folderPath: string): Promise<string[]> {
  * @param str the string to strip
  */
 export function stripColor(str: string) {
-    return str.replace(/\x1B[[(?);]{0,2}(;?\d)*./g, "");
+  return str.replace(/\x1B[[(?);]{0,2}(;?\d)*./g, "");
 }
