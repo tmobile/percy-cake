@@ -93,5 +93,31 @@
       "type": "Apache-2.0",
       "url": "http://www.apache.org/licenses/LICENSE-2.0"
     }
+  ],
+  "contributors": [
+    {
+      "name": "Kendrick Burson",
+      "email": "Kendrick.Burson3@T-Mobile.com"
+    },
+    {
+      "name": "GuanZhuo Jin",
+      "email": "stand4love@gmail.com"
+    },
+    {
+      "name": "Liquan Liu",
+      "email": "leviastan@gmail.com"
+    },
+    {
+      "name": "veshu",
+      "email": "tcveshu@gmail.com"
+    },
+    {
+      "name": "kinfkong",
+      "email": "kinfkong@126.com"
+    },
+    {
+      "name": "sumitdaga",
+      "email": "sumit.daga66@gmail.com"
+    }
   ]
 }

@@ -17,7 +17,3 @@ Attributions:
     Author: Liquan Liu <leviastan@gmail.com>
     Author: sumitdaga <sumit.daga66@gmail.com>
 
-notices:
-
-    Do I have to list *Every* module and dependency package found in node_modules, including transitive dependencies, or just the direct dependencies listed in package.json ?
-
