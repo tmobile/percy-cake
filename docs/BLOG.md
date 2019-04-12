@@ -51,28 +51,29 @@ This became a problem when we started creating more lower environments for testi
 I tried to solve this problem by creating a hierarchical format to dry the config so that I could change a value in one place and have it apply across the app.
 
 ```json
-    "product": {
-      "stage": "http://stage.sp10050e1e.guided.ss-omtrdc.net",
-      "host": "https://pd01.api.t-mobile.com/raptor/v1",
-      "browse": {
-        "service": "/search-promote/",
-        "parameters": {
-          "phone": "?type=browse&ps=handset",
-          "accessory": "?type=browse&pt=accessory",
-          "internet-device": "?type=browse&ps=wearable|tablet"
-        },
-     }
+"product": {
+  "stage": "http://stage.sp10050e1e.guided.ss-omtrdc.net",
+  "host": "https://pd01.api.t-mobile.com/raptor/v1",
+  "browse": {
+    "service": "/search-promote/",
+    "parameters": {
+      "phone": "?type=browse&ps=handset",
+      "accessory": "?type=browse&pt=accessory",
+      "internet-device": "?type=browse&ps=wearable|tablet"
+    },
+  }
 ```
 
 This required the application to have the smarts to ‘compile’ these objects into complete urls.
 
 ```javascript
-  getPhoneCatalogUrl = config.urls.product.host +
-                       config.urls.product.browse.service +
-                       config.urls.productbrowse.parameters.phone;
-```
+getPhoneCatalogUrl =
+  config.urls.product.host +
+  config.urls.product.browse.service +
+  config.urls.productbrowse.parameters.phone;
 
-// https://pd01.api.t-mobile.com/raptor/v1/search-promote/?type=browse&ps=handset/search-promote/?type=browse&ps=handset
+// getPhoneCatalogUrl == "https://pd01.api.t-mobile.com/raptor/v1/search-promote/?type=browse&ps=handset/search-promote/?type=browse&ps=handset"
+```
 
 ## The solution:
 
@@ -173,25 +174,26 @@ This allows me to show a simple list of every deployed environment and how each 
 
 ## Percy Project
 
+<img src="images/percy.logo.png" width="100"/>
+
 The Percy project comes in 2 parts:
 
- - **Configuration Editor**
- - **Hydration Tools**
+- **Percy Configuration As Code Editor**
+- **Percy Hydration Tools**
 
-The editor can be deployed one of 4 ways, all from the same code base:
+The editor can be deployed any of 4 ways, all sharing the same code base:
 
- - Static web assets served from a CDN.
- - Docker image
- - Cross platform Desktop Application (Electron)
- - VSCode Editor extension
+- Static web assets served from a CDN.
+- Docker image
+- Electron: Cross Platform Desktop Application.
+- VSCode Editor extension
 
-The hydration tools, which are node.js based script files, can be deployed as an npm package to include in your projects package.json.
+<hr/>
+## Percy Configuration As Code Editor:
 
-npm install percy-hydration
+<img src="./images/percy-home.png">
 
-## Percy Editor:
-
-### editor settings:
+### Editor settings:
 
 The editor uses a settings file called `.percyrc`.
 
@@ -216,7 +218,7 @@ The editor requires an `environments.yaml` file to define the environments that 
 
 All configuration files, including a special file called the `environments.yaml` file, must follow a specific format.
 
-[ picture ]
+<img src="images/environments.yaml.png" height="150" /> <img src="images/app.config.yaml.png" height="150"/>
 
 The _default_ section is where all the allowed property keys are defined. If a property key is not listed in the default section it will not be hydrated to any resulting configuration file. This assures that all configuration files stay in sync with the property keys consumed by the application.
 
@@ -228,14 +230,14 @@ The `environments.yaml` file is a special configuration file and is the only fil
 
 My applications’ `environments.yaml`, shown on the right, states that my application can be deployed to 4 different environments, hence after I hydrate my YAML configuration files I will have 4 sets of JSON configuration files, one for every environment listed in the `environments.yaml`.
 
-[ picture ]
+<img src="./images/environments.yaml.expanded.png" height="400"/>
 
 The default section of the environments file lists all the deployment settings for the application in a single environment, the default environment: e.g.
 
- - AWS accounts
- - IP addresses
- - Namespaces
- - …
+- AWS accounts
+- IP addresses
+- Namespaces
+- …
 
 This includes any properties or values that are required to define where are all the assets and services that are deployed in an environment, and how access them. This file can be used by a CI processor to automate deployments and maintenance tasks for any environment.
 
@@ -243,7 +245,7 @@ This includes any properties or values that are required to define where are all
 
 The default section of any configuration file, including the `environments.yaml` file, lists all the key:value pairs, in a hierarchical format, that defines the application configurable runtime value as required by your application. This can include API urls, Feature Toggles, Cache settings, even changes to labels and static text displayed within the application.
 
-[ picture ]
+<img src="./images/percyrc.tooltip.png" />
 
 To help with normalization of this file, to DRY the contents, we utilize 3 features:
 
@@ -251,13 +253,19 @@ To help with normalization of this file, to DRY the contents, we utilize 3 featu
 - Anchors and Aliases
 - Environment Inheritance
 
-In the image to the above you can see several properties that show variable substitution inside interpolated strings (the orange highlighted strings). In this example we define the \_dcphost up top, then refer to that value in other properties:
+In the image above you can see several properties that show variable substitution inside interpolated strings (the orange highlighted strings). In this example we define the `\_api-path` variable up top, then refer to that value in `apihost`, then specialize that property value further in the `prod` environment section
 
- - `dcpendpoints.dcpcart`
- - `dcpendpoints.dcpupdate`
+In the image you can see the hover over the _magenta_ info icon gives a tooltip for the current folder configuration set by a `.percyrc` file that can be included in any folder containing configuration files.
 
-Values in the `.percyrc` file determine what characters are used to wrap string interpolated values (when using variable substitution). Above we use `${ … }` to wrap a variable inside a string value. We also prefix the variable name with `_` to identify this as a transient variable (a key that is not to appear by itself in the hydrated file.)
+Values in the `.percyrc` file determine what characters are used to wrap string interpolated values (when using variable substitution). Above we use `${ … }` to wrap a variable inside a string value. We also prefix the variable name with `_` to identify this as a transient variable (a key that is used for variable substitution only and is not to appear by itself in the hydrated file.)
 
+### Property Comments
+
+Yes, you can add comments to properties to help identify what they are used for. This can include detailed multi-line comments to describe use, constraints, author, feature or even when to expire use of that property (feature toggles).
+
+<img src="./images/property.tooltip.png" />
+
+<hr/>
 ### Environment properties:
 
 Once all the allowed property keys with default values are defined in the default section we need to list how each of our deployed environments differs from the default settings. To do this we add an environment node to our configuration files environments section.
@@ -277,7 +285,7 @@ The editor follows a set of strict rules including:
    - Property override values in environment nodes must be of the same type as the default property
    - All environments inherit all values from the default node
    - All environments can inherit from another environment
-   - Only one inheritance per environment, other than default.  
+   - Only one inheritance per environment, other than default.
    - Chained inheritance is allowed.
    - Inheritance Cycles are not allowed
    - Property keys that are prefixed with the ‘variableNamePrefix’ as defined in the compiled .percyrc will not be included in the final hydrated file, although their values will be interpolated into any variable substitutions defined in the config properties.
@@ -296,11 +304,22 @@ environments: !!map
           expireInMs: !!int 500
 ```
 
+With the editor you can view the yaml format of any environment section. In this image we are showing the `prod` environment yaml settings, as stored in the yaml file.
+
+<img src="./images/environments.prod.png" witdh="400"/>
+
+Then you can right click either the environment name or the `...` icon to get the _context menu_, select _"View Compiled YAML"_ to see how all the inherited settings and variable interpolation will cascade into a final, hydrated yaml file.
+
+<img src="./images/prod.compiled.yaml.png" witdh="400"/>
+
+<hr/>
 # Percy Hydration tools:
 
-The hydration tools enforce the percy formatting rules when transpiring and hydrating the DRY YAML files to a Wet JSON format creating one folder collection of config files for every environment listed in `environments.yaml`.
+The hydration tools, which are node.js based script files, are easily incorporated into any build environment that has nodejs. They are installed as an npm package :
 
-The hydration tools are easily incorporated into any build environment that has nodejs. They are installed as an npm package : `npm i percy-hydration`
+`npm i percy-hydration`
+
+The hydration tools enforce the percy formatting rules when transpiring and hydrating the DRY YAML files to a Wet JSON format creating one folder collection of config files for every environment listed in `environments.yaml`.
 
 and are executed using one of 2 command line scripts
 
@@ -308,4 +327,4 @@ and are executed using one of 2 command line scripts
 
 `compare-json file1 file2 [—out reportFilePath]`
 
-The compare-json scripts are a validation that your YAML files are formatted correctly and will output the precise JSON file content your application is expecting to consume.
+The `compare-json` scripts will compare the json output of the hydrated yaml files to an original set of json files that you referenced when de-hydrating your configuration files into \*.percy.yaml files. These scripts will validate that your YAML files are formatted correctly and will output the precise JSON file content your application is expecting to consume.
