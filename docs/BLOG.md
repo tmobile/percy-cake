@@ -1,8 +1,12 @@
 # Percy
 
+<img src="images/percy.logo.png" width="100"/>
+
 Percy is a configuration as code editor, it is not a configuration distribution system like Spring Cloud Configuration Server.
 
 Percy facilitates editing configuration files in a terse (de-hydrated) format that is intended to simplify maintenance of external configuration files of an app or service across multiple deployed environments. The Percy project includes a set of validation and hydration scripts that will expand the de-hydrated ( DRY) configuration files into a set of JSON files, one for every deployment environment. You will still need a mechanism to publish/distribute those config files to your running application/service.
+
+
 
 ## The Problem:
 
@@ -174,8 +178,6 @@ This allows me to show a simple list of every deployed environment and how each 
 
 ## Percy Project
 
-<img src="images/percy.logo.png" width="100"/>
-
 The Percy project comes in 2 parts:
 
 - **Percy Configuration As Code Editor**
@@ -189,6 +191,7 @@ The editor can be deployed any of 4 ways, all sharing the same code base:
 - VSCode Editor extension
 
 <hr/>
+
 ## Percy Configuration As Code Editor:
 
 <img src="./images/percy-home.png">
@@ -266,6 +269,7 @@ Yes, you can add comments to properties to help identify what they are used for.
 <img src="./images/property.tooltip.png" />
 
 <hr/>
+
 ### Environment properties:
 
 Once all the allowed property keys with default values are defined in the default section we need to list how each of our deployed environments differs from the default settings. To do this we add an environment node to our configuration files environments section.
@@ -313,6 +317,7 @@ Then you can right click either the environment name or the `...` icon to get th
 <img src="./images/prod.compiled.yaml.png" witdh="400"/>
 
 <hr/>
+
 # Percy Hydration tools:
 
 The hydration tools, which are node.js based script files, are easily incorporated into any build environment that has nodejs. They are installed as an npm package :
