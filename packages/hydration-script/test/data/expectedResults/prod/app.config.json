@@ -1,11 +1,8 @@
 {
   "server.host": 1,
-  "path": "prod/file.json",
+  "path": "prod/filename.json",
   "mytx.server.host": "https://default.my.test.com",
   "middlewareapipath": "https://tx.tugs.qat.com/mw/api/path",
-  "middlewareurl": "https://tx.tugs.qat.com",
-  "dcphost": "http://prod.dcp.com",
-  "api-path": "/path/to/api",
   "apihost": "http://test.com/path/to/api",
   "dcpendpoints": {
     "dcpcart": "http://prod.dcp.com/api/v2/cart",

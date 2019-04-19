@@ -26,4 +26,6 @@ export default interface IPercyConfigInterface {
   variableSuffix: string;
   variableNamePrefix: string;
   envVariableName: string;
+  envIgnorePrefix: string;
+  envIgnoreSuffix: string;
 }

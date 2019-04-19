@@ -1,4 +1,7 @@
 {
   "extends": "tslint:recommended",
-  "arrow-parens": "tslint:recommended"
+  "rules": {
+    "arrow-parens": false,
+    "trailing-comma": false
+  }
 }

@@ -3,9 +3,6 @@
   "path": "local/file.json",
   "mytx.server.host": "https://default.my.test.com",
   "middlewareapipath": "https://default.middleware.test.com/mw/api/path",
-  "middlewareurl": "https://default.middleware.test.com",
-  "dcphost": "https://default.api.test.com",
-  "api-path": "/path/to/api",
   "apihost": "http://txnext-gen.com/path/to/api",
   "dcpendpoints": {
     "dcpcart": "https://default.api.test.com/api/cart",
