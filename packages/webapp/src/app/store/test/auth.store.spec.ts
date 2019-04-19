@@ -18,17 +18,17 @@ See the LICENSE file for additional language around disclaimer of warranties.
 Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
 its contributors may be used to endorse or promote products derived from this
 software without specific prior written permission.
-=========================================================================== 
+===========================================================================
 */
 
-import { StoreTestComponent, Setup, TestContext, TestUser } from 'test/test-helper';
+import { StoreTestComponent, Setup, TestContext, TestUser } from "test/test-helper";
 
-import { FileManagementService } from 'services/file-management.service';
-import * as reducer from '../reducers/auth.reducers';
-import * as AuthActions from '../actions/auth.actions';
+import { FileManagementService } from "services/file-management.service";
+import * as reducer from "../reducers/auth.reducers";
+import * as AuthActions from "../actions/auth.actions";
 
 
-describe('Auth store action/effect/reducer', () => {
+describe("Auth store action/effect/reducer", () => {
   let ctx: TestContext<StoreTestComponent>;
 
   const setup = Setup(StoreTestComponent);
@@ -39,8 +39,8 @@ describe('Auth store action/effect/reducer', () => {
     fileService = ctx.resolve(FileManagementService);
   });
 
-  it('Login action should be successful', async () => {
-    spyOn(fileService, 'accessRepo').and.returnValue(TestUser);
+  it("Login action should be successful", async () => {
+    spyOn(fileService, "accessRepo").and.returnValue(TestUser);
 
     ctx.store.dispatch(new AuthActions.Login(TestUser));
     expect(reducer.getFormProcessing(ctx.authState())).toEqual(true);
@@ -50,38 +50,38 @@ describe('Auth store action/effect/reducer', () => {
     expect(reducer.getCurrentUser(ctx.authState())).toEqual(TestUser);
     expect(reducer.getFormProcessing(ctx.authState())).toEqual(false);
     expect(reducer.getError(ctx.authState())).toEqual(null);
-    expect(ctx.routerStub.value).toEqual(['/dashboard']);
+    expect(ctx.routerStub.value).toEqual(["/dashboard"]);
 
     await ctx.fixture.whenStable();
 
-    expect(JSON.parse(window.localStorage.getItem('auth'))).toEqual({ currentUser: TestUser });
+    expect(JSON.parse(window.localStorage.getItem("auth"))).toEqual({ currentUser: TestUser });
   });
 
-  it('Login action fail, login error should be saved to state', async () => {
-    spyOn(fileService, 'accessRepo').and.throwError('Mock error');
+  it("Login action fail, login error should be saved to state", async () => {
+    spyOn(fileService, "accessRepo").and.throwError("Mock error");
 
     ctx.store.dispatch(new AuthActions.Login(TestUser));
     expect(reducer.getFormProcessing(ctx.authState())).toEqual(true);
     await ctx.fixture.whenStable();
     expect(reducer.getFormProcessing(ctx.authState())).toEqual(false);
-    expect(reducer.getError(ctx.authState()).message).toEqual('Mock error');
+    expect(reducer.getError(ctx.authState()).message).toEqual("Mock error");
   });
 
-  it('LoginRedirect action should be successful', async () => {
+  it("LoginRedirect action should be successful", async () => {
 
-    ctx.store.dispatch(new AuthActions.LoginRedirect({ redirectUrl: '/redirect-to' }));
+    ctx.store.dispatch(new AuthActions.LoginRedirect({ redirectUrl: "/redirect-to" }));
 
-    expect(reducer.getRedirectUrl(ctx.authState())).toEqual('/redirect-to');
-    expect(ctx.routerStub.value).toEqual(['/login']);
+    expect(reducer.getRedirectUrl(ctx.authState())).toEqual("/redirect-to");
+    expect(ctx.routerStub.value).toEqual(["/login"]);
   });
 
-  it('Logout action should be successful', async () => {
+  it("Logout action should be successful", async () => {
 
     ctx.store.dispatch(new AuthActions.Logout());
 
     expect(reducer.getCurrentUser(ctx.authState())).toEqual(null);
-    expect(ctx.routerStub.value).toEqual(['/login']);
+    expect(ctx.routerStub.value).toEqual(["/login"]);
 
-    expect(JSON.parse(window.localStorage.getItem('auth'))).toEqual({ currentUser: null });
+    expect(JSON.parse(window.localStorage.getItem("auth"))).toEqual({ currentUser: null });
   });
 });

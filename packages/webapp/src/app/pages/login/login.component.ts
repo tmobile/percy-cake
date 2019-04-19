@@ -17,7 +17,7 @@ See the LICENSE file for additional language around disclaimer of warranties.
 Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
 its contributors may be used to endorse or promote products derived from this
 software without specific prior written permission.
-=========================================================================== 
+===========================================================================
 */
 
 import { Component, OnInit, ViewChild, Inject } from "@angular/core";
@@ -228,7 +228,7 @@ export class LoginComponent implements OnInit {
     if (this._document.activeElement !== target) {
       this.autoTrigger._onChange(target.value);
     }
-  };
+  }
 
   /**
    * filters the usernames with given prefix

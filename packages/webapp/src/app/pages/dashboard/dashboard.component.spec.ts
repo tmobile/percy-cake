@@ -1,55 +1,55 @@
-import { Sort } from '@angular/material';
+import { Sort } from "@angular/material";
 
-import { Setup, assertDialogOpened, TestContext, TestUser } from 'test/test-helper';
+import { Setup, assertDialogOpened, TestContext, TestUser } from "test/test-helper";
 
-import { DashboardComponent } from './dashboard.component';
-import { LoadFilesSuccess, Refresh } from 'store/actions/backend.actions';
-import { SelectAppDialogComponent } from 'components/select-app-dialog/select-app-dialog.component';
-import { percyConfig } from 'config';
-import { ConfirmationDialogComponent } from 'components/confirmation-dialog/confirmation-dialog.component';
-import { CommitDialogComponent } from 'components/commit-dialog/commit-dialog.component';
-import { Alert } from 'store/actions/common.actions';
-import { ToggleApp, CollapseApps, TableSort, SelectApp } from 'store/actions/dashboard.actions';
-import { LoginSuccess } from 'store/actions/auth.actions';
+import { DashboardComponent } from "./dashboard.component";
+import { LoadFilesSuccess, Refresh } from "store/actions/backend.actions";
+import { SelectAppDialogComponent } from "components/select-app-dialog/select-app-dialog.component";
+import { percyConfig } from "config";
+import { ConfirmationDialogComponent } from "components/confirmation-dialog/confirmation-dialog.component";
+import { CommitDialogComponent } from "components/commit-dialog/commit-dialog.component";
+import { Alert } from "store/actions/common.actions";
+import { ToggleApp, CollapseApps, TableSort, SelectApp } from "store/actions/dashboard.actions";
+import { LoginSuccess } from "store/actions/auth.actions";
 
-describe('DashboardComponent', () => {
+describe("DashboardComponent", () => {
   const setup = Setup(DashboardComponent);
 
   const files = [
     {
-      applicationName: 'app1',
-      fileName: 'sample.yaml',
+      applicationName: "app1",
+      fileName: "sample.yaml",
       timestamp: Date.now(),
       size: 100,
       modified: true
     },
     {
-      applicationName: 'app1',
+      applicationName: "app1",
       fileName: percyConfig.environmentsFile,
       timestamp: Date.now(),
       size: 100,
     },
     {
-      applicationName: 'app2',
-      fileName: 'sample.yaml',
+      applicationName: "app2",
+      fileName: "sample.yaml",
       timestamp: Date.now(),
       size: 100,
     },
     {
-      applicationName: 'app2',
+      applicationName: "app2",
       fileName: percyConfig.environmentsFile,
       timestamp: Date.now(),
       size: 100,
     },
   ];
-  const applications = ['app1', 'app2', 'app3'];
+  const applications = ["app1", "app2", "app3"];
 
   let ctx: TestContext<DashboardComponent>;
   let dispatchSpy: jasmine.Spy;
   beforeEach(() => {
     ctx = setup();
     const backup = ctx.store.dispatch;
-    dispatchSpy = spyOn(ctx.store, 'dispatch');
+    dispatchSpy = spyOn(ctx.store, "dispatch");
     dispatchSpy.and.callFake((action) => {
       if (action instanceof Alert || action instanceof ToggleApp || action instanceof SelectApp
         || action instanceof CollapseApps || action instanceof TableSort) {
@@ -60,327 +60,327 @@ describe('DashboardComponent', () => {
     ctx.store.next(new LoadFilesSuccess({ files, applications, appConfigs: {} }));
   });
 
-  it('should create DashboardComponent', () => {
+  it("should create DashboardComponent", () => {
     expect(ctx.component).toBeTruthy();
     expect(ctx.component.isEnvFile(files[0])).toBeFalsy();
     expect(ctx.component.isEnvFile(files[1])).toBeTruthy();
 
-    ctx.store.next(new LoginSuccess({...TestUser, repositoryUrl: 'https://bitbucket.org/repo'}));
+    ctx.store.next(new LoginSuccess({...TestUser, repositoryUrl: "https://bitbucket.org/repo"}));
     expect(ctx.component.pullRequestUrl).toEqual(`https://bitbucket.org/repo/pull-requests/new?source=${TestUser.branchName}&t=1#diff`);
 
-    ctx.store.next(new LoginSuccess({...TestUser, repositoryUrl: 'https://github.com/repo'}));
+    ctx.store.next(new LoginSuccess({...TestUser, repositoryUrl: "https://github.com/repo"}));
     expect(ctx.component.pullRequestUrl).toEqual(`https://github.com/repo/pull/new/${TestUser.branchName}`);
 
-    ctx.store.next(new LoginSuccess({...TestUser, repositoryUrl: 'https://gitlab.com/repo'}));
+    ctx.store.next(new LoginSuccess({...TestUser, repositoryUrl: "https://gitlab.com/repo"}));
     expect(ctx.component.pullRequestUrl).toEqual(
       `https://gitlab.com/repo/merge_requests/new/diffs?merge_request%5Bsource_branch%5D=${TestUser.branchName}`);
 
-    ctx.store.next(new LoginSuccess({...TestUser, repositoryUrl: 'https://not-supported.com/repo'}));
+    ctx.store.next(new LoginSuccess({...TestUser, repositoryUrl: "https://not-supported.com/repo"}));
     expect(ctx.component.pullRequestUrl).toBeNull();
 
     ctx.component.ngOnDestroy();
     expect(ctx.component.foldersSubscription.closed).toBeTruthy();
   });
 
-  it('should show apps and files properly', () => {
+  it("should show apps and files properly", () => {
     expect(ctx.component.folders.value).toEqual([
       {
-        app: 'app1',
+        app: "app1",
       },
       {
-        app: 'app1',
+        app: "app1",
         appFile: files[1],
       },
       {
-        app: 'app1',
+        app: "app1",
         appFile: files[0],
       },
       {
-        app: 'app2',
+        app: "app2",
       },
       {
-        app: 'app2',
+        app: "app2",
         appFile: files[3],
       },
       {
-        app: 'app2',
+        app: "app2",
         appFile: files[2],
       },
       {
-        app: 'app3',
+        app: "app3",
       },
     ]);
     expect(ctx.component.disableCommit.value).toBeFalsy();
   });
 
-  it('should expand/collapse application', async () => {
-    ctx.component.toggleApp('app1');
+  it("should expand/collapse application", async () => {
+    ctx.component.toggleApp("app1");
     expect(ctx.component.folders.value).toEqual([
       {
-        app: 'app1',
+        app: "app1",
       },
       {
-        app: 'app2',
+        app: "app2",
       },
       {
-        app: 'app2',
+        app: "app2",
         appFile: files[3],
       },
       {
-        app: 'app2',
+        app: "app2",
         appFile: files[2],
       },
       {
-        app: 'app3',
+        app: "app3",
       },
     ]);
     expect(ctx.component.disableCommit.value).toBeFalsy();
 
-    ctx.component.toggleApp('app1');
+    ctx.component.toggleApp("app1");
     expect(ctx.component.folders.value).toEqual([
       {
-        app: 'app1',
+        app: "app1",
       },
       {
-        app: 'app1',
+        app: "app1",
         appFile: files[1],
       },
       {
-        app: 'app1',
+        app: "app1",
         appFile: files[0],
       },
       {
-        app: 'app2',
+        app: "app2",
       },
       {
-        app: 'app2',
+        app: "app2",
         appFile: files[3],
       },
       {
-        app: 'app2',
+        app: "app2",
         appFile: files[2],
       },
       {
-        app: 'app3',
+        app: "app3",
       },
     ]);
     expect(ctx.component.disableCommit.value).toBeFalsy();
   });
 
-  it('should expand/collapse all applications', () => {
-    ctx.component.toggleAllApps(new Event('click'));
+  it("should expand/collapse all applications", () => {
+    ctx.component.toggleAllApps(new Event("click"));
     expect(ctx.component.folders.value).toEqual([
       {
-        app: 'app1',
+        app: "app1",
       },
       {
-        app: 'app2',
+        app: "app2",
       },
       {
-        app: 'app3',
+        app: "app3",
       },
     ]);
     expect(ctx.component.disableCommit.value).toBeFalsy();
 
-    ctx.component.toggleAllApps(new Event('click'));
+    ctx.component.toggleAllApps(new Event("click"));
     expect(ctx.component.folders.value).toEqual([
       {
-        app: 'app1',
+        app: "app1",
       },
       {
-        app: 'app1',
+        app: "app1",
         appFile: files[1],
       },
       {
-        app: 'app1',
+        app: "app1",
         appFile: files[0],
       },
       {
-        app: 'app2',
+        app: "app2",
       },
       {
-        app: 'app2',
+        app: "app2",
         appFile: files[3],
       },
       {
-        app: 'app2',
+        app: "app2",
         appFile: files[2],
       },
       {
-        app: 'app3',
+        app: "app3",
       },
     ]);
     expect(ctx.component.disableCommit.value).toBeFalsy();
   });
 
-  it('should only show selected application', () => {
-    ctx.component.onSelectApp({ value: 'app1' });
+  it("should only show selected application", () => {
+    ctx.component.onSelectApp({ value: "app1" });
     expect(ctx.component.folders.value).toEqual([
       {
-        app: 'app1',
+        app: "app1",
       },
       {
-        app: 'app1',
+        app: "app1",
         appFile: files[1],
       },
       {
-        app: 'app1',
+        app: "app1",
         appFile: files[0],
       },
     ]);
     expect(ctx.component.disableCommit.value).toBeFalsy();
 
-    ctx.component.onSelectApp({ value: 'app2' });
+    ctx.component.onSelectApp({ value: "app2" });
     expect(ctx.component.folders.value).toEqual([
       {
-        app: 'app2',
+        app: "app2",
       },
       {
-        app: 'app2',
+        app: "app2",
         appFile: files[3],
       },
       {
-        app: 'app2',
+        app: "app2",
         appFile: files[2],
       },
     ]);
     expect(ctx.component.disableCommit.value).toBeTruthy();
 
-    ctx.component.onSelectApp({ value: 'app3' });
+    ctx.component.onSelectApp({ value: "app3" });
     expect(ctx.component.folders.value).toEqual([
       {
-        app: 'app3',
+        app: "app3",
       }
     ]);
     expect(ctx.component.disableCommit.value).toBeTruthy();
   });
 
-  it('should sort by application/file name properly', () => {
+  it("should sort by application/file name properly", () => {
     let sort: Sort = {
-      active: 'applicationName',
-      direction: 'desc'
+      active: "applicationName",
+      direction: "desc"
     };
     ctx.component.onSortChange(sort);
 
     expect(ctx.component.disableCommit.value).toBeFalsy();
     expect(ctx.component.folders.value).toEqual([
       {
-        app: 'app3',
+        app: "app3",
       },
       {
-        app: 'app2',
+        app: "app2",
       },
       {
-        app: 'app2',
+        app: "app2",
         appFile: files[3],
       },
       {
-        app: 'app2',
+        app: "app2",
         appFile: files[2],
       },
       {
-        app: 'app1',
+        app: "app1",
       },
       {
-        app: 'app1',
+        app: "app1",
         appFile: files[1],
       },
       {
-        app: 'app1',
+        app: "app1",
         appFile: files[0],
       },
     ]);
 
     sort = {
-      active: 'fileName',
-      direction: 'desc'
+      active: "fileName",
+      direction: "desc"
     };
     ctx.component.onSortChange(sort);
 
     expect(ctx.component.disableCommit.value).toBeFalsy();
     expect(ctx.component.folders.value).toEqual([
       {
-        app: 'app3',
+        app: "app3",
       },
       {
-        app: 'app2',
+        app: "app2",
       },
       {
-        app: 'app2',
+        app: "app2",
         appFile: files[3],
       },
       {
-        app: 'app2',
+        app: "app2",
         appFile: files[2],
       },
       {
-        app: 'app1',
+        app: "app1",
       },
       {
-        app: 'app1',
+        app: "app1",
         appFile: files[1],
       },
       {
-        app: 'app1',
+        app: "app1",
         appFile: files[0],
       },
     ]);
   });
 
-  it('should navigate to add new file', () => {
+  it("should navigate to add new file", () => {
     ctx.component.addNewFile();
     assertDialogOpened(SelectAppDialogComponent, {
       data: {
         envFileName: percyConfig.environmentsFile,
         applications,
-        selectedApp: '',
+        selectedApp: "",
         files
       },
       autoFocus: false
     });
 
-    ctx.dialogStub.output.next({ createEnv: true, appName: 'app3' });
-    expect(ctx.routerStub.value).toEqual(['/files/newenv', 'app3', percyConfig.environmentsFile]);
+    ctx.dialogStub.output.next({ createEnv: true, appName: "app3" });
+    expect(ctx.routerStub.value).toEqual(["/files/newenv", "app3", percyConfig.environmentsFile]);
 
-    ctx.dialogStub.output.next({ createEnv: false, appName: 'app2' });
-    expect(ctx.routerStub.value).toEqual(['/files/new', 'app2']);
+    ctx.dialogStub.output.next({ createEnv: false, appName: "app2" });
+    expect(ctx.routerStub.value).toEqual(["/files/new", "app2"]);
   });
 
-  it('should navigate to edit file', () => {
+  it("should navigate to edit file", () => {
 
     let file = files[0];
     ctx.component.editFile(file);
-    expect(ctx.routerStub.value).toEqual(['/files/edit', file.applicationName, file.fileName]);
+    expect(ctx.routerStub.value).toEqual(["/files/edit", file.applicationName, file.fileName]);
 
     file = files[1];
     ctx.component.editFile(file);
-    expect(ctx.routerStub.value).toEqual(['/files/editenv', file.applicationName, file.fileName]);
+    expect(ctx.routerStub.value).toEqual(["/files/editenv", file.applicationName, file.fileName]);
   });
 
-  it('should sync master successfully', () => {
+  it("should sync master successfully", () => {
 
     ctx.store.next(new LoginSuccess(TestUser));
 
     ctx.component.syncMaster();
 
     expect(dispatchSpy.calls.mostRecent().args[0].payload).toEqual({
-      srcBranch: 'master',
+      srcBranch: "master",
       targetBranch: TestUser.branchName,
     });
   });
 
-  it('should commit files successfully', () => {
+  it("should commit files successfully", () => {
     ctx.component.commitChanges();
     assertDialogOpened(CommitDialogComponent);
-    ctx.dialogStub.output.next('commit message');
+    ctx.dialogStub.output.next("commit message");
 
     expect(dispatchSpy.calls.mostRecent().args[0].payload).toEqual({
       files: [files[0]],
-      message: 'commit message',
+      message: "commit message",
     });
   });
 
-  it('should delete file successfully', () => {
+  it("should delete file successfully", () => {
     const file = files[0];
 
     ctx.component.deleteFile(file);
@@ -405,7 +405,7 @@ describe('DashboardComponent', () => {
     expect(dispatchSpy.calls.mostRecent().args[0].payload).toEqual(file);
   });
 
-  it('should refresh files successfully', () => {
+  it("should refresh files successfully", () => {
     ctx.component.refresh();
 
     expect(dispatchSpy.calls.mostRecent().args[0] instanceof Refresh).toBeTruthy();

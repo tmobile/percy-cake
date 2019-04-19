@@ -18,14 +18,14 @@ See the LICENSE file for additional language around disclaimer of warranties.
 Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
 its contributors may be used to endorse or promote products derived from this
 software without specific prior written permission.
-=========================================================================== 
+===========================================================================
 */
 
-import { enableProdMode } from '@angular/core';
-import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+import { enableProdMode } from "@angular/core";
+import { platformBrowserDynamic } from "@angular/platform-browser-dynamic";
 
-import { environment } from './environments/environment';
-import { AppModule } from './app/app.module';
+import { environment } from "./environments/environment";
+import { AppModule } from "./app/app.module";
 
 if (environment.production) {
   enableProdMode();

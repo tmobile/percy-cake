@@ -18,31 +18,31 @@ See the LICENSE file for additional language around disclaimer of warranties.
 Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
 its contributors may be used to endorse or promote products derived from this
 software without specific prior written permission.
-=========================================================================== 
+===========================================================================
 */
 
-import { Injectable } from '@angular/core';
-import { Store, select } from '@ngrx/store';
-import { Actions, Effect, ofType } from '@ngrx/effects';
-import { map, withLatestFrom, switchMap } from 'rxjs/operators';
-import * as _ from 'lodash';
+import { Injectable } from "@angular/core";
+import { Store, select } from "@ngrx/store";
+import { Actions, Effect, ofType } from "@ngrx/effects";
+import { map, withLatestFrom, switchMap } from "rxjs/operators";
+import * as _ from "lodash";
 
-import { appPercyConfig } from 'config';
+import { appPercyConfig } from "config";
 
-import { ConfigFile, Configuration } from 'models/config-file';
+import { ConfigFile, Configuration } from "models/config-file";
 
-import * as appStore from '..';
-import { Alert } from '../actions/common.actions';
+import * as appStore from "..";
+import { Alert } from "../actions/common.actions";
 import {
   EditorActionTypes,
   PageLoad,
   PageLoadSuccess,
   PageLoadFailure,
-} from '../actions/editor.actions';
-import { GetFileContentSuccess } from 'store/actions/backend.actions';
-import { GetConfigFile } from 'store/reducers/backend.reducers';
+} from "../actions/editor.actions";
+import { GetFileContentSuccess } from "store/actions/backend.actions";
+import { GetConfigFile } from "store/reducers/backend.reducers";
 
-import { FileManagementService } from 'services/file-management.service';
+import { FileManagementService } from "services/file-management.service";
 
 // defines the editor page related effects
 @Injectable()
@@ -116,7 +116,7 @@ export class EditorEffects {
   pageLoadFailure$ = this.actions$.pipe(
     ofType<PageLoadFailure>(EditorActionTypes.PageLoadFailure),
     map((action) => {
-      const alertType = action.payload.statusCode === 401 || action.payload.statusCode === 403 ? 'logout' : 'go-to-dashboard';
+      const alertType = action.payload.statusCode === 401 || action.payload.statusCode === 403 ? "logout" : "go-to-dashboard";
       return new Alert({
         message: action.payload.message,
         alertType

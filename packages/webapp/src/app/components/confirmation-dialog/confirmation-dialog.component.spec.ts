@@ -1,8 +1,8 @@
-import { Setup, TestContext } from 'test/test-helper';
+import { Setup, TestContext } from "test/test-helper";
 
-import { ConfirmationDialogComponent } from './confirmation-dialog.component';
+import { ConfirmationDialogComponent } from "./confirmation-dialog.component";
 
-describe('ConfirmationDialogComponent', () => {
+describe("ConfirmationDialogComponent", () => {
 
   const setup = Setup(ConfirmationDialogComponent, false);
 
@@ -12,11 +12,11 @@ describe('ConfirmationDialogComponent', () => {
   });
 
 
-  it('should create ConfirmationDialogComponent', () => {
+  it("should create ConfirmationDialogComponent", () => {
     expect(ctx.component).toBeTruthy();
   });
 
-  it('should confirm action', () => {
+  it("should confirm action", () => {
     ctx.component.confirmAction();
     expect(ctx.dialogStub.output.value).toBeTruthy();
   });

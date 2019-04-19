@@ -1,8 +1,8 @@
-import { Setup, TestContext } from 'test/test-helper';
+import { Setup, TestContext } from "test/test-helper";
 
-import { CommitDialogComponent } from './commit-dialog.component';
+import { CommitDialogComponent } from "./commit-dialog.component";
 
-describe('CommitDialogComponent', () => {
+describe("CommitDialogComponent", () => {
 
   const setup = Setup(CommitDialogComponent);
 
@@ -11,18 +11,18 @@ describe('CommitDialogComponent', () => {
     ctx = setup();
   });
 
-  it('should create CommitDialogComponent', () => {
+  it("should create CommitDialogComponent", () => {
     expect(ctx.component).toBeTruthy();
   });
 
-  it('should commit with message', () => {
-    ctx.component.comment.setValue('commit message');
+  it("should commit with message", () => {
+    ctx.component.comment.setValue("commit message");
     ctx.component.commit();
-    expect(ctx.dialogStub.output.value).toEqual('commit message');
+    expect(ctx.dialogStub.output.value).toEqual("commit message");
   });
 
-  it('should not commit without message', () => {
-    ctx.component.comment.setValue('');
+  it("should not commit without message", () => {
+    ctx.component.comment.setValue("");
     ctx.component.commit();
     expect(ctx.dialogStub.output.value).toBeUndefined();
   });

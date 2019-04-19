@@ -17,21 +17,21 @@ See the LICENSE file for additional language around disclaimer of warranties.
 Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
 its contributors may be used to endorse or promote products derived from this
 software without specific prior written permission.
-=========================================================================== 
+===========================================================================
 */
 
 
-import { Injectable } from '@angular/core';
-import { MatDialog } from '@angular/material';
-import { Store, select } from '@ngrx/store';
-import { Actions, Effect, ofType } from '@ngrx/effects';
-import { of } from 'rxjs';
-import { map, withLatestFrom, switchMap } from 'rxjs/operators';
-import * as HttpErrors from 'http-errors';
-import * as _ from 'lodash';
+import { Injectable } from "@angular/core";
+import { MatDialog } from "@angular/material";
+import { Store, select } from "@ngrx/store";
+import { Actions, Effect, ofType } from "@ngrx/effects";
+import { of } from "rxjs";
+import { map, withLatestFrom, switchMap } from "rxjs/operators";
+import * as HttpErrors from "http-errors";
+import * as _ from "lodash";
 
-import * as appStore from '..';
-import { Alert, APIError, Navigate } from '../actions/common.actions';
+import * as appStore from "..";
+import { Alert, APIError, Navigate } from "../actions/common.actions";
 import {
   BackendActionTypes, Initialize, Initialized,
   SaveDraft, CommitChanges, CommitChangesSuccess, CommitChangesFailure,
@@ -40,10 +40,10 @@ import {
   GetFileContent, GetFileContentSuccess, GetFileContentFailure,
   SaveDraftSuccess, SaveDraftFailure, Refresh, RefreshFailure, RefreshSuccess,
   CheckoutFailure, Checkout, CheckoutSuccess, MergeBranch, MergeBranchFailure, MergeBranchSuccess
-} from '../actions/backend.actions';
-import { FileManagementService } from 'services/file-management.service';
-import { ConflictDialogComponent } from 'components/conflict-dialog/conflict-dialog.component';
-import { ConfigFile } from 'models/config-file';
+} from "../actions/backend.actions";
+import { FileManagementService } from "services/file-management.service";
+import { ConflictDialogComponent } from "components/conflict-dialog/conflict-dialog.component";
+import { ConfigFile } from "models/config-file";
 
 // defines the backend related effects
 @Injectable()
@@ -59,7 +59,7 @@ export class BackendEffects {
   @Effect()
   initialize$ = this.actions$.pipe(
     ofType<Initialize>(BackendActionTypes.Initialize),
-    map(() => new Navigate(['/init']))
+    map(() => new Navigate(["/init"]))
   );
 
   // login success effect
@@ -67,7 +67,7 @@ export class BackendEffects {
   initialized$ = this.actions$.pipe(
     ofType<Initialized>(BackendActionTypes.Initialized),
     withLatestFrom(this.store.pipe(select(appStore.backendState))),
-    map(([_action, backendState]) => new Navigate([backendState.redirectUrl || '/dashboard']))
+    map(([_action, backendState]) => new Navigate([backendState.redirectUrl || "/dashboard"]))
   );
 
   // load files effect
@@ -110,8 +110,8 @@ export class BackendEffects {
         return result;
       } catch (error) {
         result.push(new RefreshFailure(error));
-        if (error['currentBranchDeleted']) {
-          result.push(new Checkout({ type: 'switch', branch: 'master' }));
+        if (error["currentBranchDeleted"]) {
+          result.push(new Checkout({ type: "switch", branch: "master" }));
         }
         return result;
       }
@@ -160,7 +160,7 @@ export class BackendEffects {
         const result = [];
         result.push(new SaveDraftSuccess(saved));
         if (action.payload.redirect) {
-          result.push(new Navigate(['/dashboard']));
+          result.push(new Navigate(["/dashboard"]));
         }
         return result;
       } catch (error) {
@@ -198,7 +198,7 @@ export class BackendEffects {
         results.push(new CommitChangesSuccess({ files, fromEditor }));
         results.push(new LoadFiles()); // reload files
         if (fromEditor) {
-          results.push(new Navigate(['/dashboard']));
+          results.push(new Navigate(["/dashboard"]));
         }
         return results;
       } catch (error) {
@@ -224,7 +224,7 @@ export class BackendEffects {
           if (resolved) {
             // Add back the unconlict draft file(s)
             action.payload.files.forEach(draftFile => {
-              if (!_.find(resolved, _.pick(draftFile, ['applicationName', 'fileName']))) {
+              if (!_.find(resolved, _.pick(draftFile, ["applicationName", "fileName"]))) {
                 resolved.push(draftFile);
               }
             });
@@ -266,7 +266,7 @@ export class BackendEffects {
           diff = { toSave, toDelete };
 
           if (conflictFiles.length) {
-            const error = new HttpErrors.Conflict('Branch conflict');
+            const error = new HttpErrors.Conflict("Branch conflict");
             error.data = {
               diff,
               conflictFiles,
@@ -340,7 +340,7 @@ export class BackendEffects {
         result.push(new DeleteFileSuccess(file)),
           result.push(new Alert({
             message: `${file.applicationName}/${file.fileName} is deleted successfully.`,
-            alertType: 'delete'
+            alertType: "delete"
           }));
 
         result.push(new LoadFiles());

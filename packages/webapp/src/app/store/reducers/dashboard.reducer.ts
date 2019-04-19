@@ -18,13 +18,13 @@ See the LICENSE file for additional language around disclaimer of warranties.
 Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
 its contributors may be used to endorse or promote products derived from this
 software without specific prior written permission.
-=========================================================================== 
+===========================================================================
 */
 
-import { DashboardActionsUnion, DashboardActionTypes } from '../actions/dashboard.actions';
-import { BackendActionsUnion, BackendActionTypes } from '../actions/backend.actions';
+import { DashboardActionsUnion, DashboardActionTypes } from "../actions/dashboard.actions";
+import { BackendActionsUnion, BackendActionTypes } from "../actions/backend.actions";
 
-import * as _ from 'lodash';
+import * as _ from "lodash";
 
 export interface State {
   deletingFile: boolean;
@@ -39,10 +39,10 @@ export const initialState: State = {
   deletingFile: false,
   committingFile: false,
   refreshing: false,
-  selectedApp: '',
+  selectedApp: "",
   tableSort: {
-    applicationName: 'asc',
-    fileName: 'asc',
+    applicationName: "asc",
+    fileName: "asc",
   },
   collapsedApps: [],
 };

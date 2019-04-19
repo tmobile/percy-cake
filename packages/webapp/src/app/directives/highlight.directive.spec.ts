@@ -17,7 +17,7 @@ See the LICENSE file for additional language around disclaimer of warranties.
 Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
 its contributors may be used to endorse or promote products derived from this
 software without specific prior written permission.
-=========================================================================== 
+===========================================================================
 */
 
 import { Component, Input } from "@angular/core";
@@ -69,7 +69,7 @@ default: !!map
     const spans = $("span.hljs-string");
 
     // check "TestUser"
-    expect(spans.eq(0).text()).toEqual('"TestUser"');
+    expect(spans.eq(0).text()).toEqual("\"TestUser\"");
 
     // Check "${name}$/${age}$/${flag}$/_{host1}"
     expect(spans.eq(1).children().length).toEqual(7);
@@ -79,7 +79,7 @@ default: !!map
         .children()
         .eq(0)
         .text()
-    ).toEqual('"' + percyConfig.variablePrefix);
+    ).toEqual("\"" + percyConfig.variablePrefix);
     expect(
       spans
         .eq(1)
@@ -121,7 +121,7 @@ default: !!map
         .children()
         .eq(6)
         .text()
-    ).toEqual(percyConfig.variableSuffix + '/_{host1}"');
+    ).toEqual(percyConfig.variableSuffix + "/_{host1}\"");
 
     // Check "${host}$"
     expect(spans.eq(2).children().length).toEqual(3);
@@ -131,7 +131,7 @@ default: !!map
         .children()
         .eq(0)
         .text()
-    ).toEqual('"' + percyConfig.variablePrefix);
+    ).toEqual("\"" + percyConfig.variablePrefix);
     expect(
       spans
         .eq(2)
@@ -145,7 +145,7 @@ default: !!map
         .children()
         .eq(2)
         .text()
-    ).toEqual(percyConfig.variableSuffix + '"');
+    ).toEqual(percyConfig.variableSuffix + "\"");
 
     // Check "${name}$/${age}$"
     expect(spans.eq(3).children().length).toEqual(5);
@@ -155,7 +155,7 @@ default: !!map
         .children()
         .eq(0)
         .text()
-    ).toEqual('"' + percyConfig.variablePrefix);
+    ).toEqual("\"" + percyConfig.variablePrefix);
     expect(
       spans
         .eq(3)
@@ -183,6 +183,6 @@ default: !!map
         .children()
         .eq(4)
         .text()
-    ).toEqual(percyConfig.variableSuffix + '"');
+    ).toEqual(percyConfig.variableSuffix + "\"");
   });
 });
