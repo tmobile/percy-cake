@@ -1,11 +1,8 @@
 {
   "server.host": 1,
-  "path": "dev/file.json",
+  "path": "dev/filename.json",
   "mytx.server.host": "https://default.my.test.com",
   "middlewareapipath": "https://tx.tugs.dev.com/mw/api/path",
-  "middlewareurl": "https://tx.tugs.dev.com",
-  "dcphost": "https://default.api.test.com",
-  "api-path": "/path/to/api",
   "apihost": "http://test.com/path/to/api",
   "dcpendpoints": {
     "dcpcart": "https://default.api.test.com/api/cart",

@@ -1,6 +1,7 @@
 default: !!map
   pod: !!str "https://dev.kube.one.test.com"  # Deploy docker container to this kubernetes pod address
 environments: !!map
+  _dev_: !!map
   local: !!map  # `local` is used for local development workstations
     pod: !!str "localhost:3030"
   dev: !!map

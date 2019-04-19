@@ -1,4 +1,5 @@
 {
   "variablePrefix": "${",
-  "variableSuffix": "}"
+  "variableSuffix": "}",
+  "variableNamePrefix": "_"
 }

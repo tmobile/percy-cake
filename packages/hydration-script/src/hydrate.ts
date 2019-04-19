@@ -20,7 +20,7 @@ See the LICENSE file for additional language around disclaimer of warranties.
 Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
 its contributors may be used to endorse or promote products derived from this
 software without specific prior written permission.
-=========================================================================== 
+===========================================================================
 */
 
 /**
@@ -92,11 +92,12 @@ async function main() {
   try {
     const hydrate = new Hydrate(
       {
-        COLOR_CONSOLE: colorConsole,
         DEFAULT_PERCY_CONFIG: config.get("DEFAULT_PERCY_CONFIG"),
         ENVIRONMENT_FILE_NAME: config.get("ENVIRONMENT_FILE_NAME"),
         LOG_LEVEL: config.get("LOG_LEVEL"),
         PERCY_CONFIG_FILE_NAME: config.get("PERCY_CONFIG_FILE_NAME"),
+        PERCY_ENV_IGNORE_PREFIX: config.get("PERCY_ENV_IGNORE_PREFIX"),
+        PERCY_ENV_IGNORE_SUFFIX: config.get("PERCY_ENV_IGNORE_SUFFIX"),
         PERCY_ENV_VARIABLE_NAME: config.get("PERCY_ENV_VARIABLE_NAME")
       },
       colorConsole

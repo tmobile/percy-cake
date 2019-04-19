@@ -79,7 +79,9 @@ Main configuration file can be found at `config/default.js`
 | PERCY_LOG_LEVEL              |                                                                   |
 | PERCY_ENVIRONMENT_FILE_NAME        | Name of the environment file (default value: `environments.yaml`) |
 | PERCY_CONFIG_FILE_NAME       | Name of the percy configuration file (default value: `.percyrc`)  |
-| PERCY_ENV_VARIABLE_NAME | The YAML environment variable name |
+| PERCY_ENV_VARIABLE_NAME | The YAML environment variable name (default value: `env`) |
+| PERCY_ENV_IGNORE_PREFIX | The prefix of env not to generate the config files (default value: `_`) |
+| PERCY_ENV_IGNORE_SUFFIX | The suffix of env not to generate the config files (default value: `_`) |
 | PERCY_DEFAULT_VARIABLE_PREFIX      | The YAML variable substitute prefix (default value: `_{`)         |
 | PERCY_DEFAULT_VARIABLE_SUFFIX      | The YAML variable substitute suffix (default value: `}_`)         |
 | PERCY_DEFAULT_VARIABLE_NAME_PREFIX | The YAML variable name prefix (default value: `$`)                |

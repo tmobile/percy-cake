@@ -17,7 +17,7 @@ See the LICENSE file for additional language around disclaimer of warranties.
 Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
 its contributors may be used to endorse or promote products derived from this
 software without specific prior written permission.
-=========================================================================== 
+===========================================================================
 */
 
 import { Injectable } from "@angular/core";
@@ -526,9 +526,9 @@ export class FileManagementService {
     const base =
       (await walkHistroy(targetCommitOid, targetHistory, srcHistory)) ||
       (await walkHistroy(srcCommitOid, srcHistory, targetHistory));
-    console.info(
+    console.info( // tslint:disable-line
       `Merge base for source commit ${srcCommitOid} and target commit ${targetCommitOid}: ${base}`
-    ); // tslint:disable-line
+    );
     return base;
   }
 

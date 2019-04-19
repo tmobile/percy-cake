@@ -43,7 +43,10 @@ environments: !!map
         - !!map
           url: !!str "testCases/httpDataCache/testData"
           expireInMs: !!int 60000000223200
+  _dev_: !!map
+    path: !!str ${env}/filename.json
   dev: !!map
+    inherits: !!str _dev_
     _middlewareurl: !!str "https://tx.tugs.dev.com"  # Production middleware endpoint
     apihost: !!str "http://test.com${_api-path}"
     newProperty: !!str "hello"
