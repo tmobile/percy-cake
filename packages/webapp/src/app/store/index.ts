@@ -18,7 +18,7 @@ See the LICENSE file for additional language around disclaimer of warranties.
 Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
 its contributors may be used to endorse or promote products derived from this
 software without specific prior written permission.
-=========================================================================== 
+===========================================================================
 */
 
 import {
@@ -27,14 +27,14 @@ import {
   createFeatureSelector,
   createSelector,
   MetaReducer
-} from '@ngrx/store';
-import { localStorageSync } from 'ngrx-store-localstorage';
-import * as fromAuth from './reducers/auth.reducers';
-import * as fromBackend from './reducers/backend.reducers';
-import * as fromDashboard from './reducers/dashboard.reducer';
-import * as fromEditor from './reducers/editor.reducer';
+} from "@ngrx/store";
+import { localStorageSync } from "ngrx-store-localstorage";
+import * as fromAuth from "./reducers/auth.reducers";
+import * as fromBackend from "./reducers/backend.reducers";
+import * as fromDashboard from "./reducers/dashboard.reducer";
+import * as fromEditor from "./reducers/editor.reducer";
 
-import { AuthActionTypes } from './actions/auth.actions';
+import { AuthActionTypes } from "./actions/auth.actions";
 
 export interface AppState {
   auth: fromAuth.State;
@@ -51,7 +51,7 @@ export const reducers: ActionReducerMap<AppState> = {
 };
 
 export function localStorageSyncReducer(reducer: ActionReducer<AppState>): ActionReducer<AppState> {
-  return localStorageSync({ keys: [{ 'auth': ['currentUser', 'loggedIn'] }], rehydrate: true })(reducer);
+  return localStorageSync({ keys: [{ "auth": ["currentUser", "loggedIn"] }], rehydrate: true })(reducer);
 }
 
 export function clearState(reducer) {
@@ -68,7 +68,7 @@ export function clearState(reducer) {
 export const metaReducers: MetaReducer<AppState>[] = [localStorageSyncReducer, clearState];
 
 // dashboard related selectors
-export const authState = createFeatureSelector<AppState, fromAuth.State>('auth');
+export const authState = createFeatureSelector<AppState, fromAuth.State>("auth");
 
 export const getFormProcessing = createSelector(authState, fromAuth.getFormProcessing);
 export const getCurrentUser = createSelector(authState, fromAuth.getCurrentUser);
@@ -76,7 +76,7 @@ export const getRedirectUrl = createSelector(authState, fromAuth.getRedirectUrl)
 export const getLoginError = createSelector(authState, fromAuth.getError);
 
 // backend related selectors
-export const backendState = createFeatureSelector<AppState, fromBackend.State>('backend');
+export const backendState = createFeatureSelector<AppState, fromBackend.State>("backend");
 export const getPrincipal = createSelector(backendState, fromBackend.getPrincipal);
 export const getApplications = createSelector(backendState, fromBackend.getApplications);
 export const getAppConfigs = createSelector(backendState, fromBackend.getAppConfigs);
@@ -86,7 +86,7 @@ export const getCanSyncMaster = createSelector(backendState, fromBackend.getCanS
 
 
 // dashboard related selectors
-export const dashboardState = createFeatureSelector<AppState, fromDashboard.State>('dashboard');
+export const dashboardState = createFeatureSelector<AppState, fromDashboard.State>("dashboard");
 export const getSelectedApp = createSelector(dashboardState, fromDashboard.getSelectedApp);
 export const getCollapsedApps = createSelector(dashboardState, fromDashboard.getCollapsedApps);
 export const getTableSort = createSelector(dashboardState, fromDashboard.getTableSort);
@@ -95,7 +95,7 @@ export const getDashboardCommittingFile = createSelector(dashboardState, fromDas
 export const getDashboardRefreshing = createSelector(dashboardState, fromDashboard.isRefreshing);
 
 // editor selectors
-export const editorState = createFeatureSelector<AppState, fromEditor.State>('editor');
+export const editorState = createFeatureSelector<AppState, fromEditor.State>("editor");
 
 export const getConfigFile = createSelector(editorState, fromEditor.getConfigFile);
 export const getConfiguration = createSelector(editorState, fromEditor.getConfiguration);

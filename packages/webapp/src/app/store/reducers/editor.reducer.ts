@@ -18,15 +18,15 @@ See the LICENSE file for additional language around disclaimer of warranties.
 Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
 its contributors may be used to endorse or promote products derived from this
 software without specific prior written permission.
-=========================================================================== 
+===========================================================================
 */
 
-import * as _ from 'lodash';
+import * as _ from "lodash";
 
-import { Configuration, ConfigFile } from 'models/config-file';
+import { Configuration, ConfigFile } from "models/config-file";
 
-import { BackendActionsUnion, BackendActionTypes } from '../actions/backend.actions';
-import { EditorActionTypes, EditorActionsUnion } from '../actions/editor.actions';
+import { BackendActionsUnion, BackendActionTypes } from "../actions/backend.actions";
+import { EditorActionTypes, EditorActionsUnion } from "../actions/editor.actions";
 
 export interface State {
   isCommitting: boolean;

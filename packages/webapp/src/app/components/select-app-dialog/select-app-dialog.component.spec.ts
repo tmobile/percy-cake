@@ -1,8 +1,8 @@
-import { Setup, TestContext } from 'test/test-helper';
+import { Setup, TestContext } from "test/test-helper";
 
-import { SelectAppDialogComponent } from './select-app-dialog.component';
+import { SelectAppDialogComponent } from "./select-app-dialog.component";
 
-describe('SelectAppDialogComponent', () => {
+describe("SelectAppDialogComponent", () => {
 
   const setup = Setup(SelectAppDialogComponent, false);
 
@@ -11,20 +11,20 @@ describe('SelectAppDialogComponent', () => {
     ctx = setup();
   });
 
-  it('should create SelectAppDialogComponent', () => {
+  it("should create SelectAppDialogComponent", () => {
     expect(ctx.component).toBeTruthy();
   });
 
-  it('initialize with non app selected', async () => {
+  it("initialize with non app selected", async () => {
     // Init component
     const data = {
-      selectedApp: '',
-      applications: ['app1', 'app2'],
-      envFileName: 'environments.yaml',
+      selectedApp: "",
+      applications: ["app1", "app2"],
+      envFileName: "environments.yaml",
       files: [
         {
-          fileName: 'environments.yaml',
-          applicationName: 'app1'
+          fileName: "environments.yaml",
+          applicationName: "app1"
         }
       ],
     };
@@ -39,24 +39,24 @@ describe('SelectAppDialogComponent', () => {
     ctx.component.selectApp();
     expect(ctx.dialogStub.output.value).toBeUndefined();
 
-    ctx.component.appname.setValue('app3');
+    ctx.component.appname.setValue("app3");
     await new Promise(resolve => setTimeout(resolve, 150)); // wait for debouce time
     expect(ctx.observables.filteredApps.value).toEqual([]);
 
     ctx.component.selectApp();
-    expect(ctx.dialogStub.output.value).toEqual({ appName: 'app3', createEnv: false });
+    expect(ctx.dialogStub.output.value).toEqual({ appName: "app3", createEnv: false });
   });
 
-  it('initialize with selected app', async () => {
+  it("initialize with selected app", async () => {
     // Init component
     const data = {
-      selectedApp: 'app1',
-      applications: ['app1', 'app2'],
-      envFileName: 'environments.yaml',
+      selectedApp: "app1",
+      applications: ["app1", "app2"],
+      envFileName: "environments.yaml",
       files: [
         {
-          fileName: 'environments.yaml',
-          applicationName: 'app1'
+          fileName: "environments.yaml",
+          applicationName: "app1"
         }
       ],
     };
@@ -66,7 +66,7 @@ describe('SelectAppDialogComponent', () => {
     expect(ctx.component.appname.value).toEqual(data.selectedApp);
     expect(ctx.component.createEnv.disabled).toBeTruthy();
 
-    ctx.component.appname.setValue('app2');
+    ctx.component.appname.setValue("app2");
     expect(ctx.component.createEnv.disabled).toBeFalsy();
 
     await new Promise(resolve => setTimeout(resolve, 150)); // wait for debouce time
@@ -75,6 +75,6 @@ describe('SelectAppDialogComponent', () => {
     ctx.component.createEnv.setValue(true);
 
     ctx.component.selectApp();
-    expect(ctx.dialogStub.output.value).toEqual({ appName: 'app2', createEnv: true });
+    expect(ctx.dialogStub.output.value).toEqual({ appName: "app2", createEnv: true });
   });
 });

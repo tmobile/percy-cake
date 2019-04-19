@@ -39,6 +39,8 @@ const hydrate = new Hydrate(
     ENVIRONMENT_FILE_NAME: config.get("ENVIRONMENT_FILE_NAME"),
     LOG_LEVEL: config.get("LOG_LEVEL"),
     PERCY_CONFIG_FILE_NAME: config.get("PERCY_CONFIG_FILE_NAME"),
+    PERCY_ENV_IGNORE_PREFIX: config.get("PERCY_ENV_IGNORE_PREFIX"),
+    PERCY_ENV_IGNORE_SUFFIX: config.get("PERCY_ENV_IGNORE_SUFFIX"),
     PERCY_ENV_VARIABLE_NAME: config.get("PERCY_ENV_VARIABLE_NAME")
   },
   true
@@ -87,7 +89,7 @@ describe("hydrate", () => {
         const json = await fs.readJson(outputJson);
         const expectedJsonPath = path.join(
           __dirname,
-          "data/anchoredConfigExpectedResults",
+          "data/expectedResults",
           env,
           "app.config.json"
         );

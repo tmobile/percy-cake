@@ -17,7 +17,7 @@ See the LICENSE file for additional language around disclaimer of warranties.
 Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
 its contributors may be used to endorse or promote products derived from this
 software without specific prior written permission.
-=========================================================================== 
+===========================================================================
 */
 
 import * as jsYaml from "js-yaml";
@@ -564,8 +564,8 @@ class YamlRender {
         // Append simple value and inline comment
         if (type === "str") {
           value = value.replace(/\\/g, "\\\\");
-          value = value.replace(/\"/g, '\\"');
-          result += ' "' + value + '"';
+          value = value.replace(/\"/g, "\\\"");
+          result += " \"" + value + "\"";
         } else if (value === Number.POSITIVE_INFINITY) {
           result += " .inf";
         } else if (value === Number.NEGATIVE_INFINITY) {
@@ -967,7 +967,7 @@ export class YamlService {
     const regExp = this.createRegExp();
     while ((regExpResult = regExp.exec(text))) {
       if (!newSpan) {
-        newSpan = $('<span class="hljs-string"></span>');
+        newSpan = $("<span class=\"hljs-string\"></span>");
       }
       const tokenName = regExpResult[1];
 
@@ -978,7 +978,7 @@ export class YamlService {
         )
       );
       // Append variable token name
-      newSpan.append($('<span class="yaml-var"></span>').text(tokenName));
+      newSpan.append($("<span class=\"yaml-var\"></span>").text(tokenName));
       // Update index
       leftIdx = regExpResult.index + prefix.length + tokenName.length;
     }

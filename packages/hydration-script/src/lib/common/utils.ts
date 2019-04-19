@@ -18,7 +18,7 @@ See the LICENSE file for additional language around disclaimer of warranties.
 Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
 its contributors may be used to endorse or promote products derived from this
 software without specific prior written permission.
-=========================================================================== 
+===========================================================================
 */
 
 /**
@@ -101,7 +101,7 @@ export async function loadEnvironmentsFile(
  * Read yaml file and parse it
  * @param filepath filepath
  */
-export async function readYAML(filepath: string): Promise<object> {
+async function readYAML(filepath: string): Promise<object> {
   const file = await fs.readFile(filepath, "utf8");
   return yaml.safeLoad(file);
 }
@@ -112,7 +112,7 @@ export async function readYAML(filepath: string): Promise<object> {
  * @param percyConfig percy configuration
  * @param env the environment name
  */
-export function resolveVariables(
+function resolveVariables(
   envNode: object,
   env: string,
   percyConfig: IPercyConfig
@@ -333,7 +333,7 @@ function addTokenReference(
  * @param appConfig app configuration object
  * @param environments environment list
  */
-export function mergeEnvNodes(
+function mergeEnvNodes(
   appConfig: IAppConfig,
   environments: string[]
 ): object {
@@ -474,7 +474,7 @@ function sortEnvByInherits(environments: string[], envNodes: object): string[] {
  * @param appConfig app configuration object
  * @param configFilePath config file path for logging purposes (optional)
  */
-export function validateAppConfig(
+function validateAppConfig(
   appConfig: object,
   configFilePath?: string,
   colorConsole?: boolean
@@ -514,7 +514,7 @@ export function validateAppConfig(
  * @param environments environment list
  * @param outputFolder output folder
  */
-export async function ensureEnvironmentFolders(
+async function ensureEnvironmentFolders(
   environments: string[],
   outputFolder: string
 ): Promise<void> {
@@ -524,17 +524,20 @@ export async function ensureEnvironmentFolders(
 }
 
 /**
- * Write results to output folder
+ * Write results json files to output folder
  * @param envNode the resolved environment specific data
  * @param yamlFilePath file path of the input yaml file
  * @param outputFolder output folder
+ * @param percyConfig the percy config
  */
-export async function writeJson(
+export async function writeResult(
   envNode: object,
   yamlFilePath: string,
-  outputFolder: string
+  outputFolder: string,
+  percyConfig: IPercyConfig
 ): Promise<void> {
-  const environments = Object.keys(envNode);
+  const environments = Object.keys(envNode).filter(
+        (env) => !env.startsWith(percyConfig.envIgnorePrefix) || !env.endsWith(percyConfig.envIgnoreSuffix));
   await ensureEnvironmentFolders(environments, outputFolder);
   const filename = path.basename(yamlFilePath, ".yaml");
   await Promise.all(

@@ -18,7 +18,7 @@ See the LICENSE file for additional language around disclaimer of warranties.
 Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
 its contributors may be used to endorse or promote products derived from this
 software without specific prior written permission.
-=========================================================================== 
+===========================================================================
 */
 
 /**
@@ -179,7 +179,7 @@ export class Hydrate {
         environments,
         percyConfig
       );
-      await utils.writeJson(result, yamlFilePath, outputFolder);
+      await utils.writeResult(result, yamlFilePath, outputFolder, percyConfig);
       this.logger.info(`Successfully processed ${yamlFilePath}`);
     } catch (e) {
       this.logger.error(`Error occurred while processing ${yamlFilePath}. `, e);
@@ -232,6 +232,8 @@ export class Hydrate {
       parentFolderPercyConfig,
       currentFolderPercyConfig,
       {
+        envIgnorePrefix: this.options.PERCY_ENV_IGNORE_PREFIX,
+        envIgnoreSuffix: this.options.PERCY_ENV_IGNORE_SUFFIX,
         envVariableName: this.options.PERCY_ENV_VARIABLE_NAME
       }
     ) as IPercyConfig;

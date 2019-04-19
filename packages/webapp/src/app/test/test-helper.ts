@@ -18,68 +18,68 @@ See the LICENSE file for additional language around disclaimer of warranties.
 Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
 its contributors may be used to endorse or promote products derived from this
 software without specific prior written permission.
-=========================================================================== 
+===========================================================================
 */
 
-import { Router, ActivatedRoute } from '@angular/router';
-import { Type, NO_ERRORS_SCHEMA, Component } from '@angular/core';
-import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
-import { HttpClient } from '@angular/common/http';
-import { Observable, isObservable, BehaviorSubject, Subscription, of } from 'rxjs';
-import { Store, StoreModule } from '@ngrx/store';
-import { EffectsModule } from '@ngrx/effects';
-import { HIGHLIGHT_OPTIONS } from 'ngx-highlightjs';
-import * as yaml from 'highlight.js/lib/languages/yaml';
-import * as _ from 'lodash';
+import { Router, ActivatedRoute } from "@angular/router";
+import { Type, NO_ERRORS_SCHEMA, Component } from "@angular/core";
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from "@angular/material";
+import { HttpClient } from "@angular/common/http";
+import { Observable, isObservable, BehaviorSubject, Subscription, of } from "rxjs";
+import { Store, StoreModule } from "@ngrx/store";
+import { EffectsModule } from "@ngrx/effects";
+import { HIGHLIGHT_OPTIONS } from "ngx-highlightjs";
+import * as yaml from "highlight.js/lib/languages/yaml";
+import * as _ from "lodash";
 
-import { TestBed } from '@angular/core/testing';
-import { TestCtx, createTestContext, configureTestSuite } from 'ng-bullet';
+import { TestBed } from "@angular/core/testing";
+import { TestCtx, createTestContext, configureTestSuite } from "ng-bullet";
 
-import { MaterialComponentsModule } from 'material-components/material-components.module';
+import { MaterialComponentsModule } from "material-components/material-components.module";
 
-import { User } from 'models/auth';
-import { reducers, metaReducers, AppState } from 'store';
-import { AppEffects } from 'store/affects/app.effects';
-import { AuthEffects } from 'store/affects/auth.effects';
-import { BackendEffects } from 'store/affects/backend.effects';
-import { EditorEffects } from 'store/affects/editor.effects';
-import { DashboardEffects } from 'store/affects/dashboard.effects';
+import { User } from "models/auth";
+import { reducers, metaReducers, AppState } from "store";
+import { AppEffects } from "store/affects/app.effects";
+import { AuthEffects } from "store/affects/auth.effects";
+import { BackendEffects } from "store/affects/backend.effects";
+import { EditorEffects } from "store/affects/editor.effects";
+import { DashboardEffects } from "store/affects/dashboard.effects";
 
-import { UtilService } from 'services/util.service';
-import { HighlightDirective } from 'directives/highlight.directive';
+import { UtilService } from "services/util.service";
+import { HighlightDirective } from "directives/highlight.directive";
 
-import { percyConfig } from 'config';
+import { percyConfig } from "config";
 
 declare var beforeEach: (any) => any;
 declare var afterEach: (any) => any;
 
-const percyTestConfig = require('../../percy.conf.test.json');
+const percyTestConfig = require("../../percy.conf.test.json");
 
 // Inject test config
 _.assign(percyConfig, percyTestConfig);
 
-const httpSpy = jasmine.createSpyObj('httpSpy', ['get']);
+const httpSpy = jasmine.createSpyObj("httpSpy", ["get"]);
 (<jasmine.Spy> httpSpy.get).and.callFake((url: string) => {
-  if (url === 'percy.conf.json') {
+  if (url === "percy.conf.json") {
     return of(percyConfig);
   }
   return of(url);
 });
-const ngZoneSpy = jasmine.createSpyObj('ngZoneSpy', ['run']);
+const ngZoneSpy = jasmine.createSpyObj("ngZoneSpy", ["run"]);
 export const utilService = new UtilService(httpSpy, ngZoneSpy);
 
 export const TestUser: User = {
-  username: 'test-user',
-  repositoryUrl: 'https://bitbucket.org/tc/repo',
-  branchName: 'admin',
-  token: 'test-token',
-  repoName: 'tc/repo',
-  repoFolder: 'test-user!tc%2Frepo'
+  username: "test-user",
+  repositoryUrl: "https://bitbucket.org/tc/repo",
+  branchName: "admin",
+  token: "test-token",
+  repoName: "tc/repo",
+  repoFolder: "test-user!tc%2Frepo"
 };
 
 @Component({
-  selector: 'app-test-store-host',
-  template: '<div></div>',
+  selector: "app-test-store-host",
+  template: "<div></div>",
 })
 export class StoreTestComponent {
   constructor(public store: Store<AppState>) { }
@@ -194,7 +194,7 @@ export const Setup = <T>(componentType: Type<T>, triggerLifecyle: boolean = true
           provide: MAT_DIALOG_DATA, useValue: {},
         },
         {
-          provide: HIGHLIGHT_OPTIONS, useValue: { languages: () => [{ name: 'yaml', func: yaml }] }
+          provide: HIGHLIGHT_OPTIONS, useValue: { languages: () => [{ name: "yaml", func: yaml }] }
         },
       ],
       schemas: [NO_ERRORS_SCHEMA],

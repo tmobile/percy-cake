@@ -2,15 +2,15 @@ default: !!map
   server.host: !!int 1  # tx server url
   path: !!str ${env}/file.json
   mytx.server.host: !!str https://default.my.test.com  # MYtx server url
-  middlewareapipath: !!str ${middlewareurl}/mw/api/path
-  middlewareurl: !!str https://default.middleware.test.com  # Backend MW url
-  dcphost: !!str https://default.api.test.com
-  api-path: !!str /path/to/api
-  apihost: !!str http://txnext-gen.com${api-path}
+  middlewareapipath: !!str ${_middlewareurl}/mw/api/path
+  _middlewareurl: !!str https://default.middleware.test.com  # Backend MW url
+  _dcphost: !!str https://default.api.test.com
+  _api-path: !!str /path/to/api
+  apihost: !!str http://txnext-gen.com${_api-path}
   dcpendpoints: !!map
-    dcpcart: !!str ${dcphost}/api/cart
-    dcpupdate: !!str ${dcphost}/api/update
-    dcprefund: !!str ${dcphost}/api/refund
+    dcpcart: !!str ${_dcphost}/api/cart
+    dcpupdate: !!str ${_dcphost}/api/update
+    dcprefund: !!str ${_dcphost}/api/refund
   newProperty: !!str test
   _testValue: !!str test
   httpCacheConfig: !!map
@@ -30,10 +30,10 @@ default: !!map
 environments: !!map
   prod: !!map
     inherits: !!str qat
-    apihost: !!str http://test.com${api-path}
-    dcphost: !!str http://prod.dcp.com
+    apihost: !!str http://test.com${_api-path}
+    _dcphost: !!str http://prod.dcp.com
     dcpendpoints: !!map
-      dcpcart: !!str ${dcphost}/api/v2/cart
+      dcpcart: !!str ${_dcphost}/api/v2/cart
     httpCacheConfig: !!map
       cacheUrls: !!seq
         - *cacheUrls-0
@@ -44,11 +44,14 @@ environments: !!map
         - !!map
           url: !!str "testCases/httpDataCache/testData"
           expireInMs: !!int 60000000223200
+  _dev_: !!map
+    path: !!str ${env}/filename.json
   dev: !!map
-    middlewareurl: !!str https://tx.tugs.dev.com  # Production middleware endpoint
-    apihost: !!str http://test.com${api-path}
+    inherits: !!str _dev_
+    _middlewareurl: !!str https://tx.tugs.dev.com  # Production middleware endpoint
+    apihost: !!str http://test.com${_api-path}
     newProperty: !!str hello
   qat: !!map
     inherits: !!str dev
-    middlewareurl: !!str https://tx.tugs.qat.com  # Production middleware endpoint
-    apihost: !!str http://test.com${api-path}
+    _middlewareurl: !!str https://tx.tugs.qat.com  # Production middleware endpoint
+    apihost: !!str http://test.com${_api-path}

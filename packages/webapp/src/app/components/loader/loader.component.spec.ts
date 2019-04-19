@@ -1,12 +1,12 @@
-import { Setup } from 'test/test-helper';
+import { Setup } from "test/test-helper";
 
-import { LoaderComponent } from './loader.component';
+import { LoaderComponent } from "./loader.component";
 
-describe('LoaderComponent', () => {
+describe("LoaderComponent", () => {
 
   const ctx = Setup(LoaderComponent);
 
-  it('should create LoaderComponent', () => {
+  it("should create LoaderComponent", () => {
     expect(ctx().component).toBeTruthy();
   });
 });

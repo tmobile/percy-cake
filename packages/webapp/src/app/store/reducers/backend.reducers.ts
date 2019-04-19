@@ -18,16 +18,16 @@ See the LICENSE file for additional language around disclaimer of warranties.
 Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
 its contributors may be used to endorse or promote products derived from this
 software without specific prior written permission.
-=========================================================================== 
+===========================================================================
 */
 
-import { EntityState, EntityAdapter, createEntityAdapter } from '@ngrx/entity';
+import { EntityState, EntityAdapter, createEntityAdapter } from "@ngrx/entity";
 
-import { Principal } from 'models/auth';
-import { ConfigFile } from 'models/config-file';
-import { BackendActionsUnion, BackendActionTypes } from '../actions/backend.actions';
+import { Principal } from "models/auth";
+import { ConfigFile } from "models/config-file";
+import { BackendActionsUnion, BackendActionTypes } from "../actions/backend.actions";
 
-import * as _ from 'lodash';
+import * as _ from "lodash";
 
 export interface ConfigFiles extends EntityState<ConfigFile> { }
 
@@ -133,7 +133,7 @@ export function reducer(state = initialState, action: BackendActionsUnion): Stat
     case BackendActionTypes.DeleteFileSuccess: {
       return {
         ...state,
-        files: ConfigFileAdapter.removeOne(ConfigFileAdapter.selectId(action.payload) + '', state.files)
+        files: ConfigFileAdapter.removeOne(ConfigFileAdapter.selectId(action.payload) + "", state.files)
       };
     }
 

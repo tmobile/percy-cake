@@ -17,7 +17,7 @@ See the LICENSE file for additional language around disclaimer of warranties.
 Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
 its contributors may be used to endorse or promote products derived from this
 software without specific prior written permission.
-=========================================================================== 
+===========================================================================
 */
 
 import * as cheerio from "cheerio";
@@ -206,7 +206,7 @@ foo: !!map
   });
 
   it("simple value type should be converted", () => {
-    const yaml = 'host: !!str "staging.mobilex.com"  # host comment line1';
+    const yaml = "host: !!str \"staging.mobilex.com\"  # host comment line1";
     const tree = utilService.convertYamlToTree(yaml);
     let yaml2 = utilService.convertTreeToYaml(tree);
     expect(yaml2).toEqual(yaml);
@@ -780,7 +780,7 @@ envstr: !!str "prod/file.json"`
     ).toEqual(10);
     expect(
       utilService.highlightNodeVariable(
-        new TreeNode("key", PROPERTY_VALUE_TYPES.STRING, '\\aa"bb"cc')
+        new TreeNode("key", PROPERTY_VALUE_TYPES.STRING, "\\aa\"bb\"cc")
       )
     ).toEqual("\\aa&quot;bb&quot;cc");
     expect(
@@ -792,7 +792,7 @@ envstr: !!str "prod/file.json"`
     const $ = cheerio.load("<span></span>");
     const span = $("span");
     span.append($("<span></span>").text(percyConfig.variablePrefix));
-    span.append($('<span class="yaml-var"></span>').text("name"));
+    span.append($("<span class=\"yaml-var\"></span>").text("name"));
     span.append($("<span></span>").text(percyConfig.variableSuffix));
     expect(
       utilService.highlightNodeVariable(

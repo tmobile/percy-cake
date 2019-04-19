@@ -18,10 +18,10 @@ See the LICENSE file for additional language around disclaimer of warranties.
 Trademark Disclaimer: Neither the name of “T-Mobile, USA” nor the names of
 its contributors may be used to endorse or promote products derived from this
 software without specific prior written permission.
-=========================================================================== 
+===========================================================================
 */
 
-import { Injectable } from '@angular/core';
+import { Injectable } from "@angular/core";
 
 // defines the dashboard page related effects
 @Injectable()
