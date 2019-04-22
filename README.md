@@ -1,5 +1,7 @@
 # Percival Editor
 
+![percival editor](docs/images/prod.compiled.yaml.png)
+
 ## Overview
 
 ### FAQ:
