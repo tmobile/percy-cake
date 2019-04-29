@@ -59,7 +59,7 @@ Here is an example of a YAML file, and you can notice the `environments` node co
 default: !!map
   server.host: !!int 1 # tx server url
   mytx.server.host: !!str "https://default.my.test.com" # MYtx server url
-  middlewareapipath: !!str "_{$middlewareurl}_/mw/api/path"
+  middlewareapipath: !!str "${_middlewareurl}/mw/api/path"
   _middlewareurl: !!str "https://default.middleware.test.com" # Backend MW url
   _dcphost: !!str "https://default.api.test.com"
   _api-path: !!str "/path/to/api"
@@ -68,6 +68,7 @@ default: !!map
     dcpcart: !!str "${_dcphost}/api/cart"
     dcpupdate: !!str "${_dcphost}/api/update"
     dcprefund: !!str "${_dcphost}/api/refund"
+    
 environments: !!map
   prod: !!map
     $middlewareurl: !!str "https://e3.my.test.com" # Production middleware endpoint
