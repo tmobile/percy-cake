@@ -1,4 +1,4 @@
-# Percival - A Configuration As Code Editor 
+# Percival - A Configuration As Kode Editor 
 ### with Hydration Tools
 
 ![percival editor](docs/images/prod.compiled.yaml.png)
