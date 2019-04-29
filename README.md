@@ -2,13 +2,13 @@
 
 ![percival editor](docs/images/prod.compiled.yaml.png)
 
-## Overview
-
 ### FAQ:
 
 - [What is Configuration As Code](docs/faq.md) ?
 - [Why is it called `Percy`](docs/faq.md)?
 - [Why `YAML`](docs/faq.md) ?
+
+## Overview
 
 The Percival Editor is a configuration tool that allows authorized users [devs, ops, web admins...] an intuitive form based User Interface for managing and maintaining complex application configuration files that are deployed to multiple environments. This editor will enforce some simple rules that will enable robust continuous deployment pipelines to automate validate, hydration and deployment of application configuration files to any number of snowflake environments.
 
@@ -20,22 +20,16 @@ We have provided specialized builders to package Percy for various runtimes (Per
 
 When accessing a remote git repository with this editor it must follow the mono-repo directory structure as below:
 
-```
+```sh
 apps/
-  +- .percyrc
-  +- app1/
-  |    +- .percyrc
+  +- .percyrc                   # [optional]
+  +- */                         # 1 folder per app defined in repo
+  |    +- .percyrc              # [optional]
   |    +- environments.yaml
-  |    +- client.config.yaml
-  |    +- server.config.yaml
-  |    +- feature.toggles.yaml
-  |    +- readme.md
-  +- app2/
-  |    +- environments.yaml
-  |    +- client.config.yaml
-  |    ...
+  |    +- *.yaml                # 1 or more config files (client, server, toggles .... )
+  |    +- readme.md             # [optional]
   ...
-readme.md
+readme.md                       # [optional]
 ```
 
 The git repo must have a root level folder named `./apps` (_name of this root directory is configurable_), with each sub-directory representing an application. The editor will load all applications together with all the `YAML` files inside each application (non-`YAML` files will be ignored).
@@ -50,7 +44,8 @@ default: !!map
   property-name: !!type value
 
 environments: !!map
-
+  env-name: !!map
+    property-name: !!type [override value] 
 ```
 
 The `default` node contains the default configuration properties for the application, and the `environments` node contains one or more environment nodes as defined in the `environments.yaml` file. The environment nodes inherit _all_ the properties defined in the `default` node.
