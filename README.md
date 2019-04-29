@@ -41,11 +41,11 @@ In each application folder, all `YAML` files must follow the format as below:
 
 ```yaml
 default: !!map
-  property-name: !!type value
+  property-name: !!str "default value"
 
 environments: !!map
   env-name: !!map
-    property-name: !!type [override value] 
+    property-name: !!str "new value for this environment only" 
 ```
 
 The `default` node contains the default configuration properties for the application, and the `environments` node contains one or more environment nodes as defined in the `environments.yaml` file. The environment nodes inherit _all_ the properties defined in the `default` node.
