@@ -60,28 +60,28 @@ default: !!map
   server.host: !!int 1 # tx server url
   mytx.server.host: !!str "https://default.my.test.com" # MYtx server url
   middlewareapipath: !!str "_{$middlewareurl}_/mw/api/path"
-  $middlewareurl: !!str "https://default.middleware.test.com" # Backend MW url
-  $dcphost: !!str "https://default.api.test.com"
-  $api-path: !!str "/path/to/api"
-  apihost: !!str "http://txnext-gen.com_{$api-path}_"
+  _middlewareurl: !!str "https://default.middleware.test.com" # Backend MW url
+  _dcphost: !!str "https://default.api.test.com"
+  _api-path: !!str "/path/to/api"
+  apihost: !!str "http://txnext-gen.com${_api-path}"
   dcpendpoints: !!map
-    dcpcart: !!str "_{$dcphost}_/api/cart"
-    dcpupdate: !!str "_{$dcphost}_/api/update"
-    dcprefund: !!str "_{$dcphost}_/api/refund"
+    dcpcart: !!str "${_dcphost}/api/cart"
+    dcpupdate: !!str "${_dcphost}/api/update"
+    dcprefund: !!str "${_dcphost}/api/refund"
 environments: !!map
   prod: !!map
     $middlewareurl: !!str "https://e3.my.test.com" # Production middleware endpoint
-    apihost: !!str "http://test.com_{$api-path}_"
+    apihost: !!str "http://test.com${_api-path}"
     $dcphost: !!str "http://prod.dcp.com"
     dcpendpoints: !!map
-      dcpcart: !!str "_{$dcphost}_/api/v2/cart"
+      dcpcart: !!str "${_dcphost}/api/v2/cart"
   dev: !!map
     $middlewareurl: !!str "https://tx.tugs.dev.com" # Production middleware endpoint
-    apihost: !!str "http://test.com_{$api-path}_"
+    apihost: !!str "http://test.com${_api-path}"
     newProperty: !!str "hello"
   qa: !!map
     $middlewareurl: !!str "https://tx.tugs.qat.com" # Production middleware endpoint
-    apihost: !!str "http://test.com_{$api-path}_"
+    apihost: !!str "http://test.com${_api-path}"
 ```
 
 ## Usage
