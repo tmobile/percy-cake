@@ -223,7 +223,7 @@ lerna run lint --stream
 lerna run test --stream
 
 # Start development server at http://localhost:4200
-lerna run --scope=percy-web-app --stream start
+lerna run --scope=percy-cake-web-app --stream start
 ```
 
 # Percy Runtime Modes:
@@ -236,7 +236,7 @@ the Percy editor can be run using the webpack development server for local testi
 
 ```bash
 # Build and Start development server at http://localhost:4200
-lerna run --scope=percy-web-app --stream start
+lerna run --scope=percy-cake-web-app --stream start
 ```
 
 ## 2. Static assets
@@ -245,7 +245,7 @@ The Percy editor can be deployed as packaged static assets to any CDN or web ser
 
 ```bash
 # build the application
-lerna run --scope=percy-web-app --stream build:prod
+lerna run --scope=percy-cake-web-app --stream build:prod
 
 ```
 

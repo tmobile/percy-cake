@@ -14,7 +14,7 @@ Build app (which will build in production mode), the static assets are built und
 ```bash
 npm install -g lerna
 lerna bootstrap --hoist
-lerna run --scope=percy-web-app --stream build:prod
+lerna run --scope=percy-cake-web-app --stream build:prod
 
 # After build, 4 files will be generated in 'packages/webapp/dist/build':
 # favicon.png
@@ -33,7 +33,7 @@ docker-compose -f ./packages/docker/docker-compose.yml up --build
 
 
 
-In this step supports config the nginx port, you can refer to [docker/docker-compose.yml](docker/docker-compose.yml)  :
+In this step supports config the nginx port, you can refer to [docker-compose.yml](docker-compose.yml)  :
 
 | Environment | Description                                                                                                |
 |-------------|------------------------------------------------------------------------------------------------------------|

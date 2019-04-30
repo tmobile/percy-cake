@@ -537,7 +537,16 @@ export async function writeResult(
   percyConfig: IPercyConfig
 ): Promise<void> {
   const environments = Object.keys(envNode).filter(
-        (env) => !env.startsWith(percyConfig.envIgnorePrefix) || !env.endsWith(percyConfig.envIgnoreSuffix));
+        (env) => {
+          if (percyConfig.envIgnorePrefix && percyConfig.envIgnoreSuffix) {
+            return !env.startsWith(percyConfig.envIgnorePrefix) || !env.endsWith(percyConfig.envIgnoreSuffix);
+          } else if (percyConfig.envIgnorePrefix) {
+            return !env.startsWith(percyConfig.envIgnorePrefix);
+          } else if (percyConfig.envIgnoreSuffix) {
+            return !env.endsWith(percyConfig.envIgnoreSuffix);
+          }
+          return true;
+        });
   await ensureEnvironmentFolders(environments, outputFolder);
   const filename = path.basename(yamlFilePath, ".yaml");
   await Promise.all(
