@@ -1,25 +1,49 @@
-# Percival - A Configuration As Kode Editor 
-### with Hydration Tools
+# Percival - a Configuration as Kode editor
 
-![percival editor](docs/images/prod.compiled.yaml.png)
+### Percy-CaKe (with Hydration Tools)
+
+![cake editor](docs/images/prod.compiled.yaml.png)
 
 ### FAQ:
 
-- [What is Configuration As Code](docs/faq.md) ?
-- [Why is it called `Percy`](docs/faq.md)?
+- [What is Configuration As Kode](docs/faq.md) ?
+- [Why `Percy`](docs/faq.md)?
 - [Why `YAML`](docs/faq.md) ?
 
 ## Overview
 
-The Percival Editor is a configuration tool that allows authorized users [devs, ops, web admins...] an intuitive form based User Interface for managing and maintaining complex application configuration files that are deployed to multiple environments. This editor will enforce some simple rules that will enable robust continuous deployment pipelines to automate validate, hydration and deployment of application configuration files to any number of snowflake environments.
+_*Build Once, Deploy anywhere.*_
+
+### Problem statement
+
+Imagine you need to deploy your web application, or micro-service, to many different environments:
+
+- `dev`
+- `qat`
+- `regression`
+- `perf`
+- `staging`
+- `prod`
+
+and in each environment your app requires a slightly different configuration:
+
+- what data api endpoints it has access to
+- what feature toggles should be enabled
+- logging level
+- ...
+
+### Solution
+
+_Percy-CaKe_ is a configuration editor that allows authorized users [_devs+, _ops_, _web admins_...] an intuitive form based User Interface for managing and maintaining complex application configuration files for deployment to multiple environments.
+
+This editor will enforce some simple rules that will enable robust continuous deployment pipelines to automate validation, hydration and deployment of application configuration files to any number of snowflake environments.
 
 Percy can interact with a local file system or a remote git repository.
 The editor allows the user to manage (list, create, edit or delete) YAML configuration files from a git repository in the browser directly.
 
-The core Percy application is a pure static web page, that requires no back-end. But a proxy may be needed for it to access the git repository successfully.
-We have provided specialized builders to package Percy for various runtimes (Percy Runtime Modes)[docs/percy.runtime.modes.md]
+The core Percy CaKe application is a pure static web SPA, that requires no back-end (_but a proxy may be needed for it to access the git repository successfully_). This same web application can be bundled many different ways. We have provided specialized builders to package Percy for various runtimes (Percy Runtime Modes)[docs/percy.runtime.modes.md]
 
-When accessing a remote git repository with this editor it must follow the mono-repo directory structure as below:
+When accessing a remote git repository with this editor the repo must follow the mono-repo directory structure as below:
 
 ```sh
 apps/
@@ -43,10 +67,9 @@ In each application folder, all `YAML` files must follow the format as below:
 ```yaml
 default: !!map
   property-name: !!str "default value"
-
 environments: !!map
   env-name: !!map
-    property-name: !!str "new value for this environment only" 
+    property-name: !!str "new value for this environment only"
 ```
 
 The `default` node contains the default configuration properties for the application, and the `environments` node contains one or more environment nodes as defined in the `environments.yaml` file. The environment nodes inherit _all_ the properties defined in the `default` node.
@@ -69,7 +92,7 @@ default: !!map
     dcpcart: !!str "${_dcphost}/api/cart"
     dcpupdate: !!str "${_dcphost}/api/update"
     dcprefund: !!str "${_dcphost}/api/refund"
-    
+
 environments: !!map
   prod: !!map
     $middlewareurl: !!str "https://e3.my.test.com" # Production middleware endpoint
@@ -175,8 +198,9 @@ Here is an example of `.percyrc` file:
 
 ```json
 {
-  "variablePrefix": "{{",
-  "variableSuffix": "}}"
+  "variablePrefix": "${",
+  "variableSuffix": "}",
+  "variableNamePrefix": "_"
 }
 ```
 
