@@ -31,8 +31,8 @@ module.exports = {
     variablePrefix: process.env.TEST_DEFAULT_VARIABLE_PREFIX || "_{",
     variableSuffix: process.env.TEST_DEFAULT_VARIABLE_SUFFIX || "}_",
     variableNamePrefix: process.env.TEST_DEFAULT_VARIABLE_NAME_PREFIX || "$",
-    envIgnorePrefix: process.env.PERCY_ENV_IGNORE_PREFIX,
-    envIgnoreSuffix: process.env.PERCY_ENV_IGNORE_SUFFIX,
+    envIgnorePrefix: process.env.TEST_DEFAULT_ENV_IGNORE_PREFIX,
+    envIgnoreSuffix: process.env.TEST_DEFAULT_ENV_IGNORE_SUFFIX,
   },
   COLORIZE_CONSOLE: process.env.COLORIZE_CONSOLE
     ? /(f(?:alse)?|0|off)/gi.test(process.env.COLORIZE_CONSOLE)
