@@ -15,16 +15,16 @@ npm install -g lerna
 lerna bootstrap --hoist
 
 # Build electron app
-lerna run --scope=percy-electron-app --stream build:prod
+lerna run --scope=percy-cake-electron-app --stream build:prod
 
 # Package for MacOS
-lerna run --scope=percy-electron-app --stream package:mac
+lerna run --scope=percy-cake-electron-app --stream package:mac
 
 # Package for Linux
-lerna run --scope=percy-electron-app --stream package:linux
+lerna run --scope=percy-cake-electron-app --stream package:linux
 
 # Package for Windowns
-lerna run --scope=percy-electron-app --stream package:win
+lerna run --scope=percy-cake-electron-app --stream package:win
 
 
 # The app executables will be built at:

@@ -9,12 +9,12 @@
 ## Installation
 
 ```
-npm install percy-hydration
+npm install percy-cake-hydration-tools
 ```
 
 Or install commands globally
 ```
-npm install -g percy-hydration
+npm install -g percy-cake-hydration-tools
 ```
 
 ## Usage In Command Line
@@ -80,8 +80,8 @@ Main configuration file can be found at `config/default.js`
 | PERCY_ENVIRONMENT_FILE_NAME        | Name of the environment file (default value: `environments.yaml`) |
 | PERCY_CONFIG_FILE_NAME       | Name of the percy configuration file (default value: `.percyrc`)  |
 | PERCY_ENV_VARIABLE_NAME | The YAML environment variable name (default value: `env`) |
-| PERCY_ENV_IGNORE_PREFIX | The prefix of env not to generate the config files (default value: `_`) |
-| PERCY_ENV_IGNORE_SUFFIX | The suffix of env not to generate the config files (default value: `_`) |
+| PERCY_DEFAULT_ENV_IGNORE_PREFIX | The prefix of env not to generate the config files (no default value) |
+| PERCY_DEFAULT_ENV_IGNORE_SUFFIX | The suffix of env not to generate the config files (no default value) |
 | PERCY_DEFAULT_VARIABLE_PREFIX      | The YAML variable substitute prefix (default value: `_{`)         |
 | PERCY_DEFAULT_VARIABLE_SUFFIX      | The YAML variable substitute suffix (default value: `}_`)         |
 | PERCY_DEFAULT_VARIABLE_NAME_PREFIX | The YAML variable name prefix (default value: `$`)                |
@@ -94,6 +94,8 @@ The app folder can contain optional `.percyrc` files, which provide repository-s
 | variablePrefix     | The YAML variable substitute prefix |
 | variableSuffix     | The YAML variable substitute suffix |
 | variableNamePrefix | The YAML variable name prefix       |
+| envIgnorePrefix    | The prefix of env to ignore         |
+| envIgnoreSuffix    | The suffix of env to ignore         |
 
 If it's in the `apps` folder, the configuration applies to all applications, and if it's in the specific application folder, it only applies to the corresponding application. When provided, the default properties from the `config/default.js` will be overridden.
 
@@ -102,7 +104,9 @@ Here is an example of `.percyrc` file:
 {
   "variablePrefix": "{{",
   "variableSuffix": "}}",
-  "variableNamePrefix": "_"
+  "variableNamePrefix": "_",
+  "envIgnorePrefix": "_",
+  "envIgnoreSuffix": "_"
 }
 ```
 
@@ -114,10 +118,10 @@ npm install -g lerna
 lerna bootstrap --hoist
 
 # Lint code
-lerna run --scope=percy-hydration --stream lint
+lerna run --scope=percy-cake-hydration-tools --stream lint
 
 # Run unit tests with coverage
-lerna run --scope=percy-hydration --stream test
+lerna run --scope=percy-cake-hydration-tools --stream test
 
 ```
 
@@ -131,18 +135,18 @@ Script for comparing two json files and outputting their differences to stdout
 
 or using lerna:
 
-`lerna run --scope=percy-hydration --stream compare-json -- <path/to/file.json> <path/to/file.json>`
+`lerna run --scope=percy-cake-hydration-tools --stream compare-json -- <path/to/file.json> <path/to/file.json>`
 
 ```bash
 # Example
 npm run compare-json test/data/.percyrc test/data/modified.percyrc
 
-lerna run --scope=percy-hydration --stream compare-json -- test/data/.percyrc test/data/modified.percyrc
+lerna run --scope=percy-cake-hydration-tools --stream compare-json -- test/data/.percyrc test/data/modified.percyrc
 
 # To generate HTML report
 npm run compare-json test/data/.percyrc test/data/modified.percyrc -- --out ./test/data/out/diff.html
 
-lerna run --scope=percy-hydration --stream compare-json -- test/data/.percyrc test/data/modified.percyrc -- --out ./test/data/out/diff.html
+lerna run --scope=percy-cake-hydration-tools --stream compare-json -- test/data/.percyrc test/data/modified.percyrc -- --out ./test/data/out/diff.html
 ```
 
 ### hydrate
@@ -153,7 +157,7 @@ Script for processing YAML configuration files and converting it to environment 
 
 or using lerna:
 
-`lerna run --scope=percy-hydration --stream hydrate -- -- < --root | --app | --file > <path/to/input> --out <path/to/output>`
+`lerna run --scope=percy-cake-hydration-tools --stream hydrate -- -- < --root | --app | --file > <path/to/input> --out <path/to/output>`
 
 It provides three options 
 - `--root` `-r` for processing all apps in a root directory
@@ -167,17 +171,17 @@ You should specify one of these three options.
 # Process all apps
 npm run hydrate -- -r ../test/data/apps --out ../test/data/out/dist
 
-lerna run --scope=percy-hydration --stream hydrate -- -- -r ../test/data/apps --out ../test/data/out/dist
+lerna run --scope=percy-cake-hydration-tools --stream hydrate -- -- -r ../test/data/apps --out ../test/data/out/dist
 
 # Process single app
 npm run hydrate -- -a ../test/data/apps/shop --out ../test/data/out/dist/shop
 
-lerna run --scope=percy-hydration --stream hydrate -- -- -a ../test/data/apps/shop --out ../test/data/out/dist/shop
+lerna run --scope=percy-cake-hydration-tools --stream hydrate -- -- -a ../test/data/apps/shop --out ../test/data/out/dist/shop
 
 # Process single file
 npm run hydrate -- -f ../test/data/apps/shop/app.config.yaml --out ../test/data/out/dist/shop
 
-lerna run --scope=percy-hydration --stream hydrate -- -- -f ../test/data/apps/shop/app.config.yaml --out ../test/data/out/dist/shop
+lerna run --scope=percy-cake-hydration-tools --stream hydrate -- -- -f ../test/data/apps/shop/app.config.yaml --out ../test/data/out/dist/shop
 ```
 
 
@@ -185,7 +189,7 @@ lerna run --scope=percy-hydration --stream hydrate -- -- -f ../test/data/apps/sh
 
 You can compiled the ts files to js, by running:
 ```
-lerna run --scope=percy-hydration --stream tsc
+lerna run --scope=percy-cake-hydration-tools --stream tsc
 ```
 
 then run the js files using these script:
@@ -195,32 +199,32 @@ then run the js files using these script:
 # Process all apps
 npm run hydrate.js -- -r ../test/data/apps --out ../test/data/out/dist
 
-lerna run --scope=percy-hydration --stream hydrate.js -- -- -r ../test/data/apps --out ../test/data/out/dist
+lerna run --scope=percy-cake-hydration-tools --stream hydrate.js -- -- -r ../test/data/apps --out ../test/data/out/dist
 
 # Process single app
 npm run hydrate.js -- -a ../test/data/apps/shop --out ../test/data/out/dist/shop
 
-lerna run --scope=percy-hydration --stream hydrate.js -- -- -a ../test/data/apps/shop --out ../test/data/out/dist/shop
+lerna run --scope=percy-cake-hydration-tools --stream hydrate.js -- -- -a ../test/data/apps/shop --out ../test/data/out/dist/shop
 
 # Process single file
 npm run hydrate.js -- -f ../test/data/apps/shop/app.config.yaml --out ../test/data/out/dist/shop
 
-lerna run --scope=percy-hydration --stream hydrate.js -- -- -f ../test/data/apps/shop/app.config.yaml --out ../test/data/out/dist/shop
+lerna run --scope=percy-cake-hydration-tools --stream hydrate.js -- -- -f ../test/data/apps/shop/app.config.yaml --out ../test/data/out/dist/shop
 
 # compare-json Example
 npm run compare-json.js test/data/.percyrc test/data/modified.percyrc
 
-lerna run --scope=percy-hydration --stream compare-json.js -- test/data/.percyrc test/data/modified.percyrc
+lerna run --scope=percy-cake-hydration-tools --stream compare-json.js -- test/data/.percyrc test/data/modified.percyrc
 ```
 
 ## Documentation
 Documentations are auto generated and can be accessed from `docs` folder. 
-In order to generate docs again you can call `lerna run --scope=percy-hydration --stream docs` command.
+In order to generate docs again you can call `lerna run --scope=percy-cake-hydration-tools --stream docs` command.
 
 
 ## Publish
 To publish this library, run:
 ```
-lerna run --scope=percy-hydration --stream tsc
+lerna run --scope=percy-cake-hydration-tools --stream tsc
 npm publish
 ```

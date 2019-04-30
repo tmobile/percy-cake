@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "percy-web-app": {
+    "percy-cake-web-app": {
       "root": "",
       "sourceRoot": "src",
       "projectType": "application",
@@ -64,18 +64,18 @@
         "serve": {
           "builder": "@angular-builders/dev-server:generic",
           "options": {
-            "browserTarget": "percy-web-app:build"
+            "browserTarget": "percy-cake-web-app:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "percy-web-app:build:production"
+              "browserTarget": "percy-cake-web-app:build:production"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "percy-web-app:build"
+            "browserTarget": "percy-cake-web-app:build"
           }
         },
         "test": {
@@ -116,5 +116,5 @@
       }
     }
   },
-  "defaultProject": "percy-web-app"
+  "defaultProject": "percy-cake-web-app"
 }

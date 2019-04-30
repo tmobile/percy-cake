@@ -322,7 +322,7 @@ Then you can right click either the environment name or the `...` icon to get th
 
 The hydration tools, which are node.js based script files, are easily incorporated into any build environment that has nodejs. They are installed as an npm package :
 
-`npm i percy-hydration`
+`npm i percy-cake-hydration-tools`
 
 The hydration tools enforce the percy formatting rules when transpiring and hydrating the DRY YAML files to a Wet JSON format creating one folder collection of config files for every environment listed in `environments.yaml`.
 

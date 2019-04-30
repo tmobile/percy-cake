@@ -232,8 +232,6 @@ export class Hydrate {
       parentFolderPercyConfig,
       currentFolderPercyConfig,
       {
-        envIgnorePrefix: this.options.PERCY_ENV_IGNORE_PREFIX,
-        envIgnoreSuffix: this.options.PERCY_ENV_IGNORE_SUFFIX,
         envVariableName: this.options.PERCY_ENV_VARIABLE_NAME
       }
     ) as IPercyConfig;

@@ -39,8 +39,6 @@ const hydrate = new Hydrate(
     ENVIRONMENT_FILE_NAME: config.get("ENVIRONMENT_FILE_NAME"),
     LOG_LEVEL: config.get("LOG_LEVEL"),
     PERCY_CONFIG_FILE_NAME: config.get("PERCY_CONFIG_FILE_NAME"),
-    PERCY_ENV_IGNORE_PREFIX: config.get("PERCY_ENV_IGNORE_PREFIX"),
-    PERCY_ENV_IGNORE_SUFFIX: config.get("PERCY_ENV_IGNORE_SUFFIX"),
     PERCY_ENV_VARIABLE_NAME: config.get("PERCY_ENV_VARIABLE_NAME")
   },
   true
@@ -220,6 +218,36 @@ describe("hydrate", () => {
       const outputFile = path.join(
         outputFolder,
         "/appWithVariableNamePrefixKey"
+      );
+      await expect(
+        hydrate.hydrateFile(inputFile, undefined, undefined, outputFile)
+      ).resolves.toBeUndefined();
+      const envs = ["dev", "local", "prod", "qat"];
+      await expect(utils.findSubFolders(outputFile)).resolves.toEqual(envs);
+      for (const env of envs) {
+        // Compare results to expected results
+        const outputJson = path.join(outputFile, env, "app.config.json");
+        await expect(fs.pathExists(outputJson));
+        const json = await fs.readJson(outputJson);
+        const expectedJsonPath = path.join(
+          __dirname,
+          "data/expectedResults",
+          env,
+          "app.config.json"
+        );
+        const expectedJson = await fs.readJson(expectedJsonPath);
+        expect(json).toEqual(expectedJson);
+      }
+    });
+
+    test("With Env to Ignore", async () => {
+      const inputFile = path.join(
+        __dirname,
+        "data/appWithEnvToIgnore/app.config.yaml"
+      );
+      const outputFile = path.join(
+        outputFolder,
+        "/appWithEnvToIgnore"
       );
       await expect(
         hydrate.hydrateFile(inputFile, undefined, undefined, outputFile)

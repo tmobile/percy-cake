@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "percy-electron-app": {
+    "percy-cake-electron-app": {
       "root": "",
       "sourceRoot": "src",
       "projectType": "application",
@@ -59,11 +59,11 @@
         "serve": {
           "builder": "@angular-builders/dev-server:generic",
           "options": {
-            "browserTarget": "percy-electron-app:build"
+            "browserTarget": "percy-cake-electron-app:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "percy-electron-app:build:production"
+              "browserTarget": "percy-cake-electron-app:build:production"
             }
           }
         },
@@ -81,5 +81,5 @@
       }
     }
   },
-  "defaultProject": "percy-electron-app"
+  "defaultProject": "percy-cake-electron-app"
 }
