@@ -24,8 +24,6 @@ software without specific prior written permission.
 /**
  * Module for providing a configured winston logger
  */
-import * as path from "path";
-process.env.NODE_CONFIG_DIR = path.resolve(__dirname, "../config");
 import * as config from "config";
 import * as winston from "winston";
 
