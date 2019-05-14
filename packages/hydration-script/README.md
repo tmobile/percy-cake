@@ -169,19 +169,19 @@ You should specify one of these three options.
 # Examples
 
 # Process all apps
-npm run hydrate -- -r ../test/data/apps --out ../test/data/out/dist
+npm run hydrate -- -r test/data/apps --out test/data/out/dist
 
-lerna run --scope=percy-cake-hydration-tools --stream hydrate -- -- -r ../test/data/apps --out ../test/data/out/dist
+lerna run --scope=percy-cake-hydration-tools --stream hydrate -- -- -r test/data/apps --out test/data/out/dist
 
 # Process single app
-npm run hydrate -- -a ../test/data/apps/shop --out ../test/data/out/dist/shop
+npm run hydrate -- -a test/data/apps/shop --out test/data/out/dist/shop
 
-lerna run --scope=percy-cake-hydration-tools --stream hydrate -- -- -a ../test/data/apps/shop --out ../test/data/out/dist/shop
+lerna run --scope=percy-cake-hydration-tools --stream hydrate -- -- -a test/data/apps/shop --out test/data/out/dist/shop
 
 # Process single file
-npm run hydrate -- -f ../test/data/apps/shop/app.config.yaml --out ../test/data/out/dist/shop
+npm run hydrate -- -f test/data/apps/shop/app.config.yaml --out test/data/out/dist/shop
 
-lerna run --scope=percy-cake-hydration-tools --stream hydrate -- -- -f ../test/data/apps/shop/app.config.yaml --out ../test/data/out/dist/shop
+lerna run --scope=percy-cake-hydration-tools --stream hydrate -- -- -f test/data/apps/shop/app.config.yaml --out test/data/out/dist/shop
 ```
 
 
@@ -197,19 +197,19 @@ then run the js files using these script:
 # hydrate Examples
 
 # Process all apps
-npm run hydrate.js -- -r ../test/data/apps --out ../test/data/out/dist
+npm run hydrate.js -- -r test/data/apps --out test/data/out/dist
 
-lerna run --scope=percy-cake-hydration-tools --stream hydrate.js -- -- -r ../test/data/apps --out ../test/data/out/dist
+lerna run --scope=percy-cake-hydration-tools --stream hydrate.js -- -- -r test/data/apps --out test/data/out/dist
 
 # Process single app
-npm run hydrate.js -- -a ../test/data/apps/shop --out ../test/data/out/dist/shop
+npm run hydrate.js -- -a test/data/apps/shop --out test/data/out/dist/shop
 
-lerna run --scope=percy-cake-hydration-tools --stream hydrate.js -- -- -a ../test/data/apps/shop --out ../test/data/out/dist/shop
+lerna run --scope=percy-cake-hydration-tools --stream hydrate.js -- -- -a test/data/apps/shop --out test/data/out/dist/shop
 
 # Process single file
-npm run hydrate.js -- -f ../test/data/apps/shop/app.config.yaml --out ../test/data/out/dist/shop
+npm run hydrate.js -- -f test/data/apps/shop/app.config.yaml --out test/data/out/dist/shop
 
-lerna run --scope=percy-cake-hydration-tools --stream hydrate.js -- -- -f ../test/data/apps/shop/app.config.yaml --out ../test/data/out/dist/shop
+lerna run --scope=percy-cake-hydration-tools --stream hydrate.js -- -- -f test/data/apps/shop/app.config.yaml --out test/data/out/dist/shop
 
 # compare-json Example
 npm run compare-json.js test/data/.percyrc test/data/modified.percyrc

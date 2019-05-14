@@ -26,10 +26,9 @@ software without specific prior written permission.
 /**
  * Script for processing YAML configuration files and converting it to environment specific JSON configuration
  */
-import * as path from "path";
-process.env.NODE_CONFIG_DIR = path.resolve(__dirname, "../config");
 import * as config from "config";
 import * as commandLineArgs from "minimist";
+import * as path from "path";
 import { getLogger } from "./lib/common";
 import { Hydrate } from "./lib/hydrate.lib";
 
@@ -101,8 +100,8 @@ async function main() {
       colorConsole
     );
 
-    options.path = path.resolve(__dirname, options.path);
-    options.out = path.resolve(__dirname, options.out);
+    options.path = path.resolve(options.path);
+    options.out = path.resolve(options.out);
 
     if (options.root) {
       await hydrate.hydrateAllApps(options.path, options.out);
