@@ -2,13 +2,15 @@
 
 ### Percy-CaKe (with Hydration Tools)
 
-![cake editor](docs/images/prod.compiled.yaml.png)
+![percy editor](docs/images/prod.compiled.yaml.png)
 
 ### FAQ:
 
 - [What is Configuration As Kode](docs/faq.md) ?
 - [Why `Percy`](docs/faq.md)?
 - [Why `YAML`](docs/faq.md) ?
+- Editor Overview _TBD_
+- File Hydration Utility Scripts _TBD_
 
 ## Overview
 
@@ -187,10 +189,44 @@ There are 3 configuration files:
 
 The git repository can contain optional `.percyrc` files, which provide repository-specific or application-specific configuration. The following properties are supported now:
 
-| Property       | Description                         |
-| -------------- | ----------------------------------- |
-| variablePrefix | The YAML variable substitute prefix |
-| variableSuffix | The YAML variable substitute suffix |
+| Property             | Description                                                                                               |
+| -------------------- | --------------------------------------------------------------------------------------------------------- |
+| `variablePrefix`     | prefix wrapper for variable substitution expressions                                                      |
+| `variableSuffix`     | suffix wrapper for variable substitution expressions                                                      |
+| `variableNamePrefix` | prefix to variables used for substitution only and should not be included independently in hydrated files |
+| `envIgnorePrefix`    | prefix to abstract environment name                                                                       |
+| `envIgnoreSuffix`    | prefix to abstract environment name                                                                       |
+
+### value substitution
+
+The Percy format support value sustitution thru a templating regex. You can define the character string that occurs _before_ and _after_ a property name that should be replaced with it's defined value:
+
+value substitution can work by replacing the entire value of a property,
+
+```yaml
+"name": !!map
+  "first": !!str "Kendrick"
+  "last": !!str "Burson"
+...
+"intro" !!map
+   "owner": !!map ${name}
+```
+
+or interpolated within a string
+
+```yaml
+"weekNumber": !!int 4
+---
+"tenure": !!str "This is week ${weekNumber} of my internship"
+```
+
+### evironment templates
+
+Percy also supports environment templates for easy sharing of code patterns thru inheritance. Note, every environment inherits from the `default` _by default_ but can inherit inherit from 1 other defined environment. Environment inheritance cascades with the last inherited value taking precedence.
+
+With environment temnplates you can define a collection of abstract environment definitions
+
+TBD
 
 If it's in the `apps` folder, the configuration applies to all applications, and if it's in the specific application folder, it only applies to the corresponding application. When provided, the default properties from the `percy.conf.json` will be overridden.
 
@@ -200,7 +236,9 @@ Here is an example of `.percyrc` file:
 {
   "variablePrefix": "${",
   "variableSuffix": "}",
-  "variableNamePrefix": "_"
+  "variableNamePrefix": "_",
+  "envIgnorePrefix": "",
+  "envIgnoreSuffix": "_tpl"
 }
 ```
 
@@ -230,7 +268,7 @@ lerna run --scope=percy-cake-web-app --stream start
 
 The Percy Configuration Editor application has **Five** different runtimes that share the same core application modules!
 
-## 1. Development server
+## 1. Local Development server
 
 the Percy editor can be run using the webpack development server for local testing and development.
 
@@ -260,7 +298,7 @@ lerna run --scope=percy-cake-web-app --stream build:prod
 
 ## 3. Docker container
 
-The Percy editor can be run as web application within a docker container;
+The Percy editor can be packaged and run as web application within a docker container;
 [click here](packages/docker/readme.docker.md) for more information.
 
 ## 4. VSCode editor extension
@@ -275,7 +313,7 @@ The Percy editor can be run as a standalone desktop application;
 
 ## License
 
-Percy is open-sourced under Apache 2.0 and is released AS-IS WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND under the terms of Section 7 of the Apache license.
+Percy editor and hydration scripts are open-sourced under Apache 2.0 and is released AS-IS WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND under the terms of Section 7 of the Apache license.
 
 ## DISCLAIMER
 
