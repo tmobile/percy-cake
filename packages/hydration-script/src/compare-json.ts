@@ -26,11 +26,12 @@ software without specific prior written permission.
 /**
  * Script for comparing two json files and outputting their differences to stdout
  */
+import * as path from "path";
+process.env.NODE_CONFIG_DIR = path.resolve(__dirname, "../config");
 import * as config from "config";
 import * as fs from "fs-extra";
 import * as jsondiffpatch from "jsondiffpatch";
 import * as commandLineArgs from "minimist";
-import * as path from "path";
 
 import { getLogger, utils } from "./lib/common";
 import { CompareJson } from "./lib/compare-json.lib";
