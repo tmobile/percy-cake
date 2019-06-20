@@ -9,6 +9,5 @@ lerna bootstrap --hoist
 lerna run --scope=percy-cake-hydration-tools --stream tsc
 
 # Run demo
-lerna run --scope=percy-cace-hydration-example --stream demo
+lerna run --scope=percy-cake-hydration-example --stream demo
 ```
-
