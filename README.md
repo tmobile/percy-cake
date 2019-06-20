@@ -195,7 +195,8 @@ The git repository can contain optional `.percyrc` files, which provide reposito
 | `variableSuffix`     | suffix wrapper for variable substitution expressions                                                      |
 | `variableNamePrefix` | prefix to variables used for substitution only and should not be included independently in hydrated files |
 | `envIgnorePrefix`    | prefix to abstract environment name                                                                       |
-| `envIgnoreSuffix`    | prefix to abstract environment name                                                                       |
+| `envIgnoreSuffix`    | suffix to abstract environment name                                                                       |
+| `envVariableName`    | The YAML environment variable name                                                                        |         
 
 ### value substitution
 
@@ -238,7 +239,8 @@ Here is an example of `.percyrc` file:
   "variableSuffix": "}",
   "variableNamePrefix": "_",
   "envIgnorePrefix": "",
-  "envIgnoreSuffix": "_tpl"
+  "envIgnoreSuffix": "_tpl",
+  "envVariableName": "env"
 }
 ```
 
