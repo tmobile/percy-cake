@@ -1,6 +1,6 @@
 {
   "name": "percy-cake-hydration-tools",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Command line hydration utility scripts for files dehydrated for `Percy - Configuration As Kode Editor`",
   "repository": "https://github.com/tmobile/percy-cake",
   "main": "dist/index.js",
