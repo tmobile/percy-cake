@@ -231,9 +231,6 @@ export class Hydrate {
       defaultPercyConfig,
       parentFolderPercyConfig,
       currentFolderPercyConfig,
-      {
-        envVariableName: this.options.PERCY_ENV_VARIABLE_NAME
-      }
     ) as IPercyConfig;
   }
 }

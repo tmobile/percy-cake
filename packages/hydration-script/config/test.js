@@ -26,11 +26,11 @@ module.exports = {
   ENVIRONMENT_FILE_NAME:
     process.env.TEST_ENVIRONMENT_FILE_NAME || "environments.yaml",
   PERCY_CONFIG_FILE_NAME: process.env.TEST_PERCY_CONFIG_FILE_NAME || ".percyrc",
-  PERCY_ENV_VARIABLE_NAME: process.env.TEST_PERCY_ENV_VARIABLE_NAME || "env",
   DEFAULT_PERCY_CONFIG: {
     variablePrefix: process.env.TEST_DEFAULT_VARIABLE_PREFIX || "_{",
     variableSuffix: process.env.TEST_DEFAULT_VARIABLE_SUFFIX || "}_",
     variableNamePrefix: process.env.TEST_DEFAULT_VARIABLE_NAME_PREFIX || "$",
+    envVariableName: process.env.TEST_DEFAULT_ENV_VARIABLE_NAME || "env",
     envIgnorePrefix: process.env.TEST_DEFAULT_ENV_IGNORE_PREFIX,
     envIgnoreSuffix: process.env.TEST_DEFAULT_ENV_IGNORE_SUFFIX,
   },

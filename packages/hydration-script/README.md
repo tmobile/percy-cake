@@ -79,7 +79,7 @@ Main configuration file can be found at `config/default.js`
 | PERCY_LOG_LEVEL              |                                                                   |
 | PERCY_ENVIRONMENT_FILE_NAME        | Name of the environment file (default value: `environments.yaml`) |
 | PERCY_CONFIG_FILE_NAME       | Name of the percy configuration file (default value: `.percyrc`)  |
-| PERCY_ENV_VARIABLE_NAME | The YAML environment variable name (default value: `env`) |
+| PERCY_DEFAULT_ENV_VARIABLE_NAME | The YAML environment variable name (default value: `env`) |
 | PERCY_DEFAULT_ENV_IGNORE_PREFIX | The prefix of env not to generate the config files (no default value) |
 | PERCY_DEFAULT_ENV_IGNORE_SUFFIX | The suffix of env not to generate the config files (no default value) |
 | PERCY_DEFAULT_VARIABLE_PREFIX      | The YAML variable substitute prefix (default value: `_{`)         |
@@ -91,6 +91,7 @@ The app folder can contain optional `.percyrc` files, which provide repository-s
 
 | Property           | Description                         |
 |--------------------|-------------------------------------|
+| envVariableName    | The YAML environment variable name  |
 | variablePrefix     | The YAML variable substitute prefix |
 | variableSuffix     | The YAML variable substitute suffix |
 | variableNamePrefix | The YAML variable name prefix       |
@@ -102,6 +103,7 @@ If it's in the `apps` folder, the configuration applies to all applications, and
 Here is an example of `.percyrc` file:
 ```json
 {
+  "envVariableName": "env",
   "variablePrefix": "{{",
   "variableSuffix": "}}",
   "variableNamePrefix": "_",

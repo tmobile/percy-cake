@@ -1,6 +1,6 @@
 default: !!map
   server.host: !!int 1  # tx server url
-  path: !!str "${env}/file.json"
+  path: !!str "${_env_}/file.json"
   mytx.server.host: !!str "https://default.my.test.com"  # MYtx server url
   middlewareapipath: !!str "${_middlewareurl}/mw/api/path"
   _middlewareurl: !!str "https://default.middleware.test.com"  # Backend MW url
@@ -44,7 +44,7 @@ environments: !!map
           url: !!str "testCases/httpDataCache/testData"
           expireInMs: !!int 60000000223200
   _dev_: !!map
-    path: !!str ${env}/filename.json
+    path: !!str ${_env_}/filename.json
   dev: !!map
     inherits: !!str _dev_
     _middlewareurl: !!str "https://tx.tugs.dev.com"  # Production middleware endpoint

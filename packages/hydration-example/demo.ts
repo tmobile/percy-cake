@@ -30,7 +30,6 @@ const hydrate = new Hydrate({
   ENVIRONMENT_FILE_NAME: config.get("ENVIRONMENT_FILE_NAME"),
   LOG_LEVEL: config.get("LOG_LEVEL"),
   PERCY_CONFIG_FILE_NAME: config.get("PERCY_CONFIG_FILE_NAME"),
-  PERCY_ENV_VARIABLE_NAME: config.get("PERCY_ENV_VARIABLE_NAME")
 });
 
 const compareJson = new CompareJson({});

@@ -26,13 +26,13 @@ module.exports = {
   ENVIRONMENT_FILE_NAME:
     process.env.ENVIRONMENT_FILE_NAME || "environments.yaml",
   PERCY_CONFIG_FILE_NAME: process.env.PERCY_CONFIG_FILE_NAME || ".percyrc",
-  PERCY_ENV_VARIABLE_NAME: process.env.PERCY_ENV_VARIABLE_NAME || "env",
   DEFAULT_PERCY_CONFIG: {
     variablePrefix: process.env.DEFAULT_VARIABLE_PREFIX || "_{",
     variableSuffix: process.env.DEFAULT_VARIABLE_SUFFIX || "}_",
     variableNamePrefix: process.env.DEFAULT_VARIABLE_NAME_PREFIX || "$",
-    envIgnorePrefix: process.env.PERCY_ENV_IGNORE_PREFIX,
-    envIgnoreSuffix: process.env.PERCY_ENV_IGNORE_SUFFIX,
+    envVariableName: process.env.DEFAULT_ENV_VARIABLE_NAME || "env",
+    envIgnorePrefix: process.env.DEFAULT_ENV_IGNORE_PREFIX,
+    envIgnoreSuffix: process.env.DEFAULT_ENV_IGNORE_SUFFIX,
   },
   COLORIZE_CONSOLE: process.env.COLORIZE_CONSOLE
     ? /(f(?:alse)?|0|off)/gi.test(process.env.COLORIZE_CONSOLE)
