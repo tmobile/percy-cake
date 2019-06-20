@@ -1,6 +1,6 @@
 {
   "name": "percy-cake-web-app",
-  "version": "1.0.1",
+  "version": "1.0.7",
   "repository": "https://github.com/tmobile/percy-cake",
   "scripts": {
     "start": "cors-proxy stop && cors-proxy start -d -p 9999 && ng serve",
