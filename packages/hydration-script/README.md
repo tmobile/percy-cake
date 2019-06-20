@@ -105,7 +105,8 @@ Main configuration file can be found at `config/default.js`
 The app folder can contain optional `.percyrc` files, which provide repository-specific or application-specific configuration. The following properties are supported now:
 
 | Property           | Description                         |
-| ------------------ | ----------------------------------- |
+|--------------------|-------------------------------------|
+| envVariableName    | The YAML environment variable name  |
 | variablePrefix     | The YAML variable substitute prefix |
 | variableSuffix     | The YAML variable substitute suffix |
 | variableNamePrefix | The YAML variable name prefix       |
@@ -118,6 +119,7 @@ Here is an example of `.percyrc` file:
 
 ```json
 {
+  "envVariableName": "env",
   "variablePrefix": "{{",
   "variableSuffix": "}}",
   "variableNamePrefix": "_",

@@ -1062,7 +1062,8 @@ export class FileManagementService {
         const defaultAppConfig = _.pick(percyConfig, [
           "variablePrefix",
           "variableSuffix",
-          "variableNamePrefix"
+          "variableNamePrefix",
+          "envVariableName"
         ]);
         appConfigs[app] = _.assign(defaultAppConfig, appConfig);
       })

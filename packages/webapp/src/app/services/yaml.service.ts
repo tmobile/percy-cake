@@ -727,7 +727,11 @@ export class YamlService {
    */
   private resolveTokens(tokens, env: string) {
     const result = _.cloneDeep(tokens);
-    result[percyConfig.envVariableName] = env;
+    const envVariableName = _.defaultTo(
+      appPercyConfig.envVariableName,
+      percyConfig.envVariableName
+    );
+    result[envVariableName] = env;
 
     const referenceLinks = [];
 
@@ -1013,7 +1017,8 @@ export class YamlService {
     const defaultAppConfig = _.pick(percyConfig, [
       "variablePrefix",
       "variableSuffix",
-      "variableNamePrefix"
+      "variableNamePrefix",
+      "envVariableName"
     ]);
     const overridden = _.assign(defaultAppConfig, appConfig);
     return _.reduce(
