@@ -2,7 +2,7 @@
   "name": "percy-cake-hydration-example",
   "version": "1.0.1",
   "description": "",
-  "repository": "https://github.com/tmobile/percy",
+  "repository": "https://github.com/tmobile/percy-cake",
   "scripts": {
     "tsc": "tsc",
     "demo": "tsc && node dist/demo.js"

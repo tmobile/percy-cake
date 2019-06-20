@@ -2,7 +2,7 @@
   "name": "builders",
   "version": "1.0.1",
   "builders": "builders.json",
-  "repository": "https://github.com/tmobile/percy",
+  "repository": "https://github.com/tmobile/percy-cake",
   "license": "Apache-2.0",
   "licenses": [
     {
