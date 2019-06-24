@@ -2,9 +2,9 @@
 
 _*Build Once, Deploy anywhere.*_
 
-# Percival - a Configuration as Kode editor
+# Percival - a Configuration as Kode editor (with Hydration Tools)
 
-## Percy-CaKe (with Hydration Tools)
+## Percy-CaKe 
 
 ![percy editor](docs/images/prod.compiled.yaml.png)
 
