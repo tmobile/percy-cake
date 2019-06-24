@@ -2,7 +2,8 @@
 
 _*Build Once, Deploy anywhere.*_
 
-# Percival - a Configuration as Kode editor (with Hydration Tools)
+# Percival - a Configuration as Kode editor 
+## (with Hydration Tools)
 
 ## Percy-CaKe 
 
