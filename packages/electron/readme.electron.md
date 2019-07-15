@@ -8,27 +8,30 @@ The open remote repo mode has exactly same functionalites as webapp (With one di
 
 The open local folder mode will open folder within local file system and supports multiple editors for multiple files.
 
-## Package Electron App
+## Build Percy Electron App
 
 ```bash
-npm install -g lerna
-lerna bootstrap --hoist
+$ npm install -g lerna
+$ lerna bootstrap --hoist
 
 # Build electron app
-lerna run --scope=percy-cake-electron-app --stream build:prod
-
-# Package for MacOS
-lerna run --scope=percy-cake-electron-app --stream package:mac
-
-# Package for Linux
-lerna run --scope=percy-cake-electron-app --stream package:linux
-
-# Package for Windowns
-lerna run --scope=percy-cake-electron-app --stream package:win
-
-
-# The app executables will be built at:
-# MacOS: ./packages/electron/release/Percy-mac.dmg
-# Linux: ./packages/electron/release/Percy-linux-x64.zip
-# Windows: ./packages/electron/release/Percy-win-x64.zip
+$ lerna run --scope=percy-cake-electron-app --stream build:prod
 ```
+
+## Package Electron App
+
+|    OS   |  Key    |
+| ------- | ------- |
+|  OSX    | `$ lerna run --scope=percy-cake-electron-app --stream package:mac`  |
+|  *nix   | `$ lerna run --scope=percy-cake-electron-app --stream package:linux` |
+| Windows | `$ lerna run --scope=percy-cake-electron-app --stream package:win`   |
+
+
+The compiled and packaged installers will be located in `packages/electron/release/**`
+
+|    OS     |  Package / Installer                              |
+| --------- | ------------------------------------------------- |
+| *MacOS*   | `./packages/electron/release/Percy-mac.dmg`       |
+| *Linux*:  | `./packages/electron/release/Percy-linux-x64.zip` |
+| *Windows* | `./packages/electron/release/Percy-win-x64.zip`   |
+

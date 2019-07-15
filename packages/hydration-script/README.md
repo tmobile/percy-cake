@@ -17,15 +17,6 @@ Or install commands globally
 npm install -g percy-cake-hydration-tools
 ```
 
-## Publish
-
-To publish this library, run:
-
-```
-lerna run --scope=percy-cake-hydration-tools --stream tsc
-npm publish
-```
-
 ## Documentation
 
 Documentations are auto generated and can be accessed from `docs` folder.

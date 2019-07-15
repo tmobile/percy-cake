@@ -2,8 +2,8 @@
   "name": "percy-cake-electron-app",
   "productName": "Percy",
   "description": "Percy Electron App",
-  "version": "1.0.1",
-  "repository": "https://github.com/tmobile/percy",
+  "version": "1.0.7",
+  "repository": "https://github.com/tmobile/percy-cake",
   "main": "dist/main.js",
   "scripts": {
     "postinstall": "electron-builder install-app-deps",

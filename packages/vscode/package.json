@@ -1,6 +1,6 @@
 {
   "name": "percy-vscode-extension",
-  "version": "1.0.1",
+  "version": "1.0.7",
   "engines": {
     "vscode": "^1.26.0"
   },

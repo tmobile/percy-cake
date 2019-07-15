@@ -1,10 +1,31 @@
-# Percival - a Configuration as Kode editor
+# Overview
 
-### Percy-CaKe (with Hydration Tools)
+_*Build Once, Deploy anywhere.*_
+
+# Percival - a Configuration as Kode editor 
+## (with Hydration Tools)
+
+## Percy-CaKe 
 
 ![percy editor](docs/images/prod.compiled.yaml.png)
 
-### FAQ:
+[Full BLOG introducing Percy-Cake](/docs/BLOG.md)
+
+
+The editor is available in 4 flavors:
+1. [Web Application](#staticAssets)
+2. [Docker container hosting web application](packages/docker/readme.docker.md)
+3. [Electron application](packages/electron/readme.electron.md)
+4. [VSCode extension](packages/vscode/readme.vscode.md)
+
+
+## Percy Hydration Tools
+
+`npm install percy-cake-hydration-tools`
+
+For more information on how to use the hydration tools please refer to the [hydration tools README](/packages/hydration-script/README.md)
+
+# FAQ:
 
 - [What is Configuration As Kode](docs/faq.md) ?
 - [Why `Percy`](docs/faq.md)?
@@ -12,104 +33,77 @@
 - Editor Overview _TBD_
 - File Hydration Utility Scripts _TBD_
 
-## Overview
 
-_*Build Once, Deploy anywhere.*_
 
-### Problem statement
+# Development
 
-Imagine you need to deploy your web application, or micro-service, to many different environments:
+Prerequisite
 
-- `dev`
-- `qat`
-- `regression`
-- `perf`
-- `staging`
-- `prod`
+- Node.js 10
+- Npm 6
 
-and in each environment your app requires a slightly different configuration:
+```bash
+# Install dependencies
+npm install -g lerna
+lerna bootstrap --hoist
 
-- what data api endpoints it has access to
-- what feature toggles should be enabled
-- logging level
-- ...
+# Lint code
+lerna run lint --stream
 
-### Solution
+# Run unit tests
+lerna run test --stream
 
-_Percy-CaKe_ is a configuration editor that allows authorized users [_devs+, _ops_, _web admins_...] an intuitive form based User Interface for managing and maintaining complex application configuration files for deployment to multiple environments.
-
-This editor will enforce some simple rules that will enable robust continuous deployment pipelines to automate validation, hydration and deployment of application configuration files to any number of snowflake environments.
-
-Percy can interact with a local file system or a remote git repository.
-The editor allows the user to manage (list, create, edit or delete) YAML configuration files from a git repository in the browser directly.
-
-The core Percy CaKe application is a pure static web SPA, that requires no back-end (_but a proxy may be needed for it to access the git repository successfully_). This same web application can be bundled many different ways. We have provided specialized builders to package Percy for various runtimes (Percy Runtime Modes)[docs/percy.runtime.modes.md]
-
-When accessing a remote git repository with this editor the repo must follow the mono-repo directory structure as below:
-
-```sh
-apps/
-  +- .percyrc                   # [optional]
-  +- */                         # 1 folder per app defined in repo
-  |    +- .percyrc              # [optional]
-  |    +- environments.yaml
-  |    +- *.yaml                # 1 or more config files (client, server, toggles .... )
-  |    +- readme.md             # [optional]
-  ...
-readme.md                       # [optional]
+# Start development server at http://localhost:4200
+lerna run --scope=percy-cake-web-app --stream start
 ```
 
-The git repo must have a root level folder named `./apps` (_name of this root directory is configurable_), with each sub-directory representing an application. The editor will load all applications together with all the `YAML` files inside each application (non-`YAML` files will be ignored).
+# Percy Runtime Modes:
 
-Each application folder must contain a special YAML file calle `environments.yaml` (_file name is configurable_) that lists all environments that the application is deployed to. So in the editor, when editing the other YAML files, you can simply select the environments pre-defined in this file.
-This `environments` file can list properties for each environment that help an automated build and deployment system (CICD) to know where and how to deploy to each environment.
+The Percy Configuration Editor application has **Five** different runtimes that share the same core application modules!
 
-In each application folder, all `YAML` files must follow the format as below:
+## 1. Local Development server
 
-```yaml
-default: !!map
-  property-name: !!str "default value"
-environments: !!map
-  env-name: !!map
-    property-name: !!str "new value for this environment only"
+the Percy editor can be run using the webpack development server for local testing and development.
+
+```bash
+# Build and Start development server at http://localhost:4200
+lerna run --scope=percy-cake-web-app --stream start
 ```
 
-The `default` node contains the default configuration properties for the application, and the `environments` node contains one or more environment nodes as defined in the `environments.yaml` file. The environment nodes inherit _all_ the properties defined in the `default` node.
-The user can _override_ any of these default settings inside the environment node, they **cannot** _add_ new properties not already defined in `default`. This is a protection to assure that all environments are given the same set of configuration propteries, while allowing individual environments to replace named properties with values specific to the deployed environment (eg: url to database or api services ).
+## <a name="staticAssets"></a>2. Static assets
 
-When the `config.yaml` file is compiled it should create a separate `config.json` file for every environment listed in the `environments.yaml`.
+The Percy editor can be deployed as packaged static assets to any CDN or web server.
 
-Here is an example of a YAML file, and you can notice the `environments` node contains `prod`, `dev` and `qa` environment nodes.
+```bash
+# build the application
+lerna run --scope=percy-cake-web-app --stream build:prod
 
-```yaml
-default: !!map
-  server.host: !!int 1 # tx server url
-  mytx.server.host: !!str "https://default.my.test.com" # MYtx server url
-  middlewareapipath: !!str "${_middlewareurl}/mw/api/path"
-  _middlewareurl: !!str "https://default.middleware.test.com" # Backend MW url
-  _dcphost: !!str "https://default.api.test.com"
-  _api-path: !!str "/path/to/api"
-  apihost: !!str "http://txnext-gen.com${_api-path}"
-  dcpendpoints: !!map
-    dcpcart: !!str "${_dcphost}/api/cart"
-    dcpupdate: !!str "${_dcphost}/api/update"
-    dcprefund: !!str "${_dcphost}/api/refund"
-
-environments: !!map
-  prod: !!map
-    $middlewareurl: !!str "https://e3.my.test.com" # Production middleware endpoint
-    apihost: !!str "http://test.com${_api-path}"
-    $dcphost: !!str "http://prod.dcp.com"
-    dcpendpoints: !!map
-      dcpcart: !!str "${_dcphost}/api/v2/cart"
-  dev: !!map
-    $middlewareurl: !!str "https://tx.tugs.dev.com" # Production middleware endpoint
-    apihost: !!str "http://test.com${_api-path}"
-    newProperty: !!str "hello"
-  qa: !!map
-    $middlewareurl: !!str "https://tx.tugs.qat.com" # Production middleware endpoint
-    apihost: !!str "http://test.com${_api-path}"
 ```
+
+### static assets are located at
+
+`packages/webapp/dist/build/`
+
+- `favicon.png`
+- `index.html`
+- `percy.bundle.min.js`
+- `percy.conf.json`
+
+## 3. Docker container
+
+The Percy editor can be packaged and run as web application within a docker container;
+[click here](packages/docker/readme.docker.md) for more information.
+
+## 4. VSCode editor extension
+
+The Percy editor can be run as a vscode extension that provides an IDE editor for app config files following the Percy yaml format;
+[click here](packages/vscode/readme.vscode.md) for more information.
+
+## 5. Percy Electron App
+
+The Percy editor can be run as a standalone desktop application;
+[click here](packages/electron/readme.electron.md) for more information
+
 
 ## Usage
 
@@ -221,7 +215,7 @@ or interpolated within a string
 "tenure": !!str "This is week ${weekNumber} of my internship"
 ```
 
-### evironment templates
+### environment templates
 
 Percy also supports environment templates for easy sharing of code patterns thru inheritance. Note, every environment inherits from the `default` _by default_ but can inherit inherit from 1 other defined environment. Environment inheritance cascades with the last inherited value taking precedence.
 
@@ -244,79 +238,13 @@ Here is an example of `.percyrc` file:
 }
 ```
 
-## Development
 
-Prerequisite
+===============================================================================================================
 
-- Node.js 10
-- Npm 6
-
-```bash
-# Install dependencies
-npm install -g lerna
-lerna bootstrap --hoist
-
-# Lint code
-lerna run lint --stream
-
-# Run unit tests
-lerna run test --stream
-
-# Start development server at http://localhost:4200
-lerna run --scope=percy-cake-web-app --stream start
-```
-
-# Percy Runtime Modes:
-
-The Percy Configuration Editor application has **Five** different runtimes that share the same core application modules!
-
-## 1. Local Development server
-
-the Percy editor can be run using the webpack development server for local testing and development.
-
-```bash
-# Build and Start development server at http://localhost:4200
-lerna run --scope=percy-cake-web-app --stream start
-```
-
-## 2. Static assets
-
-The Percy editor can be deployed as packaged static assets to any CDN or web server.
-
-```bash
-# build the application
-lerna run --scope=percy-cake-web-app --stream build:prod
-
-```
-
-### static assets are located at
-
-`packages/webapp/dist/build/`
-
-- `favicon.png`
-- `index.html`
-- `percy.bundle.min.js`
-- `percy.conf.json`
-
-## 3. Docker container
-
-The Percy editor can be packaged and run as web application within a docker container;
-[click here](packages/docker/readme.docker.md) for more information.
-
-## 4. VSCode editor extension
-
-The Percy editor can be run as a vscode extension that provides an IDE editor for app config files following the Percy yaml format;
-[click here](packages/vscode/readme.vscode.md) for more information.
-
-## 5. Percy Electron App
-
-The Percy editor can be run as a standalone desktop application;
-[click here](packages/electron/readme.electron.md) for more information
-
-## License
+# License
 
 Percy editor and hydration scripts are open-sourced under Apache 2.0 and is released AS-IS WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND under the terms of Section 7 of the Apache license.
 
-## DISCLAIMER
+# DISCLAIMER
 
 T-Mobile® has made every reasonable effort to test the code for its intended purpose, as anticipated by T-Mobile®. T-Mobile® further acknowledges that the code may be used on a wide range of platforms and in many different contexts. Accordingly, it is likely that the code will need to be modified. Please have your IT team validate the code prior to any production use.
