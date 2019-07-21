@@ -104,6 +104,10 @@ The Percy editor can be run as a vscode extension that provides an IDE editor fo
 The Percy editor can be run as a standalone desktop application;
 [click here](packages/electron/readme.electron.md) for more information
 
+## 6. Percy WebStorm Extension
+
+The Percy editor can be run as a WebStorm extension that provides an IDE editor for app config files following the Percy yaml format;
+[click here](packages/webstorm/readme.webstorm.md) for more information.
 
 ## Usage
 

@@ -44,9 +44,9 @@ intellij {
   downloadSources true
 }
 patchPluginXml {
-  pluginDescription "Percy Editor for ${arch}"
-  changeNotes """
-      First Release"""
+  // pluginDescription "Percy Editor for ${arch}"
+  // changeNotes """
+  //     First Release"""
 }
 
 task generateSources(type: Copy) {

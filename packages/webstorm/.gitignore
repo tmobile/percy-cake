@@ -5,4 +5,5 @@ build/
 .classpath
 .project
 .settings/
-
+webstorm.iml
+src/main/resources/percy.bundle.min.js
