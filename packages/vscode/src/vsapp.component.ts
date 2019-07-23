@@ -44,8 +44,24 @@ import { ConfirmationDialogComponent } from "components/confirmation-dialog/conf
 
 import { MESSAGE_TYPES } from "../extension/constants";
 
+window["sendMessage"] = (data) => {
+  window.postMessage(JSON.parse(data), "*");
+};
 declare var acquireVsCodeApi;
-const vscode = acquireVsCodeApi();
+let vscode;
+
+function getVscode() {
+  if (vscode) {
+    return vscode;
+  }
+  if (window["bridge"]) {
+    vscode = window["bridge"];
+    return vscode;
+  }
+
+  vscode = acquireVsCodeApi();
+  return vscode;
+}
 
 @Component({
   selector: "app-vscode-root",
@@ -90,7 +106,7 @@ export class VSAppComponent implements OnInit {
   ngOnInit() {
     this.isPageDirty$.subscribe(res => {
       if (this.isPageDirty !== res) {
-        vscode.postMessage({
+        getVscode().postMessage({
           type: MESSAGE_TYPES.FILE_DIRTY,
           dirty: res
         });
@@ -99,9 +115,11 @@ export class VSAppComponent implements OnInit {
       this.isPageDirty = res;
     });
 
-    vscode.postMessage({
-      type: MESSAGE_TYPES.INIT
-    });
+    setTimeout(() => {
+      getVscode().postMessage({
+        type: MESSAGE_TYPES.INIT
+      });
+    }, 100);
   }
 
   /**
@@ -205,7 +223,7 @@ export class VSAppComponent implements OnInit {
 
     if (!forRender) {
       // User reset action
-      vscode.postMessage({
+      getVscode().postMessage({
         type: MESSAGE_TYPES.FILE_DIRTY,
         dirty: this.isPageDirty
       });
@@ -271,7 +289,7 @@ export class VSAppComponent implements OnInit {
       this.fileSaving = { ...editorState.configFile };
       this.fileSaving.draftConfig = editorState.configuration;
 
-      vscode.postMessage({
+      getVscode().postMessage({
         type: MESSAGE_TYPES.SAVE,
         editMode: this.editMode,
         envFileMode: this.envFileMode,
@@ -286,7 +304,7 @@ export class VSAppComponent implements OnInit {
    * Close the webview panel.
    */
   private close() {
-    vscode.postMessage({
+    getVscode().postMessage({
       type: MESSAGE_TYPES.CLOSE
     });
   }

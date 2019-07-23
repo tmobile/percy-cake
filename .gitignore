@@ -5,6 +5,7 @@ dist
 out-tsc
 /packages/vscode/*.vsix
 /packages/electron/release
+/packages/webstorm/build
 /tmp
 
 # dependencies

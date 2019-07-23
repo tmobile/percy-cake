@@ -1,0 +1,9 @@
+.DS_Store
+bin/
+build/
+.gradle/
+.classpath
+.project
+.settings/
+webstorm.iml
+src/main/resources/percy.bundle.min.js

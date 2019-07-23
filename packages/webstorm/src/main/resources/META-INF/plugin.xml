@@ -1,0 +1,56 @@
+<idea-plugin>
+	<id>com.tmobile.percy</id>
+	<name>PercyEditor</name>
+	<vendor email="support@t-mobile.com"
+		url="https://www.t-mobile.com">T-Mobile</vendor>
+
+	<description><![CDATA[
+		
+		<p>Support for <a href="https://github.com/tmobile/percy-cake">Percy</a></p> 
+        <p>Getting Started</p>
+        <ul>
+      	  <li>Load a directory containing YAML files following the Percy directory and file structure</li>
+      	  <li>Open a YAML file and switch to the "Percy Editor" tab.</li>
+        </ul>
+        
+        <p>Features</p>
+        <ul>
+          <li>Define multiple environments in a special "environments.yaml" file</li>
+          <li>Reuse the defined environments in other YAML file in the same directory</li>
+          <li>Inherit properties from default environment in non-default environment</li>
+          <li>Support YAML property with object, bool, string, number and array types</li>
+          <li>Define variables at the top-level, and use the variables anywhere in the YAML file</li>
+          <li>View the compiled YAML of the environment node, in this view, the inherits and variables will be resolved</li>
+        </ul>
+	]]></description>
+
+	<change-notes>Initial release of the plugin.</change-notes>
+	<version>1.0.0</version>
+
+	<!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html 
+		on how to target different products -->
+	<idea-version since-build="172.3317" />
+	<!-- uncomment to enable plugin in all products -->
+	<depends>com.intellij.modules.lang</depends>
+
+	<application-components>
+		<component>
+			<implementation-class>com.tmobile.percy.editor.PercyEditorComponent</implementation-class>
+		</component>
+	</application-components>
+
+	<extensions defaultExtensionNs="com.intellij">
+		<fileTypeFactory
+			implementation="com.tmobile.percy.PercyFileTypeFactory" />
+		<httpRequestHandler
+			implementation="com.tmobile.percy.HttpServer" />
+
+		<fileEditorProvider
+			implementation="com.tmobile.percy.editor.PercyEditorProvider" />
+
+	</extensions>
+
+	<actions>
+		<!-- Add your actions here -->
+	</actions>
+</idea-plugin>

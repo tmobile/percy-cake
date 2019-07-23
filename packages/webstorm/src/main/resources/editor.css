@@ -1,0 +1,15 @@
+body {   
+    --vscode-editor-background: #ffffff;
+    --vscode-editor-foreground: #000000;
+    --vscode-dropdown-background: #ffffff;
+    --vscode-editorWidget-background: #f3f3f3;
+    --vscode-input-placeholderForeground: #767676;
+}
+
+body.vscode-dark {
+    --vscode-editor-background: #1e1e1e;
+    --vscode-editor-foreground: #d4d4d4;
+    --vscode-dropdown-background: #3c3c3c;
+    --vscode-editorWidget-background: #252526;
+    --vscode-input-placeholderForeground: #a6a6a6;
+}
