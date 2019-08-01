@@ -41,11 +41,13 @@ import { PageLoad } from "store/actions/editor.actions";
 import { appPercyConfig } from "config";
 
 import { EditorComponent } from "components/editor/editor.component";
+import { TextEditorComponent } from "components/text-editor/text-editor.component";
 
 import { ConfirmationDialogComponent } from "components/confirmation-dialog/confirmation-dialog.component";
 import { CommitDialogComponent } from "components/commit-dialog/commit-dialog.component";
 import { Observable } from "rxjs";
 import { User } from "../../models/auth";
+import { FileTypes } from "models/config-file";
 
 /*
   Configurations editor page
@@ -59,9 +61,12 @@ import { User } from "../../models/auth";
 export class EditorPageComponent implements OnInit, OnDestroy {
   appName: string;
   fileName: string;
+  fileType: string = FileTypes.YAML;
   editMode = false;
   envFileMode = false;
   isViewOnly = false;
+  isRootFile = false;
+  showYamlEditor = true;
 
   environments = this.store.pipe(select(appStore.getEnvironments));
   configuration = this.store.pipe(select(appStore.getConfiguration));
@@ -72,11 +77,14 @@ export class EditorPageComponent implements OnInit, OnDestroy {
   isPageDirty$ = this.store.pipe(select(appStore.getIsPageDirty));
   isPageDirty = false;
 
+  fileTypes = FileTypes;
+
   currentUser: Observable<User> = this.store.pipe(
     select(appStore.getCurrentUser)
   );
 
   @ViewChild("editor") editor: EditorComponent;
+  @ViewChild("textEditor") textEditor: TextEditorComponent;
 
   /**
    * creates the component
@@ -98,18 +106,30 @@ export class EditorPageComponent implements OnInit, OnDestroy {
     const routeSnapshot = this.route.snapshot;
     this.editMode = routeSnapshot.data.editMode;
     this.envFileMode = routeSnapshot.data.envFileMode;
+    this.isRootFile = routeSnapshot.data.rootFile;
 
-    const applicationName = (this.appName = routeSnapshot.paramMap.get(
-      "appName"
-    ));
+    const applicationName = (this.appName = this.isRootFile ? "" : routeSnapshot.paramMap.get("appName"));
+
+    if (this.editMode) {
+      const fileExt = routeSnapshot.paramMap.get("fileName").split(".").pop();
+      this.fileType = fileExt === FileTypes.YML ? FileTypes.YAML : fileExt;
+    } else {
+      this.fileType = routeSnapshot.paramMap.get("fileType");
+    }
+
+    this.showYamlEditor = this.fileType === FileTypes.YAML;
+
     this.fileName =
       this.editMode || this.envFileMode
         ? routeSnapshot.paramMap.get("fileName")
-        : null;
+        : this.fileType === FileTypes.PERCYRC
+          ? ".percyrc"
+          : null;
 
     this.store.dispatch(
       new PageLoad({
         fileName: this.fileName,
+        fileType: <FileTypes>this.fileType,
         applicationName,
         editMode: this.editMode
       })
@@ -157,6 +177,7 @@ export class EditorPageComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * for yaml files
    * Save draft config.
    */
   saveConfig() {
@@ -176,6 +197,7 @@ export class EditorPageComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * for yaml files
    * Commit file.
    */
   commitFile() {
@@ -204,6 +226,48 @@ export class EditorPageComponent implements OnInit, OnDestroy {
           );
         }
       });
+    });
+  }
+
+
+  /*
+    for non yaml files
+    save file content
+   */
+  saveFileContent() {
+    const result = this.textEditor.validate();
+
+    if (!result.valid) {
+      return;
+    }
+
+    this.store.dispatch(new SaveDraft({ file: result.file, redirect: true }));
+  }
+
+
+  /*
+    for non yaml files
+    commit file
+   */
+  commitFileContent() {
+    const result = this.textEditor.validate();
+
+    if (!result.valid) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open(CommitDialogComponent);
+
+    dialogRef.afterClosed().subscribe(response => {
+      if (response) {
+        this.store.dispatch(
+          new CommitChanges({
+            files: [result.file],
+            message: response,
+            fromEditor: true
+          })
+        );
+      }
     });
   }
 }

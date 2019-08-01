@@ -26,6 +26,9 @@ import { HttpClientModule } from "@angular/common/http";
 import { StoreModule } from "@ngrx/store";
 import { EffectsModule } from "@ngrx/effects";
 
+// markdown viewer
+import { MarkdownModule } from "ngx-markdown";
+
 // Common
 import { CommonModule } from "common.module";
 
@@ -43,6 +46,7 @@ import { CreateBranchDialogComponent } from "components/create-branch-dialog/cre
 import { CommitDialogComponent } from "components/commit-dialog/commit-dialog.component";
 import { SelectAppDialogComponent } from "components/select-app-dialog/select-app-dialog.component";
 import { ConflictDialogComponent } from "components/conflict-dialog/conflict-dialog.component";
+import { TextEditorComponent } from "components/text-editor/text-editor.component";
 
 import { reducers, metaReducers } from "store";
 import { AppEffects } from "store/affects/app.effects";
@@ -71,10 +75,12 @@ import { PreferencesComponent } from "./components/preferences/preferences.compo
     CommitDialogComponent,
     SelectAppDialogComponent,
     ConflictDialogComponent,
-    PreferencesComponent
+    PreferencesComponent,
+    TextEditorComponent
   ],
   imports: [
     HttpClientModule,
+    MarkdownModule.forRoot(),
     ElectronAppRoutingModule,
     CommonModule,
     StoreModule.forRoot(reducers, { metaReducers }),

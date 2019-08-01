@@ -170,40 +170,52 @@ software without specific prior written permission.
 
         <app-editor
           #editor
+          *ngIf="file.fileType === fileTypes.YAML"
           [environments]="file.environments"
           [configuration]="file.configuration"
           [appName]="file.applicationName"
           [fileName]="file.editMode || file.envFileMode ? file.fileName : ''"
           [editMode]="file.editMode"
           [envFileMode]="file.envFileMode"
+          [buttonsTemplate]="buttonsTemplate"
         >
-          <ng-template #buttonsTemplate>
-            <div class="buttons-row">
-              <button
-                type="button"
-                mat-button
-                color="primary"
-                [disabled]="fileSaving || !file.modified"
-                class="btn-cancel"
-                (click)="reset(file)"
-              >
-                Reset
-              </button>
-
-              <button
-                type="button"
-                mat-raised-button
-                color="primary"
-                [disabled]="fileSaving || !file.modified"
-                class="btn-save"
-                (click)="saveConfig(editor, file)"
-              >
-                Save
-              </button>
-            </div>
-          </ng-template>
         </app-editor>
+
+        <app-text-editor
+          #textEditor
+          *ngIf="file.fileType !== fileTypes.YAML"
+          [editMode]="file.editMode"
+          [file]="file"
+          [isPercyrcFile]="file.fileType === fileTypes.PERCYRC"
+          [buttonsTemplate]="buttonsTemplate"
+        ></app-text-editor>
       </mat-tab>
     </mat-tab-group>
   </div>
 </div>
+
+<ng-template #buttonsTemplate>
+  <div class="buttons-row">
+    <button
+      type="button"
+      mat-button
+      color="primary"
+      [disabled]="fileSaving || !file.modified"
+      class="btn-cancel"
+      (click)="reset(file)"
+    >
+      Reset
+    </button>
+
+    <button
+      type="button"
+      mat-raised-button
+      color="primary"
+      [disabled]="fileSaving || !file.modified"
+      class="btn-save"
+      (click)="saveConfig(editor, file)"
+    >
+      Save
+    </button>
+  </div>
+</ng-template>

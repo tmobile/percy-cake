@@ -39,6 +39,7 @@
     "ms": "^2.1.1",
     "ngrx-store-localstorage": "^5.1.1",
     "ngx-highlightjs": "^3.0.0",
+    "ngx-markdown": "^8.1.0",
     "pbkdf2": "^3.0.17",
     "rxjs": "~6.3.3",
     "split.js": "^1.5.10",

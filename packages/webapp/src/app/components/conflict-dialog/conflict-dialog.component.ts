@@ -25,7 +25,7 @@ import { Component, Inject, OnInit } from "@angular/core";
 import { MatDialogRef, MAT_DIALOG_DATA } from "@angular/material";
 import * as _ from "lodash";
 
-import { ConfigFile, ConflictFile } from "models/config-file";
+import { ConfigFile, ConflictFile, FileTypes } from "models/config-file";
 
 /**
  * The conflict dialog component
@@ -36,6 +36,7 @@ import { ConfigFile, ConflictFile } from "models/config-file";
   styleUrls: ["./conflict-dialog.component.scss"]
 })
 export class ConflictDialogComponent implements OnInit {
+  fileTypes = FileTypes;
   fileIdx = 0;
 
   /**
@@ -87,6 +88,7 @@ export class ConflictDialogComponent implements OnInit {
     const files = this.data.conflictFiles.map((file: ConflictFile) => {
       const result: ConfigFile = {
         fileName: file.fileName,
+        fileType: file.fileType,
         applicationName: file.applicationName,
         size: file.size,
         draftContent:

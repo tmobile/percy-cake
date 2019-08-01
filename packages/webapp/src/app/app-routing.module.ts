@@ -82,11 +82,30 @@ export const routes: Routes = [
             }
           },
           {
-            path: "new/:appName",
+            path: "new/:fileType",
             component: EditorPageComponent,
             canDeactivate: [CanDeactivateGuard],
             data: {
-              editMode: false
+              editMode: false,
+              rootFile: true
+            }
+          },
+          {
+            path: "new/:appName/:fileType",
+            component: EditorPageComponent,
+            canDeactivate: [CanDeactivateGuard],
+            data: {
+              editMode: false,
+              rootFile: false
+            }
+          },
+          {
+            path: "edit/:fileName",
+            component: EditorPageComponent,
+            canDeactivate: [CanDeactivateGuard],
+            data: {
+              editMode: true,
+              rootFile: true
             }
           },
           {
@@ -94,7 +113,8 @@ export const routes: Routes = [
             component: EditorPageComponent,
             canDeactivate: [CanDeactivateGuard],
             data: {
-              editMode: true
+              editMode: true,
+              rootFile: false
             }
           }
         ]

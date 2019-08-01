@@ -6,27 +6,25 @@
     <span *ngIf="isViewOnly">View File</span>
   </div>
 
-  <app-editor #editor *ngIf="(environments | async) && (configuration | async); else loader"
-    [environments]="environments|async" [configuration]="configuration|async"
-    [appName]="appName" [fileName]="fileName" [editMode]="editMode" [envFileMode]="envFileMode">
-    <ng-template #buttonsTemplate>
-      <div class="buttons-row">
-        <button type="button" mat-button color="primary" class="btn-cancel" [routerLink]="['/dashboard']">
-          Cancel
-        </button>
+  <ng-container *ngIf="showYamlEditor">
+    <app-editor #editor *ngIf="(environments | async) && (configuration | async); else loader"
+      [environments]="environments|async" [configuration]="configuration|async" [buttonsTemplate]="buttonsTemplate"
+      [appName]="appName" [fileName]="fileName" [editMode]="editMode" [envFileMode]="envFileMode">
+    </app-editor>
+  </ng-container>
 
-        <button *ngIf="!isViewOnly" type="button" mat-raised-button color="primary" [disabled]="(isSaving | async) || !isPageDirty" class="btn-save"
-          (click)="saveConfig()">
-          Save As Draft
-        </button>
-
-        <button *ngIf="!isViewOnly" type="button" mat-raised-button color="primary" [disabled]="(isCommitting | async) || !(configFile | async)?.modified"
-          class="btn-save" (click)="commitFile()">
-          Commit
-        </button>
-      </div>
-    </ng-template>
-  </app-editor>
+  <ng-container *ngIf="!showYamlEditor">
+    <app-text-editor
+      #textEditor
+      *ngIf="configFile | async; else loader"
+      [editMode]="editMode"
+      [file]="configFile | async"
+      [isPercyrcFile]="fileType === fileTypes.PERCYRC"
+      [buttonsTemplate]="buttonsTemplate"
+      [isViewOnly]="isViewOnly"
+    >
+    </app-text-editor>
+  </ng-container>
 
   <div *ngIf="(isSaving | async) || (isCommitting|async)">
     <app-loader></app-loader>
@@ -36,4 +34,22 @@
 <!-- loading indicator -->
 <ng-template #loader>
   <app-loader></app-loader>
+</ng-template>
+
+<ng-template #buttonsTemplate>
+  <div class="buttons-row">
+    <button type="button" mat-button color="primary" class="btn-cancel" [routerLink]="['/dashboard']">
+      Cancel
+    </button>
+
+    <button *ngIf="!isViewOnly" type="button" mat-raised-button color="primary" [disabled]="(isSaving | async) || !isPageDirty" class="btn-save"
+      (click)="showYamlEditor ? saveConfig() : saveFileContent()">
+      Save As Draft
+    </button>
+
+    <button *ngIf="!isViewOnly" type="button" mat-raised-button color="primary" [disabled]="(isCommitting | async) || !(configFile | async)?.modified"
+      class="btn-save" (click)="showYamlEditor ? commitFile() : commitFileContent()">
+      Commit
+    </button>
+  </div>
 </ng-template>

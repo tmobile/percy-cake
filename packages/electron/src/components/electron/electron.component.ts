@@ -38,7 +38,7 @@ import { Store, select } from "@ngrx/store";
 
 import { electronApi, percyConfig, appPercyConfig } from "config";
 import { TreeNode } from "models/tree-node";
-import { Configuration } from "models/config-file";
+import { Configuration, FileTypes } from "models/config-file";
 
 import * as appStore from "store";
 import { PageRestore } from "store/actions/editor.actions";
@@ -73,6 +73,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
   } = {};
 
   newFileIno = -1;
+  fileTypes = FileTypes;
 
   sub: Subscription;
 
@@ -435,8 +436,16 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
       // Parse file content
       const fileContent = electronApi.readFile(file.path);
-      file.originalConfig = this.parseYaml(fileContent, file.path);
-      file.configuration = _.cloneDeep(file.originalConfig);
+      if (file.fileType === FileTypes.YAML) {
+        file.originalConfig = this.parseYaml(fileContent, file.path);
+        file.configuration = _.cloneDeep(file.originalConfig);
+      } else {
+        file.originalConfig = fileContent;
+        file.configuration = fileContent;
+        file.originalContent = fileContent;
+        file.draftContent = fileContent;
+      }
+
       file.modified = false;
 
       file.editMode = true;
@@ -468,7 +477,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
           const _file = this.findOpenedFile(file.path);
           if (_file) {
             const _fileContent = electronApi.readFile(filePath);
-            const originalConfig = this.parseYaml(_fileContent, filePath);
+            const originalConfig = _file.fileType === FileTypes.YAML ? this.parseYaml(_fileContent, filePath) : _fileContent;
             if (!_.isEqual(originalConfig, _file.originalConfig)) {
               if (this.changedDialogRef[filePath]) {
                 this.changedDialogRef[

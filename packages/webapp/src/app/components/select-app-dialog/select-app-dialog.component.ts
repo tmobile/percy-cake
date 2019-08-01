@@ -21,20 +21,16 @@ software without specific prior written permission.
 ===========================================================================
 */
 
-import { Component, Inject, OnInit } from "@angular/core";
+import { Component, Inject, OnInit, OnDestroy } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { MatDialogRef, MAT_DIALOG_DATA } from "@angular/material";
-import { BehaviorSubject } from "rxjs";
-import {
-  startWith,
-  debounceTime,
-  distinctUntilChanged,
-  map
-} from "rxjs/operators";
+import { Subscription } from "rxjs";
 
 import * as _ from "lodash";
 
 import { NotEmpty } from "services/validators";
+import { FileTypes } from "models/config-file";
+import { percyConfig } from "config";
 
 /**
  * The select app dialog component
@@ -44,11 +40,19 @@ import { NotEmpty } from "services/validators";
   templateUrl: "./select-app-dialog.component.html",
   styleUrls: ["./select-app-dialog.component.scss"]
 })
-export class SelectAppDialogComponent implements OnInit {
+export class SelectAppDialogComponent implements OnInit, OnDestroy {
+  baseFolderOptions = ["", percyConfig.yamlAppsFolder, "application"];
+
+  fileType = new FormControl(FileTypes.YAML);
+  baseFolder = new FormControl(this.baseFolderOptions[0]);
   appname = new FormControl("", [NotEmpty]);
   createEnv = new FormControl();
 
-  filteredApps = new BehaviorSubject<string[]>([]);
+  filteredApps = [];
+  hasPercyrc = [];
+  fileTypes = FileTypes;
+
+  subscription = new Subscription();
 
   /**
    * constructs the component
@@ -64,34 +68,43 @@ export class SelectAppDialogComponent implements OnInit {
    * initializes the component
    */
   ngOnInit() {
-    const { selectedApp } = this.data;
+    const { selectedApp, files, applications } = this.data;
+
+    this.filteredApps = applications;
+    this.hasPercyrc = _.map(_.filter(files, { fileName: ".percyrc"} ), "applicationName");
+
+    const sub1 = this.appname.valueChanges
+      .subscribe(value => this.onAppChange(value));
+
+    const sub2 = this.fileType.valueChanges
+      .subscribe(fileType => {
+        if (this.appname.value !== "") {
+          this.appname.setValue("");
+        }
+
+        if (fileType === FileTypes.PERCYRC) {
+          this.baseFolderOptions = _.difference(["", percyConfig.yamlAppsFolder], this.hasPercyrc);
+          this.baseFolderOptions.push("application");
+
+          this.filteredApps = _.difference(applications, this.hasPercyrc);
+        } else {
+          this.baseFolderOptions = ["", percyConfig.yamlAppsFolder, "application"];
+          this.filteredApps = applications;
+        }
+
+        this.baseFolder.setValue(this.baseFolderOptions[0]);
+      });
+
     if (selectedApp) {
       this.appname.setValue(selectedApp);
-      this.onAppChange(selectedApp);
     }
 
-    this.appname.valueChanges
-      .pipe(
-        startWith(selectedApp),
-        map(value => {
-          this.onAppChange(value);
-          return value;
-        }),
-        debounceTime(100),
-        distinctUntilChanged(),
-        map(value => {
-          value = _.trim(value);
+    this.subscription.add(sub1);
+    this.subscription.add(sub2);
+  }
 
-          if (!value || _.includes(this.data.applications, value)) {
-            return this.data.applications;
-          }
-
-          return this.data.applications.filter(option =>
-            _.includes(option.toLowerCase(), value)
-          );
-        })
-      )
-      .subscribe(this.filteredApps);
+  ngOnDestroy() {
+    this.subscription.unsubscribe();
   }
 
   /**
@@ -116,10 +129,18 @@ export class SelectAppDialogComponent implements OnInit {
    * handles the select app action
    */
   selectApp() {
-    const appName = _.trim(this.appname.value);
-    if (!appName) {
+    const fileType = this.fileType.value;
+    const baseFolder = this.baseFolder.value;
+    let appName = this.appname.value;
+
+    if ((fileType === FileTypes.YAML || baseFolder === "application") && !appName) {
       return;
     }
-    this.dialogRef.close({ appName, createEnv: !!this.createEnv.value });
+
+    if (fileType !== FileTypes.YAML && baseFolder !== "application") {
+      appName = baseFolder;
+    }
+
+    this.dialogRef.close({ fileType, appName, createEnv: !!this.createEnv.value });
   }
 }

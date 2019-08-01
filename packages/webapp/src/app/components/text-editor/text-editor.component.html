@@ -1,0 +1,55 @@
+<div class="col-container" appSplit [gutterWidth]="20">
+  <!-- col which shows tree view -->
+  <div class="col-view-mode" appSplitArea [splitSize]="50" [minSize]="300">
+    <!-- filename input -->
+    <label *ngIf="editMode || isPercyrcFile" class="input-title">File Name</label>
+    <mat-form-field class="filename" [floatLabel]="'always'" [ngClass]="{'edit-mode': editMode || isPercyrcFile}">
+      <label class="app-label">{{file.applicationName}}/{{editMode ? file.fileName : isPercyrcFile ? '.percyrc' : ''}}</label>
+      <input [ngClass]="{'hidden': editMode || isPercyrcFile}" type="text" #fileNameInput="matInput" matInput [placeholder]="editMode || isPercyrcFile ? '': 'File Name'" maxlength="50" [formControl]="filename"/>
+      <mat-error *ngIf="filename.hasError('required')">*Required</mat-error>
+      <mat-error *ngIf="filename.hasError('alreadyExists')">*The file name already exists</mat-error>
+      <mat-error *ngIf="!filename.hasError('required') && filename.hasError('pattern')">The file name should only contain these characters:
+        "0-9a-zA-Z-_."</mat-error>
+    </mat-form-field>
+
+
+    <mat-card class="file-content-wrapper">
+      <div class="buttons-row" *ngIf="!isViewOnly">
+        <button
+          *ngIf="!showFileEditor" type="button" mat-flat-button
+          color="primary" class="btn-edit" (click)="showFileEditor = true"
+        >
+          Edit
+        </button>
+      </div>
+
+      <div class="file-content">
+        <ng-container *ngIf="isPercyrcFile && fileContent"><pre><code appHighlight [highlight]="fileContent" [languages]="['json']"></code></pre></ng-container>
+        <ng-container *ngIf="!isPercyrcFile">
+          <markdown class="markdown" [data]="fileContent" ngPreserveWhitespaces></markdown>
+        </ng-container>
+      </div>
+    </mat-card>
+
+    <ng-template [ngTemplateOutlet]="buttonsTemplate"></ng-template>
+  </div>
+
+  <!-- detail panel -->
+  <div class="col-edit-mode" appSplitArea [splitSize]="50" [minSize]="300">
+    <ng-container *ngIf="showFileEditor">
+      <h2 class="section-heading" mat-dialog-title>Edit File Content</h2>
+
+      <textarea class="text-editor" [(ngModel)]="fileEditorContent"></textarea>
+
+      <div class="buttons-row">
+        <button type="button" mat-button color="primary" class="btn-cancel" (click)="showFileEditor = false">
+          Cancel
+        </button>
+
+        <button type="submit" mat-flat-button color="primary" class="btn-submit" (click)="onSubmitChange()">
+          Submit
+        </button>
+      </div>
+    </ng-container>
+  </div>
+</div>

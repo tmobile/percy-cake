@@ -1,0 +1,155 @@
+// configuration editor page
+@import "variables";
+
+.col-container {
+  display: flex;
+  flex: 1; // This will make the tree view to fill the vertical space
+  margin-top: 5px;
+  min-height: 1px;
+  
+  .col-view-mode {
+    width: 50%;
+    padding-right: 10px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+   
+    .input-title {
+      position: absolute;
+      top: 0;
+      font-size: 10px;
+      opacity: 0.8;
+    }
+
+    .filename {
+      ::ng-deep .mat-form-field-infix {
+        display: flex;
+        padding-top: 1em;
+        overflow-x: auto;
+        overflow-y: hidden;
+        align-items: center;
+      }
+
+      ::ng-deep .mat-form-field-label-wrapper {
+        top: 0;
+      }
+
+      .app-label {
+        color: grey;
+      }
+
+      .settings-label {
+        margin-left: auto;
+        padding-left: 15px;
+      }
+
+      input {
+        width: auto;
+        flex: 1;
+        &.hidden {
+          display: none;
+        }
+      }
+    }
+
+    .filename.edit-mode {
+      ::ng-deep .mat-form-field-infix {
+        padding-top: 0;
+      }
+    }
+
+    .file-content-wrapper {
+      flex: 1;
+      min-height: 1px;
+      display: flex;
+      flex-direction: column;
+
+      .file-content {
+        flex: 1;
+        padding: 0 16px;
+        margin: 0 -16px;
+        overflow: auto;
+        min-height: 1px;
+
+        pre {
+          white-space: pre-wrap;
+          font-family: Roboto;
+          font-weight: 700;
+          line-height: 20px;
+        }
+
+        ::ng-deep .markdown {
+
+          * {
+            line-height: 1.5;
+          }
+
+          p {
+            margin: 1em 0;
+          }
+
+          h1, h2, h3, h4, h5, h6 {
+            margin: 0.83em 0;
+          }
+
+          blockquote {
+            margin: 1em 40px;
+          }
+
+          ol, ul {
+            margin: 1em 0;
+            padding-left: 40px;
+          }
+        }
+      }
+
+      .buttons-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: flex-end;
+        height: 50px;
+
+        button {
+          text-transform: uppercase;
+        }
+      }
+    }
+  }
+  
+  .col-edit-mode {
+    width: 50%;
+    padding-left: 10px;
+    display: flex;
+    flex-direction: column;
+    min-height: 1px;
+
+      .section-heading {
+        margin-bottom: 18px;
+      }
+      
+      .text-editor {
+        width: 100%;
+        flex: 1;
+        background-color: $white;
+        border: 0;
+        padding: 16px;
+        resize: none;
+        -webkit-appearance: none;
+        font-family: Roboto;
+        font-size: 14px;
+      }
+
+      .buttons-row {
+        padding-top: 20px;
+        display: flex;
+
+        > * {
+          margin-right: 10px;
+        }
+
+        button {
+          text-transform: uppercase;
+        }
+    }
+  }
+}

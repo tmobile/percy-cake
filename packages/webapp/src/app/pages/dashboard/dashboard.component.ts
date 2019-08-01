@@ -116,6 +116,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   pullRequestUrl: string;
   pullRequestTooltip: string;
 
+  percyConfig = percyConfig;
+
   /**
    * creates the component
    * @param store the application store
@@ -161,7 +163,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     )
       .pipe(
         map(([grouped, dashboardState]) => {
-          const apps = _.keys(grouped);
+          const apps = _.keys(_.omit(grouped, ["", percyConfig.yamlAppsFolder]));
+          apps.unshift("-");
 
           const result = [];
           let modified = [];
@@ -178,11 +181,31 @@ export class DashboardComponent implements OnInit, OnDestroy {
               return;
             }
 
-            let appFiles = _.orderBy(
-              grouped[app],
-              ["fileName"],
-              [dashboardState.tableSort.fileName]
-            );
+            let appFiles = [];
+
+            if (app === "-") {
+              const rootFiles = _.orderBy(
+                grouped[""],
+                ["fileName"],
+                [dashboardState.tableSort.fileName]
+              );
+
+              const appsFiles = _.orderBy(
+                grouped[percyConfig.yamlAppsFolder],
+                ["fileName"],
+                [dashboardState.tableSort.fileName]
+              );
+
+              appFiles = [...rootFiles, ...appsFiles];
+
+            } else {
+              appFiles = _.orderBy(
+                grouped[app],
+                ["fileName"],
+                [dashboardState.tableSort.fileName]
+              );
+            }
+
             const envFile = appFiles.find(
               f => f.fileName === percyConfig.environmentsFile
             );
@@ -332,14 +355,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
         dialogRef.afterClosed().subscribe(data => {
           if (data) {
-            if (data.createEnv) {
+            const { createEnv, fileType, appName } = data;
+
+            if (createEnv) {
               this.router.navigate([
                 "/files/newenv",
-                data.appName,
+                appName,
                 envFileName
               ]);
             } else {
-              this.router.navigate(["/files/new", data.appName]);
+              appName === "" ?
+                this.router.navigate(["/files/new", fileType]) :
+                this.router.navigate(["/files/new", appName, fileType]);
             }
           }
         });
@@ -351,13 +378,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
    * @param file the file to edit
    */
   editFile(file: ConfigFile) {
-    this.router.navigate([
-      file.fileName === percyConfig.environmentsFile
-        ? "/files/editenv"
-        : "/files/edit",
-      file.applicationName,
-      file.fileName
-    ]);
+    const { fileName, applicationName } = file;
+
+    applicationName === "" ?
+      this.router.navigate([
+        "/files/edit",
+        fileName
+      ]) :
+      this.router.navigate([
+        fileName === percyConfig.environmentsFile
+          ? "/files/editenv"
+          : "/files/edit",
+        applicationName,
+        fileName
+      ]);
   }
 
   /**
