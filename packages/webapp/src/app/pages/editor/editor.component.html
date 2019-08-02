@@ -8,8 +8,12 @@
 
   <ng-container *ngIf="showYamlEditor">
     <app-editor #editor *ngIf="(environments | async) && (configuration | async); else loader"
-      [environments]="environments|async" [configuration]="configuration|async" [buttonsTemplate]="buttonsTemplate"
-      [appName]="appName" [fileName]="fileName" [editMode]="editMode" [envFileMode]="envFileMode">
+      [environments]="environments|async" [configuration]="configuration|async"
+      [appName]="appName" [fileName]="fileName" [editMode]="editMode" [envFileMode]="envFileMode"
+    >
+      <ng-template #buttonsTemplate>
+        <ng-container *ngTemplateOutlet="btnsTemplate"></ng-container>
+      </ng-template>
     </app-editor>
   </ng-container>
 
@@ -20,9 +24,11 @@
       [editMode]="editMode"
       [file]="configFile | async"
       [isPercyrcFile]="fileType === fileTypes.PERCYRC"
-      [buttonsTemplate]="buttonsTemplate"
       [isViewOnly]="isViewOnly"
     >
+      <ng-template #buttonsTemplate>
+        <ng-container *ngTemplateOutlet="btnsTemplate"></ng-container>
+      </ng-template>
     </app-text-editor>
   </ng-container>
 
@@ -36,7 +42,7 @@
   <app-loader></app-loader>
 </ng-template>
 
-<ng-template #buttonsTemplate>
+<ng-template #btnsTemplate>
   <div class="buttons-row">
     <button type="button" mat-button color="primary" class="btn-cancel" [routerLink]="['/dashboard']">
       Cancel

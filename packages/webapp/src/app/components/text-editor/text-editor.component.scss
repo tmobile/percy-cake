@@ -106,7 +106,6 @@
       .buttons-row {
         display: flex;
         align-items: flex-start;
-        justify-content: flex-end;
         height: 50px;
 
         button {
@@ -142,6 +141,7 @@
       .buttons-row {
         padding-top: 20px;
         display: flex;
+        justify-content: flex-end;
 
         > * {
           margin-right: 10px;

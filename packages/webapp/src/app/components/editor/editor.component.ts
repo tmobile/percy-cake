@@ -26,6 +26,7 @@ import {
   ViewChild,
   ChangeDetectorRef,
   Input,
+  ContentChild,
   TemplateRef,
   OnChanges,
   SimpleChanges,
@@ -79,8 +80,6 @@ export class EditorComponent implements OnInit, OnDestroy, OnChanges {
   environments: string[];
   @Input()
   configuration: Configuration;
-  @Input()
-  buttonsTemplate: TemplateRef<any>;
 
   currentUser: Observable<User> = this.store.pipe(
     select(appStore.getCurrentUser)
@@ -92,6 +91,7 @@ export class EditorComponent implements OnInit, OnDestroy, OnChanges {
   showAsCompiledYAMLEnvironment: string;
   currentConfigProperty: ConfigProperty;
 
+  @ContentChild("buttonsTemplate") buttonsTemplate: TemplateRef<any>;
   @ViewChild("nestedConfig") nestedConfig: NestedConfigViewComponent;
   @ViewChild("codeEle") codeEle: ElementRef;
 

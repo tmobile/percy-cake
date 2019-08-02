@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, OnChanges, Input, TemplateRef, SimpleChanges, ViewChild } from "@angular/core";
+import { Component, OnInit, OnDestroy, OnChanges, Input, TemplateRef, SimpleChanges, ViewChild, ContentChild } from "@angular/core";
 import { FormControl, Validators } from "@angular/forms";
 import { combineLatest, Subscription } from "rxjs";
 import { map } from "rxjs/operators";
@@ -25,7 +25,8 @@ export class TextEditorComponent implements OnInit, OnChanges, OnDestroy {
   @Input() file: ConfigFile;
   @Input() isPercyrcFile: boolean;
   @Input() isViewOnly = false;
-  @Input() buttonsTemplate: TemplateRef<any>;
+
+  @ContentChild("buttonsTemplate") buttonsTemplate: TemplateRef<any>;
 
   fileContent: string;
   fileEditorContent: string;
@@ -56,6 +57,10 @@ export class TextEditorComponent implements OnInit, OnChanges, OnDestroy {
   ) { }
 
   ngOnInit() {
+    if (!this.editMode) {
+      this.showFileEditor = true;
+    }
+    
     this.sub = combineLatest(
       this.filename.valueChanges,
       this.store.pipe(select(appStore.backendState))

@@ -177,8 +177,10 @@ software without specific prior written permission.
           [fileName]="file.editMode || file.envFileMode ? file.fileName : ''"
           [editMode]="file.editMode"
           [envFileMode]="file.envFileMode"
-          [buttonsTemplate]="buttonsTemplate"
         >
+          <ng-template #buttonsTemplate>
+            <ng-container *ngTemplateOutlet="btnsTemplate; context: { $implicit: file }"></ng-container>
+          </ng-template>
         </app-editor>
 
         <app-text-editor
@@ -187,14 +189,17 @@ software without specific prior written permission.
           [editMode]="file.editMode"
           [file]="file"
           [isPercyrcFile]="file.fileType === fileTypes.PERCYRC"
-          [buttonsTemplate]="buttonsTemplate"
-        ></app-text-editor>
+        >
+          <ng-template #buttonsTemplate>
+            <ng-container *ngTemplateOutlet="btnsTemplate; context: { $implicit: file }"></ng-container>
+          </ng-template>
+        </app-text-editor>
       </mat-tab>
     </mat-tab-group>
   </div>
 </div>
 
-<ng-template #buttonsTemplate>
+<ng-template #btnsTemplate let-file>
   <div class="buttons-row">
     <button
       type="button"
@@ -213,7 +218,7 @@ software without specific prior written permission.
       color="primary"
       [disabled]="fileSaving || !file.modified"
       class="btn-save"
-      (click)="saveConfig(editor, file)"
+      (click)="file.fileType === fileTypes.YAML ? saveConfig(editor, file) : saveFile(textEditor, file)"
     >
       Save
     </button>

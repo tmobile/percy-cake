@@ -1,5 +1,24 @@
 <div class="col-container" appSplit [gutterWidth]="20">
-  <!-- col which shows tree view -->
+  <!-- file editor panel -->
+  <div class="col-edit-mode" appSplitArea [splitSize]="50" [minSize]="300">
+    <ng-container *ngIf="showFileEditor">
+      <h2 class="section-heading" mat-dialog-title>Edit File Content</h2>
+
+      <textarea class="text-editor" [(ngModel)]="fileEditorContent"></textarea>
+
+      <div class="buttons-row">
+        <button type="button" mat-button color="primary" class="btn-cancel" (click)="showFileEditor = false">
+          Cancel
+        </button>
+
+        <button type="submit" mat-flat-button color="primary" class="btn-submit" (click)="onSubmitChange()">
+          Submit
+        </button>
+      </div>
+    </ng-container>
+  </div>
+
+  <!-- col which shows file view -->
   <div class="col-view-mode" appSplitArea [splitSize]="50" [minSize]="300">
     <!-- filename input -->
     <label *ngIf="editMode || isPercyrcFile" class="input-title">File Name</label>
@@ -32,24 +51,5 @@
     </mat-card>
 
     <ng-template [ngTemplateOutlet]="buttonsTemplate"></ng-template>
-  </div>
-
-  <!-- detail panel -->
-  <div class="col-edit-mode" appSplitArea [splitSize]="50" [minSize]="300">
-    <ng-container *ngIf="showFileEditor">
-      <h2 class="section-heading" mat-dialog-title>Edit File Content</h2>
-
-      <textarea class="text-editor" [(ngModel)]="fileEditorContent"></textarea>
-
-      <div class="buttons-row">
-        <button type="button" mat-button color="primary" class="btn-cancel" (click)="showFileEditor = false">
-          Cancel
-        </button>
-
-        <button type="submit" mat-flat-button color="primary" class="btn-submit" (click)="onSubmitChange()">
-          Submit
-        </button>
-      </div>
-    </ng-container>
   </div>
 </div>

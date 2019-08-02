@@ -34,9 +34,14 @@ import {
   shell
 } from "electron";
 
+import * as electronReload from "electron-reload";
+
 import * as WindowStateKeeper from "electron-window-state";
 
 import * as api from "./api";
+
+// this is to enable hot reload
+electronReload(path.resolve(__dirname, "../dist"));
 
 const isDarwin = process.platform === "darwin";
 const isWin32 = process.platform === "win32";
