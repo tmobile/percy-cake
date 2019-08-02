@@ -117,7 +117,25 @@ software without specific prior written permission.
             color="primary"
             (click)="addNewFile(node)"
           >
-            Add New File
+            Add New Yaml File
+          </button>
+          <button
+            *ngIf="!node.isFile"
+            mat-button
+            class="btn-action-menu"
+            color="primary"
+            (click)="addNewFile(node)"
+          >
+            Add New Markdown File
+          </button>
+          <button
+            *ngIf="!node.isFile && !folderHasPercyrcFile(node)"
+            mat-button
+            class="btn-action-menu"
+            color="primary"
+            (click)="addNewFile(node)"
+          >
+            Add Percyrc File
           </button>
           <button
             *ngIf="!node.isFile && !getEnvFile(node)"

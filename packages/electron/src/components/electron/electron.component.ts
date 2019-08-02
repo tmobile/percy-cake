@@ -47,6 +47,7 @@ import { State as EditorState } from "store/reducers/editor.reducer";
 import { UtilService } from "services/util.service";
 
 import { EditorComponent } from "components/editor/editor.component";
+// import { TextEditorComponent } from "components/text-editor/text-editor.component";
 import { AlertDialogComponent } from "components/alert-dialog/alert-dialog.component";
 import { ConfirmationDialogComponent } from "components/confirmation-dialog/confirmation-dialog.component";
 
@@ -119,6 +120,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
         if (file) {
           file.modified = editorState.configFile.modified;
           file.configuration = editorState.configuration;
+          file.draftContent = editorState.configFile.draftContent;
         }
       });
 
@@ -436,14 +438,13 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
       // Parse file content
       const fileContent = electronApi.readFile(file.path);
+
+      file.originalContent = fileContent;
+      file.draftContent = fileContent;
+
       if (file.fileType === FileTypes.YAML) {
         file.originalConfig = this.parseYaml(fileContent, file.path);
         file.configuration = _.cloneDeep(file.originalConfig);
-      } else {
-        file.originalConfig = fileContent;
-        file.configuration = fileContent;
-        file.originalContent = fileContent;
-        file.draftContent = fileContent;
       }
 
       file.modified = false;
@@ -558,8 +559,10 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
     if (file.editMode) {
       file.modified = false;
       file.configuration = _.cloneDeep(file.originalConfig);
+      file.draftContent = file.originalContent;
     } else {
       file.configuration = new Configuration();
+      file.draftContent = "";
     }
     this.setEditorState(file);
   }
@@ -613,6 +616,10 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
     });
   }
 
+  // saveFile(editor: TextEditorComponent, file: File) {
+
+  // }
+
   /**
    * Reset ino for new file.
    */
@@ -634,6 +641,16 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
   getEnvFile(folder: File) {
     return folder.children.find(
       f => f.fileName === percyConfig.environmentsFile
+    );
+  }
+
+  /**
+   * returns true if folder has percyrc file
+   * @param folder the folder to check for
+   */
+  folderHasPercyrcFile(folder: File): boolean {
+    return !!folder.children.find(
+      f => f.fileName === ".percyrc"
     );
   }
 
@@ -755,6 +772,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
     if (file.editMode && file.modified) {
       file.modified = false;
       file.configuration = _.cloneDeep(file.originalConfig);
+      file.draftContent = file.originalContent;
     }
 
     this.openedFiles.splice(index, 1);
