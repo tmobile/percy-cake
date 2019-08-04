@@ -83,7 +83,7 @@ export class SelectAppDialogComponent implements OnInit, OnDestroy {
         }
 
         if (fileType === FileTypes.PERCYRC) {
-          this.baseFolderOptions = _.difference(["", percyConfig.yamlAppsFolder], this.hasPercyrc);
+          this.baseFolderOptions = _.difference([percyConfig.yamlAppsFolder], this.hasPercyrc);
           this.baseFolderOptions.push("application");
 
           this.filteredApps = _.difference(applications, this.hasPercyrc);
