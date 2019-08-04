@@ -3,8 +3,7 @@
 
 .filename-wrapper {
   margin-top: 5px;
-  width: calc(50% - 20px);
-  padding: 0 10px;
+  width: calc(50% - 10px);
   position: relative;
 
   .input-title {
@@ -54,106 +53,101 @@
   }
 }
 
+.buttons-row {
+  display: flex;
+  align-items: flex-start;
+  padding-bottom: 15px;
+
+  button {
+    text-transform: uppercase;
+  }
+}
+
 .col-container {
   display: flex;
-  flex: 1; // This will make the tree view to fill the vertical space
-  margin-top: 5px;
+  flex: 1; // This will make the editor to fill the vertical space
   min-height: 1px;
-  
-  .col-view-mode {
-    width: 50%;
-    padding-right: 10px;
-    display: flex;
-    flex-direction: column;
 
-    &.standalone {
-      width: 100%;
-      padding: 0 10px;
+  .file-content {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+
+    pre {
+      white-space: pre-wrap;
+      font-family: Roboto;
+      font-weight: 700;
+      line-height: 20px;
     }
 
-    .file-content {
-      flex: 1;
-      overflow: auto;
-      min-height: 1px;
+    ::ng-deep .markdown {
 
-      pre {
-        white-space: pre-wrap;
-        font-family: Roboto;
-        font-weight: 700;
-        line-height: 20px;
+      * {
+        line-height: 1.5;
       }
 
-      ::ng-deep .markdown {
-
-        * {
-          line-height: 1.5;
-        }
-
-        p {
-          margin: 1em 0;
-        }
-
-        h1, h2, h3, h4, h5, h6 {
-          margin: 0.83em 0;
-        }
-
-        blockquote {
-          margin: 1em 40px;
-        }
-
-        ol, ul {
-          margin: 1em 0;
-          padding-left: 40px;
-        }
+      p {
+        margin: 1em 0;
       }
-    }
 
-    .buttons-row {
-      display: flex;
-      align-items: flex-start;
-      height: 47px;
+      h1, h2, h3, h4, h5, h6 {
+        margin: 0.83em 0;
+      }
 
-      button {
-        text-transform: uppercase;
+      blockquote {
+        margin: 1em 40px;
+      }
+
+      ol, ul {
+        margin: 1em 0;
+        padding-left: 40px;
       }
     }
   }
+
+  .text-editor {
+    width: 100%;
+    flex: 1;
+    background-color: $white;
+    border: 0;
+    padding: 16px;
+    resize: none;
+    -webkit-appearance: none;
+    font-family: Roboto;
+    font-size: 14px;
+  }
   
-  .col-edit-mode {
+  .col-md-editor,
+  .col-md-view {
     width: 50%;
-    padding-left: 10px;
     display: flex;
     flex-direction: column;
     min-height: 1px;
+  }
+  
+  .col-md-editor {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
 
-      .section-heading {
-        margin-bottom: 15px;
-      }
-      
-      .text-editor {
-        width: 100%;
-        flex: 1;
-        background-color: $white;
+    .md-editor {
+      flex: 1;
+      min-height: 1px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    ::ng-deep {
+
+      .editor-toolbar {
         border: 0;
-        padding: 16px;
-        resize: none;
-        -webkit-appearance: none;
-        font-family: Roboto;
-        font-size: 14px;
       }
 
-      .buttons-row {
-        padding-top: 20px;
-        display: flex;
-        justify-content: flex-end;
-
-        > * {
-          margin-right: 10px;
-        }
-
-        button {
-          text-transform: uppercase;
-        }
+      .CodeMirror {
+        border-width: 1px 0 0 0;
+        flex: 1;
+        min-height: 1px;
+      }
     }
   }
 }

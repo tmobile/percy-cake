@@ -28,7 +28,9 @@
             ],
             "styles": [
               "src/styles.scss",
-              "../../node_modules/prismjs/themes/prism.css"
+              "../../node_modules/prismjs/themes/prism.css",
+              "../../node_modules/simplemde/dist/simplemde.min.css",
+              "../../node_modules/font-awesome/css/font-awesome.css"
             ],
             "stylePreprocessorOptions": {
               "includePaths": [
@@ -43,7 +45,8 @@
               "../../node_modules/prismjs/components/prism-javascript.min.js",
               "../../node_modules/prismjs/components/prism-markdown.min.js",
               "../../node_modules/prismjs/components/prism-python.min.js",
-              "../../node_modules/prismjs/components/prism-typescript.min.js"
+              "../../node_modules/prismjs/components/prism-typescript.min.js",
+              "../../node_modules/simplemde/dist/simplemde.min.js"
             ]
           },
           "configurations": {

@@ -99,8 +99,7 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
         ...state,
         configFile: {
           ...file,
-          modified: !_.isEqual(file.originalContent, content),
-          draftContent: content
+          modified: !_.isEqual(file.originalContent, content)
         },
         isPageDirty: !state.editMode || !_.isEqual(file.draftContent || file.originalContent, content)
       };

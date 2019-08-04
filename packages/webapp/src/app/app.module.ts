@@ -54,6 +54,7 @@ import { CommitDialogComponent } from "components/commit-dialog/commit-dialog.co
 import { SelectAppDialogComponent } from "components/select-app-dialog/select-app-dialog.component";
 import { ConflictDialogComponent } from "components/conflict-dialog/conflict-dialog.component";
 import { TextEditorComponent } from "components/text-editor/text-editor.component";
+import { MarkdownEditorComponent } from "components/markdown-editor/markdown-editor.component";
 
 import { reducers, metaReducers } from "store";
 import { environment } from "../environments/environment";
@@ -76,7 +77,8 @@ import { EditorEffects } from "store/affects/editor.effects";
     CommitDialogComponent,
     SelectAppDialogComponent,
     ConflictDialogComponent,
-    TextEditorComponent
+    TextEditorComponent,
+    MarkdownEditorComponent
   ],
   imports: [
     HttpClientModule,

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, OnChanges, Input, TemplateRef, SimpleChanges, ViewChild, ContentChild } from "@angular/core";
+import { Component, OnInit, OnDestroy, Input, TemplateRef, ViewChild, ContentChild } from "@angular/core";
 import { FormControl, Validators } from "@angular/forms";
 import { combineLatest, Subscription } from "rxjs";
 import { map } from "rxjs/operators";
@@ -19,17 +19,17 @@ import { NotEmpty } from "services/validators";
   templateUrl: "./text-editor.component.html",
   styleUrls: ["./text-editor.component.scss"]
 })
-export class TextEditorComponent implements OnInit, OnChanges, OnDestroy {
+export class TextEditorComponent implements OnInit, OnDestroy {
 
   @Input() editMode: boolean;
   @Input() file: ConfigFile;
   @Input() isPercyrcFile: boolean;
   @Input() isViewOnly = false;
+  @Input() defaultPercyFileContent?: string;
 
   @ContentChild("buttonsTemplate") buttonsTemplate: TemplateRef<any>;
 
   fileContent: string;
-  fileEditorContent: string;
   showFileEditor = false;
 
   sub: Subscription;
@@ -57,10 +57,17 @@ export class TextEditorComponent implements OnInit, OnChanges, OnDestroy {
   ) { }
 
   ngOnInit() {
+    const { draftContent, originalContent } = this.file;
+    this.fileContent = draftContent || originalContent;
+
     if (!this.editMode) {
       this.showFileEditor = true;
+
+      if (this.isPercyrcFile) {
+        this.fileContent = this.defaultPercyFileContent;
+      }
     }
-    
+
     this.sub = combineLatest(
       this.filename.valueChanges,
       this.store.pipe(select(appStore.backendState))
@@ -92,14 +99,6 @@ export class TextEditorComponent implements OnInit, OnChanges, OnDestroy {
       .subscribe();
   }
 
-  ngOnChanges(changes: SimpleChanges) {
-    if (changes["file"]) {
-      const { draftContent, originalContent } = this.file;
-      this.fileContent = draftContent || originalContent;
-      this.fileEditorContent = this.fileContent;
-    }
-  }
-
   ngOnDestroy() {
     this.sub.unsubscribe();
   }
@@ -108,9 +107,9 @@ export class TextEditorComponent implements OnInit, OnChanges, OnDestroy {
   /*
     submit new file content
    */
-  onSubmitChange() {
-    this.store.dispatch(new FileContentChange(this.fileEditorContent));
-    this.showFileEditor = false;
+  onFileContentChange(text: string) {
+    this.fileContent = text;
+    this.store.dispatch(new FileContentChange(text));
   }
 
   /**
@@ -136,6 +135,7 @@ export class TextEditorComponent implements OnInit, OnChanges, OnDestroy {
 
     return {
       file: { ...this.file, fileName },
+      fileContent: this.fileContent,
       valid
     };
   }

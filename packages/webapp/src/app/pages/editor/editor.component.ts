@@ -38,7 +38,7 @@ import * as appStore from "store";
 import { CommitChanges, SaveDraft } from "store/actions/backend.actions";
 import { PageLoad } from "store/actions/editor.actions";
 
-import { appPercyConfig } from "config";
+import { percyConfig, appPercyConfig } from "config";
 
 import { EditorComponent } from "components/editor/editor.component";
 import { TextEditorComponent } from "components/text-editor/text-editor.component";
@@ -67,6 +67,7 @@ export class EditorPageComponent implements OnInit, OnDestroy {
   isViewOnly = false;
   isRootFile = false;
   showYamlEditor = true;
+  defaultPercyFileContent: string;
 
   environments = this.store.pipe(select(appStore.getEnvironments));
   configuration = this.store.pipe(select(appStore.getConfiguration));
@@ -142,6 +143,10 @@ export class EditorPageComponent implements OnInit, OnDestroy {
     this.currentUser.subscribe(res => {
       this.isViewOnly = res && res.branchName === "master";
     });
+
+    this.configFile.subscribe(file => {
+      this.defaultPercyFileContent = file ? this.getDefaultPercyFileContent() : "";
+    });
   }
 
   /**
@@ -174,6 +179,17 @@ export class EditorPageComponent implements OnInit, OnDestroy {
       return dialogRef.afterClosed().pipe(map(response => response));
     }
     return true;
+  }
+
+
+  getDefaultPercyFileContent() {
+    const defaultAppConfig = _.pick(percyConfig, [
+      "variablePrefix",
+      "variableSuffix",
+      "variableNamePrefix",
+      "envVariableName"
+    ]);
+    return JSON.stringify({ ...defaultAppConfig, ...this.isRootFile ? {} : appPercyConfig }, null, 4);
   }
 
   /**
@@ -241,7 +257,10 @@ export class EditorPageComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.store.dispatch(new SaveDraft({ file: result.file, redirect: true }));
+    const file = { ...result.file };
+    file.draftContent = result.fileContent;
+
+    this.store.dispatch(new SaveDraft({ file, redirect: true }));
   }
 
 
@@ -256,13 +275,16 @@ export class EditorPageComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const file = { ...result.file };
+    file.draftContent = result.fileContent;
+
     const dialogRef = this.dialog.open(CommitDialogComponent);
 
     dialogRef.afterClosed().subscribe(response => {
       if (response) {
         this.store.dispatch(
           new CommitChanges({
-            files: [result.file],
+            files: [file],
             message: response,
             fromEditor: true
           })
