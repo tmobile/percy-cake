@@ -22,7 +22,6 @@
       #textEditor
       *ngIf="configFile | async; else loader"
       [editMode]="editMode"
-      [defaultPercyFileContent]="defaultPercyFileContent"
       [file]="configFile | async"
       [isPercyrcFile]="fileType === fileTypes.PERCYRC"
       [isViewOnly]="isViewOnly"

@@ -35,7 +35,6 @@ export class File {
   originalConfig: any;
   configuration: any;
   originalContent: string;
-  draftContent: string;
 
   folderPopulated = false;
   children: File[] = [];

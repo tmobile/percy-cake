@@ -10,56 +10,56 @@ import * as SimpleMDE from "simplemde";
 })
 export class MarkdownEditorComponent implements OnInit, OnDestroy {
 
-	@ViewChild("simplemde") textarea: ElementRef;
+  @ViewChild("simplemde") textarea: ElementRef;
 
-	@Input() content: string;
-	@Output() contentChange = new EventEmitter<string>();
+  @Input() content: string;
+  @Output() contentChange = new EventEmitter<string>();
 
-	private subscription = new Subscription();
-	private simplemde: SimpleMDE;
+  private subscription = new Subscription();
+  private simplemde: SimpleMDE;
 
   constructor() { }
 
   ngOnInit() {
-  	this.initMdEditor();
+    this.initMdEditor();
   }
 
   ngOnDestroy() {
-  	this.subscription.unsubscribe();
+    this.subscription.unsubscribe();
   }
 
 
   initMdEditor() {
-  	const editorOptions = {
-  		element: this.textarea.nativeElement,
-  		spellChecker: false,
-  		status: false,
-  		toolbar: [
-	      "bold",
-	      "italic",
-	      "heading",
-	      "strikethrough",
-	      "|",
-	      "code",
-	      "quote",
-	      "ordered-list",
-	      "unordered-list",
-	      "|",
-	      "link",
-	      "image",
-	      "table",
-	      "horizontal-rule",
-	      "|",
-	      "guide",
-	      "|"
-	    ]
-	  }
+    const editorOptions = {
+      element: this.textarea.nativeElement,
+      spellChecker: false,
+      status: false,
+      toolbar: [
+        "bold",
+        "italic",
+        "heading",
+        "strikethrough",
+        "|",
+        "code",
+        "quote",
+        "ordered-list",
+        "unordered-list",
+        "|",
+        "link",
+        "image",
+        "table",
+        "horizontal-rule",
+        "|",
+        "guide",
+        "|"
+      ]
+    };
 
     this.simplemde = new SimpleMDE(editorOptions);
     this.simplemde.value(this.content);
 
     const sub = this.simplemde.codemirror.on("change", () => {
-    	this.contentChange.emit(this.simplemde.value());
+      this.contentChange.emit(this.simplemde.value());
     });
 
     this.subscription.add(sub);

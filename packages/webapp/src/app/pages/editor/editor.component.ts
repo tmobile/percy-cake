@@ -38,7 +38,7 @@ import * as appStore from "store";
 import { CommitChanges, SaveDraft } from "store/actions/backend.actions";
 import { PageLoad } from "store/actions/editor.actions";
 
-import { percyConfig, appPercyConfig } from "config";
+import { appPercyConfig } from "config";
 
 import { EditorComponent } from "components/editor/editor.component";
 import { TextEditorComponent } from "components/text-editor/text-editor.component";
@@ -67,7 +67,6 @@ export class EditorPageComponent implements OnInit, OnDestroy {
   isViewOnly = false;
   isRootFile = false;
   showYamlEditor = true;
-  defaultPercyFileContent: string;
 
   environments = this.store.pipe(select(appStore.getEnvironments));
   configuration = this.store.pipe(select(appStore.getConfiguration));
@@ -143,10 +142,6 @@ export class EditorPageComponent implements OnInit, OnDestroy {
     this.currentUser.subscribe(res => {
       this.isViewOnly = res && res.branchName === "master";
     });
-
-    this.configFile.subscribe(file => {
-      this.defaultPercyFileContent = file ? this.getDefaultPercyFileContent() : "";
-    });
   }
 
   /**
@@ -181,16 +176,6 @@ export class EditorPageComponent implements OnInit, OnDestroy {
     return true;
   }
 
-
-  getDefaultPercyFileContent() {
-    const defaultAppConfig = _.pick(percyConfig, [
-      "variablePrefix",
-      "variableSuffix",
-      "variableNamePrefix",
-      "envVariableName"
-    ]);
-    return JSON.stringify({ ...defaultAppConfig, ...this.isRootFile ? {} : appPercyConfig }, null, 4);
-  }
 
   /**
    * for yaml files

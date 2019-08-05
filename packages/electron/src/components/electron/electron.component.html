@@ -115,7 +115,7 @@ software without specific prior written permission.
             mat-button
             class="btn-action-menu"
             color="primary"
-            (click)="addNewFile(node)"
+            (click)="addNewFile(node, fileTypes.YAML)"
           >
             Add New Yaml File
           </button>
@@ -124,7 +124,7 @@ software without specific prior written permission.
             mat-button
             class="btn-action-menu"
             color="primary"
-            (click)="addNewFile(node)"
+            (click)="addNewFile(node, fileTypes.MD)"
           >
             Add New Markdown File
           </button>
@@ -133,7 +133,7 @@ software without specific prior written permission.
             mat-button
             class="btn-action-menu"
             color="primary"
-            (click)="addNewFile(node)"
+            (click)="addNewFile(node, fileTypes.PERCYRC)"
           >
             Add Percyrc File
           </button>
@@ -197,7 +197,7 @@ software without specific prior written permission.
           [envFileMode]="file.envFileMode"
         >
           <ng-template #buttonsTemplate>
-            <ng-container *ngTemplateOutlet="btnsTemplate; context: { $implicit: file }"></ng-container>
+            <ng-container *ngTemplateOutlet="btnsTemplate; context: { $implicit: file, editor: editor }"></ng-container>
           </ng-template>
         </app-editor>
 
@@ -209,7 +209,7 @@ software without specific prior written permission.
           [isPercyrcFile]="file.fileType === fileTypes.PERCYRC"
         >
           <ng-template #buttonsTemplate>
-            <ng-container *ngTemplateOutlet="btnsTemplate; context: { $implicit: file }"></ng-container>
+            <ng-container *ngTemplateOutlet="btnsTemplate; context: { $implicit: file, editor: textEditor }"></ng-container>
           </ng-template>
         </app-text-editor>
       </mat-tab>
@@ -217,7 +217,7 @@ software without specific prior written permission.
   </div>
 </div>
 
-<ng-template #btnsTemplate let-file>
+<ng-template #btnsTemplate let-file let-editor="editor">
   <div class="buttons-row">
     <button
       type="button"
@@ -236,7 +236,7 @@ software without specific prior written permission.
       color="primary"
       [disabled]="fileSaving || !file.modified"
       class="btn-save"
-      (click)="file.fileType === fileTypes.YAML ? saveConfig(editor, file) : saveFile(textEditor, file)"
+      (click)="file.fileType === fileTypes.YAML ? saveConfig(editor, file) : saveFile(editor, file)"
     >
       Save
     </button>

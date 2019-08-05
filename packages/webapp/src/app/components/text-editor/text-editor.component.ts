@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, TemplateRef, ViewChild, ContentChild } from "@angular/core";
+import { Component, OnInit, OnChanges, OnDestroy, Input, TemplateRef, ViewChild, ContentChild, SimpleChanges } from "@angular/core";
 import { FormControl, Validators } from "@angular/forms";
 import { combineLatest, Subscription } from "rxjs";
 import { map } from "rxjs/operators";
@@ -8,7 +8,7 @@ import * as _ from "lodash";
 
 import * as appStore from "store";
 import { FileContentChange } from "store/actions/editor.actions";
-import { percyConfig } from "config";
+import { percyConfig, appPercyConfig } from "config";
 import { ConfigFile } from "models/config-file";
 import { NotEmpty } from "services/validators";
 
@@ -19,13 +19,12 @@ import { NotEmpty } from "services/validators";
   templateUrl: "./text-editor.component.html",
   styleUrls: ["./text-editor.component.scss"]
 })
-export class TextEditorComponent implements OnInit, OnDestroy {
+export class TextEditorComponent implements OnInit, OnChanges, OnDestroy {
 
   @Input() editMode: boolean;
   @Input() file: ConfigFile;
   @Input() isPercyrcFile: boolean;
   @Input() isViewOnly = false;
-  @Input() defaultPercyFileContent?: string;
 
   @ContentChild("buttonsTemplate") buttonsTemplate: TemplateRef<any>;
 
@@ -64,7 +63,13 @@ export class TextEditorComponent implements OnInit, OnDestroy {
       this.showFileEditor = true;
 
       if (this.isPercyrcFile) {
-        this.fileContent = this.defaultPercyFileContent;
+        const defaultAppConfig = _.pick(percyConfig, [
+          "variablePrefix",
+          "variableSuffix",
+          "variableNamePrefix",
+          "envVariableName"
+        ]);
+        this.fileContent = JSON.stringify({ ...defaultAppConfig, ...appPercyConfig }, null, 4);
       }
     }
 
@@ -97,6 +102,14 @@ export class TextEditorComponent implements OnInit, OnDestroy {
         })
       )
       .subscribe();
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes["editMode"]) {
+      if (this.editMode) {
+        this.filename.disable();
+      }
+    }
   }
 
   ngOnDestroy() {
