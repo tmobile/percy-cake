@@ -29,7 +29,7 @@ import * as _ from "lodash";
 
 import { appPercyConfig } from "config";
 
-import { ConfigFile, Configuration } from "models/config-file";
+import { ConfigFile, Configuration, FileTypes } from "models/config-file";
 
 import * as appStore from "..";
 import { Alert } from "../actions/common.actions";
@@ -64,6 +64,7 @@ export class EditorEffects {
       _.keys(appPercyConfig).forEach(key => delete appPercyConfig[key]);
 
       const fileName = action.payload.fileName;
+      const fileType = action.payload.fileType;
       const applicationName = action.payload.applicationName;
       const principal = appState.backend.principal;
 
@@ -78,6 +79,7 @@ export class EditorEffects {
           // Add new file, set an initial config
           const file: ConfigFile = {
             fileName,
+            fileType,
             applicationName,
             draftConfig: new Configuration(),
             modified: true
@@ -86,10 +88,15 @@ export class EditorEffects {
         } else {
           const file = GetConfigFile(appState.backend, fileName, applicationName);
 
-          if (file && (file.originalConfig || file.draftConfig)) { // Newly added (but uncommitted) file has only draft config
+          if (file && (
+                (file.fileType === FileTypes.YAML && (file.originalConfig || file.draftConfig)) ||
+                (file.fileType !== FileTypes.YAML && (file.originalContent || file.draftContent))
+            )) { // Newly added (but uncommitted) file has only draft config
             result.push(new GetFileContentSuccess({ file }));
           } else {
-            promises.push(this.fileManagementService.getFileContent(principal, file ? { ...file } : { fileName, applicationName }));
+            promises.push(
+              this.fileManagementService.getFileContent(principal, file ? { ...file } : { fileName, applicationName, fileType })
+            );
           }
         }
 

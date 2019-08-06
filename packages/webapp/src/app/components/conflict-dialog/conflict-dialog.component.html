@@ -18,10 +18,10 @@
               </mat-radio-group>
               <div class="view-codes" appSplit [gutterHeight]="400" [gutterWidth]="10">
                   <mat-card class="view-code mat-elevation-z" appSplitArea [splitSize]="50" [minSize]="50">
-                      <pre><code appHighlight [highlight]="file.draftContent" [languages]="file.fileName === '.percyrc' ? ['json']:['yaml']"></code></pre>
+                      <pre><code appHighlight [highlight]="file.draftContent" [languages]="file.fileType === fileTypes.PERCYRC ? ['json']: file.fileType === fileTypes.MD ? ['md'] : ['yaml']"></code></pre>
                   </mat-card>
                   <mat-card class="view-code mat-elevation-z" appSplitArea [splitSize]="50" [minSize]="50">
-                      <pre><code appHighlight [highlight]="file.originalContent" [languages]="file.fileName === '.percyrc' ? ['json']:['yaml']"></code></pre>
+                      <pre><code appHighlight [highlight]="file.originalContent" [languages]="file.fileType === fileTypes.PERCYRC ? ['json']: file.fileType === fileTypes.MD ? ['md'] : ['yaml']"></code></pre>
                   </mat-card>
               </div>
             </mat-expansion-panel>

@@ -6,7 +6,8 @@
     height: calc(100vh - 80px);
     padding: 10px 50px;
 
-    app-editor {
+    app-editor,
+    app-text-editor {
       display: flex;
       flex-direction: column;
       flex: 1;

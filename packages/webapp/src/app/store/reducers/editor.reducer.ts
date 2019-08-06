@@ -23,7 +23,7 @@ software without specific prior written permission.
 
 import * as _ from "lodash";
 
-import { Configuration, ConfigFile } from "models/config-file";
+import { Configuration, ConfigFile, FileTypes } from "models/config-file";
 
 import { BackendActionsUnion, BackendActionTypes } from "../actions/backend.actions";
 import { EditorActionTypes, EditorActionsUnion } from "../actions/editor.actions";
@@ -75,7 +75,7 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
       return {
         ...state,
         configFile: { ...file },
-        configuration: _.cloneDeep(file.draftConfig || file.originalConfig),
+        configuration: file.fileType === FileTypes.YAML ? _.cloneDeep(file.draftConfig || file.originalConfig) : null,
         isPageDirty: !state.editMode
       };
     }
@@ -91,6 +91,20 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
       };
     }
 
+    case EditorActionTypes.FileContentChange: {
+      const content = action.payload;
+      const file = state.configFile;
+
+      return {
+        ...state,
+        configFile: {
+          ...file,
+          modified: !_.isEqual(file.originalContent, content)
+        },
+        isPageDirty: !state.editMode || !_.isEqual(file.draftContent || file.originalContent, content)
+      };
+    }
+
     case BackendActionTypes.SaveDraft: {
       return {
         ...state,
@@ -100,9 +114,17 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
 
     case BackendActionTypes.SaveDraftSuccess: {
       const file = action.payload;
+      const configFile = { ...file };
+
+      if (file.fileType === FileTypes.YAML) {
+        configFile.draftConfig = _.cloneDeep(file.draftConfig);
+      } else {
+        configFile.draftContent = _.cloneDeep(file.draftContent);
+      }
+
       return {
         ...state,
-        configFile: { ...file, draftConfig: _.cloneDeep(file.draftConfig) },
+        configFile,
         configuration: file.draftConfig,
         isPageDirty: false,
         isSaving: false,
@@ -132,9 +154,17 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
       }
 
       const file = action.payload.files[0];
+      const configFile = { ...file };
+
+      if (file.fileType === FileTypes.YAML) {
+        configFile.originalConfig = _.cloneDeep(file.originalConfig);
+      } else {
+        configFile.originalContent = _.cloneDeep(file.originalContent);
+      }
+
       return {
         ...state,
-        configFile: { ...file, originalConfig: _.cloneDeep(file.originalConfig) },
+        configFile,
         configuration: file.originalConfig,
         isCommitting: false,
         isPageDirty: false,

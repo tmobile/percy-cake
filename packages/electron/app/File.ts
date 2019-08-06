@@ -34,6 +34,7 @@ export class File {
   environments: string[];
   originalConfig: any;
   configuration: any;
+  originalContent: string;
 
   folderPopulated = false;
   children: File[] = [];
@@ -42,7 +43,8 @@ export class File {
     public path: string,
     public fileName: string,
     public isFile: boolean,
-    public parent: File
+    public parent: File,
+    public fileType?: FileTypes
   ) {}
 
   addChild(child: File) {
@@ -61,4 +63,11 @@ export class File {
   removeChild(childPath: string) {
     this.children = this.children.filter(c => c.path !== childPath);
   }
+}
+
+export enum FileTypes {
+  YAML = "yaml",
+  YML = "yml",
+  PERCYRC = "percyrc",
+  MD = "md"
 }

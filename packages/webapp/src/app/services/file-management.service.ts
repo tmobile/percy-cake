@@ -29,7 +29,7 @@ import * as _ from "lodash";
 import { percyConfig } from "config";
 import { User, Authenticate, Principal, RepoMetadata } from "models/auth";
 import { TreeNode } from "models/tree-node";
-import { ConfigFile, ConflictFile } from "models/config-file";
+import { ConfigFile, ConflictFile, FileTypes } from "models/config-file";
 import { UtilService, git, FS } from "./util.service";
 import { MaintenanceService } from "./maintenance.service";
 
@@ -49,28 +49,56 @@ export class PathFinder {
 
   constructor(public user: User, public file: ConfigFile, branch: string) {
     this.repoDir = PathFinder.getRepoDir(this.user);
-    this.repoAppDir = path.resolve(
-      this.repoDir,
-      percyConfig.yamlAppsFolder,
-      this.file.applicationName
-    );
-    this.repoFilePath = path.join(
-      percyConfig.yamlAppsFolder,
-      this.file.applicationName,
-      this.file.fileName
-    );
-    this.fullFilePath = path.resolve(this.repoAppDir, this.file.fileName);
 
     this.draftDir = path.resolve(
       percyConfig.draftFolder,
       this.user.repoFolder,
       branch
     );
-    this.draftAppDir = path.resolve(
-      this.draftDir,
-      percyConfig.yamlAppsFolder,
-      this.file.applicationName
-    );
+
+    switch (file.applicationName) {
+      case "":
+        this.repoAppDir = this.repoDir;
+        this.repoFilePath = this.file.fileName;
+        this.draftAppDir = this.draftDir;
+        break;
+
+      case percyConfig.yamlAppsFolder:
+        this.repoAppDir = path.resolve(
+          this.repoDir,
+          percyConfig.yamlAppsFolder
+        );
+        this.repoFilePath = path.join(
+          percyConfig.yamlAppsFolder,
+          this.file.fileName
+        );
+        this.draftAppDir = path.resolve(
+          this.draftDir,
+          percyConfig.yamlAppsFolder
+        );
+        break;
+
+      default:
+        this.repoAppDir = path.resolve(
+          this.repoDir,
+          percyConfig.yamlAppsFolder,
+          this.file.applicationName
+        );
+        this.repoFilePath = path.join(
+          percyConfig.yamlAppsFolder,
+          this.file.applicationName,
+          this.file.fileName
+        );
+        this.draftAppDir = path.resolve(
+          this.draftDir,
+          percyConfig.yamlAppsFolder,
+          this.file.applicationName
+        );
+        break;
+    }
+
+    this.fullFilePath = path.resolve(this.repoAppDir, this.file.fileName);
+
     this.draftFullFilePath = path.resolve(this.draftAppDir, this.file.fileName);
   }
 }
@@ -722,7 +750,7 @@ export class FileManagementService {
       targetBranch,
       targetCommit,
       async () => {
-        await this.saveRepoFiles(fs, repoDir, diff.toSave);
+        await this.saveRepoFiles(fs, repoDir, diff.toSave, user);
         for (const dfile of diff.toDelete) {
           const filepath = path.join(
             percyConfig.yamlAppsFolder,
@@ -887,7 +915,8 @@ export class FileManagementService {
   async getEnvironments(principal: Principal, applicationName: string) {
     const file = {
       fileName: percyConfig.environmentsFile,
-      applicationName
+      applicationName,
+      fileType: FileTypes.YAML
     };
 
     // Load environments.yaml
@@ -958,6 +987,9 @@ export class FileManagementService {
     treeOid?: string,
     app?: string
   ) {
+    result[""] = result[""] || [];
+    result[percyConfig.yamlAppsFolder] = result[percyConfig.yamlAppsFolder] || [];
+
     if (depth === 0) {
       const { object: commit } = await git.readObject({ dir, oid: commitOid });
       treeOid = (<CommitDescription>commit).tree;
@@ -972,6 +1004,11 @@ export class FileManagementService {
           entry.type === "tree"
         ) {
           await this.findRepoYamlFiles(dir, commitOid, result, 1, entry.oid);
+        } else if (entry.type === "blob") {
+          const ext = path.extname(entry.path).toLowerCase();
+          if (ext === ".md" || entry.path === ".percyrc") {
+            result[""].push(this.getFileConfig(entry, ""));
+          }
         }
       } else if (depth === 1) {
         if (entry.type === "tree") {
@@ -984,30 +1021,39 @@ export class FileManagementService {
             entry.oid,
             entry.path
           );
-        } else if (entry.type === "blob" && entry.path === ".percyrc") {
-          result[""] = [
-            {
-              applicationName: "",
-              fileName: entry.path,
-              oid: entry.oid
-            }
-          ];
+        } else if (entry.type === "blob") {
+          const ext = path.extname(entry.path).toLowerCase();
+          if (ext === ".md" || entry.path === ".percyrc") {
+            result[percyConfig.yamlAppsFolder].push(this.getFileConfig(entry, percyConfig.yamlAppsFolder));
+          }
         }
       } else {
         if (entry.type === "blob") {
           const ext = path.extname(entry.path).toLowerCase();
-          if (ext === ".yaml" || ext === ".yml" || entry.path === ".percyrc") {
-            const file: ConfigFile = {
-              applicationName: app,
-              fileName: entry.path,
-              oid: entry.oid
-            };
-            result[app].push(file);
+          if (ext === ".yaml" || ext === ".yml" || ext === ".md" || entry.path === ".percyrc") {
+            result[app].push(this.getFileConfig(entry, app));
           }
         }
       }
     }
     return result;
+  }
+
+
+  /**
+   * @param  entry, file tree entry
+   * @param  appName application name which the file belongs to
+   */
+  getFileConfig(entry: any, appName: string): ConfigFile {
+    const ext = path.extname(entry.path).toLowerCase();
+    const fileType = entry.path === ".percyrc" ? FileTypes.PERCYRC : (ext === ".md" ? FileTypes.MD : FileTypes.YAML);
+
+    return {
+      applicationName: appName,
+      fileName: entry.path,
+      oid: entry.oid,
+      fileType
+    };
   }
 
   /**
@@ -1032,13 +1078,13 @@ export class FileManagementService {
       this.findRepoYamlFiles(repoDir, branchCommitOid)
     ]);
 
-    _.forEach(_.filter(_.keys(branchFiles), key => !!key), app => {
-      if (draft.applications.indexOf(app) === -1) {
+    _.forEach(_.keys(branchFiles), app => {
+      if (draft.applications.indexOf(app) === -1 && app !== "" && app !== percyConfig.yamlAppsFolder) {
         draft.applications.push(app);
       }
       _.forEach(branchFiles[app], repoFile => {
         const ext = path.extname(repoFile.fileName).toLowerCase();
-        if (ext === ".yaml" || ext === ".yml") {
+        if (ext === ".yaml" || ext === ".yml" || ext === ".md" || repoFile.fileName === ".percyrc") {
           const draftFile = _.find(
             draft.files,
             f =>
@@ -1127,20 +1173,62 @@ export class FileManagementService {
     const files: ConfigFile[] = [];
     const applications: string[] = [];
     const repoPath = path.resolve(percyConfig.draftFolder, repoFolder);
+    const repoRootPath = path.resolve(
+      repoPath,
+      branchName
+    );
     const appsPath = path.resolve(
       repoPath,
       branchName,
       percyConfig.yamlAppsFolder
     );
+
+    // read root files
+    if (await fs.pathExists(repoRootPath)) {
+      const rootFiles = await fs.readdir(repoRootPath);
+      await Promise.all(
+        rootFiles.map(async fileName => {
+          const stat = await fs.stat(path.resolve(repoRootPath, fileName));
+          if (!stat.isFile()) {
+            return;
+          }
+          const ext = path.extname(fileName).toLowerCase();
+          if (ext === ".md" || fileName === ".percyrc") {
+            const file: ConfigFile = {
+              applicationName: "",
+              fileName,
+              size: stat.size,
+              modified: true // For draft files, we simply assume they're modified
+            };
+            files.push(file);
+          }
+        })
+      );
+    }
+
     if (await fs.pathExists(appsPath)) {
       const apps = await fs.readdir(appsPath);
 
       await Promise.all(
         apps.map(async applicationName => {
           const appPath = path.resolve(appsPath, applicationName);
-          if (!(await fs.stat(appPath)).isDirectory()) {
+          const appsStat = await fs.stat(appPath);
+
+          // for files in the apps folder
+          if (!appsStat.isDirectory()) {
+            const ext = path.extname(applicationName).toLowerCase();
+            if (ext === ".md" || applicationName === ".percyrc") {
+              const file: ConfigFile = {
+                applicationName: percyConfig.yamlAppsFolder,
+                fileName: applicationName,
+                size: appsStat.size,
+                modified: true // For draft files, we simply assume they're modified
+              };
+              files.push(file);
+            }
             return;
           }
+
           applications.push(applicationName);
           const appFiles = await fs.readdir(appPath);
           await Promise.all(
@@ -1165,7 +1253,7 @@ export class FileManagementService {
       );
     }
 
-    return { files, applications };
+    return { files: [...files], applications };
   }
 
   /**
@@ -1177,6 +1265,8 @@ export class FileManagementService {
     principal: Principal,
     file: ConfigFile
   ): Promise<ConfigFile> {
+    const isYamlFile = file.fileType === FileTypes.YAML;
+
     const fs = await this.utilService.getBrowserFS();
     const {
       user,
@@ -1196,27 +1286,50 @@ export class FileManagementService {
 
     if (content) {
       file.oid = oid;
-      file.originalConfig = this.utilService.parseYamlConfig(content);
+      if (isYamlFile) {
+        file.originalConfig = this.utilService.parseYamlConfig(content);
+      } else {
+        file.originalContent = content;
+      }
     }
 
     if (await fs.pathExists(pathFinder.draftFullFilePath)) {
       const draftContent = await fs.readFile(pathFinder.draftFullFilePath);
-      file.draftConfig = this.utilService.parseYamlConfig(
-        draftContent.toString()
-      );
+      if (isYamlFile) {
+        file.draftConfig = this.utilService.parseYamlConfig(
+          draftContent.toString()
+        );
+      } else {
+        file.draftContent = draftContent.toString();
+      }
     }
 
-    if (!file.originalConfig && !file.draftConfig) {
+    if (
+        (isYamlFile && !file.originalConfig && !file.draftConfig) ||
+        (!isYamlFile && !file.originalContent && !file.draftContent)
+    ) {
       throw new HttpErrors.NotFound(
         `File '${file.applicationName}/${file.fileName}' does not exist`
       );
     }
 
-    file.modified = file.draftConfig
-      ? !_.isEqual(file.originalConfig, file.draftConfig)
-      : false;
+    let removeDraftFile = false;
 
-    if (file.draftConfig && !file.modified) {
+    if (isYamlFile) {
+      file.modified = file.draftConfig
+        ? !_.isEqual(file.originalConfig, file.draftConfig)
+        : false;
+
+      removeDraftFile = file.draftConfig && !file.modified;
+    } else {
+      file.modified = file.draftContent
+        ? !_.isEqual(file.originalContent, file.draftContent)
+        : false;
+
+      removeDraftFile = file.draftContent && !file.modified;
+    }
+
+    if (removeDraftFile) {
       // Remove draft file
       await fs.remove(pathFinder.draftFullFilePath);
       // Clear commit base SHA
@@ -1226,7 +1339,12 @@ export class FileManagementService {
         { [pathFinder.repoFilePath]: "" },
         branchName
       );
-      file.draftConfig = undefined;
+
+      if (isYamlFile) {
+        file.draftConfig = undefined;
+      } else {
+        file.draftContent = undefined;
+      }
     }
 
     return file;
@@ -1311,7 +1429,9 @@ export class FileManagementService {
       // Save the draft config
       await fs.writeFile(
         pathFinder.draftFullFilePath,
-        this.utilService.convertTreeToYaml(file.draftConfig)
+        file.fileType === FileTypes.YAML
+          ? this.utilService.convertTreeToYaml(file.draftConfig)
+          : file.draftContent
       );
 
       if (
@@ -1531,15 +1651,13 @@ export class FileManagementService {
     }
   }
 
-  private async saveRepoFiles(fs: FS, repoDir: string, toSave: ConfigFile[]) {
+  private async saveRepoFiles(fs: FS, repoDir: string, toSave: ConfigFile[], user: User) {
     // Create folders at first
     const folders = [];
     _.each(toSave, file => {
-      const folderPath = path.resolve(
-        repoDir,
-        percyConfig.yamlAppsFolder,
-        file.applicationName
-      );
+      const pathFinder = new PathFinder(user, file, user.branchName);
+      const folderPath = pathFinder.repoAppDir;
+
       if (!folders.includes(folderPath)) {
         folders.push(folderPath);
       }
@@ -1550,12 +1668,8 @@ export class FileManagementService {
 
     await Promise.all(
       toSave.map(async file => {
-        const folderPath = path.resolve(
-          repoDir,
-          percyConfig.yamlAppsFolder,
-          file.applicationName
-        );
-        const fullFilePath = path.resolve(folderPath, file.fileName);
+        const pathFinder = new PathFinder(user, file, user.branchName);
+        const fullFilePath = pathFinder.fullFilePath;
 
         // Convert json to yaml
         await fs.writeFile(fullFilePath, file.draftContent);
@@ -1565,14 +1679,11 @@ export class FileManagementService {
     );
 
     for (const file of toSave) {
+      const pathFinder = new PathFinder(user, file, user.branchName);
       // Add file to index
       await git.add({
         dir: repoDir,
-        filepath: path.join(
-          percyConfig.yamlAppsFolder,
-          file.applicationName,
-          file.fileName
-        )
+        filepath: pathFinder.repoFilePath
       });
     }
   }
@@ -1624,18 +1735,26 @@ export class FileManagementService {
       configFiles.map(async file => {
         const pathFinder = new PathFinder(user, file, branchName);
 
-        if (!file.draftConfig) {
-          file.draftContent = (await fs.readFile(
-            pathFinder.draftFullFilePath
-          )).toString();
-          file.draftConfig = this.utilService.parseYamlConfig(
-            file.draftContent
-          );
+        if (file.fileType === FileTypes.YAML) {
+          if (!file.draftConfig) {
+            file.draftContent = (await fs.readFile(
+              pathFinder.draftFullFilePath
+            )).toString();
+            file.draftConfig = this.utilService.parseYamlConfig(
+              file.draftContent
+            );
+          } else {
+            file.draftContent = this.utilService.convertTreeToYaml(
+              file.draftConfig,
+              false
+            );
+          }
         } else {
-          file.draftContent = this.utilService.convertTreeToYaml(
-            file.draftConfig,
-            false
-          );
+          if (!file.draftContent) {
+            file.draftContent = (await fs.readFile(
+              pathFinder.draftFullFilePath
+            )).toString();
+          }
         }
 
         if (!forcePush) {
@@ -1661,9 +1780,11 @@ export class FileManagementService {
               pulledCommit,
               pathFinder.repoFilePath
             );
-            const originalConfig = this.utilService.parseYamlConfig(
-              originalContent
-            );
+
+            const originalConfig = file.fileType === FileTypes.YAML
+              ? this.utilService.parseYamlConfig(originalContent)
+              : null;
+
             conflictFiles.push({
               ...file,
               originalConfig,
@@ -1698,7 +1819,7 @@ export class FileManagementService {
       branchName,
       pulledCommit,
       async () => {
-        await this.saveRepoFiles(fs, repoDir, configFiles);
+        await this.saveRepoFiles(fs, repoDir, configFiles, user);
         return await git.commit({
           dir: repoDir,
           message,
@@ -1722,6 +1843,8 @@ export class FileManagementService {
         file.modified = false;
         file.originalConfig = file.draftConfig;
         file.draftConfig = undefined;
+        file.originalContent = file.draftContent;
+        file.draftContent = undefined;
         commitBaseSHA[pathFinder.repoFilePath] = "";
       })
     );

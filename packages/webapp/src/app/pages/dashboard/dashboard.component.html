@@ -63,6 +63,7 @@
     <ng-container matColumnDef="fileName">
       <th mat-header-cell *matHeaderCellDef mat-sort-header="fileName">File Name</th>
       <td mat-cell *matCellDef="let element">
+        <ng-container *ngIf="element.appFile?.applicationName === 'apps'">{{percyConfig.yamlAppsFolder}}/</ng-container>
         <a *ngIf="element.appFile" mat-button color="accent" (click)="editFile(element.appFile)" [ngClass]="{'env': isEnvFile(element.appFile)}">
           {{element.appFile.fileName}}<span *ngIf="element.appFile.modified" class="mo-ind">*</span>
         </a>
@@ -81,7 +82,7 @@
               </button>
           </div>
         </div>
-        <span *ngIf="!element.appFile" matTooltip="{{getAppConfigTooltip((appConfigs|async)[element.app])}}" matTooltipClass="settings-tooltip">Settings</span>
+        <span *ngIf="!element.appFile && element.app !== '-'" matTooltip="{{getAppConfigTooltip((appConfigs|async)[element.app])}}" matTooltipClass="settings-tooltip">Settings</span>
       </td>
     </ng-container>
 

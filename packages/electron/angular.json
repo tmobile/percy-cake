@@ -27,14 +27,27 @@
               "src/percy.conf.json"
             ],
             "styles": [
-              "../webapp/src/styles.scss"
+              "../webapp/src/styles.scss",
+              "../../node_modules/prismjs/themes/prism.css",
+              "../../node_modules/simplemde/dist/simplemde.min.css",
+              "../../node_modules/font-awesome/css/font-awesome.css"
             ],
             "stylePreprocessorOptions": {
               "includePaths": [
                 "../webapp/src/styles"
               ]
             },
-            "scripts": []
+            "scripts": [
+              "../../node_modules/marked/lib/marked.js",
+              "../../node_modules/prismjs/prism.js",
+              "../../node_modules/prismjs/components/prism-c.min.js",
+              "../../node_modules/prismjs/components/prism-cpp.min.js",
+              "../../node_modules/prismjs/components/prism-javascript.min.js",
+              "../../node_modules/prismjs/components/prism-markdown.min.js",
+              "../../node_modules/prismjs/components/prism-python.min.js",
+              "../../node_modules/prismjs/components/prism-typescript.min.js",
+              "../../node_modules/simplemde/dist/simplemde.min.js"
+            ]
           },
           "configurations": {
             "production": {
