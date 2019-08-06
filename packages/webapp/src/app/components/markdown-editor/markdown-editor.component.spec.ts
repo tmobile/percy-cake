@@ -1,25 +1,16 @@
-import { async, ComponentFixture, TestBed } from "@angular/core/testing";
+import { Setup, TestContext } from "test/test-helper";
 
 import { MarkdownEditorComponent } from "./markdown-editor.component";
 
 describe("MarkdownEditorComponent", () => {
-  let component: MarkdownEditorComponent;
-  let fixture: ComponentFixture<MarkdownEditorComponent>;
-
-  beforeEach(async(() => {
-    TestBed.configureTestingModule({
-      declarations: [ MarkdownEditorComponent ]
-    })
-    .compileComponents();
-  }));
+  const setup = Setup(MarkdownEditorComponent, false);
+  let ctx: TestContext<MarkdownEditorComponent>;
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(MarkdownEditorComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
+    ctx = setup();
   });
 
-  it("should create", () => {
-    expect(component).toBeTruthy();
+  it("should create MarkdownEditorComponent", () => {
+    expect(ctx.component).toBeTruthy();
   });
 });

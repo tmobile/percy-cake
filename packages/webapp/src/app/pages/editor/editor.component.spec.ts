@@ -4,7 +4,7 @@ import { Setup, assertDialogOpened, TestContext } from "test/test-helper";
 
 import { PROPERTY_VALUE_TYPES, appPercyConfig } from "config";
 import { TreeNode } from "models/tree-node";
-import { Configuration } from "models/config-file";
+import { Configuration, FileTypes } from "models/config-file";
 import { Alert } from "store/actions/common.actions";
 
 import { PageLoadSuccess, ConfigurationChange } from "store/actions/editor.actions";
@@ -22,6 +22,7 @@ describe("EditorPageComponent", () => {
   const file = {
     applicationName: "app1",
     fileName: "sample.yaml",
+    fileType: FileTypes.YAML,
     oid: "111111",
   };
   const applications = ["app1", "app2", "app3"];
@@ -48,7 +49,8 @@ describe("EditorPageComponent", () => {
     ctx.activatedRouteStub.snapshot = {
       data: {
         editMode: true,
-        envFileMode: false
+        envFileMode: false,
+        rootFile: false,
       },
       paramMap: convertToParamMap({
         appName: file.applicationName,
@@ -60,7 +62,7 @@ describe("EditorPageComponent", () => {
     expect(dispatchSpy.calls.count()).toEqual(1);
 
     const pageLoad = dispatchSpy.calls.argsFor(0)[0].payload;
-    expect(pageLoad).toEqual({ fileName: file.fileName, applicationName: file.applicationName, editMode: true });
+    expect(pageLoad).toEqual({ fileName: file.fileName, applicationName: file.applicationName, editMode: true, fileType: FileTypes.YAML });
 
   });
 
@@ -75,10 +77,12 @@ describe("EditorPageComponent", () => {
     ctx.activatedRouteStub.snapshot = {
       data: {
         editMode: false,
-        envFileMode: false
+        envFileMode: false,
+        rootFile: false
       },
       paramMap: convertToParamMap({
         appName: "app1",
+        fileType: FileTypes.YAML
       })
     };
     ctx.detectChanges();
@@ -86,7 +90,7 @@ describe("EditorPageComponent", () => {
     expect(dispatchSpy.calls.count()).toEqual(1);
 
     const pageLoad = dispatchSpy.calls.argsFor(0)[0].payload;
-    expect(pageLoad).toEqual({ fileName: null, applicationName: file.applicationName, editMode: false });
+    expect(pageLoad).toEqual({ fileName: null, applicationName: file.applicationName, editMode: false, fileType: FileTypes.YAML });
 
     ctx.store.next(new LoadFilesSuccess({ files: [file], applications, appConfigs: {} }));
     ctx.store.next(new PageLoadSuccess({ environments: ["dev"] }));
