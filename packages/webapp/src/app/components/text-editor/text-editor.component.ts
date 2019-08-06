@@ -31,7 +31,7 @@ export class TextEditorComponent implements OnInit, OnChanges, OnDestroy {
   fileContent: string;
   showFileEditor = false;
 
-  sub: Subscription;
+  subscription = new Subscription();
 
   filename = new FormControl("", [
     NotEmpty,
@@ -73,7 +73,7 @@ export class TextEditorComponent implements OnInit, OnChanges, OnDestroy {
       }
     }
 
-    this.sub = combineLatest(
+    const sub = combineLatest(
       this.filename.valueChanges,
       this.store.pipe(select(appStore.backendState))
     )
@@ -102,6 +102,8 @@ export class TextEditorComponent implements OnInit, OnChanges, OnDestroy {
         })
       )
       .subscribe();
+
+    this.subscription.add(sub);
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -113,7 +115,7 @@ export class TextEditorComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.sub.unsubscribe();
+    this.subscription.unsubscribe();
   }
 
 
