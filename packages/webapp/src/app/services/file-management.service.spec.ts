@@ -30,7 +30,7 @@ import { MaintenanceService } from "./maintenance.service";
 import { FileManagementService, PathFinder } from "./file-management.service";
 import { git, FS } from "./util.service";
 import { Principal } from "models/auth";
-import { Configuration } from "models/config-file";
+import { Configuration, FileTypes } from "models/config-file";
 import { TreeNode } from "models/tree-node";
 
 describe("FileManagementService", () => {
@@ -53,7 +53,8 @@ describe("FileManagementService", () => {
     {
       object: {
         entries: [
-          { path: "README.md", type: "blob" },
+          { path: "README.md", type: "blob", oid: "666666" },
+          { path: "Blockquote.md", type: "blob", oid: "777777" },
           { path: "apps", type: "tree" }
         ]
       }
@@ -64,6 +65,8 @@ describe("FileManagementService", () => {
           { path: "app1", type: "tree" },
           { path: "app2", type: "tree" },
           { path: "app3", type: "tree" },
+          { path: ".percyrc", type: "blob", oid: "888888" },
+          { path: "Test.md", type: "blob", oid: "999999" },
           { path: ".gitignore", type: "blob" }
         ]
       }
@@ -74,6 +77,7 @@ describe("FileManagementService", () => {
           { path: "app1-client.yaml", type: "blob", oid: "111111" },
           { path: "app1-server.yaml", type: "blob", oid: "222222" },
           { path: "environments.yml", type: "blob", oid: "333333" },
+          { path: "test.md", type: "blob", oid: "aaaaaa" },
           { path: ".gitignore", type: "blob" }
         ]
       }
@@ -752,7 +756,10 @@ describe("FileManagementService", () => {
       TestUser.branchName
     );
     const draftAppsPath = path.resolve(draftPath, percyConfig.yamlAppsFolder);
+    await fs.mkdirs(draftPath);
+    await fs.writeFile(draftPath + "/Blockquote.md", "{}");
     await fs.mkdirs(draftAppsPath);
+    await fs.writeFile(draftAppsPath + "/Test.md", "{}");
     await fs.mkdirs(draftAppsPath + "/app1");
     await fs.mkdirs(draftAppsPath + "/app2/nest");
     await fs.writeFile(draftAppsPath + "/test.txt", "text");
@@ -764,10 +771,26 @@ describe("FileManagementService", () => {
     expect(result.canPullRequest).toBeFalsy();
     expect(result.canSyncMaster).toBeFalsy();
     expect(result.applications.sort()).toEqual(["app1", "app2", "app3"]);
-    expect(_.sortBy(result.files, ["applicationName", "filename"])).toEqual([
+    expect(_.sortBy(result.files, ["applicationName", "fileName"])).toEqual([
+      {
+        applicationName: "",
+        fileName: "Blockquote.md",
+        fileType: FileTypes.MD,
+        modified: true,
+        size: 2,
+        oid: "777777"
+      },
+      {
+        applicationName: "",
+        fileName: "README.md",
+        fileType: FileTypes.MD,
+        modified: false,
+        oid: "666666"
+      },
       {
         applicationName: "app1",
         fileName: "app1-client.yaml",
+        fileType: FileTypes.YAML,
         size: 2,
         modified: true,
         oid: "111111"
@@ -775,27 +798,53 @@ describe("FileManagementService", () => {
       {
         applicationName: "app1",
         fileName: "app1-server.yaml",
+        fileType: FileTypes.YAML,
         modified: false,
         oid: "222222"
       },
       {
         applicationName: "app1",
         fileName: "environments.yml",
+        fileType: FileTypes.YAML,
         modified: false,
         oid: "333333"
       },
       {
+        applicationName: "app1",
+        fileName: "test.md",
+        fileType: FileTypes.MD,
+        modified: false,
+        oid: "aaaaaa"
+      },
+      {
         applicationName: "app2",
         fileName: "app2-client.yaml",
+        fileType: FileTypes.YAML,
         modified: false,
         oid: "444444"
       },
       {
         applicationName: "app2",
         fileName: "app2-server.yaml",
+        fileType: FileTypes.YAML,
         modified: false,
         oid: "555555"
-      }
+      },
+      {
+        applicationName: "apps",
+        fileName: ".percyrc",
+        fileType: FileTypes.PERCYRC,
+        modified: false,
+        oid: "888888"
+      },
+      {
+        applicationName: "apps",
+        fileName: "Test.md",
+        fileType: FileTypes.MD,
+        modified: true,
+        size: 2,
+        oid: "999999"
+      },
     ]);
   });
 
@@ -819,7 +868,8 @@ describe("FileManagementService", () => {
 
     const file = {
       applicationName: "app1",
-      fileName: "config.yaml"
+      fileName: "config.yaml",
+      fileType: FileTypes.YAML
     };
 
     const pathFinder = new PathFinder(TestUser, file, TestUser.branchName);
@@ -855,7 +905,8 @@ describe("FileManagementService", () => {
 
     const file = {
       applicationName: "app1",
-      fileName: "config.yaml"
+      fileName: "config.yaml",
+      fileType: FileTypes.YAML
     };
 
     const pathFinder = new PathFinder(TestUser, file, TestUser.branchName);
@@ -892,7 +943,8 @@ describe("FileManagementService", () => {
 
     const file = {
       applicationName: "app1",
-      fileName: "config.yaml"
+      fileName: "config.yaml",
+      fileType: FileTypes.YAML
     };
 
     const pathFinder = new PathFinder(TestUser, file, TestUser.branchName);
@@ -922,7 +974,8 @@ describe("FileManagementService", () => {
 
     const file = {
       applicationName: "app1",
-      fileName: "config.yaml"
+      fileName: "config.yaml",
+      fileType: FileTypes.YAML
     };
 
     const pathFinder = new PathFinder(TestUser, file, TestUser.branchName);
@@ -946,7 +999,8 @@ describe("FileManagementService", () => {
 
     const file = {
       applicationName: "app1",
-      fileName: "config.yaml"
+      fileName: "config.yaml",
+      fileType: FileTypes.YAML
     };
 
     const pathFinder = new PathFinder(TestUser, file, TestUser.branchName);
@@ -971,6 +1025,7 @@ describe("FileManagementService", () => {
     const file = {
       applicationName: "app1",
       fileName: "config.yaml",
+      fileType: FileTypes.YAML,
       draftConfig,
       modified: true,
       oid: "223344"
@@ -1240,6 +1295,7 @@ describe("FileManagementService", () => {
     const file1 = {
       applicationName: "app1",
       fileName: "app1-client.yaml",
+      fileType: FileTypes.YAML,
       oid: "111111",
       draftConfig: draftConfig
     };
@@ -1248,6 +1304,7 @@ describe("FileManagementService", () => {
     const file2 = {
       applicationName: "app1",
       fileName: "app1-server.yaml",
+      fileType: FileTypes.YAML,
       oid: "222222"
     };
     const pathFinder2 = new PathFinder(TestUser, file2, TestUser.branchName);
@@ -1319,6 +1376,7 @@ describe("FileManagementService", () => {
     const file1 = {
       applicationName: "app1",
       fileName: "app1-client.yaml",
+      fileType: FileTypes.YAML,
       oid: "changed-oid",
       draftConfig: draftConfig
     };
@@ -1326,7 +1384,8 @@ describe("FileManagementService", () => {
 
     const file2 = {
       applicationName: "app1",
-      fileName: "app1-server.yaml"
+      fileName: "app1-server.yaml",
+      fileType: FileTypes.YAML
     };
     const pathFinder2 = new PathFinder(TestUser, file2, TestUser.branchName);
 
@@ -1413,6 +1472,7 @@ describe("FileManagementService", () => {
     const file1 = {
       applicationName: "app1",
       fileName: "app1-client.yaml",
+      fileType: FileTypes.YAML,
       oid: "changed-oid",
       draftConfig: draftConfig
     };
@@ -1420,7 +1480,8 @@ describe("FileManagementService", () => {
 
     const file2 = {
       applicationName: "app1",
-      fileName: "app1-server.yaml"
+      fileName: "app1-server.yaml",
+      fileType: FileTypes.YAML
     };
     const pathFinder2 = new PathFinder(TestUser, file2, TestUser.branchName);
 
@@ -1486,6 +1547,7 @@ describe("FileManagementService", () => {
     const file1 = {
       applicationName: "app1",
       fileName: "app1-client.yaml",
+      fileType: FileTypes.YAML,
       oid: "changed-oid",
       draftConfig: draftConfig
     };
@@ -1493,7 +1555,8 @@ describe("FileManagementService", () => {
 
     const file2 = {
       applicationName: "app1",
-      fileName: "app1-server.yaml"
+      fileName: "app1-server.yaml",
+      fileType: FileTypes.YAML
     };
     const pathFinder2 = new PathFinder(TestUser, file2, TestUser.branchName);
 
@@ -1567,6 +1630,7 @@ describe("FileManagementService", () => {
     const file1 = {
       applicationName: "app1",
       fileName: "app1-client.yaml",
+      fileType: FileTypes.YAML,
       oid: "changed-oid",
       draftConfig: draftConfig,
       originalConfig: originalConfig
@@ -1576,6 +1640,7 @@ describe("FileManagementService", () => {
     const file2 = {
       applicationName: "app1",
       fileName: "app1-server.yaml",
+      fileType: FileTypes.YAML,
       oid: "222222",
       draftConfig: originalConfig,
       originalConfig: originalConfig
@@ -1654,6 +1719,7 @@ describe("FileManagementService", () => {
     const file1 = {
       applicationName: "app1",
       fileName: "app1-client.yaml",
+      fileType: FileTypes.YAML,
       oid: "changed-oid",
       draftConfig: originalConfig,
       originalConfig: originalConfig
@@ -1663,6 +1729,7 @@ describe("FileManagementService", () => {
     const file2 = {
       applicationName: "app1",
       fileName: "app1-server.yaml",
+      fileType: FileTypes.YAML,
       oid: "222222",
       draftConfig: originalConfig,
       originalConfig: originalConfig

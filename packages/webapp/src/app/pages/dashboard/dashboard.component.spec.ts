@@ -6,6 +6,7 @@ import { DashboardComponent } from "./dashboard.component";
 import { LoadFilesSuccess, Refresh } from "store/actions/backend.actions";
 import { SelectAppDialogComponent } from "components/select-app-dialog/select-app-dialog.component";
 import { percyConfig } from "config";
+import { FileTypes } from "models/config-file";
 import { ConfirmationDialogComponent } from "components/confirmation-dialog/confirmation-dialog.component";
 import { CommitDialogComponent } from "components/commit-dialog/commit-dialog.component";
 import { Alert } from "store/actions/common.actions";
@@ -17,30 +18,70 @@ describe("DashboardComponent", () => {
 
   const files = [
     {
+      applicationName: "",
+      fileName: "README.md",
+      fileType: FileTypes.MD,
+      timestamp: Date.now(),
+      size: 100,
+      modified: true
+    },
+    {
+      applicationName: "",
+      fileName: "Blockquote.md",
+      fileType: FileTypes.MD,
+      timestamp: Date.now(),
+      size: 100
+    },
+    {
+      applicationName: "apps",
+      fileName: ".percyrc",
+      fileType: FileTypes.PERCYRC,
+      timestamp: Date.now(),
+      size: 100
+    },
+    {
       applicationName: "app1",
       fileName: "sample.yaml",
+      fileType: FileTypes.YAML,
       timestamp: Date.now(),
       size: 100,
       modified: true
     },
     {
       applicationName: "app1",
+      fileName: "test.md",
+      fileType: FileTypes.MD,
+      timestamp: Date.now(),
+      size: 100
+    },
+    {
+      applicationName: "app1",
       fileName: percyConfig.environmentsFile,
+      fileType: FileTypes.YAML,
       timestamp: Date.now(),
       size: 100,
     },
     {
       applicationName: "app2",
       fileName: "sample.yaml",
+      fileType: FileTypes.YAML,
       timestamp: Date.now(),
       size: 100,
     },
     {
       applicationName: "app2",
       fileName: percyConfig.environmentsFile,
+      fileType: FileTypes.YAML,
       timestamp: Date.now(),
       size: 100,
     },
+    {
+      applicationName: "app2",
+      fileName: ".percyrc",
+      fileType: FileTypes.PERCYRC,
+      timestamp: Date.now(),
+      size: 100,
+    }
   ];
   const applications = ["app1", "app2", "app3"];
 
@@ -63,7 +104,7 @@ describe("DashboardComponent", () => {
   it("should create DashboardComponent", () => {
     expect(ctx.component).toBeTruthy();
     expect(ctx.component.isEnvFile(files[0])).toBeFalsy();
-    expect(ctx.component.isEnvFile(files[1])).toBeTruthy();
+    expect(ctx.component.isEnvFile(files[5])).toBeTruthy();
 
     ctx.store.next(new LoginSuccess({...TestUser, repositoryUrl: "https://bitbucket.org/repo"}));
     expect(ctx.component.pullRequestUrl).toEqual(`https://bitbucket.org/repo/pull-requests/new?source=${TestUser.branchName}&t=1#diff`);
@@ -85,30 +126,53 @@ describe("DashboardComponent", () => {
   it("should show apps and files properly", () => {
     expect(ctx.component.folders.value).toEqual([
       {
-        app: "app1",
+        app: "-",
       },
       {
-        app: "app1",
+        app: "-",
         appFile: files[1],
       },
       {
-        app: "app1",
+        app: "-",
         appFile: files[0],
       },
       {
-        app: "app2",
-      },
-      {
-        app: "app2",
-        appFile: files[3],
-      },
-      {
-        app: "app2",
+        app: "-",
         appFile: files[2],
       },
       {
-        app: "app3",
+        app: "app1",
       },
+      {
+        app: "app1",
+        appFile: files[5],
+      },
+      {
+        app: "app1",
+        appFile: files[3],
+      },
+      {
+        app: "app1",
+        appFile: files[4],
+      },
+      {
+        app: "app2",
+      },
+      {
+        app: "app2",
+        appFile: files[7],
+      },
+      {
+        app: "app2",
+        appFile: files[8],
+      },
+      {
+        app: "app2",
+        appFile: files[6],
+      },
+      {
+        app: "app3",
+      }
     ]);
     expect(ctx.component.disableCommit.value).toBeFalsy();
   });
@@ -117,6 +181,21 @@ describe("DashboardComponent", () => {
     ctx.component.toggleApp("app1");
     expect(ctx.component.folders.value).toEqual([
       {
+        app: "-",
+      },
+      {
+        app: "-",
+        appFile: files[1],
+      },
+      {
+        app: "-",
+        appFile: files[0],
+      },
+      {
+        app: "-",
+        appFile: files[2],
+      },
+      {
         app: "app1",
       },
       {
@@ -124,45 +203,72 @@ describe("DashboardComponent", () => {
       },
       {
         app: "app2",
-        appFile: files[3],
+        appFile: files[7],
       },
       {
         app: "app2",
-        appFile: files[2],
+        appFile: files[8],
+      },
+      {
+        app: "app2",
+        appFile: files[6],
       },
       {
         app: "app3",
-      },
+      }
     ]);
     expect(ctx.component.disableCommit.value).toBeFalsy();
 
     ctx.component.toggleApp("app1");
     expect(ctx.component.folders.value).toEqual([
       {
-        app: "app1",
+        app: "-",
       },
       {
-        app: "app1",
+        app: "-",
         appFile: files[1],
       },
       {
-        app: "app1",
+        app: "-",
         appFile: files[0],
       },
       {
-        app: "app2",
-      },
-      {
-        app: "app2",
-        appFile: files[3],
-      },
-      {
-        app: "app2",
+        app: "-",
         appFile: files[2],
       },
       {
-        app: "app3",
+        app: "app1",
       },
+      {
+        app: "app1",
+        appFile: files[5],
+      },
+      {
+        app: "app1",
+        appFile: files[3],
+      },
+      {
+        app: "app1",
+        appFile: files[4],
+      },
+      {
+        app: "app2",
+      },
+      {
+        app: "app2",
+        appFile: files[7],
+      },
+      {
+        app: "app2",
+        appFile: files[8],
+      },
+      {
+        app: "app2",
+        appFile: files[6],
+      },
+      {
+        app: "app3",
+      }
     ]);
     expect(ctx.component.disableCommit.value).toBeFalsy();
   });
@@ -171,6 +277,9 @@ describe("DashboardComponent", () => {
     ctx.component.toggleAllApps(new Event("click"));
     expect(ctx.component.folders.value).toEqual([
       {
+        app: "-",
+      },
+      {
         app: "app1",
       },
       {
@@ -185,30 +294,53 @@ describe("DashboardComponent", () => {
     ctx.component.toggleAllApps(new Event("click"));
     expect(ctx.component.folders.value).toEqual([
       {
-        app: "app1",
+        app: "-",
       },
       {
-        app: "app1",
+        app: "-",
         appFile: files[1],
       },
       {
-        app: "app1",
+        app: "-",
         appFile: files[0],
       },
       {
-        app: "app2",
-      },
-      {
-        app: "app2",
-        appFile: files[3],
-      },
-      {
-        app: "app2",
+        app: "-",
         appFile: files[2],
       },
       {
-        app: "app3",
+        app: "app1",
       },
+      {
+        app: "app1",
+        appFile: files[5],
+      },
+      {
+        app: "app1",
+        appFile: files[3],
+      },
+      {
+        app: "app1",
+        appFile: files[4],
+      },
+      {
+        app: "app2",
+      },
+      {
+        app: "app2",
+        appFile: files[7],
+      },
+      {
+        app: "app2",
+        appFile: files[8],
+      },
+      {
+        app: "app2",
+        appFile: files[6],
+      },
+      {
+        app: "app3",
+      }
     ]);
     expect(ctx.component.disableCommit.value).toBeFalsy();
   });
@@ -221,12 +353,16 @@ describe("DashboardComponent", () => {
       },
       {
         app: "app1",
-        appFile: files[1],
+        appFile: files[5],
       },
       {
         app: "app1",
-        appFile: files[0],
+        appFile: files[3],
       },
+      {
+        app: "app1",
+        appFile: files[4],
+      }
     ]);
     expect(ctx.component.disableCommit.value).toBeFalsy();
 
@@ -237,12 +373,16 @@ describe("DashboardComponent", () => {
       },
       {
         app: "app2",
-        appFile: files[3],
+        appFile: files[7],
       },
       {
         app: "app2",
-        appFile: files[2],
+        appFile: files[8],
       },
+      {
+        app: "app2",
+        appFile: files[6],
+      }
     ]);
     expect(ctx.component.disableCommit.value).toBeTruthy();
 
@@ -272,23 +412,46 @@ describe("DashboardComponent", () => {
       },
       {
         app: "app2",
-        appFile: files[3],
+        appFile: files[7],
       },
       {
         app: "app2",
-        appFile: files[2],
+        appFile: files[8],
+      },
+      {
+        app: "app2",
+        appFile: files[6],
       },
       {
         app: "app1",
       },
       {
         app: "app1",
+        appFile: files[5],
+      },
+      {
+        app: "app1",
+        appFile: files[3],
+      },
+      {
+        app: "app1",
+        appFile: files[4],
+      },
+      {
+        app: "-",
+      },
+      {
+        app: "-",
         appFile: files[1],
       },
       {
-        app: "app1",
+        app: "-",
         appFile: files[0],
       },
+      {
+        app: "-",
+        appFile: files[2],
+      }
     ]);
 
     sort = {
@@ -307,23 +470,46 @@ describe("DashboardComponent", () => {
       },
       {
         app: "app2",
-        appFile: files[3],
+        appFile: files[7],
       },
       {
         app: "app2",
-        appFile: files[2],
+        appFile: files[6],
+      },
+      {
+        app: "app2",
+        appFile: files[8],
       },
       {
         app: "app1",
       },
       {
         app: "app1",
+        appFile: files[5],
+      },
+      {
+        app: "app1",
+        appFile: files[4],
+      },
+      {
+        app: "app1",
+        appFile: files[3],
+      },
+      {
+        app: "-",
+      },
+      {
+        app: "-",
+        appFile: files[0],
+      },
+      {
+        app: "-",
         appFile: files[1],
       },
       {
-        app: "app1",
-        appFile: files[0],
-      },
+        app: "-",
+        appFile: files[2],
+      }
     ]);
   });
 
@@ -342,17 +528,28 @@ describe("DashboardComponent", () => {
     ctx.dialogStub.output.next({ createEnv: true, appName: "app3" });
     expect(ctx.routerStub.value).toEqual(["/files/newenv", "app3", percyConfig.environmentsFile]);
 
-    ctx.dialogStub.output.next({ createEnv: false, appName: "app2" });
-    expect(ctx.routerStub.value).toEqual(["/files/new", "app2"]);
+    ctx.dialogStub.output.next({ createEnv: false, appName: "app2", fileType: FileTypes.YAML });
+    expect(ctx.routerStub.value).toEqual(["/files/new", "app2", FileTypes.YAML]);
+
+    ctx.dialogStub.output.next({ createEnv: false, appName: "", fileType: FileTypes.MD });
+    expect(ctx.routerStub.value).toEqual(["/files/new", FileTypes.MD]);
   });
 
   it("should navigate to edit file", () => {
 
     let file = files[0];
     ctx.component.editFile(file);
+    expect(ctx.routerStub.value).toEqual(["/files/edit", file.fileName]);
+
+    file = files[2];
+    ctx.component.editFile(file);
     expect(ctx.routerStub.value).toEqual(["/files/edit", file.applicationName, file.fileName]);
 
-    file = files[1];
+    file = files[3];
+    ctx.component.editFile(file);
+    expect(ctx.routerStub.value).toEqual(["/files/edit", file.applicationName, file.fileName]);
+
+    file = files[5];
     ctx.component.editFile(file);
     expect(ctx.routerStub.value).toEqual(["/files/editenv", file.applicationName, file.fileName]);
   });
@@ -375,7 +572,7 @@ describe("DashboardComponent", () => {
     ctx.dialogStub.output.next("commit message");
 
     expect(dispatchSpy.calls.mostRecent().args[0].payload).toEqual({
-      files: [files[0]],
+      files: [files[0], files[3]],
       message: "commit message",
     });
   });

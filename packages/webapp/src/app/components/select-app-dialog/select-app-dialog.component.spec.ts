@@ -1,5 +1,8 @@
 import { Setup, TestContext } from "test/test-helper";
 
+import { percyConfig } from "config";
+import { FileTypes } from "models/config-file";
+
 import { SelectAppDialogComponent } from "./select-app-dialog.component";
 
 describe("SelectAppDialogComponent", () => {
@@ -31,8 +34,13 @@ describe("SelectAppDialogComponent", () => {
     ctx.component.data = data;
     ctx.detectChanges();
 
-    await new Promise(resolve => setTimeout(resolve, 150)); // wait for debouce time
-    expect(ctx.observables.filteredApps.value).toEqual(data.applications);
+    // default base folder options
+    expect(ctx.component.baseFolderOptions).toEqual(["", percyConfig.yamlAppsFolder, "application"]);
+
+    // default file type selected
+    expect(ctx.component.fileType.value).toEqual(FileTypes.YAML);
+
+    expect(ctx.component.filteredApps).toEqual(data.applications);
     expect(ctx.component.createEnv.disabled).toBeFalsy();
 
     // Shouldn't close without app selected
@@ -40,11 +48,9 @@ describe("SelectAppDialogComponent", () => {
     expect(ctx.dialogStub.output.value).toBeUndefined();
 
     ctx.component.appname.setValue("app3");
-    await new Promise(resolve => setTimeout(resolve, 150)); // wait for debouce time
-    expect(ctx.observables.filteredApps.value).toEqual([]);
 
     ctx.component.selectApp();
-    expect(ctx.dialogStub.output.value).toEqual({ appName: "app3", createEnv: false });
+    expect(ctx.dialogStub.output.value).toEqual({ fileType: FileTypes.YAML, appName: "app3", createEnv: false });
   });
 
   it("initialize with selected app", async () => {
@@ -69,12 +75,11 @@ describe("SelectAppDialogComponent", () => {
     ctx.component.appname.setValue("app2");
     expect(ctx.component.createEnv.disabled).toBeFalsy();
 
-    await new Promise(resolve => setTimeout(resolve, 150)); // wait for debouce time
-    expect(ctx.observables.filteredApps.value).toEqual(data.applications);
+    expect(ctx.component.filteredApps).toEqual(data.applications);
 
     ctx.component.createEnv.setValue(true);
 
     ctx.component.selectApp();
-    expect(ctx.dialogStub.output.value).toEqual({ appName: "app2", createEnv: true });
+    expect(ctx.dialogStub.output.value).toEqual({ fileType: FileTypes.YAML, appName: "app2", createEnv: true });
   });
 });
