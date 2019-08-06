@@ -1,25 +1,16 @@
-import { async, ComponentFixture, TestBed } from "@angular/core/testing";
+import { Setup, TestContext } from "test/test-helper";
 
 import { TextEditorComponent } from "./text-editor.component";
 
 describe("TextEditorComponent", () => {
-  let component: TextEditorComponent;
-  let fixture: ComponentFixture<TextEditorComponent>;
-
-  beforeEach(async(() => {
-    TestBed.configureTestingModule({
-      declarations: [ TextEditorComponent ]
-    })
-    .compileComponents();
-  }));
+  const setup = Setup(TextEditorComponent, false);
+  let ctx: TestContext<TextEditorComponent>;
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(TextEditorComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
+    ctx = setup();
   });
 
-  it("should create", () => {
-    expect(component).toBeTruthy();
+  it("should create TextEditorComponent", () => {
+    expect(ctx.component).toBeTruthy();
   });
 });

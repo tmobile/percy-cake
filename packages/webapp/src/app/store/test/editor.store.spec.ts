@@ -21,7 +21,7 @@ software without specific prior written permission.
 ===========================================================================
 */
 
-import { ConfigFile, Configuration } from "models/config-file";
+import { ConfigFile, Configuration, FileTypes } from "models/config-file";
 import * as BackendActions from "../actions/backend.actions";
 import { FileManagementService } from "services/file-management.service";
 import { AlertDialogComponent } from "components/alert-dialog/alert-dialog.component";
@@ -35,6 +35,7 @@ import * as reducer from "../reducers/editor.reducer";
 const file1: ConfigFile = {
   fileName: "test1.yaml",
   applicationName: "app1",
+  fileType: FileTypes.YAML,
   modified: true,
   oid: "111111",
   draftConfig: new Configuration(),
@@ -44,6 +45,7 @@ const file1: ConfigFile = {
 const file2: ConfigFile = {
   fileName: "test1.yaml",
   applicationName: "app1",
+  fileType: FileTypes.YAML,
   modified: false,
   oid: "222222",
   originalConfig: new Configuration(),
@@ -69,7 +71,7 @@ describe("Editor store action/effect/reducer", () => {
 
     spy.and.returnValue({ environments: ["dev", "prod"], appPercyConfig: { key: "value" } });
 
-    ctx.store.dispatch(new PageLoad({ fileName: null, applicationName: "app1", editMode: false }));
+    ctx.store.dispatch(new PageLoad({ fileName: null, applicationName: "app1", editMode: false, fileType: FileTypes.YAML }));
     expect(ctx.editorState().editMode).toBeFalsy();
     await ctx.fixture.whenStable();
     await ctx.fixture.whenStable();
@@ -77,6 +79,7 @@ describe("Editor store action/effect/reducer", () => {
     const file: ConfigFile = {
       fileName: null,
       applicationName: "app1",
+      fileType: FileTypes.YAML,
       draftConfig: new Configuration(),
       modified: true
     };
@@ -93,11 +96,11 @@ describe("Editor store action/effect/reducer", () => {
     spy.and.returnValue({ environments: ["dev", "prod"], appPercyConfig: { key1: "value1" } });
 
     const file: ConfigFile = {
-      fileName: "test.yaml", applicationName: "app1", originalConfig: new Configuration()
+      fileName: "test.yaml", applicationName: "app1", fileType: FileTypes.YAML, originalConfig: new Configuration()
     };
     spyOn(fileService, "getFileContent").and.returnValue(file);
 
-    ctx.store.dispatch(new PageLoad({ fileName: "test.yaml", applicationName: "app1", editMode: true }));
+    ctx.store.dispatch(new PageLoad({ fileName: "test.yaml", applicationName: "app1", editMode: true, fileType: FileTypes.YAML }));
     expect(ctx.editorState().editMode).toBeTruthy();
     await ctx.fixture.whenStable();
     await ctx.fixture.whenStable();
@@ -112,7 +115,7 @@ describe("Editor store action/effect/reducer", () => {
 
   it("PageLoad action should be successful for edit file mode, file content already loaded in state", async () => {
     const file: ConfigFile = {
-      fileName: "test.yaml", applicationName: "app1", originalConfig: new Configuration()
+      fileName: "test.yaml", applicationName: "app1", fileType: FileTypes.YAML, originalConfig: new Configuration()
     };
     ctx.store.next(new BackendActions.LoadFilesSuccess({ files: [file], applications: ["app1"], appConfigs: {} }));
 
@@ -121,7 +124,7 @@ describe("Editor store action/effect/reducer", () => {
 
     const getFileContentSyp = spyOn(fileService, "getFileContent");
 
-    ctx.store.dispatch(new PageLoad({ fileName: "test.yaml", applicationName: "app1", editMode: true }));
+    ctx.store.dispatch(new PageLoad({ fileName: "test.yaml", applicationName: "app1", editMode: true, fileType: FileTypes.YAML }));
     expect(ctx.editorState().editMode).toBeTruthy();
     await ctx.fixture.whenStable();
     await ctx.fixture.whenStable();
@@ -140,7 +143,7 @@ describe("Editor store action/effect/reducer", () => {
 
     spyOn(fileService, "getEnvironments").and.throwError("Mock error");
 
-    ctx.store.dispatch(new PageLoad({ fileName: null, applicationName: "app1", editMode: true }));
+    ctx.store.dispatch(new PageLoad({ fileName: null, applicationName: "app1", editMode: true, fileType: FileTypes.YAML }));
     await ctx.fixture.whenStable();
     assertDialogOpened(AlertDialogComponent, {
       data: {
@@ -175,7 +178,7 @@ describe("Editor store action/effect/reducer", () => {
     const newConfig = new Configuration();
     newConfig.default.addChild(new TreeNode("key"));
 
-    ctx.store.dispatch(new PageLoad({ fileName: null, applicationName: "app1", editMode: false }));
+    ctx.store.dispatch(new PageLoad({ fileName: null, applicationName: "app1", editMode: false, fileType: FileTypes.YAML }));
     ctx.store.dispatch(new BackendActions.GetFileContentSuccess({ file: file1 }));
     ctx.store.dispatch(new ConfigurationChange(newConfig));
     await ctx.fixture.whenStable();
@@ -184,7 +187,7 @@ describe("Editor store action/effect/reducer", () => {
     expect(reducer.getConfiguration(ctx.editorState())).toEqual(newConfig);
     expect(reducer.getIsPageDirty(ctx.editorState())).toEqual(true);
 
-    ctx.store.dispatch(new PageLoad({ fileName: null, applicationName: "app1", editMode: true }));
+    ctx.store.dispatch(new PageLoad({ fileName: null, applicationName: "app1", editMode: true, fileType: FileTypes.YAML }));
     ctx.store.dispatch(new BackendActions.GetFileContentSuccess({ file: file2 }));
     ctx.store.dispatch(new ConfigurationChange(newConfig));
     await ctx.fixture.whenStable();

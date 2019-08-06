@@ -312,6 +312,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           apps.forEach(app => {
             result.push(app);
           });
+          result.push("-");
         }
         this.store.dispatch(new CollapseApps(result));
       });
