@@ -25,7 +25,7 @@ import * as fs from "fs";
 import * as _path from "path";
 import * as electron from "electron";
 
-import { File } from "./File";
+import { File, FileTypes } from "./File";
 
 export const path = _path;
 
@@ -288,8 +288,10 @@ export function populateFolder(folder: File) {
       folder.addChild(constructFolder(filePath, folder));
     } else if (stat.isFile()) {
       const ext = path.extname(fileName).toLowerCase();
-      if (ext === ".yaml" || ext === ".yml") {
-        const file = new File(filePath, fileName, true, folder);
+      if (ext === ".yaml" || ext === ".yml" || ext === ".md" || fileName === ".percyrc") {
+        const fileType: FileTypes = fileName === ".percyrc" ? FileTypes.PERCYRC : (ext === ".md" ? FileTypes.MD : FileTypes.YAML);
+
+        const file = new File(filePath, fileName, true, folder, fileType);
         file.applicationName = folder.applicationName;
         folder.addChild(file);
       }

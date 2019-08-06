@@ -38,7 +38,7 @@ import { Store, select } from "@ngrx/store";
 
 import { electronApi, percyConfig, appPercyConfig } from "config";
 import { TreeNode } from "models/tree-node";
-import { Configuration } from "models/config-file";
+import { Configuration, FileTypes } from "models/config-file";
 
 import * as appStore from "store";
 import { PageRestore } from "store/actions/editor.actions";
@@ -47,6 +47,7 @@ import { State as EditorState } from "store/reducers/editor.reducer";
 import { UtilService } from "services/util.service";
 
 import { EditorComponent } from "components/editor/editor.component";
+import { TextEditorComponent } from "components/text-editor/text-editor.component";
 import { AlertDialogComponent } from "components/alert-dialog/alert-dialog.component";
 import { ConfirmationDialogComponent } from "components/confirmation-dialog/confirmation-dialog.component";
 
@@ -73,6 +74,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
   } = {};
 
   newFileIno = -1;
+  fileTypes = FileTypes;
 
   sub: Subscription;
 
@@ -435,8 +437,14 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
       // Parse file content
       const fileContent = electronApi.readFile(file.path);
-      file.originalConfig = this.parseYaml(fileContent, file.path);
-      file.configuration = _.cloneDeep(file.originalConfig);
+
+      file.originalContent = fileContent;
+
+      if (file.fileType === FileTypes.YAML) {
+        file.originalConfig = this.parseYaml(fileContent, file.path);
+        file.configuration = _.cloneDeep(file.originalConfig);
+      }
+
       file.modified = false;
 
       file.editMode = true;
@@ -468,29 +476,31 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
           const _file = this.findOpenedFile(file.path);
           if (_file) {
             const _fileContent = electronApi.readFile(filePath);
-            const originalConfig = this.parseYaml(_fileContent, filePath);
-            if (!_.isEqual(originalConfig, _file.originalConfig)) {
+            if (!_.isEqual(_fileContent, _file.originalContent)) {
               if (this.changedDialogRef[filePath]) {
                 this.changedDialogRef[
                   filePath
-                ].componentInstance.data.originalConfig = originalConfig;
+                ].componentInstance.data.originalContent = _fileContent;
                 return;
               }
 
               const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
                 data: {
-                  originalConfig,
+                  originalContent: _fileContent,
                   confirmationText: `${filePath} is changed externally. Do you want to reload the file?`
                 }
               });
               dialogRef.afterClosed().subscribe(res => {
                 delete this.changedDialogRef[filePath];
                 if (res) {
-                  _file.originalConfig =
-                    dialogRef.componentInstance.data.originalConfig;
-                  _file.configuration = _.cloneDeep(_file.originalConfig);
+                  const originalConfig = _file.fileType === FileTypes.YAML ? this.parseYaml(_fileContent, filePath) : null;
+
+                  _file.originalConfig = originalConfig;
+                  _file.configuration = originalConfig ?  _.cloneDeep(_file.originalConfig) : null;
+                  _file.originalContent = dialogRef.componentInstance.data.originalContent;
                   _file.modified = false;
                   this.setEditorState(_file);
+                  this.openedFiles = _.map(this.openedFiles, f => _.cloneDeep(f));
                 }
               });
               this.changedDialogRef[filePath] = dialogRef;
@@ -549,8 +559,10 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
     if (file.editMode) {
       file.modified = false;
       file.configuration = _.cloneDeep(file.originalConfig);
+      this.openedFiles = _.map(this.openedFiles, f => _.cloneDeep(f));
     } else {
       file.configuration = new Configuration();
+      file.originalContent = "";
     }
     this.setEditorState(file);
   }
@@ -588,6 +600,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
       file.modified = false;
       file.configuration = configuration;
       file.originalConfig = _.cloneDeep(configuration);
+      file.originalContent = fileContent;
 
       this.setEditorState(file);
 
@@ -602,6 +615,49 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
         this.watchFile(file);
       }
     });
+  }
+
+  saveFile(editor: TextEditorComponent, file: File) {
+    const result = editor.validate();
+
+    if (!result.valid) {
+      return;
+    }
+
+    const editMode = file.editMode;
+    const fileName = result.file.fileName;
+    const filePath = editMode
+        ? file.path
+        : electronApi.path.resolve(file.parent.path, fileName);
+
+     const fileContent = result.fileContent;
+     electronApi.saveFile(filePath, fileContent);
+
+     if (!editMode) {
+        delete this.editorStates[file.path];
+      }
+
+    file.ino = null;
+    file.path = filePath;
+    file.fileName = fileName;
+    file.editMode = true;
+    file.modified = false;
+    file.configuration = null;
+    file.originalConfig = null;
+    file.originalContent = fileContent;
+
+    this.setEditorState(file);
+
+    if (!file.parent.hasChild(filePath)) {
+      file.parent.addChild(file);
+      this.sortFolderChildren(file.parent);
+      this.refreshFileExplorer();
+    }
+
+    if (!editMode) {
+      this.resetNewFileIno();
+      this.watchFile(file);
+    }
   }
 
   /**
@@ -629,6 +685,16 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * returns true if folder has percyrc file
+   * @param folder the folder to check for
+   */
+  folderHasPercyrcFile(folder: File): boolean {
+    return !!folder.children.find(
+      f => f.fileName === ".percyrc"
+    );
+  }
+
+  /**
    * Check if file is env file.
    * @param file the file to check
    * @returns true if file is env file, false otherwise
@@ -641,7 +707,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
    * Add new file.
    * @param folder the folder to add new file
    */
-  addNewFile(folder: File) {
+  addNewFile(folder: File, fileType: FileTypes) {
     if (!folder.folderPopulated) {
       this.populateFolder(folder);
     }
@@ -650,7 +716,8 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
       electronApi.path.resolve(folder.path, fileName),
       fileName,
       true,
-      folder
+      folder,
+      fileType
     );
     newFile.ino = this.newFileIno;
     newFile.applicationName = folder.applicationName;
@@ -659,6 +726,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
     newFile.modified = true;
     newFile.configuration = new Configuration();
     newFile.environments = this.getEnvironments(folder.path);
+    newFile.originalContent = "";
 
     this.newFileIno--;
 

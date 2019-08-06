@@ -78,9 +78,17 @@ export class Configuration extends TreeNode {
   }
 }
 
+export enum FileTypes {
+  YAML = "yaml",
+  YML = "yml",
+  PERCYRC = "percyrc",
+  MD = "md"
+}
+
 export interface ConfigFile {
   fileName: string;
-  applicationName: string;
+  applicationName: string; // use "" for root folder, percyConfig.yamlAppsFolder for apps folder and application name otherwise
+  fileType?: FileTypes; // default is yaml filetype
   size?: number;
   modified?: boolean; // Means this is a modified file compared to repo, able to commit
   draftConfig?: Configuration;

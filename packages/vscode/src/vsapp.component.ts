@@ -28,7 +28,7 @@ import * as _ from "lodash";
 
 import { percyConfig, appPercyConfig } from "config";
 import { TreeNode } from "models/tree-node";
-import { ConfigFile, Configuration } from "models/config-file";
+import { ConfigFile, Configuration, FileTypes } from "models/config-file";
 
 import * as appStore from "store";
 import { PageLoad } from "store/actions/editor.actions";
@@ -154,7 +154,7 @@ export class VSAppComponent implements OnInit {
       this.fileContent = message.fileContent;
       this.fileName = this.fileSaving.fileName = message.newFileName;
       this.store.dispatch(
-        new PageLoad({ ...this.fileSaving, editMode: this.editMode })
+        new PageLoad({ ...this.fileSaving, editMode: this.editMode, fileType: FileTypes.YAML })
       );
       this.store.dispatch(new SaveDraftSuccess(this.fileSaving));
       this.fileSaving = null;
@@ -234,7 +234,7 @@ export class VSAppComponent implements OnInit {
       applicationName: this.appName
     };
 
-    this.store.dispatch(new PageLoad({ ...file, editMode: this.editMode }));
+    this.store.dispatch(new PageLoad({ ...file, editMode: this.editMode, fileType: FileTypes.YAML }));
 
     if (!this.fileContent) {
       // Add new file, set an initial config

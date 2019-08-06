@@ -22,14 +22,15 @@ software without specific prior written permission.
 
 import { Action } from "@ngrx/store";
 
-import { Configuration } from "models/config-file";
+import { Configuration, FileTypes } from "models/config-file";
 
 export enum EditorActionTypes {
   PageLoad = "[Editor] Page Load",
   PageLoadSuccess = "[Editor] Page Load Success",
   PageLoadFailure = "[Editor] Page Load Failure",
   PageRestore = "[Editor] Page restore",
-  ConfigurationChange = "[Editor] Configuration Change"
+  ConfigurationChange = "[Editor] Configuration Change",
+  FileContentChange = "[Editor] File Content Change"
 }
 
 export class PageLoad implements Action {
@@ -40,6 +41,7 @@ export class PageLoad implements Action {
       fileName: string;
       applicationName: string;
       editMode: boolean;
+      fileType: FileTypes;
     }
   ) {}
 }
@@ -66,9 +68,15 @@ export class ConfigurationChange implements Action {
   constructor(public payload: Configuration) {}
 }
 
+export class FileContentChange implements Action {
+  readonly type = EditorActionTypes.FileContentChange;
+  constructor(public payload: string) {}
+}
+
 export type EditorActionsUnion =
   | PageLoad
   | PageLoadSuccess
   | PageLoadFailure
   | PageRestore
-  | ConfigurationChange;
+  | ConfigurationChange
+  | FileContentChange;

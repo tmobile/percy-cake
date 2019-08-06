@@ -115,9 +115,27 @@ software without specific prior written permission.
             mat-button
             class="btn-action-menu"
             color="primary"
-            (click)="addNewFile(node)"
+            (click)="addNewFile(node, fileTypes.YAML)"
           >
-            Add New File
+            Add New Yaml File
+          </button>
+          <button
+            *ngIf="!node.isFile"
+            mat-button
+            class="btn-action-menu"
+            color="primary"
+            (click)="addNewFile(node, fileTypes.MD)"
+          >
+            Add New Markdown File
+          </button>
+          <button
+            *ngIf="!node.isFile && !folderHasPercyrcFile(node)"
+            mat-button
+            class="btn-action-menu"
+            color="primary"
+            (click)="addNewFile(node, fileTypes.PERCYRC)"
+          >
+            Add Percyrc File
           </button>
           <button
             *ngIf="!node.isFile && !getEnvFile(node)"
@@ -170,6 +188,7 @@ software without specific prior written permission.
 
         <app-editor
           #editor
+          *ngIf="file.fileType === fileTypes.YAML"
           [environments]="file.environments"
           [configuration]="file.configuration"
           [appName]="file.applicationName"
@@ -178,32 +197,48 @@ software without specific prior written permission.
           [envFileMode]="file.envFileMode"
         >
           <ng-template #buttonsTemplate>
-            <div class="buttons-row">
-              <button
-                type="button"
-                mat-button
-                color="primary"
-                [disabled]="fileSaving || !file.modified"
-                class="btn-cancel"
-                (click)="reset(file)"
-              >
-                Reset
-              </button>
-
-              <button
-                type="button"
-                mat-raised-button
-                color="primary"
-                [disabled]="fileSaving || !file.modified"
-                class="btn-save"
-                (click)="saveConfig(editor, file)"
-              >
-                Save
-              </button>
-            </div>
+            <ng-container *ngTemplateOutlet="btnsTemplate; context: { $implicit: file, editor: editor }"></ng-container>
           </ng-template>
         </app-editor>
+
+        <app-text-editor
+          #textEditor
+          *ngIf="file.fileType !== fileTypes.YAML"
+          [editMode]="file.editMode"
+          [file]="file"
+          [isPercyrcFile]="file.fileType === fileTypes.PERCYRC"
+        >
+          <ng-template #buttonsTemplate>
+            <ng-container *ngTemplateOutlet="btnsTemplate; context: { $implicit: file, editor: textEditor }"></ng-container>
+          </ng-template>
+        </app-text-editor>
       </mat-tab>
     </mat-tab-group>
   </div>
 </div>
+
+<ng-template #btnsTemplate let-file let-editor="editor">
+  <div class="buttons-row">
+    <button
+      type="button"
+      mat-button
+      color="primary"
+      [disabled]="fileSaving || !file.modified"
+      class="btn-cancel"
+      (click)="reset(file)"
+    >
+      Reset
+    </button>
+
+    <button
+      type="button"
+      mat-raised-button
+      color="primary"
+      [disabled]="fileSaving || !file.modified"
+      class="btn-save"
+      (click)="file.fileType === fileTypes.YAML ? saveConfig(editor, file) : saveFile(editor, file)"
+    >
+      Save
+    </button>
+  </div>
+</ng-template>

@@ -80,7 +80,7 @@ module.exports = {
       entrypoints:
         process.env.NODE_ENV === "prod"
           ? ["percy"]
-          : ["polyfills", "styles", "main"]
+          : ["polyfills", "styles", "main", "scripts"]
     })
   ],
   optimization: {
