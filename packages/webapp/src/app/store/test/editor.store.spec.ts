@@ -81,7 +81,7 @@ const file5: ConfigFile = {
   originalContent: "original",
 };
 
-fdescribe("Editor store action/effect/reducer", () => {
+describe("Editor store action/effect/reducer", () => {
   let ctx: TestContext<StoreTestComponent>;
   let fileService: FileManagementService;
 
