@@ -1,0 +1,33 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.intellij' version '0.4.9'
+}
+
+group 'com.tmobile'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+apply plugin: 'org.jetbrains.intellij'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.9'
+  compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.9.9'
+}
+
+intellij {
+  version 'IC-2017.2'
+  pluginName 'PercyEditor'
+  updateSinceUntilBuild false
+  downloadSources true
+}
+patchPluginXml {
+  changeNotes """
+      First Release"""
+}
