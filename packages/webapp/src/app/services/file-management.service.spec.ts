@@ -55,7 +55,8 @@ describe("FileManagementService", () => {
         entries: [
           { path: "README.md", type: "blob", oid: "666666" },
           { path: "Blockquote.md", type: "blob", oid: "777777" },
-          { path: "apps", type: "tree" }
+          { path: "text-file.txt", type: "blob" },
+          { path: percyConfig.yamlAppsFolder, type: "tree" }
         ]
       }
     },
@@ -575,21 +576,30 @@ describe("FileManagementService", () => {
     const file1 = {
       applicationName: "app1",
       fileName: "app1-client.yaml",
+      fileType: FileTypes.YAML,
       oid: "111111",
       draftContent: utilService.convertTreeToYaml(draftConfig)
     };
     const file2 = {
       applicationName: "app1",
       fileName: "app1-server.yaml",
+      fileType: FileTypes.YAML,
       oid: "222222"
+    };
+    const file3 = {
+      applicationName: "",
+      fileName: "README.md",
+      fileType: FileTypes.MD,
+      oid: "666666",
+      draftContent: "text"
     };
 
     await fileService.mergeBranch(principal, "master", TestUser.branchName, {
-      toSave: [file1],
+      toSave: [file1, file3],
       toDelete: [file2]
     });
 
-    expect(addStub.calls.count()).toEqual(1);
+    expect(addStub.calls.count()).toEqual(2);
     expect(removeStub.calls.count()).toEqual(1);
     expect(commitStub.calls.count()).toEqual(1);
     expect(readObjectStub.calls.count()).toEqual(1);
@@ -831,14 +841,14 @@ describe("FileManagementService", () => {
         oid: "555555"
       },
       {
-        applicationName: "apps",
+        applicationName: percyConfig.yamlAppsFolder,
         fileName: ".percyrc",
         fileType: FileTypes.PERCYRC,
         modified: false,
         oid: "888888"
       },
       {
-        applicationName: "apps",
+        applicationName: percyConfig.yamlAppsFolder,
         fileName: "Test.md",
         fileType: FileTypes.MD,
         modified: true,
@@ -851,42 +861,128 @@ describe("FileManagementService", () => {
   it("should get file content successfully", async () => {
     await fileService.accessRepo(TestUser);
 
+    const percyFileContent = JSON.stringify({ key: "value" });
+
     const originalConfig = new Configuration();
     originalConfig.environments.addChild(new TreeNode("dev"));
     originalConfig.environments.addChild(new TreeNode("qat"));
 
-    readObjectStub.and.returnValue({
-      oid: "222333",
-      type: "blob",
-      object: utilService.convertTreeToYaml(originalConfig)
-    });
+    readObjectStub.and.returnValues(
+      {
+        oid: "222333",
+        type: "blob",
+        object: utilService.convertTreeToYaml(originalConfig)
+      },
+      {
+        oid: "222444",
+        type: "blob",
+        object: "test"
+      },
+      {
+        oid: "222555",
+        type: "blob",
+        object: percyFileContent
+      },
+      {
+        oid: "222666",
+        type: "blob",
+        object: "test"
+      }
+    );
 
     const draftConfig = new Configuration();
     draftConfig.environments.addChild(new TreeNode("dev"));
     draftConfig.environments.addChild(new TreeNode("qat"));
     draftConfig.environments.addChild(new TreeNode("prod"));
 
-    const file = {
+    const file1 = {
       applicationName: "app1",
       fileName: "config.yaml",
       fileType: FileTypes.YAML
     };
 
-    const pathFinder = new PathFinder(TestUser, file, TestUser.branchName);
-    await fs.mkdirs(pathFinder.draftAppDir);
+    const file2 = {
+      applicationName: "",
+      fileName: "test.md",
+      fileType: FileTypes.MD
+    };
+
+    const file3 = {
+      applicationName: percyConfig.yamlAppsFolder,
+      fileName: ".percyrc",
+      fileType: FileTypes.PERCYRC
+    };
+
+    const file4 = {
+      applicationName: "app1",
+      fileName: "test.md",
+      fileType: FileTypes.MD
+    };
+
+    const pathFinder1 = new PathFinder(TestUser, file1, TestUser.branchName);
+    await fs.mkdirs(pathFinder1.draftAppDir);
     await fs.writeFile(
-      pathFinder.draftFullFilePath,
+      pathFinder1.draftFullFilePath,
       utilService.convertTreeToYaml(draftConfig)
     );
 
-    const result = await fileService.getFileContent(principal, file);
+    const result1 = await fileService.getFileContent(principal, file1);
 
-    expect(result).toEqual({
-      ...file,
+    expect(result1).toEqual({
+      ...file1,
       oid: "222333",
       modified: true,
       originalConfig,
       draftConfig
+    });
+
+    const pathFinder2 = new PathFinder(TestUser, file2, TestUser.branchName);
+    await fs.mkdirs(pathFinder2.draftAppDir);
+    await fs.writeFile(
+      pathFinder2.draftFullFilePath,
+      "test modified"
+    );
+
+    const result2 = await fileService.getFileContent(principal, file2);
+
+    expect(result2).toEqual({
+      ...file2,
+      oid: "222444",
+      modified: true,
+      originalContent: "test",
+      draftContent: "test modified"
+    });
+
+    const pathFinder3 = new PathFinder(TestUser, file3, TestUser.branchName);
+    await fs.mkdirs(pathFinder3.draftAppDir);
+    await fs.writeFile(
+      pathFinder3.draftFullFilePath,
+      "test modified"
+    );
+
+    const result3 = await fileService.getFileContent(principal, file3);
+
+    expect(result3).toEqual({
+      ...file3,
+      oid: "222555",
+      originalContent: percyFileContent
+    });
+
+    const pathFinder4 = new PathFinder(TestUser, file4, TestUser.branchName);
+    await fs.mkdirs(pathFinder4.draftAppDir);
+    await fs.writeFile(
+      pathFinder4.draftFullFilePath,
+      "test modified"
+    );
+
+    const result4 = await fileService.getFileContent(principal, file4);
+
+    expect(result4).toEqual({
+      ...file4,
+      oid: "222666",
+      modified: true,
+      originalContent: "test",
+      draftContent: "test modified"
     });
   });
 
@@ -897,34 +993,65 @@ describe("FileManagementService", () => {
     originalConfig.environments.addChild(new TreeNode("dev"));
     originalConfig.environments.addChild(new TreeNode("qat"));
 
-    readObjectStub.and.returnValue({
-      oid: "222333",
-      type: "blob",
-      object: utilService.convertTreeToYaml(originalConfig)
-    });
+    readObjectStub.and.returnValues(
+      {
+        oid: "222333",
+        type: "blob",
+        object: utilService.convertTreeToYaml(originalConfig)
+      },
+      {
+        oid: "222444",
+        type: "blob",
+        object: "test"
+      }
+    );
 
-    const file = {
+    const file1 = {
       applicationName: "app1",
       fileName: "config.yaml",
       fileType: FileTypes.YAML
     };
 
-    const pathFinder = new PathFinder(TestUser, file, TestUser.branchName);
-    await fs.mkdirs(pathFinder.draftAppDir);
+    const pathFinder1 = new PathFinder(TestUser, file1, TestUser.branchName);
+    await fs.mkdirs(pathFinder1.draftAppDir);
     await fs.writeFile(
-      pathFinder.draftFullFilePath,
+      pathFinder1.draftFullFilePath,
       utilService.convertTreeToYaml(originalConfig)
     );
 
-    const result = await fileService.getFileContent(principal, file);
+    const result1 = await fileService.getFileContent(principal, file1);
 
-    expect(await fs.pathExists(pathFinder.draftFullFilePath)).toBeFalsy();
-    expect(result).toEqual({
-      ...file,
+    expect(await fs.pathExists(pathFinder1.draftFullFilePath)).toBeFalsy();
+    expect(result1).toEqual({
+      ...file1,
       oid: "222333",
       modified: false,
       originalConfig,
       draftConfig: undefined
+    });
+
+    const file2 = {
+      applicationName: "app1",
+      fileName: "test.md",
+      fileType: FileTypes.MD
+    };
+
+    const pathFinder2 = new PathFinder(TestUser, file2, TestUser.branchName);
+    await fs.mkdirs(pathFinder2.draftAppDir);
+    await fs.writeFile(
+      pathFinder2.draftFullFilePath,
+      "test"
+    );
+
+    const result2 = await fileService.getFileContent(principal, file2);
+
+    expect(await fs.pathExists(pathFinder2.draftFullFilePath)).toBeFalsy();
+    expect(result2).toEqual({
+      ...file2,
+      oid: "222444",
+      modified: false,
+      originalContent: "test",
+      draftContent: undefined
     });
   });
 
@@ -990,7 +1117,7 @@ describe("FileManagementService", () => {
     expect(result).toEqual({ ...file, modified: true, draftConfig });
   });
 
-  it("error expected if both original config and draft config missing", async () => {
+  it("error expected if both original config and draft config missing for yaml file", async () => {
     await fileService.accessRepo(TestUser);
 
     readObjectStub.and.callFake(() => {
@@ -1014,6 +1141,30 @@ describe("FileManagementService", () => {
     }
   });
 
+  it("error expected if both original content and draft content missing for non-yaml file", async () => {
+    await fileService.accessRepo(TestUser);
+
+    readObjectStub.and.callFake(() => {
+      throw { code: git.E.TreeOrBlobNotFoundError };
+    });
+
+    const file = {
+      applicationName: "app1",
+      fileName: "test.md",
+      fileType: FileTypes.MD
+    };
+
+    const pathFinder = new PathFinder(TestUser, file, TestUser.branchName);
+    await fs.remove(pathFinder.draftFullFilePath);
+
+    try {
+      await fileService.getFileContent(principal, file);
+      fail("error expected");
+    } catch (err) {
+      expect(/File (.*) does not exist/.test(err.message)).toBeTruthy();
+    }
+  });
+
   it("should save draft file successfully", async () => {
     await fileService.accessRepo(TestUser);
     await fileService.checkoutBranch(principal, "switch", TestUser.branchName);
@@ -1022,7 +1173,7 @@ describe("FileManagementService", () => {
     draftConfig.environments.addChild(new TreeNode("dev"));
     draftConfig.environments.addChild(new TreeNode("qat"));
 
-    const file = {
+    const file1 = {
       applicationName: "app1",
       fileName: "config.yaml",
       fileType: FileTypes.YAML,
@@ -1031,23 +1182,43 @@ describe("FileManagementService", () => {
       oid: "223344"
     };
 
-    await fileService.saveDraft(principal, file);
+    await fileService.saveDraft(principal, file1);
 
-    const pathFinder = new PathFinder(TestUser, file, TestUser.branchName);
+    const pathFinder1 = new PathFinder(TestUser, file1, TestUser.branchName);
 
-    const draftFile = await fs.readFile(pathFinder.draftFullFilePath);
-    expect(utilService.parseYamlConfig(draftFile.toString())).toEqual(
+    const draftFile1 = await fs.readFile(pathFinder1.draftFullFilePath);
+    expect(utilService.parseYamlConfig(draftFile1.toString())).toEqual(
       draftConfig
     );
 
     // Commit base SHA should be cleared
     expect(principal.repoMetadata.commitBaseSHA[TestUser.branchName]).toEqual({
-      [pathFinder.repoFilePath]: file.oid
+      [pathFinder1.repoFilePath]: file1.oid
     });
-    const metadataFile = utilService.getMetadataPath(TestUser.repoFolder);
+    const metadataFile1 = utilService.getMetadataPath(TestUser.repoFolder);
     expect(
-      (await fs.readJson(metadataFile)).commitBaseSHA[TestUser.branchName]
-    ).toEqual({ [pathFinder.repoFilePath]: file.oid });
+      (await fs.readJson(metadataFile1)).commitBaseSHA[TestUser.branchName]
+    ).toEqual({ [pathFinder1.repoFilePath]: file1.oid });
+
+    const percyFileContent = JSON.stringify({ key: "value" });
+
+    const file2 = {
+      applicationName: percyConfig.yamlAppsFolder,
+      fileName: ".percyrc",
+      fileType: FileTypes.PERCYRC,
+      draftContent: percyFileContent,
+      modified: true,
+      oid: "223355"
+    };
+
+    await fileService.saveDraft(principal, file2);
+
+    const pathFinder2 = new PathFinder(TestUser, file2, TestUser.branchName);
+
+    const draftFile2 = await fs.readFile(pathFinder2.draftFullFilePath);
+    expect(draftFile2.toString()).toEqual(
+      percyFileContent
+    );
   });
 
   it("save draft file which is same as original file, draft file should be deleted", async () => {
@@ -1115,7 +1286,8 @@ describe("FileManagementService", () => {
 
     const file = {
       applicationName: "app1",
-      fileName: "config.yaml"
+      fileName: "config.yaml",
+      fileType: FileTypes.YAML
     };
     const pathFinder = new PathFinder(TestUser, file, TestUser.branchName);
     await fs.mkdirs(pathFinder.draftAppDir);
@@ -1144,15 +1316,16 @@ describe("FileManagementService", () => {
     commitStub.and.returnValue(newCommitOid);
 
     const file = {
-      applicationName: "app1",
-      fileName: "config.yaml",
+      applicationName: "",
+      fileName: "test.md",
+      fileType: FileTypes.MD,
       oid: "223344"
     };
     const pathFinder = new PathFinder(TestUser, file, TestUser.branchName);
     await fs.mkdirs(pathFinder.draftAppDir);
     await fs.writeFile(
       pathFinder.draftFullFilePath,
-      utilService.convertTreeToYaml(new Configuration())
+      "test"
     );
 
     principal = {
@@ -1199,8 +1372,9 @@ describe("FileManagementService", () => {
     commitStub.and.returnValue(newCommitOid);
 
     const file = {
-      applicationName: "app1",
-      fileName: "config.yaml",
+      applicationName: percyConfig.yamlAppsFolder,
+      fileName: ".percyrc",
+      fileType: FileTypes.PERCYRC,
       oid: "223344"
     };
 
@@ -1238,6 +1412,7 @@ describe("FileManagementService", () => {
     const file = {
       applicationName: "app1",
       fileName: "config.yaml",
+      fileType: FileTypes.YAML,
       oid: "223344"
     };
     const pathFinder = new PathFinder(TestUser, file, TestUser.branchName);
@@ -1302,44 +1477,65 @@ describe("FileManagementService", () => {
     const pathFinder1 = new PathFinder(TestUser, file1, TestUser.branchName);
 
     const file2 = {
-      applicationName: "app1",
-      fileName: "app1-server.yaml",
-      fileType: FileTypes.YAML,
-      oid: "222222"
+      applicationName: "",
+      fileName: "README.md",
+      fileType: FileTypes.MD,
+      oid: "666666"
     };
     const pathFinder2 = new PathFinder(TestUser, file2, TestUser.branchName);
 
     await fs.mkdirs(pathFinder2.draftAppDir);
     await fs.writeFile(
       pathFinder2.draftFullFilePath,
-      utilService.convertTreeToYaml(draftConfig)
+      "test"
     );
+
+    const percyFileContent = JSON.stringify({ key: "value" });
+
+    const file3 = {
+      applicationName: "app1",
+      fileName: ".percyrc",
+      fileType: FileTypes.PERCYRC,
+      oid: "888888",
+      draftContent: percyFileContent
+    };
+    const pathFinder3 = new PathFinder(TestUser, file3, TestUser.branchName);
 
     principal = {
       user: TestUser,
       repoMetadata: {
         ...TestUser,
         commitBaseSHA: {
-          [TestUser.branchName]: { [pathFinder1.repoFilePath]: file1.oid }
+          [TestUser.branchName]: {
+            [pathFinder1.repoFilePath]: file1.oid,
+            [pathFinder3.repoFilePath]: file3.oid
+          }
         },
         version: "1.0"
       }
     };
     const result = await fileService.commitFiles(
       principal,
-      [file1, file2],
+      [file1, file2, file3],
       "test commit"
     );
 
-    expect(result.length).toEqual(2);
+    expect(result.length).toEqual(3);
     result.forEach(file => {
       expect(file.modified).toBeFalsy();
-      expect(file.originalConfig).toEqual(draftConfig);
+      if (file.oid === file1.oid) {
+        expect(file.originalConfig).toEqual(draftConfig);
+      } else if (file.oid === file2.oid) {
+        expect(file.originalContent).toEqual("test");
+      } else if (file.oid === file3.oid) {
+        expect(file.originalContent).toEqual(percyFileContent);
+      }
       expect(file.draftConfig).toBeUndefined();
+      expect(file.draftContent).toBeUndefined();
     });
 
     expect(fetchStub.calls.count()).toEqual(1);
-    expect(addStub.calls.count()).toEqual(2);
+    expect(addStub.calls.count()).toEqual(3);
     expect(commitStub.calls.count()).toEqual(1);
     expect(pushStub.calls.count()).toEqual(1);
 
@@ -1462,7 +1658,7 @@ describe("FileManagementService", () => {
     readObjectStub.and.returnValues(
       ...objectTree,
       originalConfigObj,
-      originalConfigObj
+      { object: "test original", type: "blob" }
     );
     commitStub.and.returnValue(newCommitOid);
 
@@ -1480,15 +1676,15 @@ describe("FileManagementService", () => {
 
     const file2 = {
       applicationName: "app1",
-      fileName: "app1-server.yaml",
-      fileType: FileTypes.YAML
+      fileName: "test.md",
+      fileType: FileTypes.MD
     };
     const pathFinder2 = new PathFinder(TestUser, file2, TestUser.branchName);
 
     await fs.mkdirs(pathFinder2.draftAppDir);
     await fs.writeFile(
       pathFinder2.draftFullFilePath,
-      utilService.convertTreeToYaml(draftConfig)
+      "test changed"
     );
 
     try {
@@ -1503,8 +1699,13 @@ describe("FileManagementService", () => {
 
       expect(err.data.length).toEqual(2);
       err.data.forEach(file => {
-        expect(file.draftConfig).toEqual(draftConfig);
-        expect(file.originalConfig).toEqual(originalConfig);
+        if (file.fileType === FileTypes.YAML) {
+          expect(file.draftConfig).toEqual(draftConfig);
+          expect(file.originalConfig).toEqual(originalConfig);
+        } else {
+          expect(file.draftContent).toEqual("test changed");
+          expect(file.originalContent).toEqual("test original");
+        }
       });
       expect(fetchStub.calls.count()).toEqual(1);
       expect(addStub.calls.count()).toEqual(0);
@@ -1554,16 +1755,17 @@ describe("FileManagementService", () => {
     const pathFinder1 = new PathFinder(TestUser, file1, TestUser.branchName);
 
     const file2 = {
-      applicationName: "app1",
-      fileName: "app1-server.yaml",
-      fileType: FileTypes.YAML
+      applicationName: percyConfig.yamlAppsFolder,
+      fileName: ".percyrc",
+      fileType: FileTypes.PERCYRC
     };
     const pathFinder2 = new PathFinder(TestUser, file2, TestUser.branchName);
+    const percyFileContent = JSON.stringify({ key: "value changed" });
 
     await fs.mkdirs(pathFinder2.draftAppDir);
     await fs.writeFile(
       pathFinder2.draftFullFilePath,
-      utilService.convertTreeToYaml(draftConfig)
+      percyFileContent
     );
 
     principal = {
@@ -1653,30 +1855,66 @@ describe("FileManagementService", () => {
       utilService.convertTreeToYaml(draftConfig)
     );
 
+    // changed file
+    const file3 = {
+      applicationName: "app1",
+      fileName: "test.md",
+      fileType: FileTypes.MD,
+      oid: "changed-oid2",
+      draftContent: "draft",
+      originalContent: "original"
+    };
+
+    const percyFileContent = JSON.stringify({ key: "value" });
+
+    // unchanged file
+    const file4 = {
+      applicationName: percyConfig.yamlAppsFolder,
+      fileName: ".percyrc",
+      fileType: FileTypes.PERCYRC,
+      oid: "888888",
+      draftContent: percyFileContent,
+      originalContent: percyFileContent
+    };
+    const pathFinder4 = new PathFinder(TestUser, file4, TestUser.branchName);
+
+    await fs.mkdirs(pathFinder4.draftAppDir);
+    await fs.writeFile(
+      pathFinder4.draftFullFilePath,
+      JSON.stringify({ key: "value changed" })
+    );
+
     principal = {
       user: TestUser,
       repoMetadata: {
         ...TestUser,
         commitBaseSHA: {
-          [TestUser.branchName]: { [pathFinder2.repoFilePath]: file2.oid }
+          [TestUser.branchName]: {
+            [pathFinder2.repoFilePath]: file2.oid,
+            [pathFinder4.repoFilePath]: file4.oid
+          }
         },
         version: "1.0"
       }
     };
     const result = await fileService.resovelConflicts(
       principal,
-      [file1, file2],
+      [file1, file2, file3, file4],
       "test commit"
     );
 
-    expect(result.length).toEqual(2);
+    expect(result.length).toEqual(4);
     expect(result[0].modified).toBeFalsy();
     expect(result[1].modified).toBeFalsy();
+    expect(result[2].modified).toBeFalsy();
+    expect(result[3].modified).toBeFalsy();
     expect(result[0].originalConfig).toEqual(draftConfig);
-    expect(result[1].originalConfig).toEqual(originalConfig);
+    expect(result[1].originalContent).toEqual("draft");
+    expect(result[2].originalContent).toEqual(percyFileContent);
+    expect(result[3].originalConfig).toEqual(originalConfig);
 
     expect(fetchStub.calls.count()).toEqual(1);
-    expect(addStub.calls.count()).toEqual(1);
+    expect(addStub.calls.count()).toEqual(2);
     expect(commitStub.calls.count()).toEqual(1);
     expect(pushStub.calls.count()).toEqual(1);
 
@@ -1689,6 +1927,7 @@ describe("FileManagementService", () => {
 
     // Draft file should be deleted
     expect(await fs.pathExists(pathFinder2.draftFullFilePath)).toBeFalsy();
+    expect(await fs.pathExists(pathFinder4.draftFullFilePath)).toBeFalsy();
 
     // Commit base SHA should be cleared
     expect(principal.repoMetadata.commitBaseSHA[TestUser.branchName]).toEqual(

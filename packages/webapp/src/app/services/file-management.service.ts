@@ -1876,7 +1876,9 @@ export class FileManagementService {
 
     await Promise.all(
       configFiles.map(async file => {
-        file.modified = !_.isEqual(file.draftConfig, file.originalConfig);
+        file.modified = file.fileType === FileTypes.YAML
+          ? !_.isEqual(file.draftConfig, file.originalConfig)
+          : !_.isEqual(file.draftContent, file.originalContent);
 
         if (file.modified) {
           modified.push(file);
