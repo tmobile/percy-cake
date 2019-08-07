@@ -28,16 +28,18 @@ describe("SelectAppDialogComponent", () => {
         {
           fileName: "environments.yaml",
           applicationName: "app1"
+        },
+        {
+          fileName: ".percyrc",
+          applicationName: "app1"
         }
       ],
     };
     ctx.component.data = data;
     ctx.detectChanges();
 
-    // default base folder options
     expect(ctx.component.baseFolderOptions).toEqual(["", percyConfig.yamlAppsFolder, "application"]);
-
-    // default file type selected
+    expect(ctx.component.hasPercyrc).toEqual(["app1"]);
     expect(ctx.component.fileType.value).toEqual(FileTypes.YAML);
 
     expect(ctx.component.filteredApps).toEqual(data.applications);
@@ -47,10 +49,35 @@ describe("SelectAppDialogComponent", () => {
     ctx.component.selectApp();
     expect(ctx.dialogStub.output.value).toBeUndefined();
 
-    ctx.component.appname.setValue("app3");
+    ctx.component.appname.setValue("app2");
 
     ctx.component.selectApp();
-    expect(ctx.dialogStub.output.value).toEqual({ fileType: FileTypes.YAML, appName: "app3", createEnv: false });
+    expect(ctx.dialogStub.output.value).toEqual({ fileType: FileTypes.YAML, appName: "app2", createEnv: false });
+
+    // select filetype as percyrc
+    ctx.component.fileType.setValue(FileTypes.PERCYRC);
+    expect(ctx.component.appname.value).toEqual("");
+    expect(ctx.component.baseFolderOptions).toEqual([percyConfig.yamlAppsFolder, "application"]);
+    expect(ctx.component.filteredApps).toEqual(["app2"]);
+    expect(ctx.component.baseFolder.value).toEqual(percyConfig.yamlAppsFolder);
+
+    ctx.component.selectApp();
+    expect(ctx.dialogStub.output.value).toEqual({
+      fileType: FileTypes.PERCYRC, appName: percyConfig.yamlAppsFolder, createEnv: false
+    });
+
+    ctx.component.baseFolder.setValue("application");
+    ctx.component.appname.setValue("app2");
+
+    ctx.component.selectApp();
+    expect(ctx.dialogStub.output.value).toEqual({ fileType: FileTypes.PERCYRC, appName: "app2", createEnv: false });
+
+    // select filetype as percyrc
+    ctx.component.fileType.setValue(FileTypes.MD);
+    expect(ctx.component.appname.value).toEqual("");
+    expect(ctx.component.baseFolderOptions).toEqual(["", percyConfig.yamlAppsFolder, "application"]);
+    expect(ctx.component.filteredApps).toEqual(data.applications);
+    expect(ctx.component.baseFolder.value).toEqual("");
   });
 
   it("initialize with selected app", async () => {

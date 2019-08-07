@@ -3,7 +3,7 @@ import * as _ from "lodash";
 
 import { PROPERTY_VALUE_TYPES, appPercyConfig } from "config";
 import { TreeNode } from "models/tree-node";
-import { Configuration } from "models/config-file";
+import { Configuration, FileTypes } from "models/config-file";
 import { Alert } from "store/actions/common.actions";
 
 import { PageLoadSuccess, ConfigurationChange } from "store/actions/editor.actions";
@@ -19,6 +19,7 @@ describe("EditorComponent", () => {
   const file = {
     applicationName: "app1",
     fileName: "sample.yaml",
+    fileType: FileTypes.YAML,
     oid: "111111",
   };
   const applications = ["app1", "app2", "app3"];
