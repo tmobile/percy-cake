@@ -26,11 +26,13 @@ import * as BackendActions from "../actions/backend.actions";
 import { FileManagementService } from "services/file-management.service";
 import { AlertDialogComponent } from "components/alert-dialog/alert-dialog.component";
 
-import { appPercyConfig } from "config";
+import { percyConfig, appPercyConfig } from "config";
 import { StoreTestComponent, Setup, TestContext, assertDialogOpened } from "test/test-helper";
 import { TreeNode } from "models/tree-node";
-import { PageLoad, ConfigurationChange } from "../actions/editor.actions";
+import { PageLoad, ConfigurationChange, FileContentChange } from "../actions/editor.actions";
 import * as reducer from "../reducers/editor.reducer";
+
+const percyFileContent = JSON.stringify({ key: "value" });
 
 const file1: ConfigFile = {
   fileName: "test1.yaml",
@@ -51,7 +53,35 @@ const file2: ConfigFile = {
   originalConfig: new Configuration(),
 };
 
-describe("Editor store action/effect/reducer", () => {
+const file3: ConfigFile = {
+  fileName: "test.md",
+  applicationName: "app1",
+  fileType: FileTypes.MD,
+  modified: false,
+  oid: "333333",
+  originalContent: "original",
+};
+
+const file4: ConfigFile = {
+  fileName: ".percyrc",
+  applicationName: percyConfig.yamlAppsFolder,
+  fileType: FileTypes.PERCYRC,
+  modified: false,
+  oid: "444444",
+  originalContent: percyFileContent,
+};
+
+const file5: ConfigFile = {
+  fileName: "test2.md",
+  applicationName: "",
+  fileType: FileTypes.MD,
+  modified: true,
+  oid: "555555",
+  draftContent: "draft",
+  originalContent: "original",
+};
+
+fdescribe("Editor store action/effect/reducer", () => {
   let ctx: TestContext<StoreTestComponent>;
   let fileService: FileManagementService;
 
@@ -66,7 +96,7 @@ describe("Editor store action/effect/reducer", () => {
     spyOn(fileService, "deleteFile").and.returnValue(false);
   });
 
-  it("PageLoad action should be successful for add new file mode", async () => {
+  it("PageLoad action should be successful for add new yaml file mode", async () => {
     const spy = spyOn(fileService, "getEnvironments");
 
     spy.and.returnValue({ environments: ["dev", "prod"], appPercyConfig: { key: "value" } });
@@ -81,6 +111,7 @@ describe("Editor store action/effect/reducer", () => {
       applicationName: "app1",
       fileType: FileTypes.YAML,
       draftConfig: new Configuration(),
+      draftContent: null,
       modified: true
     };
     expect(reducer.getConfigFile(ctx.editorState())).toEqual(file);
@@ -91,7 +122,33 @@ describe("Editor store action/effect/reducer", () => {
     expect(reducer.getEnvironments(ctx.editorState())).toEqual(["dev", "prod"]);
   });
 
-  it("PageLoad action should be successful for edit file mode", async () => {
+  it("PageLoad action should be successful for add new non yaml file mode", async () => {
+    const spy = spyOn(fileService, "getEnvironments");
+
+    spy.and.returnValue({ environments: ["dev", "prod"], appPercyConfig: { key: "value" } });
+
+    ctx.store.dispatch(new PageLoad({ fileName: null, applicationName: "", editMode: false, fileType: FileTypes.MD }));
+    expect(ctx.editorState().editMode).toBeFalsy();
+    await ctx.fixture.whenStable();
+    await ctx.fixture.whenStable();
+
+    const file: ConfigFile = {
+      fileName: null,
+      applicationName: "",
+      fileType: FileTypes.MD,
+      draftContent: "",
+      draftConfig: null,
+      modified: true
+    };
+    expect(reducer.getConfigFile(ctx.editorState())).toEqual(file);
+    expect(reducer.getConfiguration(ctx.editorState())).toBeNull();
+    expect(reducer.getIsPageDirty(ctx.editorState())).toBeTruthy();
+    expect(appPercyConfig).toEqual({ key: "value" });
+
+    expect(reducer.getEnvironments(ctx.editorState())).toEqual(["dev", "prod"]);
+  });
+
+  it("PageLoad action should be successful for edit yaml file mode", async () => {
     const spy = spyOn(fileService, "getEnvironments");
     spy.and.returnValue({ environments: ["dev", "prod"], appPercyConfig: { key1: "value1" } });
 
@@ -109,6 +166,28 @@ describe("Editor store action/effect/reducer", () => {
 
     expect(reducer.getConfigFile(ctx.editorState())).toEqual(file);
     expect(reducer.getConfiguration(ctx.editorState())).toEqual(file.originalConfig);
+    expect(reducer.getIsPageDirty(ctx.editorState())).toBeFalsy();
+    expect(appPercyConfig).toEqual({ key1: "value1" });
+  });
+
+  it("PageLoad action should be successful for edit non yaml file mode", async () => {
+    const spy = spyOn(fileService, "getEnvironments");
+    spy.and.returnValue({ environments: ["dev", "prod"], appPercyConfig: { key1: "value1" } });
+
+    const file: ConfigFile = {
+      fileName: "test.md", applicationName: "app1", fileType: FileTypes.MD, originalContent: "original"
+    };
+    spyOn(fileService, "getFileContent").and.returnValue(file);
+
+    ctx.store.dispatch(new PageLoad({ fileName: "test.md", applicationName: "app1", editMode: true, fileType: FileTypes.MD }));
+    expect(ctx.editorState().editMode).toBeTruthy();
+    await ctx.fixture.whenStable();
+    await ctx.fixture.whenStable();
+
+    expect(reducer.getEnvironments(ctx.editorState())).toEqual(["dev", "prod"]);
+
+    expect(reducer.getConfigFile(ctx.editorState())).toEqual(file);
+    expect(reducer.getConfiguration(ctx.editorState())).toBeNull();
     expect(reducer.getIsPageDirty(ctx.editorState())).toBeFalsy();
     expect(appPercyConfig).toEqual({ key1: "value1" });
   });
@@ -171,6 +250,30 @@ describe("Editor store action/effect/reducer", () => {
     expect(reducer.getConfiguration(ctx.editorState())).toEqual(file2.originalConfig);
     expect(reducer.getConfiguration(ctx.editorState()) !== file2.originalConfig).toBeTruthy();
     expect(reducer.getIsPageDirty(ctx.editorState())).toEqual(true);
+
+    ctx.store.dispatch(new BackendActions.GetFileContentSuccess({ file: file3 }));
+    await ctx.fixture.whenStable();
+
+    expect(reducer.getConfigFile(ctx.editorState())).toEqual(file3);
+    expect(reducer.getConfigFile(ctx.editorState()) !== file3).toBeTruthy();
+    expect(reducer.getConfiguration(ctx.editorState())).toBeNull();
+    expect(reducer.getIsPageDirty(ctx.editorState())).toEqual(true);
+
+    ctx.store.dispatch(new BackendActions.GetFileContentSuccess({ file: file4 }));
+    await ctx.fixture.whenStable();
+
+    expect(reducer.getConfigFile(ctx.editorState())).toEqual(file4);
+    expect(reducer.getConfigFile(ctx.editorState()) !== file4).toBeTruthy();
+    expect(reducer.getConfiguration(ctx.editorState())).toBeNull();
+    expect(reducer.getIsPageDirty(ctx.editorState())).toEqual(true);
+
+    ctx.store.dispatch(new BackendActions.GetFileContentSuccess({ file: file5 }));
+    await ctx.fixture.whenStable();
+
+    expect(reducer.getConfigFile(ctx.editorState())).toEqual(file5);
+    expect(reducer.getConfigFile(ctx.editorState()) !== file5).toBeTruthy();
+    expect(reducer.getConfiguration(ctx.editorState())).toBeNull();
+    expect(reducer.getIsPageDirty(ctx.editorState())).toEqual(true);
   });
 
   it("ConfigurationChange action should be successful", async () => {
@@ -197,6 +300,19 @@ describe("Editor store action/effect/reducer", () => {
     expect(reducer.getIsPageDirty(ctx.editorState())).toEqual(true);
   });
 
+  it("FileContentChange action should be successful", async () => {
+    spyOn(fileService, "getEnvironments").and.returnValue(["dev", "prod"]);
+
+    ctx.store.dispatch(new PageLoad({ fileName: null, applicationName: "", editMode: false, fileType: FileTypes.MD }));
+    ctx.store.dispatch(new BackendActions.GetFileContentSuccess({ file: file5 }));
+    ctx.store.dispatch(new FileContentChange("new content"));
+    await ctx.fixture.whenStable();
+
+    expect(reducer.getConfigFile(ctx.editorState())).toEqual({ ...file5, modified: true });
+    expect(reducer.getConfiguration(ctx.editorState())).toBeNull();
+    expect(reducer.getIsPageDirty(ctx.editorState())).toEqual(true);
+  });
+
   it("SaveDraft action should be successful", async () => {
     ctx.store.dispatch(new BackendActions.SaveDraft({ file: file1, redirect: false }));
     expect(reducer.isSaving(ctx.editorState())).toEqual(true);
@@ -210,6 +326,15 @@ describe("Editor store action/effect/reducer", () => {
     expect(reducer.getConfigFile(ctx.editorState()).draftConfig !== file1.draftConfig).toBeTruthy();
     expect(reducer.getConfiguration(ctx.editorState())).toEqual(file1.draftConfig);
     expect(reducer.getConfiguration(ctx.editorState()) === file1.draftConfig).toBeTruthy();
+    expect(reducer.getIsPageDirty(ctx.editorState())).toEqual(false);
+    expect(reducer.isSaving(ctx.editorState())).toEqual(false);
+
+    ctx.store.dispatch(new BackendActions.SaveDraftSuccess(file5));
+
+    expect(reducer.getConfigFile(ctx.editorState())).toEqual(file5);
+    expect(reducer.getConfigFile(ctx.editorState()) !== file5).toBeTruthy();
+    expect(reducer.getConfigFile(ctx.editorState()).draftContent === file5.draftContent).toBeTruthy();
+    expect(reducer.getConfiguration(ctx.editorState())).toBeUndefined();
     expect(reducer.getIsPageDirty(ctx.editorState())).toEqual(false);
     expect(reducer.isSaving(ctx.editorState())).toEqual(false);
   });
@@ -237,6 +362,14 @@ describe("Editor store action/effect/reducer", () => {
     expect(reducer.getConfigFile(ctx.editorState()).originalConfig !== file1.originalConfig).toBeTruthy();
     expect(reducer.getConfiguration(ctx.editorState())).toEqual(file1.originalConfig);
     expect(reducer.getConfiguration(ctx.editorState()) === file1.originalConfig).toBeTruthy();
+    expect(reducer.getIsPageDirty(ctx.editorState())).toEqual(false);
+    expect(reducer.isSaving(ctx.editorState())).toEqual(false);
+
+    ctx.store.dispatch(new BackendActions.CommitChangesSuccess({ files: [file3], fromEditor: true }));
+
+    expect(reducer.getConfigFile(ctx.editorState())).toEqual(file3);
+    expect(reducer.getConfigFile(ctx.editorState()) !== file3).toBeTruthy();
+    expect(reducer.getConfiguration(ctx.editorState())).toBeUndefined();
     expect(reducer.getIsPageDirty(ctx.editorState())).toEqual(false);
     expect(reducer.isSaving(ctx.editorState())).toEqual(false);
   });
