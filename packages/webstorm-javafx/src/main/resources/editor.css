@@ -1,0 +1,24 @@
+.default-theme .mat-card::-webkit-scrollbar {
+    display: none;
+}
+
+.split-tree-view {
+    flex: 1;
+}
+
+.split-tree-view .tree-view {
+    flex: 1;
+}
+.col-default-env app-nested-config-view {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+body, pre {
+    font-family: sans-serif !important;
+}
+
+.mat-dialog-title, .mat-tooltip, .mat-radio-button, .mat-tree, .mat-form-field, .mat-button, .mat-raised-button, .mat-icon-button, .mat-stroked-button, .mat-flat-button, .mat-fab, .mat-mini-fab, .mat-select, .mat-option, .mat-slide-toggle-content {
+    font-family: sans-serif !important;
+}

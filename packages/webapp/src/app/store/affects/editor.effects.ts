@@ -81,7 +81,8 @@ export class EditorEffects {
             fileName,
             fileType,
             applicationName,
-            draftConfig: new Configuration(),
+            draftConfig: fileType === FileTypes.YAML ? new Configuration() : null,
+            draftContent: fileType === FileTypes.YAML ? null : "",
             modified: true
           };
           result.push(new GetFileContentSuccess({ file, newlyCreated: true }));

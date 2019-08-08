@@ -2,7 +2,7 @@ import { convertToParamMap } from "@angular/router";
 
 import { Setup, assertDialogOpened, TestContext } from "test/test-helper";
 
-import { PROPERTY_VALUE_TYPES, appPercyConfig } from "config";
+import { PROPERTY_VALUE_TYPES, appPercyConfig, percyConfig } from "config";
 import { TreeNode } from "models/tree-node";
 import { Configuration, FileTypes } from "models/config-file";
 import { Alert } from "store/actions/common.actions";
@@ -45,7 +45,7 @@ describe("EditorPageComponent", () => {
     expect(ctx.component).toBeTruthy();
   });
 
-  it("should init EditorPageComponent with edit file mode", () => {
+  it("should init EditorPageComponent with edit yaml file mode", () => {
     ctx.activatedRouteStub.snapshot = {
       data: {
         editMode: true,
@@ -66,23 +66,23 @@ describe("EditorPageComponent", () => {
 
   });
 
-  const newFile = {
-    fileName: null,
-    applicationName: "app1",
-    draftConfig: new Configuration(),
-    modified: true
+  const appsFile = {
+    applicationName: percyConfig.yamlAppsFolder,
+    fileName: ".percyrc",
+    fileType: FileTypes.PERCYRC,
+    oid: "555555"
   };
-  async function initNewFileMode() {
 
+  it("should init EditorPageComponent with edit non yaml file mode", () => {
     ctx.activatedRouteStub.snapshot = {
       data: {
-        editMode: false,
+        editMode: true,
         envFileMode: false,
-        rootFile: false
+        rootFile: false,
       },
       paramMap: convertToParamMap({
-        appName: "app1",
-        fileType: FileTypes.YAML
+        appName: appsFile.applicationName,
+        fileName: appsFile.fileName
       })
     };
     ctx.detectChanges();
@@ -90,9 +90,63 @@ describe("EditorPageComponent", () => {
     expect(dispatchSpy.calls.count()).toEqual(1);
 
     const pageLoad = dispatchSpy.calls.argsFor(0)[0].payload;
-    expect(pageLoad).toEqual({ fileName: null, applicationName: file.applicationName, editMode: false, fileType: FileTypes.YAML });
+    expect(pageLoad).toEqual({
+      fileName: appsFile.fileName, applicationName: appsFile.applicationName, editMode: true, fileType: appsFile.fileType
+    });
 
-    ctx.store.next(new LoadFilesSuccess({ files: [file], applications, appConfigs: {} }));
+  });
+
+  const rootFile = {
+    applicationName: "",
+    fileName: "test.md",
+    fileType: FileTypes.MD,
+    oid: "555555"
+  };
+
+  it("should init EditorPageComponent with edit root file mode", () => {
+    ctx.activatedRouteStub.snapshot = {
+      data: {
+        editMode: true,
+        envFileMode: false,
+        rootFile: true,
+      },
+      paramMap: convertToParamMap({
+        appName: rootFile.applicationName,
+        fileName: rootFile.fileName
+      })
+    };
+    ctx.detectChanges();
+
+    expect(dispatchSpy.calls.count()).toEqual(1);
+
+    const pageLoad = dispatchSpy.calls.argsFor(0)[0].payload;
+    expect(pageLoad).toEqual({
+      fileName: rootFile.fileName, applicationName: rootFile.applicationName, editMode: true, fileType: rootFile.fileType
+    });
+
+  });
+
+  async function initNewFileMode(newFile) {
+
+    ctx.activatedRouteStub.snapshot = {
+      data: {
+        editMode: false,
+        envFileMode: false,
+        rootFile: newFile.applicationName === ""
+      },
+      paramMap: convertToParamMap({
+        appName: newFile.applicationName,
+        fileType: newFile.fileType
+      })
+    };
+    ctx.detectChanges();
+
+    expect(dispatchSpy.calls.count()).toEqual(1);
+
+    const pageLoad = dispatchSpy.calls.argsFor(0)[0].payload;
+    expect(pageLoad).toEqual({ fileName: null, applicationName: newFile.applicationName, editMode: false, fileType: newFile.fileType });
+
+    ctx.store.next(new LoadFilesSuccess({ files: [newFile], applications, appConfigs: {} }));
     ctx.store.next(new PageLoadSuccess({ environments: ["dev"] }));
     ctx.store.next(new GetFileContentSuccess({file: newFile, newlyCreated: true}));
 
@@ -100,8 +154,16 @@ describe("EditorPageComponent", () => {
     await ctx.fixture.whenStable();
   }
 
+  const newFile1 = {
+    fileName: null,
+    applicationName: "app1",
+    fileType: FileTypes.YAML,
+    draftConfig: new Configuration(),
+    modified: true
+  };
+
   it("should not save draft if validation failed", async () => {
-    await initNewFileMode();
+    await initNewFileMode(newFile1);
 
     const spy = jasmine.createSpyObj("", ["validate"]);
     spy.validate.and.returnValue(of({ valid: false }));
@@ -131,7 +193,7 @@ describe("EditorPageComponent", () => {
   // });
 
   it("should save draft if file name and yaml config invalid", async () => {
-    await initNewFileMode();
+    await initNewFileMode(newFile1);
 
     const configuration = new Configuration();
     configuration.default.addChild(new TreeNode("key1", PROPERTY_VALUE_TYPES.STRING, "aaa"));
@@ -139,7 +201,7 @@ describe("EditorPageComponent", () => {
     configuration.environments.addChild(new TreeNode("dev"));
 
     const spy = jasmine.createSpyObj("", ["validate", "getFileName"]);
-    spy.validate.and.returnValue(of({ valid: true, editorState: {configuration, configFile: newFile} }));
+    spy.validate.and.returnValue(of({ valid: true, editorState: {configuration, configFile: newFile1} }));
     spy.getFileName.and.returnValue("test.yaml");
     ctx.component.editor = spy;
 
@@ -150,6 +212,7 @@ describe("EditorPageComponent", () => {
         file: {
           fileName: "test.yaml",
           applicationName: "app1",
+          fileType: FileTypes.YAML,
           draftConfig: configuration,
           modified: true,
         },
@@ -159,7 +222,7 @@ describe("EditorPageComponent", () => {
   });
 
   it("should not commit file if file name is invalid", async () => {
-    await initNewFileMode();
+    await initNewFileMode(newFile1);
 
     const spy = jasmine.createSpyObj("", ["validate"]);
     spy.validate.and.returnValue(of({ valid: false }));
@@ -189,7 +252,7 @@ describe("EditorPageComponent", () => {
   // });
 
   it("should commit file if file name and yaml config invalid", async () => {
-    await initNewFileMode();
+    await initNewFileMode(newFile1);
 
     const configuration = new Configuration();
     configuration.default.addChild(new TreeNode("key1", PROPERTY_VALUE_TYPES.STRING, "aaa"));
@@ -197,7 +260,7 @@ describe("EditorPageComponent", () => {
     configuration.environments.addChild(new TreeNode("dev"));
 
     const spy = jasmine.createSpyObj("", ["validate", "getFileName"]);
-    spy.validate.and.returnValue(of({ valid: true, editorState: {configuration, configFile: newFile} }));
+    spy.validate.and.returnValue(of({ valid: true, editorState: {configuration, configFile: newFile1} }));
     spy.getFileName.and.returnValue("test.yaml");
     ctx.component.editor = spy;
 
@@ -211,7 +274,90 @@ describe("EditorPageComponent", () => {
         files: [{
           fileName: "test.yaml",
           applicationName: "app1",
+          fileType: FileTypes.YAML,
           draftConfig: configuration,
+          modified: true,
+        }],
+        message: "some commit message",
+        fromEditor: true
+      }
+    );
+  });
+
+  const newFile2 = {
+    fileName: null,
+    applicationName: "",
+    fileType: FileTypes.MD,
+    draftContent: "draft",
+    modified: true
+  };
+
+  it("should not save file content if validation failed", async () => {
+    await initNewFileMode(newFile2);
+
+    const spy = jasmine.createSpyObj("", ["validate"]);
+    spy.validate.and.returnValue({ valid: false });
+    ctx.component.textEditor = spy;
+
+    ctx.component.saveFileContent();
+
+    expect(dispatchSpy.calls.mostRecent().args[0] instanceof SaveDraft).toBeFalsy();
+  });
+
+  it("should save file content if file name is valid", async () => {
+    await initNewFileMode(newFile2);
+
+    const spy = jasmine.createSpyObj("", ["validate"]);
+    spy.validate.and.returnValue({ valid: true, file: { ...newFile2, fileName: "test.md" }, fileContent: "new content" });
+    ctx.component.textEditor = spy;
+
+    ctx.component.saveFileContent();
+
+    expect(dispatchSpy.calls.mostRecent().args[0].payload).toEqual(
+      {
+        file: {
+          fileName: "test.md",
+          applicationName: "",
+          fileType: FileTypes.MD,
+          draftContent: "new content",
+          modified: true,
+        },
+        redirect: true
+      }
+    );
+  });
+
+  it("should not commit file content if validation failed", async () => {
+    await initNewFileMode(newFile2);
+
+    const spy = jasmine.createSpyObj("", ["validate"]);
+    spy.validate.and.returnValue({ valid: false });
+    ctx.component.textEditor = spy;
+
+    ctx.component.commitFileContent();
+
+    expect(dispatchSpy.calls.mostRecent().args[0] instanceof CommitChanges).toBeFalsy();
+  });
+
+  it("should commit file content if file name is valid", async () => {
+    await initNewFileMode(newFile2);
+
+    const spy = jasmine.createSpyObj("", ["validate"]);
+    spy.validate.and.returnValue({ valid: true, file: { ...newFile2, fileName: "test.md" }, fileContent: "new content" });
+    ctx.component.textEditor = spy;
+
+    ctx.component.commitFileContent();
+
+    assertDialogOpened(CommitDialogComponent);
+    ctx.dialogStub.output.next("some commit message");
+
+    expect(dispatchSpy.calls.mostRecent().args[0].payload).toEqual(
+      {
+        files: [{
+          fileName: "test.md",
+          applicationName: "",
+          fileType: FileTypes.MD,
+          draftContent: "new content",
           modified: true,
         }],
         message: "some commit message",
@@ -249,6 +395,4 @@ describe("EditorPageComponent", () => {
 
     expect(appPercyConfig).toEqual({});
   });
-
-
 });
