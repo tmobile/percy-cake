@@ -79,6 +79,7 @@ describe("FileManagementService", () => {
           { path: "app1-server.yaml", type: "blob", oid: "222222" },
           { path: "environments.yml", type: "blob", oid: "333333" },
           { path: "test.md", type: "blob", oid: "aaaaaa" },
+          { path: ".percyrc", type: "blob", oid: "bbbbbb"},
           { path: ".gitignore", type: "blob" }
         ]
       }
@@ -702,7 +703,8 @@ describe("FileManagementService", () => {
   it("should get app environments successfully", async () => {
     await fileService.accessRepo(TestUser);
 
-    const appPercyConf = { key: "value" };
+    const appPercyConfRepo = { key: "value", key2: "value" };
+    const appPercyConfDraft = { key: "draft" };
 
     const config = new Configuration();
     config.environments.addChild(new TreeNode("dev"));
@@ -718,17 +720,39 @@ describe("FileManagementService", () => {
           percyConfig.yamlAppsFolder + "/app1/" + ".percyrc"
         ) > -1
       ) {
-        return { object: JSON.stringify(appPercyConf), type: "blob" };
+        return { object: JSON.stringify(appPercyConfRepo), type: "blob" };
       }
       throw { code: git.E.TreeOrBlobNotFoundError };
     });
 
-    const envs = await fileService.getEnvironments(principal, "app1");
+    let envs = await fileService.getEnvironments(principal, "app1");
 
     expect(readObjectStub.calls.count()).toEqual(3);
 
     expect(envs.environments).toEqual(["dev", "qat", "prod"]);
-    expect(envs.appPercyConfig).toEqual(appPercyConf);
+    expect(envs.appPercyConfig).toEqual(appPercyConfRepo);
+
+
+    // appPercyConfig overridden by apps draft percy file
+    const draftPath = path.resolve(
+      percyConfig.draftFolder,
+      TestUser.repoFolder,
+      TestUser.branchName
+    );
+    const draftAppsPath = path.resolve(draftPath, percyConfig.yamlAppsFolder);
+    await fs.mkdirs(draftAppsPath);
+    await fs.writeFile(draftAppsPath + "/.percyrc", JSON.stringify(appPercyConfDraft));
+
+    envs = await fileService.getEnvironments(principal, "app1");
+    expect(envs.appPercyConfig).toEqual({ ...appPercyConfDraft, ...appPercyConfRepo });
+
+    // appPercyConfig overridden by app draft percy file
+    await fs.remove(draftAppsPath + "/.percyrc");
+    await fs.mkdirs(draftAppsPath + "/app1");
+    await fs.writeFile(draftAppsPath + "/app1/.percyrc", JSON.stringify(appPercyConfDraft));
+
+    envs = await fileService.getEnvironments(principal, "app1");
+    expect(envs.appPercyConfig).toEqual(appPercyConfDraft);
   });
 
   it("should get an empty array when environments file does not exists", async () => {
@@ -754,7 +778,6 @@ describe("FileManagementService", () => {
       { object: "{}", type: "blob" },
       { object: "{}", type: "blob" },
       { object: "{}", type: "blob" },
-      { object: "{}", type: "blob" },
       ...objectTree,
       { object: { parent: [] } },
       { object: { parent: [] } }
@@ -774,7 +797,9 @@ describe("FileManagementService", () => {
     await fs.mkdirs(draftAppsPath + "/app2/nest");
     await fs.writeFile(draftAppsPath + "/test.txt", "text");
     await fs.writeFile(draftAppsPath + "/app1/app1-client.yaml", "{}");
+    await fs.writeFile(draftAppsPath + "/app1/test.md", "draft");
     await fs.writeFile(draftAppsPath + "/app2/test.txt", "text");
+    await fs.writeFile(draftAppsPath + "/app2/.percyrc", "{}");
 
     const result = await fileService.getFiles(principal);
 
@@ -796,6 +821,13 @@ describe("FileManagementService", () => {
         fileType: FileTypes.MD,
         modified: false,
         oid: "666666"
+      },
+      {
+        applicationName: "app1",
+        fileName: ".percyrc",
+        fileType: FileTypes.PERCYRC,
+        modified: false,
+        oid: "bbbbbb"
       },
       {
         applicationName: "app1",
@@ -823,8 +855,16 @@ describe("FileManagementService", () => {
         applicationName: "app1",
         fileName: "test.md",
         fileType: FileTypes.MD,
-        modified: false,
+        size: 5,
+        modified: true,
         oid: "aaaaaa"
+      },
+      {
+        applicationName: "app2",
+        fileName: ".percyrc",
+        fileType: FileTypes.PERCYRC,
+        size: 2,
+        modified: true
       },
       {
         applicationName: "app2",
@@ -1493,10 +1533,10 @@ describe("FileManagementService", () => {
     const percyFileContent = JSON.stringify({ key: "value" });
 
     const file3 = {
-      applicationName: "app1",
+      applicationName: "app3",
       fileName: ".percyrc",
       fileType: FileTypes.PERCYRC,
-      oid: "888888",
+      oid: "eeeeee",
       draftContent: percyFileContent
     };
     const pathFinder3 = new PathFinder(TestUser, file3, TestUser.branchName);

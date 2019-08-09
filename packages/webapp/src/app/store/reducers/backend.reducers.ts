@@ -24,7 +24,7 @@ software without specific prior written permission.
 import { EntityState, EntityAdapter, createEntityAdapter } from "@ngrx/entity";
 
 import { Principal } from "models/auth";
-import { ConfigFile } from "models/config-file";
+import { ConfigFile, FileTypes } from "models/config-file";
 import { BackendActionsUnion, BackendActionTypes } from "../actions/backend.actions";
 
 import * as _ from "lodash";
@@ -117,9 +117,20 @@ export function reducer(state = initialState, action: BackendActionsUnion): Stat
     }
 
     case BackendActionTypes.SaveDraftSuccess: {
+      const appConfigs = { ...state.appConfigs };
+
+      // update appConfig if the saved file is a percyrc file and if its an application in the apps folder
+      const file = action.payload;
+      const applicationName = file.applicationName;
+      if (file.fileType === FileTypes.PERCYRC && appConfigs[applicationName]) {
+        const newAppConfig = file.draftContent ? JSON.parse(file.draftContent) : {};
+        appConfigs[applicationName] = { ...appConfigs[applicationName], ...newAppConfig };
+      }
+
       return {
         ...state,
-        files: ConfigFileAdapter.upsertOne(action.payload, state.files)
+        files: ConfigFileAdapter.upsertOne(file, state.files),
+        appConfigs
       };
     }
 
