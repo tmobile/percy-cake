@@ -25,7 +25,7 @@ import * as _ from "lodash";
 import * as HttpErrors from "http-errors";
 
 import { Principal } from "models/auth";
-import { ConfigFile, Configuration } from "models/config-file";
+import { ConfigFile, Configuration, FileTypes } from "models/config-file";
 import { FileManagementService } from "services/file-management.service";
 import { AlertDialogComponent } from "components/alert-dialog/alert-dialog.component";
 import { ConflictDialogComponent } from "components/conflict-dialog/conflict-dialog.component";
@@ -36,14 +36,18 @@ import * as AuthActions from "../actions/auth.actions";
 import * as BackendActions from "../actions/backend.actions";
 import * as reducer from "../reducers/backend.reducers";
 
+const percyConfig = { key: "value" };
+
 const file1: ConfigFile = {
   fileName: "test1.yaml",
+  fileType: FileTypes.YAML,
   applicationName: "app1",
   modified: true
 };
 
 const file2: ConfigFile = {
   fileName: "test2.yaml",
+  fileType: FileTypes.YAML,
   applicationName: "app1",
   oid: "222222",
   modified: false
@@ -51,9 +55,19 @@ const file2: ConfigFile = {
 
 const file3: ConfigFile = {
   fileName: "test3.yaml",
+  fileType: FileTypes.YAML,
   applicationName: "app1",
   oid: "333333",
   modified: true
+};
+
+const file4: ConfigFile = {
+  fileName: ".percyrc",
+  fileType: FileTypes.PERCYRC,
+  applicationName: "app1",
+  oid: "444444",
+  modified: true,
+  draftContent: JSON.stringify(percyConfig)
 };
 
 describe("Backend store action/effect/reducer", () => {
@@ -256,13 +270,33 @@ describe("Backend store action/effect/reducer", () => {
   });
 
   it("SaveDraft action should be successful", async () => {
-    spyOn(fileService, "saveDraft").and.returnValue(file1);
+    // Get one file
+    getFilesSpy.and.returnValue({
+      files: [file1],
+      applications: ["app1"],
+      appConfigs: { "app1": {} }
+    });
+
+    ctx.store.dispatch(new BackendActions.LoadFiles());
+    await ctx.fixture.whenStable();
+
+    const saveDraftSpy = spyOn(fileService, "saveDraft");
+
+    saveDraftSpy.and.returnValue(file1);
 
     ctx.store.dispatch(new BackendActions.SaveDraft({ file: file1, redirect: true }));
     await ctx.fixture.whenStable();
     expect(ctx.backendState().files.entities["app1/test1.yaml"]).toEqual(file1);
+    expect(ctx.backendState().appConfigs).toEqual({ "app1": {} });
 
     expect(ctx.routerStub.value).toEqual(["/dashboard"]);
+
+    saveDraftSpy.and.returnValue(file4);
+
+    ctx.store.dispatch(new BackendActions.SaveDraft({ file: file4, redirect: true }));
+    await ctx.fixture.whenStable();
+    expect(ctx.backendState().files.entities["app1/.percyrc"]).toEqual(file4);
+    expect(ctx.backendState().appConfigs).toEqual({ "app1": percyConfig });
   });
 
   it("SaveDraft action should be successful without redirect", async () => {

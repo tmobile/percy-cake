@@ -955,20 +955,43 @@ export class FileManagementService {
    * @param applicationName the application name
    */
   private async loadAppPercyConfig(user: User, applicationName: string) {
-    const dir = PathFinder.getRepoDir(user);
-    const commitOid = await this.getRemoteCommit(dir, user.branchName);
+    const fs = await this.utilService.getBrowserFS();
 
-    // Load .percyrc for the app
-    const readPercyrc = async (filepath: string) => {
-      const { content } = await this.readRepoFile(dir, commitOid, filepath);
+    const appPercyFile: ConfigFile = {
+      fileName: ".percyrc",
+      applicationName
+    };
+
+    const appsPercyFile: ConfigFile = {
+      fileName: ".percyrc",
+      applicationName: percyConfig.yamlAppsFolder
+    };
+
+    const pathFinderApp = new PathFinder(user, appPercyFile, user.branchName);
+    const pathFinderApps = new PathFinder(user, appsPercyFile, user.branchName);
+
+    const commitOid = await this.getRemoteCommit(pathFinderApp.repoDir, user.branchName);
+
+    // Load .percyrc from the repo for the app
+    const readRepoPercyrc = async (filepath: string) => {
+      const { content } = await this.readRepoFile(pathFinderApp.repoDir, commitOid, filepath);
       return content ? JSON.parse(content) : {};
     };
 
+    // Load .percyrc from draft for the app
+    const readDraftPercyrc = async (filepath: string) => {
+      const fileExists = await fs.pathExists(filepath);
+      const content = fileExists ? await fs.readFile(filepath) : null;
+      return content ? JSON.parse(content.toString()) : {};
+    };
+
     const result = await Promise.all([
-      readPercyrc(path.join(percyConfig.yamlAppsFolder, ".percyrc")),
-      readPercyrc(
-        path.join(percyConfig.yamlAppsFolder, applicationName, ".percyrc")
-      )
+      await fs.pathExists(pathFinderApps.draftFullFilePath)
+        ? readDraftPercyrc(pathFinderApps.draftFullFilePath)
+        : readRepoPercyrc(pathFinderApps.repoFilePath),
+      await fs.pathExists(pathFinderApp.draftFullFilePath)
+        ? readDraftPercyrc(pathFinderApp.draftFullFilePath)
+        : readRepoPercyrc(pathFinderApp.repoFilePath)
     ]);
 
     // Merge percyrcs
@@ -1196,6 +1219,7 @@ export class FileManagementService {
           if (ext === ".md" || fileName === ".percyrc") {
             const file: ConfigFile = {
               applicationName: "",
+              fileType: fileName === ".percyrc" ? FileTypes.PERCYRC : FileTypes.MD,
               fileName,
               size: stat.size,
               modified: true // For draft files, we simply assume they're modified
@@ -1220,6 +1244,7 @@ export class FileManagementService {
             if (ext === ".md" || applicationName === ".percyrc") {
               const file: ConfigFile = {
                 applicationName: percyConfig.yamlAppsFolder,
+                fileType: applicationName === ".percyrc" ? FileTypes.PERCYRC : FileTypes.MD,
                 fileName: applicationName,
                 size: appsStat.size,
                 modified: true // For draft files, we simply assume they're modified
@@ -1238,9 +1263,10 @@ export class FileManagementService {
                 return;
               }
               const ext = path.extname(fileName).toLowerCase();
-              if (ext === ".yaml" || ext === ".yml") {
+              if (ext === ".yaml" || ext === ".yml" || ext === ".md" || fileName === ".percyrc") {
                 const file: ConfigFile = {
                   applicationName,
+                  fileType: fileName === ".percyrc" ? FileTypes.PERCYRC : (ext === ".md" ? FileTypes.MD : FileTypes.YAML),
                   fileName,
                   size: stat.size,
                   modified: true // For draft files, we simply assume they're modified
@@ -1876,7 +1902,9 @@ export class FileManagementService {
 
     await Promise.all(
       configFiles.map(async file => {
-        file.modified = !_.isEqual(file.draftConfig, file.originalConfig);
+        file.modified = file.fileType === FileTypes.YAML
+          ? !_.isEqual(file.draftConfig, file.originalConfig)
+          : !_.isEqual(file.draftContent, file.originalContent);
 
         if (file.modified) {
           modified.push(file);
