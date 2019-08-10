@@ -231,7 +231,8 @@ export class VSAppComponent implements OnInit {
 
     const file: ConfigFile = {
       fileName: this.fileName,
-      applicationName: this.appName
+      applicationName: this.appName,
+      fileType: FileTypes.YAML
     };
 
     this.store.dispatch(new PageLoad({ ...file, editMode: this.editMode, fileType: FileTypes.YAML }));
