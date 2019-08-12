@@ -24,7 +24,7 @@ dependencies {
   compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.9'
   compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.9.9'
   compile 'org.json:json:20190722'
-  implementation 'com.github.dhruvit-r:journey:0.3.5-offline'
+  implementation 'com.github.dhruvit-r:journey:0.3.4-offline'
 }
 
 intellij {

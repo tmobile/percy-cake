@@ -263,7 +263,7 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
 
             String stylesheet = "/default.css";
             if (UIUtil.isUnderDarcula()) {
-                stylesheet = "/dracula.css";
+                stylesheet = "/darcula.css";
             };
             String url = HttpServer.getStaticUrl(stylesheet);
             String JS = "window.injectCss('" + url + "');";
@@ -358,8 +358,6 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
         if (browser != null) {
             ApplicationManager.getApplication().invokeAndWait(() -> {
                 messageRouter.removeHandler(handler);
-                browser.getCefApp().dispose();
-                browser = null;
             });
         }
         LafManager.getInstance().removeLafManagerListener(lafListener);
