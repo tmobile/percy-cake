@@ -20,7 +20,7 @@ lerna run --scope=percy-vscode-extension --stream build:prod
 lerna run --scope=percy-webstorm-extension --stream build
 
 # Package webstorm extension
-lerna run --scope=percy-webstorm-journey-extension --stream package
+lerna run --scope=percy-webstorm-extension --stream package
 
 # To launch a sand-boxed instance of the IDE with the plugin (for testing)
 lerna run --scope=percy-webstorm-extension --stream launch
