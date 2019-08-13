@@ -13,6 +13,7 @@ import java.util.Map;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONObject;
@@ -344,24 +345,13 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
      */
     @Override
     public void deselectNotify() {
-        if (browser != null && panel !=null) {
+        if (browser != null && panel != null) {
             // get window width/height
-            double width = panel.getWidth();
-            double height = panel.getHeight();
+            Dimension d = SwingUtilities.getWindowAncestor(panel).getSize();
 
-            if (width > 0 && height > 0) {
-                // set preferred width/height same as window
-                double preferredWidth = browser.getUIComponent().getPreferredSize().getWidth();
-                double preferredHeight = browser.getUIComponent().getPreferredSize().getHeight();
-                if (width != preferredWidth) {
-                    LOG.info("Prefer window width " + width);
-                    preferredWidth = width;
-                    browser.getUIComponent().setPreferredSize(new Dimension((int) width, (int) preferredHeight));
-                }
-                if (height != preferredHeight) {
-                    LOG.info("Prefer window height " + height);
-                    browser.getUIComponent().setPreferredSize(new Dimension((int) preferredWidth, (int) preferredHeight));
-                }
+            if (d.getWidth() > 0 && d.getHeight() > 0) {
+                browser.getUIComponent().setSize(d);
+                panel.setSize(d);
             }
         }
     }
