@@ -4,6 +4,7 @@
 package com.tmobile.percy.editor;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -347,10 +348,23 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
     public void deselectNotify() {
         if (browser != null && panel != null) {
             // get window width/height
-            Dimension d = SwingUtilities.getWindowAncestor(panel).getSize();
+            Component root = SwingUtilities.getRoot(panel);
+            if (root == null) {
+                return;
+            }
+
+            Dimension d = root.getSize();
+
+            Component webView = browser.getUIComponent();
+
+            if (webView == null) {
+                return;
+            }
 
             if (d.getWidth() > 0 && d.getHeight() > 0) {
-                browser.getUIComponent().setSize(d);
+                webView.setPreferredSize(d);
+                webView.setSize(d);
+                panel.setPreferredSize(d);
                 panel.setSize(d);
             }
         }
