@@ -20,6 +20,7 @@ import org.json.JSONObject;
 import com.codebrig.journey.JourneyBrowserView;
 import com.codebrig.journey.JourneySettings;
 import com.codebrig.journey.proxy.CefBrowserProxy;
+import com.codebrig.journey.proxy.CefClientProxy;
 import com.codebrig.journey.proxy.browser.CefFrameProxy;
 import com.codebrig.journey.proxy.browser.CefMessageRouterProxy;
 import com.codebrig.journey.proxy.callback.CefQueryCallbackProxy;
@@ -85,7 +86,17 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
     /**
      * The browser.
      */
-    private JourneyBrowserView browser;
+    private static JourneyBrowserView browserView;
+
+    /**
+     * The browser.
+     */
+    private CefClientProxy client;
+
+    /**
+     * The browser.
+     */
+    private CefBrowserProxy browser;
 
     /**
      * The Message Router Handler
@@ -101,6 +112,12 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
      * Whether file is modified.
      */
     private boolean modified;
+
+    static {
+        JourneySettings journeySettings = new JourneySettings();
+        journeySettings.setRemoteDebuggingPort(8989);
+        browserView = new JourneyBrowserView(journeySettings, JourneyBrowserView.ABOUT_BLANK);
+    }
 
     class MessageRouter extends CefNativeDefault implements CefMessageRouterHandlerProxy {
         @Override
@@ -145,14 +162,13 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
             LOG.info(url);
 
             try {
-                JourneySettings journeySettings = new JourneySettings();
-                journeySettings.setRemoteDebuggingPort(8989);
-                browser = new JourneyBrowserView(journeySettings, url);
-                panel.add(browser.getCefBrowser().getUIComponent(), BorderLayout.CENTER);
+                client = browserView.getCefApp().createClient();
+                browser = client.createBrowser(url, false, false);
+                panel.add(browser.getUIComponent(), BorderLayout.CENTER);
                 messageRouter = CefMessageRouterProxy.create();
                 handler = CefMessageRouterHandlerProxy.createHandler(new MessageRouter());
                 messageRouter.addHandler(handler, true);
-                browser.getCefClient().addMessageRouter(messageRouter);
+                client.addMessageRouter(messageRouter);
             } catch (Exception e) {
                 LOG.error("Error while initialing WebView. ", e);
             }
@@ -267,7 +283,7 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
             };
             String url = HttpServer.getStaticUrl(stylesheet);
             String JS = "window.injectCss('" + url + "');";
-            browser.getCefBrowser().executeJavaScript(JS, "", 0);
+            browser.executeJavaScript(JS, "", 0);
         }
     }
 
@@ -280,7 +296,7 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
     private void sendToJS(Object toSend) throws JsonProcessingException {
         String toSendStr = mapper.writeValueAsString(toSend);
         String JS = "window.sendMessage({" +  toSendStr + "});";
-        browser.getCefBrowser().executeJavaScript(JS, "", 0);
+        browserView.getCefBrowser().executeJavaScript(JS, "", 0);
     }
 
     /**
@@ -335,16 +351,16 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
 
             if (width > 0 && height > 0) {
                 // set preferred width/height same as window
-                double preferredWidth = browser.getPreferredSize().getWidth();
-                double preferredHeight = browser.getPreferredSize().getHeight();
+                double preferredWidth = browser.getUIComponent().getPreferredSize().getWidth();
+                double preferredHeight = browser.getUIComponent().getPreferredSize().getHeight();
                 if (width != preferredWidth) {
                     LOG.info("Prefer window width " + width);
                     preferredWidth = width;
-                    browser.setPreferredSize(new Dimension((int) width, (int) preferredHeight));
+                    browser.getUIComponent().setPreferredSize(new Dimension((int) width, (int) preferredHeight));
                 }
                 if (height != preferredHeight) {
                     LOG.info("Prefer window height " + height);
-                    browser.setPreferredSize(new Dimension((int) preferredWidth, (int) preferredHeight));
+                    browser.getUIComponent().setPreferredSize(new Dimension((int) preferredWidth, (int) preferredHeight));
                 }
             }
         }
@@ -355,9 +371,10 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
      */
     @Override
     public void dispose() {
-        if (browser != null) {
+        if (browserView != null) {
             ApplicationManager.getApplication().invokeAndWait(() -> {
                 messageRouter.removeHandler(handler);
+                client.dispose();
             });
         }
         LafManager.getInstance().removeLafManagerListener(lafListener);
