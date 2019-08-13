@@ -40,7 +40,12 @@ import { VSAppComponent } from "./vsapp.component";
   declarations: [VSAppComponent],
   imports: [
     CommonModule,
-    RouterModule.forRoot([]),
+    RouterModule.forRoot([
+      {
+        path: "**",
+        component: VSAppComponent
+      }
+    ]),
     StoreModule.forRoot(reducers),
     EffectsModule.forRoot([AppEffects])
   ],
