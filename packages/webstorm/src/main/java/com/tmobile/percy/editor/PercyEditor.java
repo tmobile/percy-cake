@@ -9,8 +9,6 @@ import java.awt.Dimension;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -88,7 +86,7 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
     /**
      * The browser.
      */
-    private static JourneyBrowserView browserView;
+    private static JourneyBrowserView journeyBrowser;
 
     /**
      * The browser.
@@ -115,29 +113,37 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
      */
     private boolean modified;
 
+    /**
+     * Initialize an instance of the browser.
+     */
     static {
         JourneySettings journeySettings = new JourneySettings();
+        // Uncomment the following line to enable the remote debugger.
+        // Browse to http://localhost:8989/ to debug.
         journeySettings.setRemoteDebuggingPort(8989);
-        browserView = new JourneyBrowserView(journeySettings, JourneyBrowserView.ABOUT_BLANK);
+        journeyBrowser = new JourneyBrowserView(journeySettings, JourneyBrowserView.ABOUT_BLANK);
     }
 
     class MessageRouter extends CefNativeDefault implements CefMessageRouterHandlerProxy {
         @Override
+        /**
+         * Handles an incoming message from the browser
+         */
         public boolean onQuery(CefBrowserProxy browser, CefFrameProxy frame, long query_id, String request,
-            boolean persistent, CefQueryCallbackProxy callback) {
-                try {
-                    JSONObject response = handleRequest(new JSONObject(request));
-                    callback.success(response.toString());
-                    return true;
-                } catch (Exception e) {
-                    callback.failure(-1, e.toString());
-                    return false;
-                }
+                boolean persistent, CefQueryCallbackProxy callback) {
+            try {
+                JSONObject response = handleRequest(new JSONObject(request));
+                callback.success(response.toString());
+                return true;
+            } catch (Exception e) {
+                callback.failure(-1, e.toString());
+                return false;
+            }
         }
 
         @Override
         public void onQueryCanceled(CefBrowserProxy browser, CefFrameProxy frame, long query_id) {
-            LOG.info("Query cancellted");
+            LOG.info("Query cancelled");
         }
     }
 
@@ -164,7 +170,7 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
             LOG.info(url);
 
             try {
-                client = browserView.getCefApp().createClient();
+                client = journeyBrowser.getCefApp().createClient();
                 browser = client.createBrowser(url, false, false);
                 panel.add(browser.getUIComponent(), BorderLayout.CENTER);
                 messageRouter = CefMessageRouterProxy.create();
@@ -187,10 +193,10 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
 
                         try {
                             if (browser != null) {
-                                Map<String, String> send = new HashMap<>();
+                                JSONObject send = new JSONObject();
                                 send.put("type", "PercyEditorFileChanged");
                                 send.put("fileContent", e.getDocument().getText());
-                                sendToJS(send);
+                                sendToJS(send.toString());
                             }
                         } catch (JsonProcessingException e1) {
                             LOG.error(e);
@@ -201,8 +207,14 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
         });
     }
 
+    /**
+     * Handles an incoming message from the WebView
+     *
+     * @param message the message
+     * @return
+     * @throws IOException
+     */
     private JSONObject handleRequest(@Nullable JSONObject message) throws IOException {
-
         String type = message.getString("type");
         LOG.info(type);
 
@@ -237,15 +249,17 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
             while (parent != null) {
                 VirtualFile percyConfigFile = parent.findChild(".percyrc");
                 if (percyConfigFile != null) {
-                    JSONObject pmap = new JSONObject();
+                    JSONObject previousMap = new JSONObject();
                     if (send.has("appPercyConfig")) {
-                        pmap = send.getJSONObject("appPercyConfig");
+                        previousMap = send.getJSONObject("appPercyConfig");
                     }
-                    JSONObject nmap = new JSONObject(new String(percyConfigFile.contentsToByteArray()));
-                    for (String key : JSONObject.getNames(nmap)) {
-                        pmap.put(key, nmap.get(key));
+                    JSONObject newMap = new JSONObject(new String(percyConfigFile.contentsToByteArray()));
+                    for (String key : JSONObject.getNames(newMap)) {
+                        if (!previousMap.has(key)) {
+                            previousMap.put(key, newMap.get(key));
+                        }
                     }
-                    send.put("appPercyConfig", nmap);
+                    send.put("appPercyConfig", previousMap);
                 }
                 if (parent.getPath().equals(project.getBasePath())) {
                     break;
@@ -278,11 +292,10 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
      */
     private void setWebStyle() {
         if (browser != null) {
-
             String stylesheet = "/default.css";
             if (UIUtil.isUnderDarcula()) {
                 stylesheet = "/darcula.css";
-            };
+            }
             String url = HttpServer.getStaticUrl(stylesheet);
             String JS = "window.injectCss('" + url + "');";
             browser.executeJavaScript(JS, "", 0);
@@ -295,10 +308,11 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
      * @param toSend The message to send
      * @throws JsonProcessingException if JSON error occurs
      */
-    private void sendToJS(Object toSend) throws JsonProcessingException {
+    private void sendToJS(String toSend) throws JsonProcessingException {
         String toSendStr = mapper.writeValueAsString(toSend);
-        String JS = "window.sendMessage({" +  toSendStr + "});";
-        browserView.getCefBrowser().executeJavaScript(JS, "", 0);
+        String JS = "window.sendMessage(" + toSendStr + ");";
+
+        browser.executeJavaScript(JS, "", 0);
     }
 
     /**
@@ -375,7 +389,7 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
      */
     @Override
     public void dispose() {
-        if (browserView != null) {
+        if (journeyBrowser != null && client != null) {
             ApplicationManager.getApplication().invokeAndWait(() -> {
                 messageRouter.removeHandler(handler);
                 client.dispose();
