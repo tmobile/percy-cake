@@ -114,6 +114,16 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
     private boolean modified;
 
     /**
+     * OS String
+     */
+    private static String OS = System.getProperty("os.name").toLowerCase();
+
+    /**
+     * Whether the OS is linux
+     */
+    private static boolean isLinux = !OS.startsWith("mac") && !OS.startsWith("windows");
+
+    /**
      * Initialize an instance of the browser.
      */
     static {
@@ -121,6 +131,9 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
         // Uncomment the following line to enable the remote debugger.
         // Browse to http://localhost:8989/ to debug.
         journeySettings.setRemoteDebuggingPort(8989);
+        if (isLinux) {
+            journeySettings.setWindowlessRenderingEnabled(true);
+        }
         journeyBrowser = new JourneyBrowserView(journeySettings, JourneyBrowserView.ABOUT_BLANK);
     }
 
@@ -171,7 +184,7 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
 
             try {
                 client = journeyBrowser.getCefApp().createClient();
-                browser = client.createBrowser(url, false, false);
+                browser = client.createBrowser(url, isLinux, false);
                 panel.add(browser.getUIComponent(), BorderLayout.CENTER);
                 messageRouter = CefMessageRouterProxy.create();
                 handler = CefMessageRouterHandlerProxy.createHandler(new MessageRouter());
