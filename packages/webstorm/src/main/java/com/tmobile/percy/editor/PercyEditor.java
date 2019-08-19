@@ -9,6 +9,8 @@ import java.awt.Dimension;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -19,6 +21,7 @@ import org.json.JSONObject;
 
 import com.codebrig.journey.JourneyBrowserView;
 import com.codebrig.journey.JourneySettings;
+import com.codebrig.journey.JourneySettings.LogSeverity;
 import com.codebrig.journey.proxy.CefBrowserProxy;
 import com.codebrig.journey.proxy.CefClientProxy;
 import com.codebrig.journey.proxy.browser.CefFrameProxy;
@@ -125,7 +128,7 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
     /**
      * Whether the OS is linux
      */
-    private static boolean isLinux = !OS.startsWith("mac") && !OS.startsWith("windows");
+    private static boolean isMac = OS.startsWith("mac");
 
     /**
      * Initialize an instance of the browser.
@@ -135,17 +138,20 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
         // Uncomment the following line to enable the remote debugger.
         // Browse to http://localhost:8989/ to debug.
         // journeySettings.setRemoteDebuggingPort(8989);
-        if (isLinux) {
+        Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"), "debug.log");
+        journeySettings.setLogFile(tempDir.toString());
+        journeySettings.setLogSeverity(LogSeverity.LOGSEVERITY_VERBOSE);
+        if (!isMac) {
             journeySettings.setWindowlessRenderingEnabled(true);
         }
         journeyBrowser = new JourneyBrowserView(journeySettings, JourneyBrowserView.ABOUT_BLANK);
     }
 
     class MessageRouter extends CefNativeDefault implements CefMessageRouterHandlerProxy {
-        @Override
         /**
          * Handles an incoming message from the browser
          */
+        @Override
         public boolean onQuery(CefBrowserProxy browser, CefFrameProxy frame, long query_id, String request,
                 boolean persistent, CefQueryCallbackProxy callback) {
             try {
@@ -175,20 +181,20 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
         this.project = project;
         this.file = file;
         DumbService.getInstance(project).smartInvokeLater(() -> {
-            this.panel.setBackground(JBColor.background());
 
             String url = HttpServer.getStaticUrl("index.html");
             LOG.info(url);
 
             try {
                 client = journeyBrowser.getCefApp().createClient();
-                browser = client.createBrowser(url, isLinux, false);
-                webViewComponent = browser.getUIComponent();
-                panel.add(webViewComponent, BorderLayout.CENTER);
+                browser = client.createBrowser(url, !isMac, false);
                 messageRouter = CefMessageRouterProxy.create();
                 handler = CefMessageRouterHandlerProxy.createHandler(new MessageRouter());
                 messageRouter.addHandler(handler, true);
                 client.addMessageRouter(messageRouter);
+                webViewComponent = browser.getUIComponent();
+                panel.add(webViewComponent, BorderLayout.CENTER);
+                this.panel.setBackground(JBColor.background());
             } catch (Exception e) {
                 LOG.error("Error while initialing WebView. ", e);
             }
@@ -198,24 +204,25 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
 
             // Add document change listener
             com.intellij.openapi.editor.Document document = FileDocumentManager.getInstance().getDocument(file);
-            if (document != null) {
-                document.addDocumentListener(new DocumentListener() {
-                    @Override
-                    public void documentChanged(final DocumentEvent e) {
-
-                        try {
-                            if (browser != null) {
-                                JSONObject send = new JSONObject();
-                                send.put("type", "PercyEditorFileChanged");
-                                send.put("fileContent", e.getDocument().getText());
-                                sendToJS(send.toString());
-                            }
-                        } catch (JsonProcessingException e1) {
-                            LOG.error(e);
-                        }
-                    }
-                }, this);
+            if (document == null) {
+                return;
             }
+            DocumentListener listener = new DocumentListener() {
+                @Override
+                public void documentChanged(final DocumentEvent e) {
+                    try {
+                        if (browser != null) {
+                            JSONObject send = new JSONObject();
+                            send.put("type", "PercyEditorFileChanged");
+                            send.put("fileContent", e.getDocument().getText());
+                            sendToJS(send.toString());
+                        }
+                    } catch (JsonProcessingException e1) {
+                        LOG.error(e);
+                    }
+                }
+            };
+            document.addDocumentListener(listener, this);
         });
     }
 
