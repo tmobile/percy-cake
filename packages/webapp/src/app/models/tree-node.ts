@@ -276,3 +276,11 @@ export class TreeNode {
     return top;
   }
 }
+
+/**
+ * Flat tree node to render nodes as a flattened tree
+ */
+export interface FlatTreeNode extends TreeNode {
+  level: number;
+  expandable: boolean;
+}

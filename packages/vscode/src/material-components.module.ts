@@ -44,6 +44,7 @@ import {
   MatSortModule,
   MatSlideToggleModule
 } from "@angular/material";
+import { ScrollingModule } from "@angular/cdk/scrolling";
 
 @NgModule({
   imports: [
@@ -68,7 +69,8 @@ import {
     MatExpansionModule,
     MatIconModule,
     MatSortModule,
-    MatSlideToggleModule
+    MatSlideToggleModule,
+    ScrollingModule
   ],
   exports: [
     MatListModule,
@@ -92,7 +94,8 @@ import {
     MatExpansionModule,
     MatIconModule,
     MatSortModule,
-    MatSlideToggleModule
+    MatSlideToggleModule,
+    ScrollingModule
   ]
 })
 export class MaterialComponentsModule {}
