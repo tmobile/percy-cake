@@ -1,0 +1,13 @@
+{
+  "name": "percy-webstorm-extension",
+  "version": "1.0.0",
+  "description": "WebStorm plugin for percy editor",
+  "repository": "https://github.com/tmobile/percy-cake",
+  "scripts": {
+    "build": "cp ../vscode/dist/percy.bundle.min.js ./src/main/resources",
+    "package": "./gradlew assemble",
+    "launch": "./gradlew runIde"
+  },
+  "author": "T-Mobile",
+  "license": "ISC"
+}

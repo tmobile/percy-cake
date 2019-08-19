@@ -1,44 +1,30 @@
 <div class="split-tree-view" appSplit [splitFlexLayout]="true" [splitDirection]="'vertical'" [gutterHeight]="20">
   <!-- default config tree view -->
   <div class="tree-view" appSplitArea [splitSize]="50" [minSize]="50">
-    <mat-card class="nested-config-view">
-      <ng-container *ngTemplateOutlet="treeView; context: {dataSource: defaultDataSource, treeControl: defaultTreeControl}"></ng-container>
-    </mat-card>
+    <cdk-virtual-scroll-viewport itemSize="41" class="nested-config-view mat-card">
+      <ng-container *cdkVirtualFor="let node of defaultDataSource">
+        <ng-container *ngTemplateOutlet="treeNode; context: {$implicit: node, treeControl: defaultTreeControl}"></ng-container>
+      </ng-container>
+    </cdk-virtual-scroll-viewport>
   </div>
   <!-- environments config tree view -->
   <div class="tree-view" appSplitArea [splitSize]="50" [minSize]="50">
-    <mat-card class="nested-config-view">
-      <ng-container *ngTemplateOutlet="treeView; context: {dataSource: envDataSource, treeControl: envTreeControl}"></ng-container>
-    </mat-card>
+    <cdk-virtual-scroll-viewport itemSize="41" class="nested-config-view mat-card">
+      <ng-container *cdkVirtualFor="let node of envDataSource">
+        <ng-container *ngTemplateOutlet="treeNode; context: {$implicit: node, treeControl: envTreeControl}"></ng-container>
+      </ng-container>
+    </cdk-virtual-scroll-viewport>
   </div>
 </div>
 
-<!-- Tree view template -->
-<ng-template #treeView let-dataSource="dataSource" let-treeControl="treeControl">
-    <mat-tree [dataSource]="dataSource" [treeControl]="treeControl" class="nested-tree">
-        <mat-tree-node *matTreeNodeDef="let node">
-            <ng-container *ngTemplateOutlet="treeNode; context: {$implicit: node, treeControl: treeControl}"></ng-container>
-        </mat-tree-node>
-
-        <mat-nested-tree-node *matTreeNodeDef="let node; when: hasNestedChild">
-          <div>
-            <ng-container *ngTemplateOutlet="treeNode; context: {$implicit: node, treeControl: treeControl}"></ng-container>
-            <div class="sub-tree" *ngIf="treeControl.isExpanded(node)">
-                <ng-container matTreeNodeOutlet></ng-container>
-            </div>
-          </div>
-        </mat-nested-tree-node>
-    </mat-tree>
-</ng-template>
-
 <!-- Tree node template -->
 <ng-template #treeNode let-node let-treeControl="treeControl">
-    <div class="mat-tree-node">
-        <div *ngIf="node.isLeaf()" class="btn-tree-toggle"></div>
+    <div class="mat-tree-node" [style.padding-left]="(node.level * 40) + 'px'">
+        <div *ngIf="!node.expandable" class="btn-tree-toggle"></div>
 
-        <div *ngIf="!node.isLeaf() && node.getLevel() === 0" (click)="toggle(treeControl, node, true)" class="{{treeControl.isExpanded(node)?'btn-tree-toggle toggle-all-up unselectable':'btn-tree-toggle toggle-all-down unselectable'}}" >&raquo;</div>
+        <div *ngIf="node.expandable && node.level === 0" (click)="toggle(treeControl, node, true)" class="{{treeControl.isExpanded(node)?'btn-tree-toggle toggle-all-up unselectable':'btn-tree-toggle toggle-all-down unselectable'}}" >&raquo;</div>
 
-        <div *ngIf="!node.isLeaf()" class="{{treeControl.isExpanded(node)?'btn-tree-toggle toggle-up unselectable':'btn-tree-toggle toggle-down unselectable'}}" (click)="toggle(treeControl, node)">{{treeControl.isExpanded(node) ? '-' : '+' }}</div>
+        <div *ngIf="node.expandable" class="{{treeControl.isExpanded(node)?'btn-tree-toggle toggle-up unselectable':'btn-tree-toggle toggle-down unselectable'}}" (click)="toggle(treeControl, node)">{{treeControl.isExpanded(node) ? '-' : '+' }}</div>
 
         <span class="context-menu-trigger" #menuTrigger [matMenuTriggerFor]="menu"></span>
 
@@ -48,22 +34,22 @@
             <div [matTooltip]="node.getCommentStr(true)" matTooltipPosition="above" class="value">
               <ng-container *ngIf="node.isObjectInArray() && node.aliases && node.aliases.length">{{'*' + node.aliases[0]}}</ng-container>
               <ng-container *ngIf="node.isObjectInArray() && node.anchor">{{'&' + node.anchor}}</ng-container>
-              <div *ngIf="node.isLeaf()" [innerHTML]="yamlService.highlightNodeVariable(node)"></div>
+              <div *ngIf="!node.expandable" [innerHTML]="yamlService.highlightNodeVariable(node)"></div>
             </div>
             <button mat-icon-button #menuButton class="btn-action" (click)="$event.stopPropagation()" (contextmenu)="buttonOpenMenu($event, menuButton)" [matMenuTriggerFor]="menu">...</button>
         </div>
 
         <mat-menu #menu="matMenu">
-          <button *ngIf="!node.isLeaf() && (currentUser|async)?.branchName !== 'master'" mat-button class="btn-action-menu" color="primary" (click)="openAddPropertyDialog(node)">
-            {{node.isDefaultNode() || node.getLevel() > 0? (node.isDefaultNode()? 'Add Property':'Override Property'): 'Add Environment'}}
+          <button *ngIf="node.expandable && (currentUser|async)?.branchName !== 'master'" mat-button class="btn-action-menu" color="primary" (click)="openAddPropertyDialog(node)">
+            {{node.isDefaultNode() || node.level > 0? (node.isDefaultNode()? 'Add Property':'Override Property'): 'Add Environment'}}
           </button>
           <button *ngIf="(currentUser|async)?.branchName !== 'master'" mat-button class="btn-action-menu" color="primary" (click)="openEditPropertyDialog(node)">
             Edit
           </button>
-          <button *ngIf="!node.isDefaultNode() && node.getLevel() === 1" (click)="viewCompiledYAML(node.key)" mat-button class="btn-action-menu" color="primary">
+          <button *ngIf="!node.isDefaultNode() && node.level === 1" (click)="viewCompiledYAML(node.key)" mat-button class="btn-action-menu" color="primary">
             View Compiled YAML
           </button>
-          <button *ngIf="node.getLevel()>0 && (currentUser|async)?.branchName !== 'master'" mat-button class="btn-action-menu" color="warn" (click)="deleteProperty(node)">
+          <button *ngIf="node.level>0 && (currentUser|async)?.branchName !== 'master'" mat-button class="btn-action-menu" color="warn" (click)="deleteProperty(node)">
             Delete
           </button>
           <button *ngIf="(currentUser|async)?.branchName === 'master'" (click)="showDetail(node)" mat-button class="btn-action-menu" color="primary">
