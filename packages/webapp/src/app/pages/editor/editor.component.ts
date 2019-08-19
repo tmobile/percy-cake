@@ -114,7 +114,7 @@ export class EditorPageComponent implements OnInit, OnDestroy {
       const fileExt = routeSnapshot.paramMap.get("fileName").split(".").pop();
       this.fileType = fileExt === FileTypes.YML ? FileTypes.YAML : fileExt;
     } else {
-      this.fileType = routeSnapshot.paramMap.get("fileType");
+      this.fileType = this.envFileMode ? FileTypes.YAML : routeSnapshot.paramMap.get("fileType");
     }
 
     this.showYamlEditor = this.fileType === FileTypes.YAML;
