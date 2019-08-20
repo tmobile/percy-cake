@@ -9,6 +9,8 @@ import java.awt.Dimension;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -19,6 +21,7 @@ import org.json.JSONObject;
 
 import com.codebrig.journey.JourneyBrowserView;
 import com.codebrig.journey.JourneySettings;
+import com.codebrig.journey.JourneySettings.LogSeverity;
 import com.codebrig.journey.proxy.CefBrowserProxy;
 import com.codebrig.journey.proxy.CefClientProxy;
 import com.codebrig.journey.proxy.browser.CefFrameProxy;
@@ -29,10 +32,9 @@ import com.codebrig.journey.proxy.handler.CefNativeDefault;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
-import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -109,9 +111,24 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
     private CefMessageRouterProxy messageRouter;
 
     /**
+     * The WebView UI Component
+     */
+    private Component webViewComponent;
+
+    /**
      * Whether file is modified.
      */
     private boolean modified;
+
+    /**
+     * OS String
+     */
+    private static String OS = System.getProperty("os.name").toLowerCase();
+
+    /**
+     * Whether the OS is linux
+     */
+    private static boolean isMac = OS.startsWith("mac");
 
     /**
      * Initialize an instance of the browser.
@@ -120,15 +137,21 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
         JourneySettings journeySettings = new JourneySettings();
         // Uncomment the following line to enable the remote debugger.
         // Browse to http://localhost:8989/ to debug.
-        journeySettings.setRemoteDebuggingPort(8989);
+        // journeySettings.setRemoteDebuggingPort(8989);
+        Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"), "debug.log");
+        journeySettings.setLogFile(tempDir.toString());
+        journeySettings.setLogSeverity(LogSeverity.LOGSEVERITY_VERBOSE);
+        if (!isMac) {
+            journeySettings.setWindowlessRenderingEnabled(true);
+        }
         journeyBrowser = new JourneyBrowserView(journeySettings, JourneyBrowserView.ABOUT_BLANK);
     }
 
     class MessageRouter extends CefNativeDefault implements CefMessageRouterHandlerProxy {
-        @Override
         /**
          * Handles an incoming message from the browser
          */
+        @Override
         public boolean onQuery(CefBrowserProxy browser, CefFrameProxy frame, long query_id, String request,
                 boolean persistent, CefQueryCallbackProxy callback) {
             try {
@@ -147,12 +170,6 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
         }
     }
 
-    /**
-     * The listener to setup look and feel.
-     */
-    private final LafManagerListener lafListener = (LafManager manager) -> {
-        setWebStyle();
-    };
 
     /**
      * Constructor.
@@ -164,19 +181,20 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
         this.project = project;
         this.file = file;
         DumbService.getInstance(project).smartInvokeLater(() -> {
-            this.panel.setBackground(JBColor.background());
 
             String url = HttpServer.getStaticUrl("index.html");
             LOG.info(url);
 
             try {
                 client = journeyBrowser.getCefApp().createClient();
-                browser = client.createBrowser(url, false, false);
-                panel.add(browser.getUIComponent(), BorderLayout.CENTER);
+                browser = client.createBrowser(url, !isMac, false);
                 messageRouter = CefMessageRouterProxy.create();
                 handler = CefMessageRouterHandlerProxy.createHandler(new MessageRouter());
                 messageRouter.addHandler(handler, true);
                 client.addMessageRouter(messageRouter);
+                webViewComponent = browser.getUIComponent();
+                panel.add(webViewComponent, BorderLayout.CENTER);
+                this.panel.setBackground(JBColor.background());
             } catch (Exception e) {
                 LOG.error("Error while initialing WebView. ", e);
             }
@@ -186,24 +204,25 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
 
             // Add document change listener
             com.intellij.openapi.editor.Document document = FileDocumentManager.getInstance().getDocument(file);
-            if (document != null) {
-                document.addDocumentListener(new DocumentListener() {
-                    @Override
-                    public void documentChanged(final DocumentEvent e) {
-
-                        try {
-                            if (browser != null) {
-                                JSONObject send = new JSONObject();
-                                send.put("type", "PercyEditorFileChanged");
-                                send.put("fileContent", e.getDocument().getText());
-                                sendToJS(send.toString());
-                            }
-                        } catch (JsonProcessingException e1) {
-                            LOG.error(e);
-                        }
-                    }
-                }, this);
+            if (document == null) {
+                return;
             }
+            DocumentListener listener = new DocumentListener() {
+                @Override
+                public void documentChanged(final DocumentEvent e) {
+                    try {
+                        if (browser != null) {
+                            JSONObject send = new JSONObject();
+                            send.put("type", "PercyEditorFileChanged");
+                            send.put("fileContent", e.getDocument().getText());
+                            sendToJS(send.toString());
+                        }
+                    } catch (JsonProcessingException e1) {
+                        LOG.error(e);
+                    }
+                }
+            };
+            document.addDocumentListener(listener, this);
         });
     }
 
@@ -271,9 +290,12 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
         } else if ("PercyEditorSave".equalsIgnoreCase(type)) {
             String fileContent = message.getString("fileContent");
             LOG.info("Save file: " + file.getCanonicalPath());
-
             WriteCommandAction.runWriteCommandAction(project, () -> {
-                FileDocumentManager.getInstance().getDocument(file).setText(fileContent);
+                ApplicationManager.getApplication().invokeLater(() -> {
+                    ApplicationManager.getApplication().runWriteAction(() -> {
+                        FileDocumentManager.getInstance().getDocument(file).setText(fileContent);
+                    });
+                }, ModalityState.NON_MODAL);
             });
             JSONObject send = new JSONObject();
             send.put("type", "PercyEditorSaved");
@@ -369,15 +391,13 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
 
             Dimension d = root.getSize();
 
-            Component webView = browser.getUIComponent();
-
-            if (webView == null) {
+            if (webViewComponent == null) {
                 return;
             }
 
             if (d.getWidth() > 0 && d.getHeight() > 0) {
-                webView.setPreferredSize(d);
-                webView.setSize(d);
+                webViewComponent.setPreferredSize(d);
+                webViewComponent.setSize(d);
                 panel.setPreferredSize(d);
                 panel.setSize(d);
             }
@@ -393,9 +413,8 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
             ApplicationManager.getApplication().invokeAndWait(() -> {
                 messageRouter.removeHandler(handler);
                 client.dispose();
-            });
+            });  
         }
-        LafManager.getInstance().removeLafManagerListener(lafListener);
     }
 
     /**
