@@ -418,10 +418,20 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
     }
 
     /**
-     * Dummy method.
+     * Set proper zoom level and window visibility (required for off-screen rendering)
      */
     @Override
     public void selectNotify() {
+        if (browser == null) {
+            return;
+        }
+        // The code below fixes the blank screen issue on Windows and Linux
+        double zoomLevel = browser.getZoomLevel();
+        browser.setZoomLevel(1);
+        browser.setZoomLevel(0);
+        browser.setZoomLevel(zoomLevel);
+        browser.setWindowVisibility(false);
+        browser.setWindowVisibility(true);
     }
 
     /**

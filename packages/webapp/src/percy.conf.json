@@ -1,6 +1,6 @@
 {
   "corsProxy": "http://localhost:9999",
-  "defaultRepositoryUrl": "https://bitbucket.org/leviastan/sample-yaml-config",
+  "defaultRepositoryUrl": "https://github.com/standlove/yaml-config-test",
   "lockedBranches": [
     "trunk"
   ],
