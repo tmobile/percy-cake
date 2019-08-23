@@ -184,6 +184,10 @@ body.vscode-theme {
 
   .split-tree-view .nested-config-view .mat-tree-node .underline {
     border-bottom-color: inherit !important;
+
+    .btn-action {
+      color: inherit !important;
+    }
   }
 
   .mat-input-element:disabled, .mat-select-disabled .mat-select-value, button:disabled {
@@ -206,9 +210,4 @@ body.vscode-theme {
       padding-left: 0 !important;
     }
   }
-}
-
-// hide in non-webstorm environment
-.show-webstorm {
-  display: none;
 }

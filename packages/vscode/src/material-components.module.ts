@@ -42,7 +42,8 @@ import {
   MatExpansionModule,
   MatIconModule,
   MatSortModule,
-  MatSlideToggleModule
+  MatSlideToggleModule,
+  MatRippleModule
 } from "@angular/material";
 import { ScrollingModule } from "@angular/cdk/scrolling";
 
@@ -70,6 +71,7 @@ import { ScrollingModule } from "@angular/cdk/scrolling";
     MatIconModule,
     MatSortModule,
     MatSlideToggleModule,
+    MatRippleModule,
     ScrollingModule
   ],
   exports: [
@@ -95,6 +97,7 @@ import { ScrollingModule } from "@angular/cdk/scrolling";
     MatIconModule,
     MatSortModule,
     MatSlideToggleModule,
+    MatRippleModule,
     ScrollingModule
   ]
 })
