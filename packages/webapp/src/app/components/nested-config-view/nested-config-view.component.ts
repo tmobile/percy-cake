@@ -39,7 +39,7 @@ import * as _ from "lodash";
 import { PROPERTY_VALUE_TYPES } from "config";
 import { User } from "models/auth";
 import { Configuration } from "models/config-file";
-import { TreeNode, FlatTreeNode } from "models/tree-node";
+import { TreeNode } from "models/tree-node";
 import { ConfigProperty } from "models/config-property";
 
 import * as appStore from "store";
@@ -71,13 +71,13 @@ export class NestedConfigViewComponent implements OnChanges {
     select(appStore.getCurrentUser)
   );
 
-  treeFlattener: MatTreeFlattener<TreeNode, FlatTreeNode>;
+  treeFlattener: MatTreeFlattener<TreeNode, TreeNode>;
 
-  defaultTreeControl: FlatTreeControl<FlatTreeNode>;
-  defaultDataSource: MatTreeFlatDataSource<TreeNode, FlatTreeNode>;
+  defaultTreeControl: FlatTreeControl<TreeNode>;
+  defaultDataSource: MatTreeFlatDataSource<TreeNode, TreeNode>;
 
-  envTreeControl: FlatTreeControl<FlatTreeNode>;
-  envDataSource: MatTreeFlatDataSource<TreeNode, FlatTreeNode>;
+  envTreeControl: FlatTreeControl<TreeNode>;
+  envDataSource: MatTreeFlatDataSource<TreeNode, TreeNode>;
 
   /**
    * initializes the component
@@ -90,24 +90,19 @@ export class NestedConfigViewComponent implements OnChanges {
     private yamlService: YamlService
   ) {
     const _getChildren = (node: TreeNode) => node.children;
-    const _transformer = (node: TreeNode, level: number): FlatTreeNode => {
-      const flatNode = node as FlatTreeNode;
-      flatNode.level = level;
-      flatNode.expandable = !node.isLeaf();
-      return flatNode;
-    };
+    const _transformer = (node: TreeNode): TreeNode => node;
 
     this.treeFlattener = new MatTreeFlattener(
-      _transformer, node => node.level, node => node.expandable, _getChildren
+      _transformer, node => node.getLevel(), node => !node.isLeaf(), _getChildren
     );
 
-    this.defaultTreeControl = new FlatTreeControl<FlatTreeNode>(
-      node => node.level, node => node.expandable
+    this.defaultTreeControl = new FlatTreeControl<TreeNode>(
+      node => node.getLevel(), node => !node.isLeaf()
     );
     this.defaultDataSource = new MatTreeFlatDataSource(this.defaultTreeControl, this.treeFlattener);
 
-    this.envTreeControl = new FlatTreeControl<FlatTreeNode>(
-      node => node.level, node => node.expandable
+    this.envTreeControl = new FlatTreeControl<TreeNode>(
+      node => node.getLevel(), node => !node.isLeaf()
     );
     this.envDataSource = new MatTreeFlatDataSource(this.envTreeControl, this.treeFlattener);
   }
@@ -146,12 +141,6 @@ export class NestedConfigViewComponent implements OnChanges {
       }
     }
   }
-
-  /*
-   * when condition in mat-nested-tree-node
-   * which returns true if a node has children
-   */
-  hasNestedChild = (_n: number, node: TreeNode) => !node.isLeaf();
 
   /**
    * prepare the dropdown options based node and mode
@@ -409,9 +398,9 @@ export class NestedConfigViewComponent implements OnChanges {
 
       // expand newly added nodes by default
       if (this.currentConfigProperty.node.isDefaultNode()) {
-        this.defaultTreeControl.expand(node as FlatTreeNode);
+        this.defaultTreeControl.expand(node);
       } else {
-        this.envTreeControl.expand(node as FlatTreeNode);
+        this.envTreeControl.expand(node);
       }
     }
   }
@@ -425,9 +414,9 @@ export class NestedConfigViewComponent implements OnChanges {
 
     if (!this.currentConfigProperty.editMode) {
       if (this.currentConfigProperty.node.isDefaultNode()) {
-        this.defaultTreeControl.expand(this.currentConfigProperty.node as FlatTreeNode);
+        this.defaultTreeControl.expand(this.currentConfigProperty.node);
       } else {
-        this.envTreeControl.expand(this.currentConfigProperty.node as FlatTreeNode);
+        this.envTreeControl.expand(this.currentConfigProperty.node);
       }
     }
 
@@ -450,7 +439,7 @@ export class NestedConfigViewComponent implements OnChanges {
   buttonOpenMenu(event, menuButton) {
     event.preventDefault();
     event.stopPropagation();
-    menuButton._elementRef.nativeElement.click();
+    menuButton.click();
   }
 
   /**
