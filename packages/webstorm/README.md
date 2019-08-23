@@ -10,8 +10,6 @@ Intellij Idea
 npm install -g lerna
 lerna bootstrap --hoist
 
-# Build web app
-lerna run --scope=percy-cake-web-app --stream build:prod
 
 # Build vscode extension
 lerna run --scope=percy-vscode-extension --stream build:prod

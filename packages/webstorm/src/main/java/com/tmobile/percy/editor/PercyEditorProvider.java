@@ -56,7 +56,7 @@ public class PercyEditorProvider extends WeighedFileEditorProvider {
             return false;
         }
         // when a project is already disposed due to a slow initialization,
-        // reject this file`
+        // reject this file
         if (project.isDisposed()) {
             return false;
         }

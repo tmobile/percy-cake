@@ -8,7 +8,7 @@
     Percy Editor
     ]]></description>
 
-	<!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+	<!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html 
 		on how to target different products -->
 	<idea-version since-build="172.3317" />
 	<!-- uncomment to enable plugin in all products -->

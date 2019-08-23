@@ -16,7 +16,7 @@ public class PercyFileTypeFactory extends FileTypeFactory {
 
     /**
      * Create file type.
-     *
+     * 
      * @param fileTypeConsumer The file type consumer
      */
     @Override

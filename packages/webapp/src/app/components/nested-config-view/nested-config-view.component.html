@@ -36,7 +36,10 @@
               <ng-container *ngIf="node.isObjectInArray() && node.anchor">{{'&' + node.anchor}}</ng-container>
               <div *ngIf="!node.expandable" [innerHTML]="yamlService.highlightNodeVariable(node)"></div>
             </div>
-            <button mat-icon-button #menuButton class="btn-action" (click)="$event.stopPropagation()" (contextmenu)="buttonOpenMenu($event, menuButton)" [matMenuTriggerFor]="menu">...</button>
+            <!-- for all other packages -->
+            <button mat-icon-button #menuButton1 class="btn-action hide-webstorm" (click)="$event.stopPropagation()" (contextmenu)="buttonOpenMenu($event, menuButton1)" [matMenuTriggerFor]="menu">...</button>
+            <!-- for websotorm plugin -->
+            <button #menuButton2 class="btn-action show-webstorm" (click)="$event.stopPropagation()" (contextmenu)="buttonOpenMenu($event, menuButton2)" [matMenuTriggerFor]="menu">...</button>
         </div>
 
         <mat-menu #menu="matMenu">

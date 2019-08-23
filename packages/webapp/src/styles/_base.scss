@@ -207,3 +207,8 @@ body.vscode-theme {
     }
   }
 }
+
+// hide in non-webstorm environment
+.show-webstorm {
+  display: none;
+}
