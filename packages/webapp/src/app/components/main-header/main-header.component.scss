@@ -21,6 +21,14 @@
   .repo-info {
     display: flex;
     align-items: center;
+    position: relative;
+
+    .info-text {
+      position: absolute;
+      right: 0;
+      top: -12px;
+      font-style: italic;
+    }
 
     .mat-button {
       min-width: 0;

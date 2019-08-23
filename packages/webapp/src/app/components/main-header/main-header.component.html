@@ -4,15 +4,16 @@
 
   <!-- repo info -->
   <div class="repo-info">
-      <h4>{{(currentUser|async)?.repoName}} @</h4>
-      <button
-        mat-button color="primary"
-        [matMenuTriggerFor]="branchesMenu"
-        (click)="getBranches()"
-        [ngClass]="{'is-disabled' : isEditorPage}"
-      >
-        {{(currentUser|async)?.branchName}}
-      </button>
+    <div class="info-text" *ngIf="(currentUser|async)?.branchName === 'master'">The master branch is read only.</div>
+    <h4>{{(currentUser|async)?.repoName}} @</h4>
+    <button
+      mat-button color="primary"
+      [matMenuTriggerFor]="branchesMenu"
+      (click)="getBranches()"
+      [ngClass]="{'is-disabled' : isEditorPage}"
+    >
+      {{(currentUser|async)?.branchName}}
+    </button>
   </div>
   <!-- logout button -->
   <button
