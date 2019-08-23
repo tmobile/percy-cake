@@ -3,36 +3,24 @@
  */
 package com.tmobile.percy.editor;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Dimension;
+import java.awt.Color;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
 
 import org.jetbrains.annotations.Nullable;
-import org.json.JSONObject;
+import org.w3c.dom.Document;
 
-import com.codebrig.journey.JourneyBrowserView;
-import com.codebrig.journey.JourneySettings;
-import com.codebrig.journey.proxy.CefBrowserProxy;
-import com.codebrig.journey.proxy.CefClientProxy;
-import com.codebrig.journey.proxy.browser.CefFrameProxy;
-import com.codebrig.journey.proxy.browser.CefMessageRouterProxy;
-import com.codebrig.journey.proxy.callback.CefQueryCallbackProxy;
-import com.codebrig.journey.proxy.handler.CefMessageRouterHandlerProxy;
-import com.codebrig.journey.proxy.handler.CefNativeDefault;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -41,7 +29,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorState;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,7 +36,16 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 import com.tmobile.percy.HttpServer;
 
-// import netscape.javascript.JSObject;
+import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.embed.swing.JFXPanel;
+import javafx.scene.CacheHint;
+import javafx.scene.Scene;
+import javafx.scene.text.FontSmoothingType;
+import javafx.scene.web.WebEngine;
+import javafx.scene.web.WebView;
+import netscape.javascript.JSObject;
 
 /**
  * The percy editor.
@@ -57,7 +53,11 @@ import com.tmobile.percy.HttpServer;
  * @author TCSCODER
  * @version 1.0
  */
-public class PercyEditor extends UserDataHolderBase implements FileEditor, Disposable {
+public class PercyEditor extends UserDataHolderBase implements FileEditor {
+    static {
+        Platform.setImplicitExit(false);
+    }
+
     /**
      * The logger.
      */
@@ -71,7 +71,12 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
     /**
      * The JavaFX panel.
      */
-    private final JPanel panel = new JPanel(new BorderLayout());
+    private final JFXPanel jfxPanel = new JFXPanel();
+
+    /**
+     * The bridge to call java from javascript.
+     */
+    private final Bridge bridge = new Bridge();
 
     /**
      * The project.
@@ -84,29 +89,14 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
     private final VirtualFile file;
 
     /**
-     * The browser.
+     * The web view.
      */
-    private static JourneyBrowserView journeyBrowser;
+    private WebView webView;
 
     /**
-     * The browser.
+     * The web view scene.
      */
-    private CefClientProxy client;
-
-    /**
-     * The browser.
-     */
-    private CefBrowserProxy browser;
-
-    /**
-     * The Message Router Handler
-     */
-    private CefMessageRouterHandlerProxy handler;
-
-    /**
-     * The Message Router
-     */
-    private CefMessageRouterProxy messageRouter;
+    private Scene scene;
 
     /**
      * Whether file is modified.
@@ -114,44 +104,22 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
     private boolean modified;
 
     /**
-     * Initialize an instance of the browser.
+     * The listener to setup javascript bridge.
      */
-    static {
-        JourneySettings journeySettings = new JourneySettings();
-        // Uncomment the following line to enable the remote debugger.
-        // Browse to http://localhost:8989/ to debug.
-        journeySettings.setRemoteDebuggingPort(8989);
-        journeyBrowser = new JourneyBrowserView(journeySettings, JourneyBrowserView.ABOUT_BLANK);
-    }
-
-    class MessageRouter extends CefNativeDefault implements CefMessageRouterHandlerProxy {
-        @Override
-        /**
-         * Handles an incoming message from the browser
-         */
-        public boolean onQuery(CefBrowserProxy browser, CefFrameProxy frame, long query_id, String request,
-                boolean persistent, CefQueryCallbackProxy callback) {
-            try {
-                JSONObject response = handleRequest(new JSONObject(request));
-                callback.success(response.toString());
-                return true;
-            } catch (Exception e) {
-                callback.failure(-1, e.toString());
-                return false;
-            }
-        }
-
-        @Override
-        public void onQueryCanceled(CefBrowserProxy browser, CefFrameProxy frame, long query_id) {
-            LOG.info("Query cancelled");
-        }
-    }
+    private final ChangeListener<Document> bridgeListener = (ObservableValue<? extends Document> prop, Document oldDoc,
+            Document newDoc) -> {
+        JSObject win = (JSObject) webView.getEngine().executeScript("window");
+        win.setMember("bridge", bridge);
+        jfxPanel.setScene(scene);
+    };
 
     /**
      * The listener to setup look and feel.
      */
     private final LafManagerListener lafListener = (LafManager manager) -> {
-        setWebStyle();
+        Platform.runLater(() -> {
+            setWebStyle();
+        });
     };
 
     /**
@@ -163,142 +131,67 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
     public PercyEditor(Project project, VirtualFile file) {
         this.project = project;
         this.file = file;
-        DumbService.getInstance(project).smartInvokeLater(() -> {
-            this.panel.setBackground(JBColor.background());
+        this.jfxPanel.setBackground(JBColor.background());
 
+        Platform.runLater(() -> {
+            // create WebView
+            webView = new WebView();
+            webView.setContextMenuEnabled(true);
+            webView.setCache(true);
+            webView.setCacheHint(CacheHint.SPEED);
+            webView.fontSmoothingTypeProperty().setValue(FontSmoothingType.GRAY);
+            setWebStyle();
+
+            // setup WebEngine
+            WebEngine engine = webView.getEngine();
+            engine.setJavaScriptEnabled(true);
+            engine.documentProperty().addListener(bridgeListener);
+
+            // create scene to display
+            Color color = JBColor.background();
+            scene = new Scene(webView, javafx.scene.paint.Color.rgb(color.getRed(), color.getGreen(), color.getBlue(),
+                    color.getAlpha() / 255.0));
+
+            // load html
             String url = HttpServer.getStaticUrl("index.html");
-            LOG.info(url);
-
-            try {
-                client = journeyBrowser.getCefApp().createClient();
-                browser = client.createBrowser(url, false, false);
-                panel.add(browser.getUIComponent(), BorderLayout.CENTER);
-                messageRouter = CefMessageRouterProxy.create();
-                handler = CefMessageRouterHandlerProxy.createHandler(new MessageRouter());
-                messageRouter.addHandler(handler, true);
-                client.addMessageRouter(messageRouter);
-            } catch (Exception e) {
-                LOG.error("Error while initialing WebView. ", e);
-            }
-
-            // Add look and feel listener
-            setWebStyle();
-
-            // Add document change listener
-            com.intellij.openapi.editor.Document document = FileDocumentManager.getInstance().getDocument(file);
-            if (document != null) {
-                document.addDocumentListener(new DocumentListener() {
-                    @Override
-                    public void documentChanged(final DocumentEvent e) {
-
-                        try {
-                            if (browser != null) {
-                                JSONObject send = new JSONObject();
-                                send.put("type", "PercyEditorFileChanged");
-                                send.put("fileContent", e.getDocument().getText());
-                                sendToJS(send.toString());
-                            }
-                        } catch (JsonProcessingException e1) {
-                            LOG.error(e);
-                        }
-                    }
-                }, this);
-            }
+            LOG.info("Render " + url);
+            engine.load(url);
         });
-    }
 
-    /**
-     * Handles an incoming message from the WebView
-     *
-     * @param message the message
-     * @return
-     * @throws IOException
-     */
-    private JSONObject handleRequest(@Nullable JSONObject message) throws IOException {
-        String type = message.getString("type");
-        LOG.info(type);
+        // Add look and feel listener
+        LafManager.getInstance().addLafManagerListener(lafListener);
 
-        if ("PercyEditorInit".equalsIgnoreCase(type)) {
-            setWebStyle();
+        // Add document change listener
+        com.intellij.openapi.editor.Document document = FileDocumentManager.getInstance().getDocument(file);
+        if (document != null) {
+            document.addDocumentListener(new DocumentListener() {
+                @Override
+                public void documentChanged(final DocumentEvent e) {
 
-            String envFileName = "environments.yaml";
-            JSONObject send = new JSONObject();
-            send.put("type", "PercyEditorRender");
-            send.put("editMode", true);
-            send.put("envFileMode", envFileName.equals(file.getName()));
-            send.put("appName", file.getParent().getPath());
-            send.put("fileName", file.getName());
-            send.put("pathSep", File.separator);
-            send.put("fileContent", new String(file.contentsToByteArray()));
-
-            VirtualFile envFile = file.findFileByRelativePath("../" + envFileName);
-            if (envFile != null) {
-                send.put("envFileContent", new String(envFile.contentsToByteArray()));
-            }
-
-            JSONObject percyConfig = new JSONObject();
-            percyConfig.put("variablePrefix", "_{");
-            percyConfig.put("variableSuffix", "}_");
-            percyConfig.put("variableNamePrefix", "$");
-            percyConfig.put("envVariableName", "env");
-            percyConfig.put("filenameRegex", "^[a-zA-Z0-9_.-]*$");
-            percyConfig.put("propertyNameRegex", "^[\\s]*[a-zA-Z0-9$_.-]*[\\s]*$");
-            send.put("percyConfig", percyConfig);
-
-            VirtualFile parent = file.getParent();
-            while (parent != null) {
-                VirtualFile percyConfigFile = parent.findChild(".percyrc");
-                if (percyConfigFile != null) {
-                    JSONObject previousMap = new JSONObject();
-                    if (send.has("appPercyConfig")) {
-                        previousMap = send.getJSONObject("appPercyConfig");
-                    }
-                    JSONObject newMap = new JSONObject(new String(percyConfigFile.contentsToByteArray()));
-                    for (String key : JSONObject.getNames(newMap)) {
-                        if (!previousMap.has(key)) {
-                            previousMap.put(key, newMap.get(key));
+                    try {
+                        if (webView != null) {
+                            Map<String, String> send = new HashMap<>();
+                            send.put("type", "PercyEditorFileChanged");
+                            send.put("fileContent", e.getDocument().getText());
+                            sendToJS(send);
                         }
+                    } catch (JsonProcessingException e1) {
+                        LOG.error(e);
                     }
-                    send.put("appPercyConfig", previousMap);
                 }
-                if (parent.getPath().equals(project.getBasePath())) {
-                    break;
-                }
-                parent = parent.getParent();
-            }
-
-            return send;
-        } else if ("PercyEditorSave".equalsIgnoreCase(type)) {
-            String fileContent = message.getString("fileContent");
-            LOG.info("Save file: " + file.getCanonicalPath());
-
-            WriteCommandAction.runWriteCommandAction(project, () -> {
-                FileDocumentManager.getInstance().getDocument(file).setText(fileContent);
-            });
-            JSONObject send = new JSONObject();
-            send.put("type", "PercyEditorSaved");
-            send.put("fileContent", fileContent);
-            send.put("newFileName", file.getName());
-            return send;
-        } else if ("PercyEditorFileDirty".equalsIgnoreCase(type)) {
-            modified = Boolean.parseBoolean(message.getString("dirty"));
-            LOG.info("modified: " + modified);
+            }, this);
         }
-        return new JSONObject().put("status", "success");
     }
 
     /**
      * Set web style.
      */
     private void setWebStyle() {
-        if (browser != null) {
-            String stylesheet = "/default.css";
-            if (UIUtil.isUnderDarcula()) {
-                stylesheet = "/darcula.css";
-            }
-            String url = HttpServer.getStaticUrl(stylesheet);
-            String JS = "window.injectCss('" + url + "');";
-            browser.executeJavaScript(JS, "", 0);
+        if (webView != null) {
+            URL url = UIUtil.isUnderDarcula() ? PercyEditor.class.getResource("/darcula.css")
+                    : PercyEditor.class.getResource("/default.css");
+
+            webView.getEngine().setUserStyleSheetLocation(url.toExternalForm());
         }
     }
 
@@ -308,11 +201,105 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
      * @param toSend The message to send
      * @throws JsonProcessingException if JSON error occurs
      */
-    private void sendToJS(String toSend) throws JsonProcessingException {
+    private void sendToJS(Object toSend) throws JsonProcessingException {
         String toSendStr = mapper.writeValueAsString(toSend);
-        String JS = "window.sendMessage(" + toSendStr + ");";
+        Platform.runLater(() -> {
+            JSObject win = (JSObject) webView.getEngine().executeScript("window");
+            win.call("sendMessage", toSendStr);
+        });
+    }
 
-        browser.executeJavaScript(JS, "", 0);
+    /**
+     * The init message.
+     */
+    public class InitMessage {
+        public String type;
+        public boolean editMode;
+        public boolean envFileMode;
+        public String appName;
+        public String fileName;
+        public String pathSep;
+        public String fileContent;
+        public String envFileContent;
+        public Map<String, Object> percyConfig = new HashMap<>();
+        public Map<String, Object> appPercyConfig = new HashMap<>();
+    }
+
+    /**
+     * The bridge to call java from javascript.
+     */
+    public class Bridge {
+
+        /**
+         * Post message.
+         *
+         * @param message The post message received from javascript.
+         * @throws IOException if any I/O error occurs
+         */
+        @SuppressWarnings("unchecked")
+        public void postMessage(@Nullable JSObject message) throws IOException {
+
+            String type = message.getMember("type").toString();
+            LOG.info(type);
+
+            if ("PercyEditorInit".equalsIgnoreCase(type)) {
+
+                String envFileName = "environments.yaml";
+                InitMessage send = new InitMessage();
+                send.type = "PercyEditorRender";
+                send.editMode = true;
+                send.envFileMode = envFileName.equals(file.getName());
+                send.appName = file.getParent().getPath();
+                send.fileName = file.getName();
+                send.pathSep = File.separator;
+                send.fileContent = new String(file.contentsToByteArray());
+
+                VirtualFile envFile = file.findFileByRelativePath("../" + envFileName);
+                if (envFile != null) {
+                    send.envFileContent = new String(envFile.contentsToByteArray());
+                }
+
+                send.percyConfig.put("variablePrefix", "_{");
+                send.percyConfig.put("variableSuffix", "}_");
+                send.percyConfig.put("variableNamePrefix", "$");
+                send.percyConfig.put("envVariableName", "env");
+                send.percyConfig.put("filenameRegex", "^[a-zA-Z0-9_.-]*$");
+                send.percyConfig.put("propertyNameRegex", "^[\\s]*[a-zA-Z0-9$_.-]*[\\s]*$");
+
+                VirtualFile parent = file.getParent();
+                while (parent != null) {
+                    VirtualFile percyConfigFile = parent.findChild(".percyrc");
+                    if (percyConfigFile != null) {
+                        Map<String, Object> pmap = send.appPercyConfig;
+                        Map<String, Object> nmap = mapper.readValue(new String(percyConfigFile.contentsToByteArray()),
+                                Map.class);
+                        nmap.putAll(pmap);
+                        send.appPercyConfig = nmap;
+                    }
+                    if (parent.getPath().equals(project.getBasePath())) {
+                        break;
+                    }
+                    parent = parent.getParent();
+                }
+
+                sendToJS(send);
+            } else if ("PercyEditorSave".equalsIgnoreCase(type)) {
+                String fileContent = message.getMember("fileContent").toString();
+                LOG.info("Save file: " + file.getCanonicalPath());
+
+                WriteCommandAction.runWriteCommandAction(project, () -> {
+                    FileDocumentManager.getInstance().getDocument(file).setText(fileContent);
+                });
+                Map<String, String> send = new HashMap<>();
+                send.put("type", "PercyEditorSaved");
+                send.put("fileContent", fileContent);
+                send.put("newFileName", file.getName());
+                sendToJS(send);
+            } else if ("PercyEditorFileDirty".equalsIgnoreCase(type)) {
+                modified = Boolean.parseBoolean(message.getMember("dirty").toString());
+                LOG.info("modified: " + modified);
+            }
+        }
     }
 
     /**
@@ -322,7 +309,7 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
      */
     @Override
     public JComponent getComponent() {
-        return this.panel;
+        return this.jfxPanel;
     }
 
     /**
@@ -332,7 +319,7 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
      */
     @Override
     public JComponent getPreferredFocusedComponent() {
-        return this.panel;
+        return this.jfxPanel;
     }
 
     /**
@@ -360,26 +347,21 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
      */
     @Override
     public void deselectNotify() {
-        if (browser != null && panel != null) {
+        if (webView != null && scene !=null && scene.getWindow() != null) {
             // get window width/height
-            Component root = SwingUtilities.getRoot(panel);
-            if (root == null) {
-                return;
-            }
+            double width = scene.getWindow().getWidth();
+            double height = scene.getWindow().getHeight();
 
-            Dimension d = root.getSize();
-
-            Component webView = browser.getUIComponent();
-
-            if (webView == null) {
-                return;
-            }
-
-            if (d.getWidth() > 0 && d.getHeight() > 0) {
-                webView.setPreferredSize(d);
-                webView.setSize(d);
-                panel.setPreferredSize(d);
-                panel.setSize(d);
+            if (width > 0 && height > 0) {
+                // set preferred width/height same as window
+                if (width != webView.getPrefWidth()) {
+                    LOG.info("Prefer window width " + width);
+                    webView.setPrefWidth(width);
+                }
+                if (height != webView.getPrefHeight()) {
+                    LOG.info("Prefer window height " + height);
+                    webView.setPrefHeight(height);
+                }
             }
         }
     }
@@ -389,11 +371,8 @@ public class PercyEditor extends UserDataHolderBase implements FileEditor, Dispo
      */
     @Override
     public void dispose() {
-        if (journeyBrowser != null && client != null) {
-            ApplicationManager.getApplication().invokeAndWait(() -> {
-                messageRouter.removeHandler(handler);
-                client.dispose();
-            });
+        if (webView != null) {
+            webView.getEngine().documentProperty().removeListener(bridgeListener);
         }
         LafManager.getInstance().removeLafManagerListener(lafListener);
     }

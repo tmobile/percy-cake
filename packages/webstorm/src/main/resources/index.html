@@ -6,36 +6,10 @@
     <base href="/percy/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" type="text/css" href="editor.css">
-    <script>
-      var bridge = {
-        postMessage: (message) => {
-          if (typeof window.cefQuery === 'function') {
-            window.cefQuery({
-              request: JSON.stringify(message || ''),
-              onSuccess: function (response) {
-                window.sendMessage(response);
-              },
-              onFailure: function (error_code, error_message) {
-                console.log('No response');
-              }
-            });
-          }
-        }
-      };
-      var injectCss = function (url) {
-        var head = document.head;
-        var link = document.createElement("link");
-
-        link.type = "text/css";
-        link.rel = "stylesheet";
-        link.href = url;
-
-        head.appendChild(link);
-      }
-    </script>
   </head>
   <body class="default-theme vscode-theme">
     <app-vscode-root></app-vscode-root>
     <script type="text/javascript" src="percy.bundle.min.js"></script>
+    <!--<script type="text/javascript" src="fb.js"></script>-->
   </body>
 </html>

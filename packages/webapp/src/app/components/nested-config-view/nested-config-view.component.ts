@@ -29,8 +29,8 @@ import {
   OnChanges,
   SimpleChanges
 } from "@angular/core";
-import { NestedTreeControl } from "@angular/cdk/tree";
-import { MatTreeNestedDataSource } from "@angular/material/tree";
+import { FlatTreeControl } from "@angular/cdk/tree";
+import { MatTreeFlatDataSource, MatTreeFlattener } from "@angular/material/tree";
 import { MatDialog } from "@angular/material";
 import { Observable } from "rxjs";
 import { select, Store } from "@ngrx/store";
@@ -39,12 +39,13 @@ import * as _ from "lodash";
 import { PROPERTY_VALUE_TYPES } from "config";
 import { User } from "models/auth";
 import { Configuration } from "models/config-file";
-import { TreeNode } from "models/tree-node";
+import { TreeNode, FlatTreeNode } from "models/tree-node";
 import { ConfigProperty } from "models/config-property";
 
 import * as appStore from "store";
 import { ConfirmationDialogComponent } from "../confirmation-dialog/confirmation-dialog.component";
 import { YamlService } from "services/yaml.service";
+
 
 /**
  *  Tree with nested nodes
@@ -70,11 +71,13 @@ export class NestedConfigViewComponent implements OnChanges {
     select(appStore.getCurrentUser)
   );
 
-  defaultTreeControl: NestedTreeControl<TreeNode>;
-  defaultDataSource: MatTreeNestedDataSource<TreeNode>;
+  treeFlattener: MatTreeFlattener<TreeNode, FlatTreeNode>;
 
-  envTreeControl: NestedTreeControl<TreeNode>;
-  envDataSource: MatTreeNestedDataSource<TreeNode>;
+  defaultTreeControl: FlatTreeControl<FlatTreeNode>;
+  defaultDataSource: MatTreeFlatDataSource<TreeNode, FlatTreeNode>;
+
+  envTreeControl: FlatTreeControl<FlatTreeNode>;
+  envDataSource: MatTreeFlatDataSource<TreeNode, FlatTreeNode>;
 
   /**
    * initializes the component
@@ -87,10 +90,26 @@ export class NestedConfigViewComponent implements OnChanges {
     private yamlService: YamlService
   ) {
     const _getChildren = (node: TreeNode) => node.children;
-    this.defaultTreeControl = new NestedTreeControl<TreeNode>(_getChildren);
-    this.defaultDataSource = new MatTreeNestedDataSource();
-    this.envTreeControl = new NestedTreeControl<TreeNode>(_getChildren);
-    this.envDataSource = new MatTreeNestedDataSource();
+    const _transformer = (node: TreeNode, level: number): FlatTreeNode => {
+      const flatNode = node as FlatTreeNode;
+      flatNode.level = level;
+      flatNode.expandable = !node.isLeaf();
+      return flatNode;
+    };
+
+    this.treeFlattener = new MatTreeFlattener(
+      _transformer, node => node.level, node => node.expandable, _getChildren
+    );
+
+    this.defaultTreeControl = new FlatTreeControl<FlatTreeNode>(
+      node => node.level, node => node.expandable
+    );
+    this.defaultDataSource = new MatTreeFlatDataSource(this.defaultTreeControl, this.treeFlattener);
+
+    this.envTreeControl = new FlatTreeControl<FlatTreeNode>(
+      node => node.level, node => node.expandable
+    );
+    this.envDataSource = new MatTreeFlatDataSource(this.envTreeControl, this.treeFlattener);
   }
 
   /**
@@ -105,13 +124,9 @@ export class NestedConfigViewComponent implements OnChanges {
 
       const environmentsTree = this.configuration.environments;
       this.envDataSource.data = [environmentsTree];
-      this.toggle(
-        this.defaultTreeControl,
-        this.defaultDataSource.data[0],
-        true,
-        true
-      );
-      this.toggle(this.envTreeControl, this.envDataSource.data[0], true, true);
+
+      this.defaultTreeControl.expandAll();
+      this.envTreeControl.expandAll();
     }
   }
 
@@ -261,11 +276,9 @@ export class NestedConfigViewComponent implements OnChanges {
    */
   private refreshTree() {
     let _data = this.defaultDataSource.data;
-    this.defaultDataSource.data = null;
     this.defaultDataSource.data = _data;
 
     _data = this.envDataSource.data;
-    this.envDataSource.data = null;
     this.envDataSource.data = _data;
 
     this.configurationChange.emit(this.configuration);
@@ -396,9 +409,9 @@ export class NestedConfigViewComponent implements OnChanges {
 
       // expand newly added nodes by default
       if (this.currentConfigProperty.node.isDefaultNode()) {
-        this.defaultTreeControl.expand(node);
+        this.defaultTreeControl.expand(node as FlatTreeNode);
       } else {
-        this.envTreeControl.expand(node);
+        this.envTreeControl.expand(node as FlatTreeNode);
       }
     }
   }
@@ -412,9 +425,9 @@ export class NestedConfigViewComponent implements OnChanges {
 
     if (!this.currentConfigProperty.editMode) {
       if (this.currentConfigProperty.node.isDefaultNode()) {
-        this.defaultTreeControl.expand(this.currentConfigProperty.node);
+        this.defaultTreeControl.expand(this.currentConfigProperty.node as FlatTreeNode);
       } else {
-        this.envTreeControl.expand(this.currentConfigProperty.node);
+        this.envTreeControl.expand(this.currentConfigProperty.node as FlatTreeNode);
       }
     }
 

@@ -15,16 +15,18 @@
       width: 100%;
       position: absolute;
       background-color: $white;
-      padding: 5px;
-      overflow: auto;
+      min-width: 400px;
+      border-radius: 4px;
+
+      ::ng-deep .cdk-virtual-scroll-content-wrapper {
+        padding: 5px;
+      }
   
-      .mat-tree {
-          min-width: 400px;
-      }
-      .sub-tree {
-          padding-left: 40px;
-      }
       .mat-tree-node {
+          display: flex;
+          align-items: center;
+          flex: 1;
+          word-wrap: break-word;
           overflow: visible;
           min-height: 0;
           flex-shrink: 0;
@@ -64,10 +66,12 @@
           }
           .btn-action {
               margin-left: auto;
-              ::ng-deep .mat-button-wrapper {
-                  position: relative;
-                  top: -5px;
-              }
+              width: 40px;
+              height: 40px;
+              font-size: 20px;
+              font-weight: 700;
+              padding-bottom: 8px;
+              border-radius: 50%;
           }
           .key {
               padding-right: 20px;
@@ -82,10 +86,6 @@
               line-height: 1.2;
               cursor: pointer;
           }
-      }
-      ::ng-deep .mat-icon-button {
-          font-size: 20px;
-          font-weight: 700;
       }
       .btn-add-root-property {
           margin-left: 40px;

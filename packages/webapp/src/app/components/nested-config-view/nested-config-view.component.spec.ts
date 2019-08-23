@@ -5,7 +5,7 @@ import { ConfirmationDialogComponent } from "../confirmation-dialog/confirmation
 import { PROPERTY_VALUE_TYPES } from "config";
 import { ConfigProperty } from "models/config-property";
 import { Configuration } from "models/config-file";
-import { TreeNode } from "models/tree-node";
+import { TreeNode, FlatTreeNode } from "models/tree-node";
 
 describe("NestedConfigViewComponent", () => {
   const environments = ["dev", "qat"];
@@ -71,20 +71,20 @@ describe("NestedConfigViewComponent", () => {
 
   it("should expand all trees initially and then able to toggle", () => {
 
-    expect(ctx.component.defaultTreeControl.isExpanded(ctx.component.defaultDataSource.data[0])).toBeTruthy();
-    expect(ctx.component.defaultTreeControl.isExpanded(ctx.component.defaultDataSource.data[0].children[0])).toBeTruthy();
-    expect(ctx.component.envTreeControl.isExpanded(ctx.component.envDataSource.data[0])).toBeTruthy();
-    expect(ctx.component.envTreeControl.isExpanded(ctx.component.envDataSource.data[0].children[0])).toBeTruthy();
+    expect(ctx.component.defaultTreeControl.isExpanded(ctx.component.defaultDataSource.data[0] as FlatTreeNode)).toBeTruthy();
+    expect(ctx.component.defaultTreeControl.isExpanded(ctx.component.defaultDataSource.data[0].children[0] as FlatTreeNode)).toBeTruthy();
+    expect(ctx.component.envTreeControl.isExpanded(ctx.component.envDataSource.data[0] as FlatTreeNode)).toBeTruthy();
+    expect(ctx.component.envTreeControl.isExpanded(ctx.component.envDataSource.data[0].children[0] as FlatTreeNode)).toBeTruthy();
 
     ctx.component.toggle(ctx.component.defaultTreeControl, ctx.component.defaultDataSource.data[0], true);
-    expect(ctx.component.defaultTreeControl.isExpanded(ctx.component.defaultDataSource.data[0])).toBeFalsy();
-    expect(ctx.component.defaultTreeControl.isExpanded(ctx.component.defaultDataSource.data[0].children[0])).toBeFalsy();
+    expect(ctx.component.defaultTreeControl.isExpanded(ctx.component.defaultDataSource.data[0] as FlatTreeNode)).toBeFalsy();
+    expect(ctx.component.defaultTreeControl.isExpanded(ctx.component.defaultDataSource.data[0].children[0] as FlatTreeNode)).toBeFalsy();
 
     ctx.component.toggle(ctx.component.defaultTreeControl, ctx.component.defaultDataSource.data[0], false);
-    expect(ctx.component.defaultTreeControl.isExpanded(ctx.component.defaultDataSource.data[0])).toBeTruthy();
+    expect(ctx.component.defaultTreeControl.isExpanded(ctx.component.defaultDataSource.data[0] as FlatTreeNode)).toBeTruthy();
 
     ctx.component.toggle(ctx.component.defaultTreeControl, ctx.component.defaultDataSource.data[0], false);
-    expect(ctx.component.defaultTreeControl.isExpanded(ctx.component.defaultDataSource.data[0])).toBeFalsy();
+    expect(ctx.component.defaultTreeControl.isExpanded(ctx.component.defaultDataSource.data[0] as FlatTreeNode)).toBeFalsy();
   });
 
 
