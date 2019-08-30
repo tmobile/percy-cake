@@ -960,8 +960,9 @@ export class YamlService {
     }, []);
 
     _.each([ ...config.environments.children, defaultTree ], envNode => {
+      const envKey = envNode.key;
       const mergeStack = [];
-      const inheritedEnvs = [envNode.key];
+      const inheritedEnvs = [envKey];
       let hasCyclicError = false;
 
       while (envNode) {
@@ -997,7 +998,7 @@ export class YamlService {
         });
 
         try {
-          variablesValues = this.resolveTokens(variablesValues, envNode.key);
+          variablesValues = this.resolveTokens(variablesValues, envKey);
         } catch(err) {
           console.log(err);
         };
@@ -1014,10 +1015,7 @@ export class YamlService {
 
             _.every(stack.children, node => {
               if (node.key === variable) {
-                referenceNode = {
-                  node,
-                  env: stack.key
-                };
+                referenceNode = node;
                 return false;
               }
               return true;
@@ -1032,7 +1030,7 @@ export class YamlService {
           }
         });
 
-        variablesConfig[envNode.key] = envVariablesConfig;
+        variablesConfig[envKey] = envVariablesConfig;
       }
     });
 

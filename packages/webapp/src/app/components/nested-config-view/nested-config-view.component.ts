@@ -537,14 +537,22 @@ export class NestedConfigViewComponent implements OnChanges {
     this.selectedNode.emit(node);
   }
 
-  scrollToReference(event, env: string, node: TreeNode) {
+  scrollToReference(event, node: TreeNode) {
     event.stopPropagation();
 
+    const paths = node.getPaths();
+    const env = paths[0] === "default" ? "default" : paths[1];
+
     if (env === "default") {
-      const index = _.findIndex(this.defaultDataSource._flattenedData.value, flatNode => flatNode.key === node.key && flatNode.getLevel() === node.getLevel());
+      const index = _.findIndex(this.defaultDataSource._flattenedData.value, flatNode =>
+        flatNode.key === node.key && flatNode.getLevel() === node.getLevel()
+      );
       this.viewportDefault.scrollToIndex(index);
     } else {
-      const index = _.findIndex(this.envDataSource._flattenedData.value, flatNode => flatNode.key === node.key && flatNode.getLevel() === node.getLevel());
+      const index = _.findIndex(this.envDataSource._flattenedData.value, flatNode => {
+        return flatNode.parent && flatNode.parent.key === env
+        && flatNode.key === node.key && flatNode.getLevel() === node.getLevel()
+      });
       this.viewportEnv.scrollToIndex(index);
     }
   }
