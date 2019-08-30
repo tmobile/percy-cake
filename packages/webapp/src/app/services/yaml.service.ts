@@ -951,6 +951,94 @@ export class YamlService {
     return this.convertTreeToYaml(substituted, false);
   }
 
+  getEnvVariablesConfig(config: Configuration) {
+    const variablesConfig = {};
+    const defaultTree = _.cloneDeep(config.default);
+
+    const possibleVariables = _.reduce(defaultTree.children, (accu, child) => {
+      return child.isLeaf() ? accu.concat(child.key) : accu;
+    }, []);
+
+    _.each([ ...config.environments.children, defaultTree ], envNode => {
+      const mergeStack = [];
+      const inheritedEnvs = [envNode.key];
+      let hasCyclicError = false;
+
+      while (envNode) {
+        const deepCopy = _.cloneDeep(envNode);
+        const inherits = deepCopy.findChild(["inherits"]);
+        mergeStack.push(deepCopy);
+        if (inherits) {
+          _.remove(deepCopy.children, v => v === inherits);
+          const inheritEnv = inherits.value;
+          if (inheritedEnvs.indexOf(inheritEnv) > -1) {
+            hasCyclicError = true;
+            break;
+          }
+          inheritedEnvs.push(inheritEnv);
+          envNode = config.environments.findChild([inheritEnv]);
+        } else {
+          break;
+        }
+      }
+
+      if (!hasCyclicError) {
+        const merged = _.cloneDeep(config.default);
+        _.forEachRight(mergeStack, m => {
+          this.mergeEnv(merged, m);
+        });
+
+        // resolve tokens
+        let variablesValues = {};
+        _.each(merged.children, child => {
+          if (child.isLeaf()) {
+            variablesValues[child.key] = child.value;
+          }
+        });
+
+        try {
+          variablesValues = this.resolveTokens(variablesValues, envNode.key);
+        } catch(err) {
+          console.log(err);
+        };
+
+        let envVariablesConfig = {};
+
+        mergeStack.push(defaultTree);
+        _.each(possibleVariables, variable => {
+          let referenceNode;
+          _.every(mergeStack, stack => {
+            if (referenceNode) {
+              return false;
+            }
+
+            _.every(stack.children, node => {
+              if (node.key === variable) {
+                referenceNode = {
+                  node,
+                  env: stack.key
+                };
+                return false;
+              }
+              return true;
+            });
+
+            return true;
+          });
+
+          envVariablesConfig[variable] = {
+            value: variablesValues[variable],
+            referenceNode
+          }
+        });
+
+        variablesConfig[envNode.key] = envVariablesConfig;
+      }
+    });
+
+    return variablesConfig;
+  }
+
   /**
    * Highlight variable within yaml text string value
    * @param text the yaml text string value
@@ -1006,6 +1094,33 @@ export class YamlService {
     }
     const span = this.highlightVariable(_.defaultTo(node.value, ""));
     return span.html();
+  }
+
+
+  getNodeValueConfig(node: TreeNode, envVariablesConfig: any) {
+    if (node.valueType !== PROPERTY_VALUE_TYPES.STRING) {
+      return [{ key: node.value }];
+    }
+    const span = this.highlightVariable(_.defaultTo(node.value, ""));
+    const $ = cheerio.load(span.html());
+    const nodePaths = node.getPaths();
+    const nodeEnv = nodePaths[0] === "default" ? "default" : nodePaths[1];
+
+    if ($("span").length === 0) {
+      return [{ key: span.html() }];
+    }
+
+    const valueConfig = [];
+    $("span").each(function() {
+      const config = { key: $(this).text() };
+      if ($(this).hasClass("yaml-var")) {
+        config["isVariable"] = true;
+        config["value"] = _.get(envVariablesConfig, `${nodeEnv}.${config.key}.value`, '');
+        config["referenceNode"] = _.get(envVariablesConfig, `${nodeEnv}.${config.key}.referenceNode`, null);
+      }
+      valueConfig.push(config);
+    });
+    return valueConfig;
   }
 
   /**

@@ -1,24 +1,51 @@
 <div class="split-tree-view" appSplit [splitFlexLayout]="true" [splitDirection]="'vertical'" [gutterHeight]="20">
   <!-- default config tree view -->
   <div class="tree-view" appSplitArea [splitSize]="50" [minSize]="50">
-    <cdk-virtual-scroll-viewport itemSize="41" class="nested-config-view mat-card">
+    <cdk-virtual-scroll-viewport #defaultViewport itemSize="41" class="nested-config-view mat-card">
       <ng-container *cdkVirtualFor="let node of defaultDataSource">
-        <ng-container *ngTemplateOutlet="treeNode; context: {$implicit: node, treeControl: defaultTreeControl, isExpandable: !node.isLeaf(), nodeLevel: node.getLevel()}"></ng-container>
+        <ng-container
+          *ngTemplateOutlet="treeNode; context:
+            {
+              $implicit: node,
+              treeControl: defaultTreeControl,
+              isExpandable: !node.isLeaf(),
+              nodeLevel: node.getLevel(),
+              commentStr: node.getCommentStr(true),
+              isObjectInArray: node.isObjectInArray(),
+              index: index
+            }"></ng-container>
       </ng-container>
     </cdk-virtual-scroll-viewport>
   </div>
   <!-- environments config tree view -->
   <div class="tree-view" appSplitArea [splitSize]="50" [minSize]="50">
-    <cdk-virtual-scroll-viewport itemSize="41" class="nested-config-view mat-card">
+    <cdk-virtual-scroll-viewport #envViewport itemSize="41" class="nested-config-view mat-card">
       <ng-container *cdkVirtualFor="let node of envDataSource">
-        <ng-container *ngTemplateOutlet="treeNode; context: {$implicit: node, treeControl: envTreeControl, isExpandable: !node.isLeaf(), nodeLevel: node.getLevel()}"></ng-container>
+        <ng-container
+          *ngTemplateOutlet="treeNode; context:
+            {
+              $implicit: node,
+              treeControl: envTreeControl,
+              isExpandable: !node.isLeaf(),
+              nodeLevel: node.getLevel(),
+              commentStr: node.getCommentStr(true),
+              isObjectInArray: node.isObjectInArray()
+            }"></ng-container>
       </ng-container>
     </cdk-virtual-scroll-viewport>
   </div>
 </div>
 
 <!-- Tree node template -->
-<ng-template #treeNode let-node let-treeControl="treeControl" let-isExpandable="isExpandable" let-nodeLevel="nodeLevel">
+<ng-template
+  #treeNode
+  let-node
+  let-treeControl="treeControl"
+  let-isExpandable="isExpandable"
+  let-nodeLevel="nodeLevel"
+  let-commentStr="commentStr"
+  let-isObjectInArray="isObjectInArray"
+>
     <div class="mat-tree-node" [style.padding-left]="(nodeLevel * 40) + 'px'">
         <div *ngIf="!isExpandable" class="btn-tree-toggle"></div>
 
@@ -30,11 +57,13 @@
 
         <div class="underline" (contextmenu)="openMenu($event, menuTrigger)"
             (click)="showDetail(node)" (dblclick)="treeControl.isExpanded(node) ? treeControl.collapse(node): treeControl.expand(node)">
-            <div [matTooltip]="node.getCommentStr(true)" matTooltipPosition="above" class="key" >{{node.key}} :</div>
-            <div [matTooltip]="node.getCommentStr(true)" matTooltipPosition="above" class="value">
-              <ng-container *ngIf="node.isObjectInArray() && node.aliases && node.aliases.length">{{'*' + node.aliases[0]}}</ng-container>
-              <ng-container *ngIf="node.isObjectInArray() && node.anchor">{{'&' + node.anchor}}</ng-container>
-              <div *ngIf="!isExpandable" [innerHTML]="yamlService.highlightNodeVariable(node)"></div>
+            <div [matTooltip]="commentStr" matTooltipPosition="above" class="key" >{{node.key}} :</div>
+            <div [matTooltip]="commentStr" matTooltipPosition="above" class="value">
+              <ng-container *ngIf="isObjectInArray && node.aliases && node.aliases.length">{{'*' + node.aliases[0]}}</ng-container>
+              <ng-container *ngIf="isObjectInArray && node.anchor">{{'&' + node.anchor}}</ng-container>
+              <div *ngIf="!isExpandable">
+                <span *ngFor="let config of yamlService.getNodeValueConfig(node, envVariablesConfig)" [title]="config.isVariable ? config.value : ''" [class.yaml-var]="config.isVariable" (click)="scrollToReference($event, config.referenceNode.env, config.referenceNode.node)">{{config.key}}</span>
+              </div>
             </div>
             <button matRipple [matRippleCentered]="true" #menuButton class="btn-action" (click)="$event.stopPropagation()" (contextmenu)="buttonOpenMenu($event, menuButton)" [matMenuTriggerFor]="menu">...</button>
         </div>
