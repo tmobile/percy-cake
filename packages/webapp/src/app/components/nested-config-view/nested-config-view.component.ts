@@ -41,7 +41,7 @@ import * as _ from "lodash";
 
 import { PROPERTY_VALUE_TYPES } from "config";
 import { User } from "models/auth";
-import { Configuration } from "models/config-file";
+import { Configuration, EnvsVariablesConfig } from "models/config-file";
 import { TreeNode } from "models/tree-node";
 import { ConfigProperty } from "models/config-property";
 
@@ -71,8 +71,10 @@ export class NestedConfigViewComponent implements OnChanges {
   @Output() cancelAddEditPropertyChange = new EventEmitter<any>();
   @Output() viewCompiledYAMLEvent = new EventEmitter<string>();
 
-  @ViewChild("defaultViewport") viewportDefault: CdkVirtualScrollViewport;
-  @ViewChild("envViewport") viewportEnv: CdkVirtualScrollViewport;
+  @ViewChild("defaultViewport") defaultViewport: CdkVirtualScrollViewport;
+  @ViewChild("envViewport") envViewport: CdkVirtualScrollViewport;
+
+  propertyValueTypes = PROPERTY_VALUE_TYPES;
 
   currentUser: Observable<User> = this.store.pipe(
     select(appStore.getCurrentUser)
@@ -86,7 +88,7 @@ export class NestedConfigViewComponent implements OnChanges {
   envTreeControl: FlatTreeControl<TreeNode>;
   envDataSource: MatTreeFlatDataSource<TreeNode, TreeNode>;
 
-  envVariablesConfig: any;
+  envsVariablesConfig: EnvsVariablesConfig;
 
   /**
    * initializes the component
@@ -123,7 +125,7 @@ export class NestedConfigViewComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges) {
     const configurationChanged = changes["configuration"];
     if (configurationChanged) {
-      this.envVariablesConfig = this.yamlService.getEnvVariablesConfig(this.configuration);
+      this.envsVariablesConfig = this.yamlService.getEnvsVariablesConfig(this.configuration);
 
       const defaultTree = this.configuration.default;
       this.defaultDataSource.data = [defaultTree];
@@ -275,7 +277,7 @@ export class NestedConfigViewComponent implements OnChanges {
    * Refresh the tree
    */
   private refreshTree() {
-    this.envVariablesConfig = this.yamlService.getEnvVariablesConfig(this.configuration);
+    this.envsVariablesConfig = this.yamlService.getEnvsVariablesConfig(this.configuration);
 
     let _data = this.defaultDataSource.data;
     this.defaultDataSource.data = _data;
@@ -537,24 +539,25 @@ export class NestedConfigViewComponent implements OnChanges {
     this.selectedNode.emit(node);
   }
 
-  scrollToReference(event, node: TreeNode) {
+  /**
+   * scroll to a reference node, in a particular viewport (default or env)
+   * @param node  the reference node to scroll to
+   */
+  scrollToReferenceNode(event, node: TreeNode) {
     event.stopPropagation();
 
     const paths = node.getPaths();
     const env = paths[0] === "default" ? "default" : paths[1];
 
-    if (env === "default") {
-      const index = _.findIndex(this.defaultDataSource._flattenedData.value, flatNode =>
-        flatNode.key === node.key && flatNode.getLevel() === node.getLevel()
-      );
-      this.viewportDefault.scrollToIndex(index);
-    } else {
-      const index = _.findIndex(this.envDataSource._flattenedData.value, flatNode => {
-        return flatNode.parent && flatNode.parent.key === env
-        && flatNode.key === node.key && flatNode.getLevel() === node.getLevel()
-      });
-      this.viewportEnv.scrollToIndex(index);
-    }
+    const dataSource = env === "default" ? this.defaultDataSource : this.envDataSource;
+    const viewport = env === "default" ? this.defaultViewport : this.envViewport;
+
+    const nodeIndex = _.findIndex(dataSource._flattenedData.value, flatNode =>
+      flatNode.parent && flatNode.parent.key === env
+      && flatNode.key === node.key && flatNode.getLevel() === node.getLevel()
+    );
+
+    viewport.scrollToIndex(nodeIndex);
   }
 
   /**

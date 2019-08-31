@@ -11,8 +11,7 @@
               isExpandable: !node.isLeaf(),
               nodeLevel: node.getLevel(),
               commentStr: node.getCommentStr(true),
-              isObjectInArray: node.isObjectInArray(),
-              index: index
+              isObjectInArray: node.isObjectInArray()
             }"></ng-container>
       </ng-container>
     </cdk-virtual-scroll-viewport>
@@ -57,19 +56,23 @@
 
         <div class="underline" (contextmenu)="openMenu($event, menuTrigger)"
             (click)="showDetail(node)" (dblclick)="treeControl.isExpanded(node) ? treeControl.collapse(node): treeControl.expand(node)">
-            <div [matTooltip]="commentStr" matTooltipPosition="above" class="key" >{{node.key}} :</div>
+            <div [matTooltip]="node.getCommentStr(true)" matTooltipPosition="above" class="key" >{{node.key}} :</div>
             <div class="value">
               <ng-container *ngIf="isObjectInArray && node.aliases && node.aliases.length">{{'*' + node.aliases[0]}}</ng-container>
               <ng-container *ngIf="isObjectInArray && node.anchor">{{'&' + node.anchor}}</ng-container>
               <div *ngIf="!isExpandable">
-                <span
-                  *ngFor="let config of yamlService.getNodeValueConfig(node, envVariablesConfig)"
-                  [class.yaml-var]="config.isVariable"
-                  (click)="scrollToReference($event, config.referenceNode)"
-                >
-                  <span>{{config.key}}</span>
-                  <span *ngIf="config.isVariable" class="mat-tooltip">{{config.value}}</span>
-                </span>
+                <div *ngIf="node.valueType !== propertyValueTypes.STRING">{{node.value}}</div>
+
+                <ng-container *ngIf="node.valueType === propertyValueTypes.STRING">
+                  <span
+                    *ngFor="let config of yamlService.getNodeValueConfig(node, envsVariablesConfig)"
+                    [class.yaml-var]="config.variableConfig"
+                    (click)="config.variableConfig && config.variableConfig.referenceNode && scrollToReferenceNode($event, config.variableConfig.referenceNode)"
+                  >
+                    <span>{{config.text}}</span>
+                    <span *ngIf="config.variableConfig" class="mat-tooltip" [class.mat-error]="config.variableConfig.hasError">{{config.variableConfig.cascadedValue}}</span>
+                  </span>
+                </ng-container>
               </div>
             </div>
             <button matRipple [matRippleCentered]="true" #menuButton class="btn-action" (click)="$event.stopPropagation()" (contextmenu)="buttonOpenMenu($event, menuButton)" [matMenuTriggerFor]="menu">...</button>

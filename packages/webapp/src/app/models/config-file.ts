@@ -101,3 +101,15 @@ export interface ConfigFile {
 export interface ConflictFile extends ConfigFile {
   resolveStrategy?: string;
 }
+
+export interface VariableConfig {
+  cascadedValue: string;
+  hasError?: boolean;
+  referenceNode?: TreeNode;
+}
+
+export interface EnvsVariablesConfig {
+  [env: string]: {
+    [variable: string]: VariableConfig
+  }
+}

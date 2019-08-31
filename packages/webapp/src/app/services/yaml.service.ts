@@ -27,8 +27,13 @@ import * as cheerio from "cheerio";
 
 import { PROPERTY_VALUE_TYPES, percyConfig, appPercyConfig } from "config";
 import { TreeNode } from "models/tree-node";
-import { Configuration } from "models/config-file";
+import { Configuration, EnvsVariablesConfig, VariableConfig } from "models/config-file";
 import { Injectable } from "@angular/core";
+
+export interface ValueConfig {
+  text: string;
+  variableConfig?: VariableConfig;
+}
 
 class YamlParser {
   // mapping of type from YAML to JSON
@@ -688,14 +693,16 @@ export class YamlService {
    * @param refTo the reference to (right side)
    * @throws Error if loop reference detected
    */
-  private addTokenReference(referenceLinks, refFrom, refTo) {
+  private addTokenReference(referenceLinks, refFrom, refTo): string[][] {
+    let cycles = [];
+
     if (refFrom === refTo) {
-      throw new Error(
-        "Loop variable reference: " + [refFrom, refTo].join("->")
-      );
+      cycles.push([refFrom, refTo]);
+      return cycles;
     }
 
     let added = false;
+    
 
     _.each(referenceLinks, referenceLink => {
       if (referenceLink[referenceLink.length - 1] !== refFrom) {
@@ -706,7 +713,7 @@ export class YamlService {
       if (idx > -1) {
         const cyclic = referenceLink.slice(idx);
         cyclic.push(refTo);
-        throw new Error("Loop variable reference: " + cyclic.join("->"));
+        cycles.push(cyclic);
       }
       referenceLink.push(refTo);
       added = true;
@@ -715,6 +722,8 @@ export class YamlService {
     if (!added) {
       referenceLinks.push([refFrom, refTo]);
     }
+
+    return cycles;
   }
 
   /**
@@ -738,7 +747,7 @@ export class YamlService {
     while (true) {
       let referenceFound = false;
 
-      _.each(result, (value, key) => {
+      _.each(result, (value, key) => {console.log(key, value);  
         if (typeof value !== "string") {
           return;
         }
@@ -748,7 +757,7 @@ export class YamlService {
         const regExp = this.createRegExp();
         let regExpResult;
 
-        while ((regExpResult = regExp.exec(value))) {
+        while ((regExpResult = regExp.exec(value))) {//console.log(regExpResult);
           const fullMatch = regExpResult[0];
           const tokenName = regExpResult[1];
           const tokenValue = result[tokenName];
@@ -756,11 +765,14 @@ export class YamlService {
           if (typeof tokenValue === "string") {
             if (this.createRegExp().exec(tokenValue)) {
               referenceFound = true;
-              this.addTokenReference(referenceLinks, key, tokenName);
+              const cycles = this.addTokenReference(referenceLinks, key, tokenName);
+              if (cycles.length > 0) {
+                throw new Error("Loop variable reference: " + cycles[0].join("->"));
+              }
               continue;
             }
           }
-
+          console.log(tokenValue);
           retValue = retValue.replace(fullMatch, tokenValue);
         }
 
@@ -951,8 +963,12 @@ export class YamlService {
     return this.convertTreeToYaml(substituted, false);
   }
 
-  getEnvVariablesConfig(config: Configuration) {
-    const variablesConfig = {};
+  /**
+   * gets variables config, like cascaded value and reference node for all environments including default
+   * @param config the configuration object
+   */
+  getEnvsVariablesConfig(config: Configuration): EnvsVariablesConfig {
+    const allEnvsVariablesConfig = {};
     const defaultTree = _.cloneDeep(config.default);
 
     const possibleVariables = _.reduce(defaultTree.children, (accu, child) => {
@@ -983,28 +999,29 @@ export class YamlService {
         }
       }
 
+      let variablesConfig = {};
+      let variablesCascadedValues = {};
+
       if (!hasCyclicError) {
+        // resolve variables cascaded values
         const merged = _.cloneDeep(config.default);
         _.forEachRight(mergeStack, m => {
           this.mergeEnv(merged, m);
         });
 
-        // resolve tokens
-        let variablesValues = {};
         _.each(merged.children, child => {
           if (child.isLeaf()) {
-            variablesValues[child.key] = child.value;
+            variablesCascadedValues[child.key] = child.value;
           }
         });
 
         try {
-          variablesValues = this.resolveTokens(variablesValues, envKey);
+          variablesCascadedValues = this.resolveTokens(variablesCascadedValues, envKey);
         } catch(err) {
           console.log(err);
         };
 
-        let envVariablesConfig = {};
-
+        // get reference nodes
         mergeStack.push(defaultTree);
         _.each(possibleVariables, variable => {
           let referenceNode;
@@ -1024,17 +1041,33 @@ export class YamlService {
             return true;
           });
 
-          envVariablesConfig[variable] = {
-            value: variablesValues[variable],
+          variablesConfig[variable] = {
+            cascadedValue: variablesCascadedValues[variable],
             referenceNode
-          }
+          };
         });
-
-        variablesConfig[envKey] = envVariablesConfig;
+      } else {
+        _.each(possibleVariables, variable => {
+          variablesConfig[variable] = {
+            cascadedValue: "Cylic env inherits detected!",
+            hasError: true
+          };
+        });
       }
+
+      // add the env variable value
+      const envVariableName = _.defaultTo(
+        appPercyConfig.envVariableName,
+        percyConfig.envVariableName
+      );
+      variablesConfig[envVariableName] = {
+        cascadedValue: envKey
+      };
+
+      allEnvsVariablesConfig[envKey] = variablesConfig;
     });
 
-    return variablesConfig;
+    return allEnvsVariablesConfig;
   }
 
   /**
@@ -1094,30 +1127,41 @@ export class YamlService {
     return span.html();
   }
 
-
-  getNodeValueConfig(node: TreeNode, envVariablesConfig: any) {
-    if (node.valueType !== PROPERTY_VALUE_TYPES.STRING) {
-      return [{ key: node.value }];
-    }
+  /**
+   * parse string type node values for variables and return value as a config which can then be rendered
+   * @param node the string TreeNode to highlight its value
+   * @param envsVariablesConfig  pre calculated variable config for each environment
+   */
+  getNodeValueConfig(node: TreeNode, envsVariablesConfig: EnvsVariablesConfig): ValueConfig[] {
     const span = this.highlightVariable(_.defaultTo(node.value, ""));
     const $ = cheerio.load(span.html());
+
+    // if there are no variables at all in the node value
+    if ($("span").length === 0) {
+      return [{ text: span.html() }];
+    }
+
     const nodePaths = node.getPaths();
     const nodeEnv = nodePaths[0] === "default" ? "default" : nodePaths[1];
 
-    if ($("span").length === 0) {
-      return [{ key: span.html() }];
-    }
-
     const valueConfig = [];
     $("span").each(function() {
-      const config = { key: $(this).text() };
+      let config = { text: $(this).text() };
+
+      // if its a variable
       if ($(this).hasClass("yaml-var")) {
-        config["isVariable"] = true;
-        config["value"] = _.get(envVariablesConfig, `${nodeEnv}.${config.key}.value`, '');
-        config["referenceNode"] = _.get(envVariablesConfig, `${nodeEnv}.${config.key}.referenceNode`, null);
+        const notFoundConfig: VariableConfig = {
+          cascadedValue: "Undefined variable!",
+          hasError: true
+        };
+
+        const variableConfig = _.get(envsVariablesConfig, `${nodeEnv}.${config.text}`, notFoundConfig);
+        config["variableConfig"] = variableConfig;
       }
+
       valueConfig.push(config);
     });
+
     return valueConfig;
   }
 
