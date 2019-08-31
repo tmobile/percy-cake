@@ -67,7 +67,7 @@
                   [class.yaml-var]="config.isVariable"
                   (click)="scrollToReference($event, config.referenceNode)"
                 >
-                  {{config.key}}
+                  <span>{{config.key}}</span>
                   <span *ngIf="config.isVariable" class="mat-tooltip">{{config.value}}</span>
                 </span>
               </div>
