@@ -111,5 +111,5 @@ export interface VariableConfig {
 export interface EnvsVariablesConfig {
   [env: string]: {
     [variable: string]: VariableConfig
-  }
+  };
 }

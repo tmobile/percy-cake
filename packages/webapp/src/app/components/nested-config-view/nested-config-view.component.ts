@@ -34,7 +34,7 @@ import {
 import { FlatTreeControl } from "@angular/cdk/tree";
 import { MatTreeFlatDataSource, MatTreeFlattener } from "@angular/material/tree";
 import { MatDialog } from "@angular/material";
-import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
+import { CdkVirtualScrollViewport } from "@angular/cdk/scrolling";
 import { Observable } from "rxjs";
 import { select, Store } from "@ngrx/store";
 import * as _ from "lodash";

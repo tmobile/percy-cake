@@ -35,6 +35,8 @@ export interface ValueConfig {
   variableConfig?: VariableConfig;
 }
 
+const _LOOP_ = "___LOOP___";
+
 class YamlParser {
   // mapping of type from YAML to JSON
   private typeMap = {
@@ -694,7 +696,7 @@ export class YamlService {
    * @throws Error if loop reference detected
    */
   private addTokenReference(referenceLinks, refFrom, refTo): string[][] {
-    let cycles = [];
+    const cycles = [];
 
     if (refFrom === refTo) {
       cycles.push([refFrom, refTo]);
@@ -702,7 +704,6 @@ export class YamlService {
     }
 
     let added = false;
-    
 
     _.each(referenceLinks, referenceLink => {
       if (referenceLink[referenceLink.length - 1] !== refFrom) {
@@ -734,7 +735,8 @@ export class YamlService {
    * @param env the environment name
    * @returns the resolved tokens
    */
-  private resolveTokens(tokens, env: string) {
+  private resolveTokens(tokens, env: string, throwError = true) {
+    const tokenCount = _.keys(tokens).length;
     const result = _.cloneDeep(tokens);
     const envVariableName = _.defaultTo(
       appPercyConfig.envVariableName,
@@ -743,11 +745,13 @@ export class YamlService {
     result[envVariableName] = env;
 
     const referenceLinks = [];
+    let loopTokens = [];
+    let allCycles = [];
+    let tokenResolvedCount = 0;
 
-    while (true) {
-      let referenceFound = false;
+    while (tokenCount !== (_.uniq(loopTokens).length + tokenResolvedCount)) {
 
-      _.each(result, (value, key) => {console.log(key, value);  
+      _.each(result, (value, key) => {
         if (typeof value !== "string") {
           return;
         }
@@ -757,32 +761,41 @@ export class YamlService {
         const regExp = this.createRegExp();
         let regExpResult;
 
-        while ((regExpResult = regExp.exec(value))) {//console.log(regExpResult);
+        while ((regExpResult = regExp.exec(value))) {
           const fullMatch = regExpResult[0];
           const tokenName = regExpResult[1];
           const tokenValue = result[tokenName];
 
           if (typeof tokenValue === "string") {
             if (this.createRegExp().exec(tokenValue)) {
-              referenceFound = true;
-              const cycles = this.addTokenReference(referenceLinks, key, tokenName);
-              if (cycles.length > 0) {
-                throw new Error("Loop variable reference: " + cycles[0].join("->"));
+              if (_.includes(loopTokens, tokenName)) {
+                loopTokens.push(key);
+              } else {
+                const newCycles = this.addTokenReference(referenceLinks, key, tokenName);
+                if (newCycles.length > 0) {
+                  if (throwError) {
+                    throw new Error("Loop variable reference: " + newCycles[0].join("->"));
+                  }
+                  allCycles = [ ...allCycles, ...newCycles ];
+                  loopTokens = _.flatten(allCycles);
+                }
               }
               continue;
             }
           }
-          console.log(tokenValue);
           retValue = retValue.replace(fullMatch, tokenValue);
         }
 
         result[key] = retValue;
+        if (!this.createRegExp().exec(retValue)) {
+          tokenResolvedCount++;
+        }
       });
-
-      if (!referenceFound) {
-        break;
-      }
     }
+
+    _.each(_.uniq(loopTokens), token => {
+      result[token] = _LOOP_;
+    });
 
     return result;
   }
@@ -999,7 +1012,7 @@ export class YamlService {
         }
       }
 
-      let variablesConfig = {};
+      const variablesConfig = {};
       let variablesCascadedValues = {};
 
       if (!hasCyclicError) {
@@ -1015,11 +1028,7 @@ export class YamlService {
           }
         });
 
-        try {
-          variablesCascadedValues = this.resolveTokens(variablesCascadedValues, envKey);
-        } catch(err) {
-          console.log(err);
-        };
+        variablesCascadedValues = this.resolveTokens(variablesCascadedValues, envKey, false);
 
         // get reference nodes
         mergeStack.push(defaultTree);
@@ -1041,8 +1050,11 @@ export class YamlService {
             return true;
           });
 
+          const cascadedValue = variablesCascadedValues[variable];
+
           variablesConfig[variable] = {
-            cascadedValue: variablesCascadedValues[variable],
+            cascadedValue: cascadedValue === _LOOP_ ? "Loop variable reference found!" : cascadedValue,
+            hasError: cascadedValue === _LOOP_,
             referenceNode
           };
         });
@@ -1146,7 +1158,7 @@ export class YamlService {
 
     const valueConfig = [];
     $("span").each(function() {
-      let config = { text: $(this).text() };
+      const config = { text: $(this).text() };
 
       // if its a variable
       if ($(this).hasClass("yaml-var")) {
