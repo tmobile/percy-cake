@@ -62,7 +62,14 @@
               <ng-container *ngIf="isObjectInArray && node.aliases && node.aliases.length">{{'*' + node.aliases[0]}}</ng-container>
               <ng-container *ngIf="isObjectInArray && node.anchor">{{'&' + node.anchor}}</ng-container>
               <div *ngIf="!isExpandable">
-                <span *ngFor="let config of yamlService.getNodeValueConfig(node, envVariablesConfig)" [title]="config.isVariable ? config.value : ''" [class.yaml-var]="config.isVariable" (click)="scrollToReference($event, config.referenceNode)">{{config.key}}</span>
+                <span
+                  *ngFor="let config of yamlService.getNodeValueConfig(node, envVariablesConfig)"
+                  [class.yaml-var]="config.isVariable"
+                  (click)="scrollToReference($event, config.referenceNode)"
+                >
+                  {{config.key}}
+                  <span *ngIf="config.isVariable" class="mat-tooltip">{{config.value}}</span>
+                </span>
               </div>
             </div>
             <button matRipple [matRippleCentered]="true" #menuButton class="btn-action" (click)="$event.stopPropagation()" (contextmenu)="buttonOpenMenu($event, menuButton)" [matMenuTriggerFor]="menu">...</button>

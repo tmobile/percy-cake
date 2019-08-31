@@ -84,6 +84,36 @@
               flex-shrink: 1;
               line-height: 1.2;
               cursor: pointer;
+
+              .yaml-var {
+                position: relative;
+                display: inline-block;
+
+                .mat-tooltip {
+                  position: absolute;
+                  color: #fff;
+                  border-radius: 4px;
+                  margin: 0 0 8px 0;
+                  max-width: 300px;
+                  transform: translateX(-50%);
+                  white-space: nowrap;
+                  padding-left: 8px;
+                  padding-right: 8px;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                  word-break: initial;
+                  left: 50%;
+                  bottom: 100%;
+                  display: none;
+                }
+
+                &:hover {
+
+                  .mat-tooltip {
+                    display: block;
+                  }
+                }
+              }
           }
       }
       .btn-add-root-property {
