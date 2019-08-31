@@ -736,7 +736,6 @@ export class YamlService {
    * @returns the resolved tokens
    */
   private resolveTokens(tokens, env: string, throwError = true) {
-    const tokenCount = _.keys(tokens).length;
     const result = _.cloneDeep(tokens);
     const envVariableName = _.defaultTo(
       appPercyConfig.envVariableName,
@@ -744,12 +743,14 @@ export class YamlService {
     );
     result[envVariableName] = env;
 
+    const tokenCount = _.keys(result).length;
+
     const referenceLinks = [];
     let loopTokens = [];
     let allCycles = [];
     let tokenResolvedCount = 0;
 
-    while (tokenCount !== (_.uniq(loopTokens).length + tokenResolvedCount)) {
+    while (tokenCount !== (loopTokens.length + tokenResolvedCount)) {
 
       _.each(result, (value, key) => {
         if (typeof value !== "string") {
@@ -787,13 +788,13 @@ export class YamlService {
         }
 
         result[key] = retValue;
-        if (!this.createRegExp().exec(retValue)) {
-          tokenResolvedCount++;
-        }
       });
+
+      tokenResolvedCount = _.filter(result, value => !this.createRegExp().exec(value)).length;
+      loopTokens = _.uniq(loopTokens);
     }
 
-    _.each(_.uniq(loopTokens), token => {
+    _.each(loopTokens, token => {
       result[token] = _LOOP_;
     });
 
