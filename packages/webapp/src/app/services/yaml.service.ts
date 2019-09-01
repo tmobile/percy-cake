@@ -775,7 +775,7 @@ export class YamlService {
                 const newCycles = this.addTokenReference(referenceLinks, key, tokenName);
                 if (newCycles.length > 0) {
                   if (throwError) {
-                    throw new Error("Loop variable reference: " + newCycles[0].join("->"));
+                    throw new Error("Cyclic variable reference: " + newCycles[0].join("->"));
                   }
                   allCycles = [ ...allCycles, ...newCycles ];
                   loopTokens = _.flatten(allCycles);
@@ -1054,7 +1054,7 @@ export class YamlService {
           const cascadedValue = variablesCascadedValues[variable];
 
           variablesConfig[variable] = {
-            cascadedValue: cascadedValue === _LOOP_ ? "Loop variable reference found!" : cascadedValue,
+            cascadedValue: cascadedValue === _LOOP_ ? "Cyclic variable reference found!" : cascadedValue,
             hasError: cascadedValue === _LOOP_,
             referenceNode
           };

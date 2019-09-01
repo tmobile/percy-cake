@@ -70,7 +70,7 @@
                     (click)="config.variableConfig && config.variableConfig.referenceNode && scrollToReferenceNode($event, config.variableConfig.referenceNode)"
                   >
                     <span>{{config.text}}</span>
-                    <span *ngIf="config.variableConfig" class="mat-tooltip" [class.mat-error]="config.variableConfig.hasError">{{config.variableConfig.cascadedValue}}</span>
+                    <span *ngIf="config.variableConfig" class="mat-tooltip" [class.has-error]="config.variableConfig.hasError">{{config.variableConfig.cascadedValue}}</span>
                   </span>
                 </ng-container>
               </div>

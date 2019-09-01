@@ -90,6 +90,7 @@
 
                 .mat-tooltip {
                   position: absolute;
+                  color: #fff;
                   border-radius: 4px;
                   margin: 0 0 8px 0;
                   max-width: 300px;
@@ -104,8 +105,8 @@
                   bottom: 100%;
                   display: none;
 
-                  &:not(.mat-error) {
-                    color: #fff;
+                  &.has-error {
+                    background-color: #ff4081;
                   }
                 }
 
