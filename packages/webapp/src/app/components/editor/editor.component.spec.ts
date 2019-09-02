@@ -147,7 +147,7 @@ describe("EditorComponent", () => {
     expect(result.valid).toBeFalsy();
 
     assertDialogOpened(AlertDialogComponent, {
-      data: { message: `YAML validation failed:\nLoop variable reference: key1->key1`, alertType: "error" },
+      data: { message: `YAML validation failed:\nCyclic variable reference: key1->key1`, alertType: "error" },
     });
   });
 
@@ -262,7 +262,7 @@ describe("EditorComponent", () => {
     ctx.component.showCompiledYAML("dev");
 
     assertDialogOpened(AlertDialogComponent, {
-      data: { message: "Loop variable reference: key1->key1", alertType: "error" },
+      data: { message: "Cyclic variable reference: key1->key1", alertType: "error" },
     });
   });
 

@@ -13,7 +13,6 @@
     .nested-config-view {
       height: 100%;
       width: 100%;
-      position: absolute;
       background-color: $white;
       min-width: 400px;
       border-radius: 4px;
@@ -85,6 +84,39 @@
               flex-shrink: 1;
               line-height: 1.2;
               cursor: pointer;
+
+              .yaml-var {
+
+                .mat-tooltip {
+                  position: absolute;
+                  color: #fff;
+                  border-radius: 4px;
+                  margin: 0 0 8px 0;
+                  max-width: 300px;
+                  transform: translateX(-50%);
+                  white-space: nowrap;
+                  padding-left: 8px;
+                  padding-right: 8px;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                  word-break: initial;
+                  left: 50%;
+                  bottom: 100%;
+                  display: none;
+
+                  &.has-error {
+                    background-color: #ff4081;
+                  }
+                }
+
+                &:hover {
+                  position: relative;
+
+                  .mat-tooltip {
+                    display: block;
+                  }
+                }
+              }
           }
       }
       .btn-add-root-property {

@@ -375,7 +375,7 @@ foo: !!map
       console.log(utilService.compileYAML("dev", config));
       fail("error expected");
     } catch (err) {
-      expect(err.message.indexOf("Loop variable reference") > -1).toBeTruthy();
+      expect(err.message.indexOf("Cyclic variable reference") > -1).toBeTruthy();
     }
 
     config.default.findChild(["var1"]).value = constructVar("var1");
@@ -383,7 +383,7 @@ foo: !!map
       utilService.compileYAML("dev", config);
       fail("error expected");
     } catch (err) {
-      expect(err.message.indexOf("Loop variable reference") > -1).toBeTruthy();
+      expect(err.message.indexOf("Cyclic variable reference") > -1).toBeTruthy();
     }
   });
 
@@ -494,6 +494,14 @@ foo: !!map
         `${constructVar("var1")}/${constructVar("var2")}/${constructVar(
           "key3"
         )}`
+      )
+    );
+    config.default.addChild(
+      new TreeNode(
+        "undefinedVar",
+        PROPERTY_VALUE_TYPES.STRING,
+        constructVar("var_undefined"),
+        ["comment undefined var"]
       )
     );
     config.default.addChild(
@@ -668,6 +676,7 @@ foo: !!map
 key2: !!int 10  # comment2
 key3: !!bool true
 var3: !!str "dev-value/dev-value/10/true"
+undefinedVar: !!str "${percyConfig.variablePrefix}var_undefined${percyConfig.variableSuffix}"  # comment undefined var
 var2: !!str "dev-value/10"
 var1: !!str "dev-value"
 arr1: !!seq  # dev-arr1-comment
@@ -688,6 +697,7 @@ envstr: !!str "dev/file.json"`
 key2: !!int 50  # qat-comment2
 key3: !!bool true
 var3: !!str "dev-value/dev-value/50/true"
+undefinedVar: !!str "${percyConfig.variablePrefix}var_undefined${percyConfig.variableSuffix}"  # comment undefined var
 var2: !!str "dev-value/50"
 var1: !!str "dev-value"
 arr1: !!seq  # dev-arr1-comment
@@ -709,6 +719,7 @@ envstr: !!str "qat/file.json"`
 key2: !!int 50  # qat-comment2
 key3: !!bool false
 var3: !!str "dev-value/dev-value/50/false"
+undefinedVar: !!str "${percyConfig.variablePrefix}var_undefined${percyConfig.variableSuffix}"  # comment undefined var
 var2: !!str "dev-value/50"
 var1: !!str "dev-value"
 arr1: !!seq  # dev-arr1-comment
@@ -799,5 +810,351 @@ envstr: !!str "prod/file.json"`
         new TreeNode("key", PROPERTY_VALUE_TYPES.STRING, constructVar("name"))
       )
     ).toEqual(span.html());
+  });
+
+  it("should get variables config for all environments", () => {
+    // const LOOP_ENV_ERROR = "Cylic env inherits detected!";
+    const LOOP_VARIABLE_ERROR = "Cyclic variable reference found!";
+
+    const config = new Configuration();
+    const nodeKey1 = new TreeNode("key1", PROPERTY_VALUE_TYPES.STRING, "value", ["comment1"]);
+    config.default.addChild(nodeKey1);
+
+    const nodeKey2 = new TreeNode("key2", PROPERTY_VALUE_TYPES.NUMBER, 10, ["comment2"]);
+    config.default.addChild(nodeKey2);
+
+    const nodeKey3 = new TreeNode("key3", PROPERTY_VALUE_TYPES.BOOLEAN, true);
+    config.default.addChild(nodeKey3);
+
+    config.default.addChild(
+      new TreeNode("keyObject1", PROPERTY_VALUE_TYPES.OBJECT)
+    );
+
+    const nodeKey4 = new TreeNode(
+      "key4",
+      PROPERTY_VALUE_TYPES.STRING,
+      `${constructVar("key1")}`
+    );
+    config.default.addChild(nodeKey4);
+
+    const nodeKeyUndefined = new TreeNode(
+      "keyUndefined",
+      PROPERTY_VALUE_TYPES.STRING,
+      `${constructVar("varUndefined")}`
+    );
+    config.default.addChild(nodeKeyUndefined);
+
+    const nodeVar3 = new TreeNode(
+      "var3",
+      PROPERTY_VALUE_TYPES.STRING,
+      `${constructVar("var1")}/${constructVar("var2")}/${constructVar(
+        "key3"
+      )}`
+    );
+    config.default.addChild(nodeVar3);
+
+    const nodeVar2 = new TreeNode(
+      "var2",
+      PROPERTY_VALUE_TYPES.STRING,
+      `${constructVar("var1")}/${constructVar("key2")}`
+    );
+    config.default.addChild(nodeVar2);
+
+    const nodeVar1 = new TreeNode("var1", PROPERTY_VALUE_TYPES.STRING, constructVar("var3"));
+    config.default.addChild(nodeVar1);
+
+    config.environments.addChild(new TreeNode("dev"));
+
+    const variableConfig = {
+      "key1": {
+        cascadedValue: nodeKey1.value,
+        hasError: false,
+        referenceNode: nodeKey1
+      },
+      "key2": {
+        cascadedValue: nodeKey2.value,
+        hasError: false,
+        referenceNode: nodeKey2
+      },
+      "key3": {
+        cascadedValue: nodeKey3.value,
+        hasError: false,
+        referenceNode: nodeKey3
+      },
+      "key4": {
+        cascadedValue: nodeKey1.value,
+        hasError: false,
+        referenceNode: nodeKey4
+      },
+      "keyUndefined": {
+        cascadedValue: nodeKeyUndefined.value,
+        hasError: false,
+        referenceNode: nodeKeyUndefined
+      },
+      "var3": {
+        cascadedValue: LOOP_VARIABLE_ERROR,
+        hasError: true,
+        referenceNode: nodeVar3
+      },
+      "var2": {
+        cascadedValue: LOOP_VARIABLE_ERROR,
+        hasError: true,
+        referenceNode: nodeVar2
+      },
+      "var1": {
+        cascadedValue: LOOP_VARIABLE_ERROR,
+        hasError: true,
+        referenceNode: nodeVar1
+      }
+    };
+    expect(utilService.getEnvsVariablesConfig(config))
+    .toEqual({
+      "default": {
+        ...variableConfig,
+        [percyConfig.envVariableName]: {
+          cascadedValue: "default"
+        }
+      },
+      "dev": {
+        ...variableConfig,
+        [percyConfig.envVariableName]: {
+          cascadedValue: "dev"
+        }
+      }
+    });
+  });
+
+  it("should return string node value config, with variables", () => {
+    const LOOP_ENV_INHERIT_ERROR = "Cylic env inherits detected!";
+    const LOOP_VARIABLE_ERROR = "Cyclic variable reference found!";
+
+    const config = new Configuration();
+    const nodeKey1 = new TreeNode("key1", PROPERTY_VALUE_TYPES.STRING, "value", ["comment1"]);
+    config.default.addChild(nodeKey1);
+
+    const nodeKey2 = new TreeNode("key2", PROPERTY_VALUE_TYPES.NUMBER, 10, ["comment2"]);
+    config.default.addChild(nodeKey2);
+
+    const nodeKey3 = new TreeNode("key3", PROPERTY_VALUE_TYPES.BOOLEAN, true);
+    config.default.addChild(nodeKey3);
+
+    config.default.addChild(
+      new TreeNode("keyObject1", PROPERTY_VALUE_TYPES.OBJECT)
+    );
+
+    const nodeKey4 = new TreeNode(
+      "key4",
+      PROPERTY_VALUE_TYPES.STRING,
+      `${constructVar("key1")}`
+    );
+    config.default.addChild(nodeKey4);
+
+    const nodeKeyUndefined = new TreeNode(
+      "keyUndefined",
+      PROPERTY_VALUE_TYPES.STRING,
+      `${constructVar("varUndefined")}`
+    );
+    config.default.addChild(nodeKeyUndefined);
+
+    const nodeVar3 = new TreeNode(
+      "var3",
+      PROPERTY_VALUE_TYPES.STRING,
+      `${constructVar("var1")}/${constructVar("var2")}/${constructVar(
+        "key3"
+      )}`
+    );
+    config.default.addChild(nodeVar3);
+
+    const nodeVar2 = new TreeNode(
+      "var2",
+      PROPERTY_VALUE_TYPES.STRING,
+      `${constructVar("var1")}/${constructVar("key2")}`
+    );
+    config.default.addChild(nodeVar2);
+
+    const nodeVar1 = new TreeNode("var1", PROPERTY_VALUE_TYPES.STRING, constructVar("var3"));
+    config.default.addChild(nodeVar1);
+
+    config.environments.addChild(new TreeNode("dev"));
+    config.environments.addChild(new TreeNode("qat"));
+    config.environments.addChild(new TreeNode("prod"));
+
+    config.environments
+      .findChild(["dev"])
+      .addChild(new TreeNode("inherits", PROPERTY_VALUE_TYPES.STRING, "qat"));
+
+    config.environments
+      .findChild(["qat"])
+      .addChild(new TreeNode("inherits", PROPERTY_VALUE_TYPES.STRING, "dev"));
+
+    config.environments
+      .findChild(["prod"])
+      .addChild(new TreeNode("var3", PROPERTY_VALUE_TYPES.NUMBER, 1245));
+
+    const nodeKeyTest = new TreeNode(
+      "key",
+       PROPERTY_VALUE_TYPES.STRING,
+       `src/${constructVar("key4")}/path/${constructVar("varUndefined")}/path2//${constructVar("var1")}`
+     );
+    config.default.addChild(nodeKeyTest);
+
+    const nodeKeyTestDev = new TreeNode(
+      "key",
+       PROPERTY_VALUE_TYPES.STRING,
+       constructVar("var1")
+     );
+    config.environments.findChild(["dev"]).addChild(nodeKeyTestDev);
+
+    const nodeKeyTestQat = new TreeNode(
+      "key",
+       PROPERTY_VALUE_TYPES.STRING,
+       constructVar("key4")
+     );
+    config.environments.findChild(["qat"]).addChild(nodeKeyTestQat);
+
+    const nodeKeyTestProd = new TreeNode(
+      "key",
+       PROPERTY_VALUE_TYPES.STRING,
+       `src/${constructVar("key4")}/path/${constructVar("varUndefined")}/path2//${constructVar("var1")}`
+     );
+    config.environments.findChild(["prod"]).addChild(nodeKeyTestProd);
+
+    const envsVariablesConfig = utilService.getEnvsVariablesConfig(config);
+
+    expect(
+      utilService.getNodeValueConfig(
+        new TreeNode("key", PROPERTY_VALUE_TYPES.STRING, "\\aa\"bb\"cc"),
+        envsVariablesConfig
+      )
+    ).toEqual([{ text: "\\aa&quot;bb&quot;cc" }]);
+
+    expect(
+      utilService.getNodeValueConfig(
+        new TreeNode("key", PROPERTY_VALUE_TYPES.STRING, constructVar("varUndefined")),
+        envsVariablesConfig
+      )
+    ).toEqual([
+      {
+        text: percyConfig.variablePrefix
+      },
+      {
+        text: "varUndefined",
+        variableConfig: {
+          cascadedValue: "Undefined variable!",
+          hasError: true
+        }
+      },
+      {
+        text: percyConfig.variableSuffix
+      }
+    ]);
+
+    expect(utilService.getNodeValueConfig(nodeKeyTest, envsVariablesConfig)).toEqual([
+      {
+        text: `src/${percyConfig.variablePrefix}`
+      },
+      {
+        text: "key4",
+        variableConfig: {
+          cascadedValue: nodeKey1.value,
+          hasError: false,
+          referenceNode: nodeKey4
+        }
+      },
+      {
+        text: `${percyConfig.variableSuffix}/path/${percyConfig.variablePrefix}`,
+      },
+      {
+        text: "varUndefined",
+        variableConfig: {
+          cascadedValue: "Undefined variable!",
+          hasError: true
+        }
+      },
+      {
+        text: `${percyConfig.variableSuffix}/path2//${percyConfig.variablePrefix}`,
+      },
+      {
+        text: "var1",
+        variableConfig: {
+          cascadedValue: LOOP_VARIABLE_ERROR,
+          hasError: true,
+          referenceNode: nodeVar1
+        }
+      },
+      {
+        text: percyConfig.variableSuffix
+      }
+    ]);
+
+    expect(utilService.getNodeValueConfig(nodeKeyTestDev, envsVariablesConfig)).toEqual([
+      {
+        text: percyConfig.variablePrefix
+      },
+      {
+        text: "var1",
+        variableConfig: {
+          cascadedValue: LOOP_ENV_INHERIT_ERROR,
+          hasError: true
+        }
+      },
+      {
+        text: percyConfig.variableSuffix
+      }
+    ]);
+
+    expect(utilService.getNodeValueConfig(nodeKeyTestQat, envsVariablesConfig)).toEqual([
+      {
+        text: percyConfig.variablePrefix
+      },
+      {
+        text: "key4",
+        variableConfig: {
+          cascadedValue: LOOP_ENV_INHERIT_ERROR,
+          hasError: true
+        }
+      },
+      {
+        text: percyConfig.variableSuffix
+      }
+    ]);
+
+    expect(utilService.getNodeValueConfig(nodeKeyTestProd, envsVariablesConfig)).toEqual([
+      {
+        text: `src/${percyConfig.variablePrefix}`
+      },
+      {
+        text: "key4",
+        variableConfig: {
+          cascadedValue: nodeKey1.value,
+          hasError: false,
+          referenceNode: nodeKey4
+        }
+      },
+      {
+        text: `${percyConfig.variableSuffix}/path/${percyConfig.variablePrefix}`,
+      },
+      {
+        text: "varUndefined",
+        variableConfig: {
+          cascadedValue: "Undefined variable!",
+          hasError: true
+        }
+      },
+      {
+        text: `${percyConfig.variableSuffix}/path2//${percyConfig.variablePrefix}`,
+      },
+      {
+        text: "var1",
+        variableConfig: {
+          cascadedValue: "1245",
+          hasError: false,
+          referenceNode: nodeVar1
+        }
+      },
+      {
+        text: percyConfig.variableSuffix
+      }
+    ]);
   });
 });
