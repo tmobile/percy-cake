@@ -578,4 +578,35 @@ describe("NestedConfigViewComponent", () => {
     ctx.component.buttonOpenMenu(new Event("click"), menuButton);
     expect(menuButton.click).toHaveBeenCalled();
   });
+
+  it("viewport should scroll to reference node when variable is clicked", () => {
+    const refNode = config.default.findChild(["url"]);
+
+    const spyDefaultViewport = jasmine.createSpyObj("", ["scrollToIndex"]);
+    ctx.component.defaultViewport = spyDefaultViewport;
+
+    const spyEnvViewport = jasmine.createSpyObj("", ["scrollToIndex"]);
+    ctx.component.envViewport = spyEnvViewport;
+
+    ctx.component.scrollToReferenceNode(new Event("click"), refNode);
+    expect(spyDefaultViewport.scrollToIndex.calls.mostRecent().args[0]).toEqual(1);
+
+    const refNode2 = new TreeNode("url", PROPERTY_VALUE_TYPES.STRING, "http://test2");
+    config.environments.findChild(["dev"]).addChild(refNode2);
+    ctx.component.ngOnChanges({
+      configuration: <any>{}
+    });
+
+    ctx.component.scrollToReferenceNode(new Event("click"), refNode2);
+    expect(spyEnvViewport.scrollToIndex.calls.mostRecent().args[0]).toEqual(14);
+
+    const refNode3 = new TreeNode("url", PROPERTY_VALUE_TYPES.STRING, "http://test");
+    config.environments.findChild(["qa"]).addChild(refNode3);
+    ctx.component.ngOnChanges({
+      configuration: <any>{}
+    });
+
+    ctx.component.scrollToReferenceNode(new Event("click"), refNode3);
+    expect(spyEnvViewport.scrollToIndex.calls.mostRecent().args[0]).toEqual(17);
+  });
 });

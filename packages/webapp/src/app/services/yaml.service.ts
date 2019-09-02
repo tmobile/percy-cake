@@ -736,7 +736,7 @@ export class YamlService {
    * @returns the resolved tokens
    */
   private resolveTokens(tokens, env: string, throwError = true) {
-    const result = _.cloneDeep(tokens);
+    let result = _.cloneDeep(tokens);
     const envVariableName = _.defaultTo(
       appPercyConfig.envVariableName,
       percyConfig.envVariableName
@@ -765,7 +765,7 @@ export class YamlService {
         while ((regExpResult = regExp.exec(value))) {
           const fullMatch = regExpResult[0];
           const tokenName = regExpResult[1];
-          const tokenValue = result[tokenName];
+          let tokenValue = result[tokenName];
 
           if (typeof tokenValue === "string") {
             if (this.createRegExp().exec(tokenValue)) {
@@ -784,6 +784,9 @@ export class YamlService {
               continue;
             }
           }
+          if (_.isUndefined(tokenValue)) {
+            tokenValue = `VARIABLE_PREFIX${tokenName}VARIABLE_SUFFIX`;
+          }
           retValue = retValue.replace(fullMatch, tokenValue);
         }
 
@@ -796,6 +799,15 @@ export class YamlService {
 
     _.each(loopTokens, token => {
       result[token] = _LOOP_;
+    });
+
+    result = _.mapValues(result, value => {
+      if (typeof value !== "string") {
+        return value;
+      }
+      return _.replace(
+        _.replace(value, /VARIABLE_SUFFIX/g, percyConfig.variableSuffix), /VARIABLE_PREFIX/g, percyConfig.variablePrefix
+      );
     });
 
     return result;
@@ -845,7 +857,7 @@ export class YamlService {
     while ((regExpResult = regExp.exec(text))) {
       const fullMatch = regExpResult[0];
       const tokenName = regExpResult[1];
-      const tokenValue = tokens[tokenName];
+      const tokenValue = _.isUndefined(tokens[tokenName]) ? this.constructVariable(tokenName) : tokens[tokenName];
 
       retVal = retVal.replace(fullMatch, tokenValue);
     }
