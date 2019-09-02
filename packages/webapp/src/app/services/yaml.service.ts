@@ -27,8 +27,15 @@ import * as cheerio from "cheerio";
 
 import { PROPERTY_VALUE_TYPES, percyConfig, appPercyConfig } from "config";
 import { TreeNode } from "models/tree-node";
-import { Configuration } from "models/config-file";
+import { Configuration, EnvsVariablesConfig, VariableConfig } from "models/config-file";
 import { Injectable } from "@angular/core";
+
+export interface ValueConfig {
+  text: string;
+  variableConfig?: VariableConfig;
+}
+
+const _LOOP_ = "___LOOP___";
 
 class YamlParser {
   // mapping of type from YAML to JSON
@@ -688,11 +695,12 @@ export class YamlService {
    * @param refTo the reference to (right side)
    * @throws Error if loop reference detected
    */
-  private addTokenReference(referenceLinks, refFrom, refTo) {
+  private addTokenReference(referenceLinks, refFrom, refTo): string[][] {
+    const cycles = [];
+
     if (refFrom === refTo) {
-      throw new Error(
-        "Loop variable reference: " + [refFrom, refTo].join("->")
-      );
+      cycles.push([refFrom, refTo]);
+      return cycles;
     }
 
     let added = false;
@@ -706,7 +714,7 @@ export class YamlService {
       if (idx > -1) {
         const cyclic = referenceLink.slice(idx);
         cyclic.push(refTo);
-        throw new Error("Loop variable reference: " + cyclic.join("->"));
+        cycles.push(cyclic);
       }
       referenceLink.push(refTo);
       added = true;
@@ -715,6 +723,8 @@ export class YamlService {
     if (!added) {
       referenceLinks.push([refFrom, refTo]);
     }
+
+    return cycles;
   }
 
   /**
@@ -725,18 +735,22 @@ export class YamlService {
    * @param env the environment name
    * @returns the resolved tokens
    */
-  private resolveTokens(tokens, env: string) {
-    const result = _.cloneDeep(tokens);
+  private resolveTokens(tokens, env: string, throwError = true) {
+    let result = _.cloneDeep(tokens);
     const envVariableName = _.defaultTo(
       appPercyConfig.envVariableName,
       percyConfig.envVariableName
     );
     result[envVariableName] = env;
 
-    const referenceLinks = [];
+    const tokenCount = _.keys(result).length;
 
-    while (true) {
-      let referenceFound = false;
+    const referenceLinks = [];
+    let loopTokens = [];
+    let allCycles = [];
+    let tokenResolvedCount = 0;
+
+    while (tokenCount !== (loopTokens.length + tokenResolvedCount)) {
 
       _.each(result, (value, key) => {
         if (typeof value !== "string") {
@@ -751,26 +765,50 @@ export class YamlService {
         while ((regExpResult = regExp.exec(value))) {
           const fullMatch = regExpResult[0];
           const tokenName = regExpResult[1];
-          const tokenValue = result[tokenName];
+          let tokenValue = result[tokenName];
 
           if (typeof tokenValue === "string") {
             if (this.createRegExp().exec(tokenValue)) {
-              referenceFound = true;
-              this.addTokenReference(referenceLinks, key, tokenName);
+              if (_.includes(loopTokens, tokenName)) {
+                loopTokens.push(key);
+              } else {
+                const newCycles = this.addTokenReference(referenceLinks, key, tokenName);
+                if (newCycles.length > 0) {
+                  if (throwError) {
+                    throw new Error("Cyclic variable reference: " + newCycles[0].join("->"));
+                  }
+                  allCycles = [ ...allCycles, ...newCycles ];
+                  loopTokens = _.flatten(allCycles);
+                }
+              }
               continue;
             }
           }
-
+          if (_.isUndefined(tokenValue)) {
+            tokenValue = `VARIABLE_PREFIX${tokenName}VARIABLE_SUFFIX`;
+          }
           retValue = retValue.replace(fullMatch, tokenValue);
         }
 
         result[key] = retValue;
       });
 
-      if (!referenceFound) {
-        break;
-      }
+      tokenResolvedCount = _.filter(result, value => !this.createRegExp().exec(value)).length;
+      loopTokens = _.uniq(loopTokens);
     }
+
+    _.each(loopTokens, token => {
+      result[token] = _LOOP_;
+    });
+
+    result = _.mapValues(result, value => {
+      if (typeof value !== "string") {
+        return value;
+      }
+      return _.replace(
+        _.replace(value, /VARIABLE_SUFFIX/g, percyConfig.variableSuffix), /VARIABLE_PREFIX/g, percyConfig.variablePrefix
+      );
+    });
 
     return result;
   }
@@ -819,7 +857,7 @@ export class YamlService {
     while ((regExpResult = regExp.exec(text))) {
       const fullMatch = regExpResult[0];
       const tokenName = regExpResult[1];
-      const tokenValue = tokens[tokenName];
+      const tokenValue = _.isUndefined(tokens[tokenName]) ? this.constructVariable(tokenName) : tokens[tokenName];
 
       retVal = retVal.replace(fullMatch, tokenValue);
     }
@@ -952,6 +990,112 @@ export class YamlService {
   }
 
   /**
+   * gets variables config, like cascaded value and reference node for all environments including default
+   * @param config the configuration object
+   */
+  getEnvsVariablesConfig(config: Configuration): EnvsVariablesConfig {
+    const allEnvsVariablesConfig = {};
+    const defaultTree = _.cloneDeep(config.default);
+
+    const possibleVariables = _.reduce(defaultTree.children, (accu, child) => {
+      return child.isLeaf() ? accu.concat(child.key) : accu;
+    }, []);
+
+    _.each([ ...config.environments.children, defaultTree ], envNode => {
+      const envKey = envNode.key;
+      const mergeStack = [];
+      const inheritedEnvs = [envKey];
+      let hasCyclicError = false;
+
+      while (envNode) {
+        const deepCopy = _.cloneDeep(envNode);
+        const inherits = deepCopy.findChild(["inherits"]);
+        mergeStack.push(deepCopy);
+        if (inherits) {
+          _.remove(deepCopy.children, v => v === inherits);
+          const inheritEnv = inherits.value;
+          if (inheritedEnvs.indexOf(inheritEnv) > -1) {
+            hasCyclicError = true;
+            break;
+          }
+          inheritedEnvs.push(inheritEnv);
+          envNode = config.environments.findChild([inheritEnv]);
+        } else {
+          break;
+        }
+      }
+
+      const variablesConfig = {};
+      let variablesCascadedValues = {};
+
+      if (!hasCyclicError) {
+        // resolve variables cascaded values
+        const merged = _.cloneDeep(config.default);
+        _.forEachRight(mergeStack, m => {
+          this.mergeEnv(merged, m);
+        });
+
+        _.each(merged.children, child => {
+          if (child.isLeaf()) {
+            variablesCascadedValues[child.key] = child.value;
+          }
+        });
+
+        variablesCascadedValues = this.resolveTokens(variablesCascadedValues, envKey, false);
+
+        // get reference nodes
+        mergeStack.push(defaultTree);
+        _.each(possibleVariables, variable => {
+          let referenceNode;
+          _.every(mergeStack, stack => {
+            if (referenceNode) {
+              return false;
+            }
+
+            _.every(stack.children, node => {
+              if (node.key === variable) {
+                referenceNode = node;
+                return false;
+              }
+              return true;
+            });
+
+            return true;
+          });
+
+          const cascadedValue = variablesCascadedValues[variable];
+
+          variablesConfig[variable] = {
+            cascadedValue: cascadedValue === _LOOP_ ? "Cyclic variable reference found!" : cascadedValue,
+            hasError: cascadedValue === _LOOP_,
+            referenceNode
+          };
+        });
+      } else {
+        _.each(possibleVariables, variable => {
+          variablesConfig[variable] = {
+            cascadedValue: "Cylic env inherits detected!",
+            hasError: true
+          };
+        });
+      }
+
+      // add the env variable value
+      const envVariableName = _.defaultTo(
+        appPercyConfig.envVariableName,
+        percyConfig.envVariableName
+      );
+      variablesConfig[envVariableName] = {
+        cascadedValue: envKey
+      };
+
+      allEnvsVariablesConfig[envKey] = variablesConfig;
+    });
+
+    return allEnvsVariablesConfig;
+  }
+
+  /**
    * Highlight variable within yaml text string value
    * @param text the yaml text string value
    * @param parentSpan the parent span node contains the text
@@ -1006,6 +1150,44 @@ export class YamlService {
     }
     const span = this.highlightVariable(_.defaultTo(node.value, ""));
     return span.html();
+  }
+
+  /**
+   * parse string type node values for variables and return value as a config which can then be rendered
+   * @param node the string TreeNode to highlight its value
+   * @param envsVariablesConfig  pre calculated variable config for each environment
+   */
+  getNodeValueConfig(node: TreeNode, envsVariablesConfig: EnvsVariablesConfig): ValueConfig[] {
+    const span = this.highlightVariable(_.defaultTo(node.value, ""));
+    const $ = cheerio.load(span.html());
+
+    // if there are no variables at all in the node value
+    if ($("span").length === 0) {
+      return [{ text: span.html() }];
+    }
+
+    const nodePaths = node.getPaths();
+    const nodeEnv = nodePaths[0] === "default" ? "default" : nodePaths[1];
+
+    const valueConfig = [];
+    $("span").each(function() {
+      const config = { text: $(this).text() };
+
+      // if its a variable
+      if ($(this).hasClass("yaml-var")) {
+        const notFoundConfig: VariableConfig = {
+          cascadedValue: "Undefined variable!",
+          hasError: true
+        };
+
+        const variableConfig = _.get(envsVariablesConfig, `${nodeEnv}.${config.text}`, notFoundConfig);
+        config["variableConfig"] = variableConfig;
+      }
+
+      valueConfig.push(config);
+    });
+
+    return valueConfig;
   }
 
   /**
