@@ -86,7 +86,6 @@
               cursor: pointer;
 
               .yaml-var {
-                position: relative;
 
                 .mat-tooltip {
                   position: absolute;
@@ -111,6 +110,7 @@
                 }
 
                 &:hover {
+                  position: relative;
 
                   .mat-tooltip {
                     display: block;
