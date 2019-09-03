@@ -106,6 +106,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   canSyncMaster: Observable<boolean> = this.store.pipe(
     select(appStore.getCanSyncMaster)
   );
+  isLoadingFiles: Observable<boolean> = this.store.pipe(
+    select(appStore.getLoadingFiles)
+  );
 
   folders = new BehaviorSubject<any[]>(null);
   modifiedFiles = new BehaviorSubject<any[]>(null);
