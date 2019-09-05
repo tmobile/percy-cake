@@ -41,7 +41,7 @@
     </div>
   </div>
   <!-- files table -->
-  <table *ngIf="applications| async; else loader" matSort [matSortDisableClear]="true" (matSortChange)="onSortChange($event)" mat-table [dataSource]="folders|async" class="files-table mat-elevation-z8">
+  <table *ngIf="applications| async" matSort [matSortDisableClear]="true" (matSortChange)="onSortChange($event)" mat-table [dataSource]="folders|async" class="files-table mat-elevation-z8">
 
     <!-- Application column -->
     <ng-container matColumnDef="applicationName">
@@ -89,7 +89,7 @@
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
     <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
   </table>
-  <div *ngIf="(isDeleting|async) || (isCommitting|async) || (isRefreshing|async)">
+  <div *ngIf="(isDeleting|async) || (isCommitting|async) || (isRefreshing|async) || (isLoadingFiles|async)">
       <app-loader></app-loader>
   </div>
 </div>
