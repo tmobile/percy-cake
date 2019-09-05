@@ -83,7 +83,7 @@ export const getAppConfigs = createSelector(backendState, fromBackend.getAppConf
 export const getAllFiles = createSelector(backendState, fromBackend.getAllFiles);
 export const getCanPullRequest = createSelector(backendState, fromBackend.getCanPullRequest);
 export const getCanSyncMaster = createSelector(backendState, fromBackend.getCanSyncMaster);
-
+export const getLoadingFiles = createSelector(backendState, fromBackend.isLoadingFiles);
 
 // dashboard related selectors
 export const dashboardState = createFeatureSelector<AppState, fromDashboard.State>("dashboard");

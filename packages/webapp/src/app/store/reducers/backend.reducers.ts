@@ -39,6 +39,7 @@ export interface State {
   redirectUrl: string;
   canPullRequest: boolean;
   canSyncMaster: boolean;
+  loadingFiles: boolean;
 }
 
 const ConfigFileAdapter: EntityAdapter<ConfigFile> = createEntityAdapter<ConfigFile>({
@@ -56,7 +57,8 @@ export const initialState: State = {
   principal: null,
   redirectUrl: null,
   canPullRequest: false,
-  canSyncMaster: false
+  canSyncMaster: false,
+  loadingFiles: false
 };
 
 export function reducer(state = initialState, action: BackendActionsUnion): State {
@@ -72,6 +74,14 @@ export function reducer(state = initialState, action: BackendActionsUnion): Stat
       return {
         ...state,
         ...action.payload
+      };
+    }
+
+    case BackendActionTypes.LoadFiles: {
+      return {
+        ...state,
+        loadingFiles: true,
+        applications: null
       };
     }
 
@@ -102,7 +112,15 @@ export function reducer(state = initialState, action: BackendActionsUnion): Stat
         canSyncMaster: !!action.payload.canSyncMaster,
         files,
         appConfigs: action.payload.appConfigs || {},
-        applications: _.orderBy(action.payload.applications)
+        applications: _.orderBy(action.payload.applications),
+        loadingFiles: false
+      };
+    }
+
+    case BackendActionTypes.LoadFilesFailure: {
+      return {
+        ...state,
+        loadingFiles: false
       };
     }
 
@@ -186,3 +204,4 @@ export const getAllFiles = (state: State) => {
   });
   return grouped;
 };
+export const isLoadingFiles = (state: State) => state.loadingFiles;
