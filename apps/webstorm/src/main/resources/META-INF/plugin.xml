@@ -1,0 +1,31 @@
+<idea-plugin>
+	<id>com.tmobile.percy</id>
+	<name>Percy Editor</name>
+	<vendor email="support@t-mobile.com"
+		url="https://www.t-mobile.com">T-Mobile</vendor>
+
+	<description><![CDATA[
+    Percy Editor
+    ]]></description>
+
+	<!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+		on how to target different products -->
+	<idea-version since-build="172.3317" />
+	<!-- uncomment to enable plugin in all products -->
+	<depends>com.intellij.modules.lang</depends>
+
+	<extensions defaultExtensionNs="com.intellij">
+		<fileTypeFactory
+			implementation="com.tmobile.percy.PercyFileTypeFactory" />
+		<httpRequestHandler
+			implementation="com.tmobile.percy.HttpServer" />
+
+		<fileEditorProvider
+			implementation="com.tmobile.percy.editor.PercyEditorProvider" />
+
+	</extensions>
+
+	<actions>
+		<!-- Add your actions here -->
+	</actions>
+</idea-plugin>

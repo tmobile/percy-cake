@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "projects": {
+    "webapp": {
+      "root": "apps/webapp",
+      "sourceRoot": "apps/webapp/src",
+      "projectType": "application",
+      "prefix": "percy-cake",
+      "schematics": {},
+      "architect": {}
+    },
+    "electron": {
+      "root": "apps/electron",
+      "sourceRoot": "apps/electron/src",
+      "projectType": "application",
+      "prefix": "electron",
+      "schematics": {},
+      "architect": {}
+    },
+    "hydration-example": {
+      "root": "apps/hydration-example",
+      "sourceRoot": "apps/hydration-example/src",
+      "projectType": "application",
+      "prefix": "hydration-example",
+      "schematics": {},
+      "architect": {}
+    },
+    "hydration-script": {
+      "root": "apps/hydration-script",
+      "sourceRoot": "apps/hydration-script/src",
+      "projectType": "application",
+      "prefix": "hydration-script",
+      "schematics": {},
+      "architect": {}
+    },
+    "vscode": {
+      "root": "apps/vscode",
+      "sourceRoot": "apps/vscode/src",
+      "projectType": "application",
+      "prefix": "vscode",
+      "schematics": {},
+      "architect": {}
+    },
+    "webstorm": {
+      "root": "apps/webstorm",
+      "sourceRoot": "apps/webstorm/src",
+      "projectType": "application",
+      "prefix": "webstorm",
+      "schematics": {},
+      "architect": {}
+    },
+    "builders": {
+      "root": "apps/builders",
+      "sourceRoot": "apps/builders/src",
+      "projectType": "application",
+      "prefix": "builders",
+      "schematics": {},
+      "architect": {}
+    },
+    "docker": {
+      "root": "apps/docker",
+      "sourceRoot": "apps/docker/src",
+      "projectType": "application",
+      "prefix": "docker",
+      "schematics": {},
+      "architect": {}
+    }
+  },
+  "cli": {
+    "defaultCollection": "@nrwl/angular"
+  },
+  "schematics": {
+    "@nrwl/angular:application": {
+      "unitTestRunner": "none",
+      "e2eTestRunner": "none"
+    },
+    "@nrwl/angular:library": {
+      "unitTestRunner": "none"
+    }
+  },
+  "defaultProject": "webapp"
+}

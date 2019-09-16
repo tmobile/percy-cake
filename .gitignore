@@ -3,9 +3,10 @@
 # compiled output
 dist
 out-tsc
-/packages/vscode/*.vsix
-/packages/electron/release
-/packages/webstorm/build
+/apps/vscode/*.vsix
+/apps/electron/release
+/apps/webstorm/build
+apps/webstorm/src/main/resources/percy.bundle.min.js
 /tmp
 
 # dependencies
@@ -33,7 +34,6 @@ node_modules
 coverage
 /libpeerconnection.log
 npm-debug.log
-lerna-debug.log
 yarn-error.log
 testem.log
 /typings
