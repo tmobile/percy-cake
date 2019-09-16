@@ -2,10 +2,10 @@
 
 _*Build Once, Deploy anywhere.*_
 
-# Percival - a Configuration as Kode editor 
+# Percival - a Configuration as Kode editor
 ## (with Hydration Tools)
 
-## Percy-CaKe 
+## Percy-CaKe
 
 ![percy editor](docs/images/prod.compiled.yaml.png)
 
@@ -43,18 +43,14 @@ Prerequisite
 - Npm 6
 
 ```bash
-# Install dependencies
-npm install -g lerna
-lerna bootstrap --hoist
-
 # Lint code
-lerna run lint --stream
+$ npm run lint
 
 # Run unit tests
-lerna run test --stream
+$ npm run test
 
 # Start development server at http://localhost:4200
-lerna run --scope=percy-cake-web-app --stream start
+$ npm run webapp:start
 ```
 
 # Percy Runtime Modes:
@@ -67,7 +63,7 @@ the Percy editor can be run using the webpack development server for local testi
 
 ```bash
 # Build and Start development server at http://localhost:4200
-lerna run --scope=percy-cake-web-app --stream start
+$ npm run webapp:start
 ```
 
 ## <a name="staticAssets"></a>2. Static assets
@@ -76,8 +72,7 @@ The Percy editor can be deployed as packaged static assets to any CDN or web ser
 
 ```bash
 # build the application
-lerna run --scope=percy-cake-web-app --stream build:prod
-
+$ npm run webapp:build
 ```
 
 ### static assets are located at
@@ -194,7 +189,7 @@ The git repository can contain optional `.percyrc` files, which provide reposito
 | `variableNamePrefix` | prefix to variables used for substitution only and should not be included independently in hydrated files |
 | `envIgnorePrefix`    | prefix to abstract environment name                                                                       |
 | `envIgnoreSuffix`    | suffix to abstract environment name                                                                       |
-| `envVariableName`    | The YAML environment variable name                                                                        |         
+| `envVariableName`    | The YAML environment variable name                                                                        |
 
 ### value substitution
 

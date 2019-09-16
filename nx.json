@@ -1,0 +1,36 @@
+{
+  "npmScope": "percy-cake",
+  "implicitDependencies": {
+    "angular.json": "*",
+    "package.json": "*",
+    "tsconfig.json": "*",
+    "tslint.json": "*",
+    "nx.json": "*"
+  },
+  "projects": {
+    "webapp": {
+      "tags": []
+    },
+    "vscode": {
+      "tags": []
+    },
+    "webstorm": {
+      "tags": []
+    },
+    "builders": {
+      "tags": []
+    },
+    "docker": {
+      "tags": []
+    },
+    "electron": {
+      "tags": []
+    },
+    "hydration-example": {
+      "tags": []
+    },
+    "hydration-script": {
+      "tags": []
+    }
+  }
+}

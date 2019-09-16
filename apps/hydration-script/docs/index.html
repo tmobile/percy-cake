@@ -1,0 +1,411 @@
+<!doctype html>
+<html class="default no-js">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>percy-cake-hydration-tools</title>
+	<meta name="description" content="">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+<header>
+	<div class="tsd-page-toolbar">
+		<div class="container">
+			<div class="table-wrap">
+				<div class="table-cell" id="tsd-search" data-index="assets/js/search.js" data-base=".">
+					<div class="field">
+						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
+						<input id="tsd-search-field" type="text" />
+					</div>
+					<ul class="results">
+						<li class="state loading">Preparing search index...</li>
+						<li class="state failure">The search index is not available</li>
+					</ul>
+					<a href="index.html" class="title">percy-cake-hydration-tools</a>
+				</div>
+				<div class="table-cell" id="tsd-widgets">
+					<div id="tsd-filter">
+						<a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a>
+						<div class="tsd-filter-group">
+							<div class="tsd-select" id="tsd-filter-visibility">
+								<span class="tsd-select-label">All</span>
+								<ul class="tsd-select-list">
+									<li data-value="public">Public</li>
+									<li data-value="protected">Public/Protected</li>
+									<li data-value="private" class="selected">All</li>
+								</ul>
+							</div>
+							<input type="checkbox" id="tsd-filter-inherited" checked />
+							<label class="tsd-widget" for="tsd-filter-inherited">Inherited</label>
+							<input type="checkbox" id="tsd-filter-externals" checked />
+							<label class="tsd-widget" for="tsd-filter-externals">Externals</label>
+							<input type="checkbox" id="tsd-filter-only-exported" />
+							<label class="tsd-widget" for="tsd-filter-only-exported">Only exported</label>
+						</div>
+					</div>
+					<a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="tsd-page-title">
+		<div class="container">
+			<ul class="tsd-breadcrumb">
+				<li>
+					<a href="globals.html">Globals</a>
+				</li>
+			</ul>
+			<h1> percy-cake-hydration-tools</h1>
+		</div>
+	</div>
+</header>
+<div class="container container-main">
+	<div class="row">
+		<div class="col-8 col-content">
+			<div class="tsd-panel tsd-typography">
+				<a href="#percival-hydration-and-json-comparison-command-line-utilities" id="percival-hydration-and-json-comparison-command-line-utilities" style="color: inherit; text-decoration: none;">
+					<h2>Percival Hydration and JSON Comparison Command Line Utilities</h2>
+				</a>
+				<a href="#prerequisites" id="prerequisites" style="color: inherit; text-decoration: none;">
+					<h2>Prerequisites</h2>
+				</a>
+				<ul>
+					<li>Node.js 10.15.x</li>
+					<li>Npm 6</li>
+				</ul>
+				<a href="#installation" id="installation" style="color: inherit; text-decoration: none;">
+					<h2>Installation</h2>
+				</a>
+				<pre><code>npm <span class="hljs-keyword">install</span> percy-cake-hydration-tools</code></pre><p>Or install commands globally</p>
+				<pre><code>npm <span class="hljs-keyword">install</span> -g percy-cake-hydration-tools</code></pre>
+				<a href="#documentation" id="documentation" style="color: inherit; text-decoration: none;">
+					<h2>Documentation</h2>
+				</a>
+				<p>Documentations are auto generated and can be accessed from <code>docs</code> folder.
+				In order to generate docs again you can call <code>npm run hydration-tools:docs</code> command.</p>
+				<a href="#usage-in-command-line" id="usage-in-command-line" style="color: inherit; text-decoration: none;">
+					<h2>Usage In Command Line</h2>
+				</a>
+				<a href="#compare-json" id="compare-json" style="color: inherit; text-decoration: none;">
+					<h3>compare-json</h3>
+				</a>
+				<p>Script for comparing two json files and outputting their differences to stdout</p>
+				<p><code>compare-json &lt;path/to/file.json&gt; &lt;path/to/file.json&gt;</code></p>
+				<pre><code class="language-bash"><span class="hljs-comment"># Example</span>
+compare-json <span class="hljs-built_in">test</span>/data/.percyrc <span class="hljs-built_in">test</span>/data/modified.percyrc
+
+<span class="hljs-comment"># To generate HTML report</span>
+compare-json <span class="hljs-built_in">test</span>/data/.percyrc <span class="hljs-built_in">test</span>/data/modified.percyrc --out ./<span class="hljs-built_in">test</span>/data/out/diff.html
+
+<span class="hljs-comment"># to turn off/on the console color  pass --consoleColor false/true respectively</span>
+compare-json <span class="hljs-built_in">test</span>/data/.percyrc <span class="hljs-built_in">test</span>/data/modified.percyrc --colorConsole=<span class="hljs-literal">false</span></code></pre>
+				<a href="#hydrate" id="hydrate" style="color: inherit; text-decoration: none;">
+					<h3>hydrate</h3>
+				</a>
+				<p>Script for processing YAML configuration files and converting it to environment specific JSON configuration</p>
+				<p><code>hydrate &lt; --root | --app | --file &gt; &lt;path/to/input&gt; --out &lt;path/to/output&gt;</code>
+				It provides three options</p>
+				<ul>
+					<li><code>--root</code> <code>-r</code> for processing all apps in a root directory</li>
+					<li><code>--app</code> <code>-a</code> for processing a single app directory</li>
+					<li><code>--file</code> <code>-f</code> for processing a single file
+					You should specify one of these three options.</li>
+				</ul>
+				<pre><code class="language-bash"><span class="hljs-comment"># Examples</span>
+
+<span class="hljs-comment"># Process all apps</span>
+hydrate -r <span class="hljs-built_in">test</span>/data/apps --out <span class="hljs-built_in">test</span>/data/out/dist
+
+<span class="hljs-comment"># Process single app</span>
+hydrate -a <span class="hljs-built_in">test</span>/data/apps/shop --out <span class="hljs-built_in">test</span>/data/out/dist/shop
+
+<span class="hljs-comment"># Process single file</span>
+hydrate -f <span class="hljs-built_in">test</span>/data/apps/shop/app.config.yaml --out <span class="hljs-built_in">test</span>/data/out/dist/shop
+
+<span class="hljs-comment"># to turn off/on the console color  pass --consoleColor false/true respectively</span>
+hydrate -r <span class="hljs-built_in">test</span>/data/apps --out <span class="hljs-built_in">test</span>/data/out/dist --colorConsole=<span class="hljs-literal">false</span></code></pre>
+				<p><strong><em>NOTE:</em></strong> if you are not installing globally, used the scripts like below instead:</p>
+				<pre><code>node_modules/.bin/hydrate -r <span class="hljs-keyword">test</span>/data/apps --<span class="hljs-keyword">out</span> <span class="hljs-keyword">test</span>/data/<span class="hljs-keyword">out</span>/dist
+node_modules/.bin/<span class="hljs-keyword">compare</span>-json <span class="hljs-keyword">test</span>/data/.percyrc <span class="hljs-keyword">test</span>/data/modified.percyrc --<span class="hljs-keyword">out</span> ./<span class="hljs-keyword">test</span>/data/<span class="hljs-keyword">out</span>/diff.html</code></pre>
+				<a href="#configuration" id="configuration" style="color: inherit; text-decoration: none;">
+					<h2>Configuration</h2>
+				</a>
+				<p>Main configuration file can be found at <code>config/default.js</code></p>
+				<table>
+					<thead>
+						<tr>
+							<th>Variable</th>
+							<th>Description</th>
+						</tr>
+					</thead>
+					<tbody><tr>
+							<td>PERCY_LOG_LEVEL</td>
+							<td></td>
+						</tr>
+						<tr>
+							<td>PERCY_ENVIRONMENT_FILE_NAME</td>
+							<td>Name of the environment file (default value: <code>environments.yaml</code>)</td>
+						</tr>
+						<tr>
+							<td>PERCY_CONFIG_FILE_NAME</td>
+							<td>Name of the percy configuration file (default value: <code>.percyrc</code>)</td>
+						</tr>
+						<tr>
+							<td>PERCY_ENV_VARIABLE_NAME</td>
+							<td>The YAML environment variable name (default value: <code>env</code>)</td>
+						</tr>
+						<tr>
+							<td>PERCY_DEFAULT_ENV_IGNORE_PREFIX</td>
+							<td>The prefix of env not to generate the config files (no default value)</td>
+						</tr>
+						<tr>
+							<td>PERCY_DEFAULT_ENV_IGNORE_SUFFIX</td>
+							<td>The suffix of env not to generate the config files (no default value)</td>
+						</tr>
+						<tr>
+							<td>PERCY_DEFAULT_VARIABLE_PREFIX</td>
+							<td>The YAML variable substitute prefix (default value: <code>_{</code>)</td>
+						</tr>
+						<tr>
+							<td>PERCY_DEFAULT_VARIABLE_SUFFIX</td>
+							<td>The YAML variable substitute suffix (default value: <code>}_</code>)</td>
+						</tr>
+						<tr>
+							<td>PERCY_DEFAULT_VARIABLE_NAME_PREFIX</td>
+							<td>The YAML variable name prefix (default value: <code>$</code>)</td>
+						</tr>
+						<tr>
+							<td>PERCY_CONSOLE_COLORS</td>
+							<td>The flag whether to colorize the console output or not</td>
+						</tr>
+				</tbody></table>
+				<p>The app folder can contain optional <code>.percyrc</code> files, which provide repository-specific or application-specific configuration. The following properties are supported now:</p>
+				<table>
+					<thead>
+						<tr>
+							<th>Property</th>
+							<th>Description</th>
+						</tr>
+					</thead>
+					<tbody><tr>
+							<td>envVariableName</td>
+							<td>The YAML environment variable name</td>
+						</tr>
+						<tr>
+							<td>variablePrefix</td>
+							<td>The YAML variable substitute prefix</td>
+						</tr>
+						<tr>
+							<td>variableSuffix</td>
+							<td>The YAML variable substitute suffix</td>
+						</tr>
+						<tr>
+							<td>variableNamePrefix</td>
+							<td>The YAML variable name prefix</td>
+						</tr>
+						<tr>
+							<td>envIgnorePrefix</td>
+							<td>The prefix of env to ignore</td>
+						</tr>
+						<tr>
+							<td>envIgnoreSuffix</td>
+							<td>The suffix of env to ignore</td>
+						</tr>
+				</tbody></table>
+				<p>If it&#39;s in the <code>apps</code> folder, the configuration applies to all applications, and if it&#39;s in the specific application folder, it only applies to the corresponding application. When provided, the default properties from the <code>config/default.js</code> will be overridden.</p>
+				<p>Here is an example of <code>.percyrc</code> file:</p>
+				<pre><code class="language-json">{
+  <span class="hljs-attr">"envVariableName"</span>: <span class="hljs-string">"env"</span>,
+  <span class="hljs-attr">"variablePrefix"</span>: <span class="hljs-string">"{{"</span>,
+  <span class="hljs-attr">"variableSuffix"</span>: <span class="hljs-string">"}}"</span>,
+  <span class="hljs-attr">"variableNamePrefix"</span>: <span class="hljs-string">"_"</span>,
+  <span class="hljs-attr">"envIgnorePrefix"</span>: <span class="hljs-string">"_"</span>,
+  <span class="hljs-attr">"envIgnoreSuffix"</span>: <span class="hljs-string">"_"</span>
+}</code></pre>
+				<a href="#installation-1" id="installation-1" style="color: inherit; text-decoration: none;">
+					<h2>Installation</h2>
+				</a>
+				<pre><code class="language-bash"><span class="hljs-comment"># Lint code</span>
+$ npm run hydration-tools:lint
+
+<span class="hljs-comment"># Run unit tests with coverage</span>
+$ npm run hydration-tools:<span class="hljs-built_in">test</span></code></pre>
+				<a href="#usage-inside-the-lib" id="usage-inside-the-lib" style="color: inherit; text-decoration: none;">
+					<h2>Usage inside the lib</h2>
+				</a>
+				<a href="#compare-json-1" id="compare-json-1" style="color: inherit; text-decoration: none;">
+					<h3>compare-json</h3>
+				</a>
+				<p>Script for comparing two json files and outputting their differences to stdout</p>
+				<p><code>npm run compare-json &lt;path/to/file.json&gt; &lt;path/to/file.json&gt;</code></p>
+				<p>or:</p>
+				<p><code>npm run hydration-tools:compare-json -- &lt;path/to/file.json&gt; &lt;path/to/file.json&gt;</code></p>
+				<pre><code class="language-bash"><span class="hljs-comment"># Example</span>
+$ npm run compare-json <span class="hljs-built_in">test</span>/data/.percyrc <span class="hljs-built_in">test</span>/data/modified.percyrc
+
+$ npm run hydration-tools:compare-json -- <span class="hljs-built_in">test</span>/data/.percyrc <span class="hljs-built_in">test</span>/data/modified.percyrc
+
+<span class="hljs-comment"># To generate HTML report</span>
+$ npm run compare-json <span class="hljs-built_in">test</span>/data/.percyrc <span class="hljs-built_in">test</span>/data/modified.percyrc -- --out ./<span class="hljs-built_in">test</span>/data/out/diff.html
+
+$ npm run hydration-tools:compare-json -- <span class="hljs-built_in">test</span>/data/.percyrc <span class="hljs-built_in">test</span>/data/modified.percyrc -- --out ./<span class="hljs-built_in">test</span>/data/out/diff.html</code></pre>
+				<a href="#hydrate-1" id="hydrate-1" style="color: inherit; text-decoration: none;">
+					<h3>hydrate</h3>
+				</a>
+				<p>Script for processing YAML configuration files and converting it to environment specific JSON configuration</p>
+				<p><code>npm run hydrate -- &lt; --root | --app | --file &gt; &lt;path/to/input&gt; --out &lt;path/to/output&gt;</code></p>
+				<p>or:</p>
+				<p><code>npm run hydration-tools:hydrate -- -- &lt; --root | --app | --file &gt; &lt;path/to/input&gt; --out &lt;path/to/output&gt;</code></p>
+				<p>It provides three options</p>
+				<ul>
+					<li><code>--root</code> <code>-r</code> for processing all apps in a root directory</li>
+					<li><code>--app</code> <code>-a</code> for processing a single app directory</li>
+					<li><code>--file</code> <code>-f</code> for processing a single file
+					You should specify one of these three options.</li>
+				</ul>
+				<pre><code class="language-bash"><span class="hljs-comment"># Examples</span>
+
+<span class="hljs-comment"># Process all apps</span>
+$ npm run hydrate -- -r <span class="hljs-built_in">test</span>/data/apps --out <span class="hljs-built_in">test</span>/data/out/dist
+
+$ npm run hydration-tools:hydrate -- -- -r <span class="hljs-built_in">test</span>/data/apps --out <span class="hljs-built_in">test</span>/data/out/dist
+
+<span class="hljs-comment"># Process single app</span>
+$ npm run hydrate -- -a <span class="hljs-built_in">test</span>/data/apps/shop --out <span class="hljs-built_in">test</span>/data/out/dist/shop
+
+$ npm run hydration-tools:hydrate -- -- -a <span class="hljs-built_in">test</span>/data/apps/shop --out <span class="hljs-built_in">test</span>/data/out/dist/shop
+
+<span class="hljs-comment"># Process single file</span>
+$ npm run hydrate -- -f <span class="hljs-built_in">test</span>/data/apps/shop/app.config.yaml --out <span class="hljs-built_in">test</span>/data/out/dist/shop
+
+$ npm run hydration-tools:hydrate -- -- -f <span class="hljs-built_in">test</span>/data/apps/shop/app.config.yaml --out <span class="hljs-built_in">test</span>/data/out/dist/shop</code></pre>
+				<a href="#run-with-compiled-js-better-performance" id="run-with-compiled-js-better-performance" style="color: inherit; text-decoration: none;">
+					<h2>Run with compiled JS (better performance)</h2>
+				</a>
+				<p>You can compiled the ts files to js, by running:</p>
+				<pre><code>$ npm <span class="hljs-keyword">run</span><span class="bash"> hydration-tools:tsc</span></code></pre><p>then run the js files using these script:</p>
+				<pre><code class="language-bash"><span class="hljs-comment"># hydrate Examples</span>
+
+<span class="hljs-comment"># Process all apps</span>
+$ npm run hydrate.js -- -r <span class="hljs-built_in">test</span>/data/apps --out <span class="hljs-built_in">test</span>/data/out/dist
+
+$ npm run hydration-tools:hydrate.js -- -- -r <span class="hljs-built_in">test</span>/data/apps --out <span class="hljs-built_in">test</span>/data/out/dist
+
+<span class="hljs-comment"># Process single app</span>
+$ npm run hydrate.js -- -a <span class="hljs-built_in">test</span>/data/apps/shop --out <span class="hljs-built_in">test</span>/data/out/dist/shop
+
+$ npm run hydration-tools:hydrate.js -- -- -a <span class="hljs-built_in">test</span>/data/apps/shop --out <span class="hljs-built_in">test</span>/data/out/dist/shop
+
+<span class="hljs-comment"># Process single file</span>
+$ npm run hydrate.js -- -f <span class="hljs-built_in">test</span>/data/apps/shop/app.config.yaml --out <span class="hljs-built_in">test</span>/data/out/dist/shop
+
+$ npm run hydration-tools:hydrate.js -- -- -f <span class="hljs-built_in">test</span>/data/apps/shop/app.config.yaml --out <span class="hljs-built_in">test</span>/data/out/dist/shop
+
+<span class="hljs-comment"># compare-json Example</span>
+$ npm run compare-json.js <span class="hljs-built_in">test</span>/data/.percyrc <span class="hljs-built_in">test</span>/data/modified.percyrc
+
+$ npm run hydration-tools:compare-json.js -- <span class="hljs-built_in">test</span>/data/.percyrc <span class="hljs-built_in">test</span>/data/modified.percyrc</code></pre>
+			</div>
+		</div>
+		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
+			<nav class="tsd-navigation primary">
+				<ul>
+					<li class="globals  ">
+						<a href="globals.html"><em>Globals</em></a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_common_logger_.html">"common/logger"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_common_utils_.html">"common/utils"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_compare_json_lib_.html">"compare-<wbr>json.lib"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_hydrate_lib_.html">"hydrate.lib"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_interfaces_iappconfig_interface_.html">"interfaces/IApp<wbr>Config.interface"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_interfaces_ipercyconfig_interface_.html">"interfaces/IPercy<wbr>Config.interface"</a>
+					</li>
+				</ul>
+			</nav>
+			<nav class="tsd-navigation secondary menu-sticky">
+				<ul class="before-current">
+				</ul>
+			</nav>
+		</div>
+	</div>
+</div>
+<footer class="with-border-bottom">
+	<div class="container">
+		<h2>Legend</h2>
+		<div class="tsd-legend-group">
+			<ul class="tsd-legend">
+				<li class="tsd-kind-module"><span class="tsd-kind-icon">Module</span></li>
+				<li class="tsd-kind-object-literal"><span class="tsd-kind-icon">Object literal</span></li>
+				<li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li>
+				<li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li>
+				<li class="tsd-kind-function tsd-has-type-parameter"><span class="tsd-kind-icon">Function with type parameter</span></li>
+				<li class="tsd-kind-index-signature"><span class="tsd-kind-icon">Index signature</span></li>
+				<li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li>
+				<li class="tsd-kind-type-alias tsd-has-type-parameter"><span class="tsd-kind-icon">Type alias with type parameter</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li>
+				<li class="tsd-kind-enum-member"><span class="tsd-kind-icon">Enumeration member</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-enum"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-enum"><span class="tsd-kind-icon">Method</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-interface"><span class="tsd-kind-icon">Interface</span></li>
+				<li class="tsd-kind-interface tsd-has-type-parameter"><span class="tsd-kind-icon">Interface with type parameter</span></li>
+				<li class="tsd-kind-constructor tsd-parent-kind-interface"><span class="tsd-kind-icon">Constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li>
+				<li class="tsd-kind-index-signature tsd-parent-kind-interface"><span class="tsd-kind-icon">Index signature</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li>
+				<li class="tsd-kind-class tsd-has-type-parameter"><span class="tsd-kind-icon">Class with type parameter</span></li>
+				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class"><span class="tsd-kind-icon">Accessor</span></li>
+				<li class="tsd-kind-index-signature tsd-parent-kind-class"><span class="tsd-kind-icon">Index signature</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static property</span></li>
+				<li class="tsd-kind-call-signature tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static method</span></li>
+			</ul>
+		</div>
+	</div>
+</footer>
+<div class="container tsd-generator">
+	<p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p>
+</div>
+<div class="overlay"></div>
+<script src="assets/js/main.js"></script>
+<script>if (location.protocol == 'file:') document.write('<script src="assets/js/search.js"><' + '/script>');</script>
+</body>
+</html>

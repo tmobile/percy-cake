@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "es2016",
+    "module": "commonjs",
+    "declaration": true,
+    "declarationDir": "dist/types",
+    "moduleResolution": "node",
+    "outDir": "dist",
+    "strict": true,
+    "sourceMap": true,
+    "typeRoots": [
+      "../../node_modules/@types"
+    ],
+    "baseUrl": ".",
+    "types": [
+      "jest",
+      "node"
+    ]
+  },
+  "include": [
+    "src/**/*"
+  ]
+}
