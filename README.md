@@ -14,16 +14,16 @@ _*Build Once, Deploy anywhere.*_
 
 The editor is available in 4 flavors:
 1. [Web Application](#staticAssets)
-2. [Docker container hosting web application](packages/docker/readme.docker.md)
-3. [Electron application](packages/electron/readme.electron.md)
-4. [VSCode extension](packages/vscode/readme.vscode.md)
+2. [Docker container hosting web application](apps/docker/readme.docker.md)
+3. [Electron application](apps/electron/readme.electron.md)
+4. [VSCode extension](apps/vscode/readme.vscode.md)
 
 
 ## Percy Hydration Tools
 
 `npm install percy-cake-hydration-tools`
 
-For more information on how to use the hydration tools please refer to the [hydration tools README](/packages/hydration-script/README.md)
+For more information on how to use the hydration tools please refer to the [hydration tools README](apps/hydration-script/README.md)
 
 # FAQ:
 
@@ -77,7 +77,7 @@ $ npm run webapp:build
 
 ### static assets are located at
 
-`packages/webapp/dist/build/`
+`apps/webapp/dist/build/`
 
 - `favicon.png`
 - `index.html`
@@ -87,22 +87,22 @@ $ npm run webapp:build
 ## 3. Docker container
 
 The Percy editor can be packaged and run as web application within a docker container;
-[click here](packages/docker/readme.docker.md) for more information.
+[click here](apps/docker/readme.docker.md) for more information.
 
 ## 4. VSCode editor extension
 
 The Percy editor can be run as a vscode extension that provides an IDE editor for app config files following the Percy yaml format;
-[click here](packages/vscode/readme.vscode.md) for more information.
+[click here](apps/vscode/readme.vscode.md) for more information.
 
 ## 5. Percy Electron App
 
 The Percy editor can be run as a standalone desktop application;
-[click here](packages/electron/readme.electron.md) for more information
+[click here](apps/electron/readme.electron.md) for more information
 
 ## 6. Percy WebStorm Extension
 
 The Percy editor can be run as a WebStorm extension that provides an IDE editor for app config files following the Percy yaml format;
-[click here](packages/webstorm/README.md) for more information.
+[click here](apps/webstorm/README.md) for more information.
 
 ## Usage
 
@@ -155,9 +155,9 @@ To relieve the impact, we have adopted several ways to reduce file I/O:
 
 There are 3 configuration files:
 
-- [packages/webapp/src/percy.conf.json](packages/webapp/src/percy.conf.json) and [packages/electron/src/percy.conf.json](packages/electron/src/percy.conf.json): configuration used in development
-- [packages/webapp/src/percy.conf.test.json](packages/webapp/src/percy.conf.test.json): configuration used in Karma test
-- [packages/webapp/src/percy.conf.prod.json](packages/webapp/src/percy.conf.prod.json) and [packages/electron/src/percy.conf.prod.json](packages/electron/src/percy.conf.prod.json): for production configuration, which will be copied to `packages/webapp/dist/percy.conf.json` and `packages/webapp/dist/build/percy.conf.json` in the production build
+- [apps/webapp/src/percy.conf.json](apps/webapp/src/percy.conf.json) and [apps/electron/src/percy.conf.json](apps/electron/src/percy.conf.json): configuration used in development
+- [apps/webapp/src/percy.conf.test.json](apps/webapp/src/percy.conf.test.json): configuration used in Karma test
+- [apps/webapp/src/percy.conf.prod.json](apps/webapp/src/percy.conf.prod.json) and [apps/electron/src/percy.conf.prod.json](apps/electron/src/percy.conf.prod.json): for production configuration, which will be copied to `apps/webapp/dist/percy.conf.json` and `apps/webapp/dist/build/percy.conf.json` in the production build
 
 | Variable              | Description                                                                                                                                                  |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
