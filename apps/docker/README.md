@@ -9,16 +9,16 @@ Prerequisite
 
 
 
-Build app (which will build in production mode), the static assets are built under `packages/webapp/dist/build`:
+Build app (which will build in production mode), the static assets are built under `apps/webapp/dist/build`:
 
 ```bash
 $ npm run webapp:build
 
-# After build, 4 files will be generated in 'packages/webapp/dist/build':
+# After build, 4 files will be generated in 'apps/webapp/dist/build':
 # favicon.png
 # index.html
 # percy.bundle.min.js
-# percy.conf.json (which is a copy of packages/webapp/src/percy.conf.prod.json)
+# percy.conf.json (which is a copy of apps/webapp/src/percy.conf.prod.json)
 ```
 
 
@@ -26,7 +26,7 @@ $ npm run webapp:build
 Run docker compose:
 
 ```bash
-docker-compose -f ./packages/docker/docker-compose.yml up --build
+docker-compose -f ./apps/docker/docker-compose.yml up --build
 ```
 
 
