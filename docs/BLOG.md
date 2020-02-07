@@ -14,29 +14,29 @@ While working on one of our projects I saw a great deal of duplication in our ap
 
 ```json
 "url": {
-	"mostPopularDevices":         "https://pd01.api.t-mobile.com/raptor/v1/search-promote/?type=browse&",
-	"productBrowseDetailsLive":   "https://pd01.api.t-mobile.com/raptor/v1/search-promote/?type=browse&pt=Device&ps=Handset",
-	"accessoryBrowseDetailsLive": "https://pd01.api.t-mobile.com/raptor/v1/search-promote/?type=browse&pt=Accessory",
-	"accessories":                "https://pd01.api.t-mobile.com/raptor/v1/search-promote/?type=browse&pt=Accessory&o=",
-	"compatibleAccessory":        "https://pd01.api.t-mobile.com/raptor/v1/search-promote/?type=browse&pt=Accessory&facets=true",
-	"authorization":              "https://pd01.api.t-mobile.com/raptor/v1/oauth/v1/access",
-	"updateProfile":              "https://pd01.api.t-mobile.com/raptor/v1/update-profile",
-	"ShippingOrderFees":          "https://pd01.api.t-mobile.com/raptor/v1/order/fees",
-	"simKitDetails":              "https://pd01.api.t-mobile.com/raptor/v1/productDetails/i-739C46ADBDEE4AE9ADE7BF05D984EAE1",
-	"shippingOptionsUrl":         "https://pd01.api.t-mobile.com/raptor/v1/shipping-option/",
+	"mostPopularDevices":         "https://pod01.api.acme.com/raptor/v1/search-promote/?type=browse&",
+	"productBrowseDetailsLive":   "https://pod01.api.acme.com/raptor/v1/search-promote/?type=browse&pt=Device&ps=Handset",
+	"accessoryBrowseDetailsLive": "https://pod01.api.acme.com/raptor/v1/search-promote/?type=browse&pt=Accessory",
+	"accessories":                "https://pod01.api.acme.com/raptor/v1/search-promote/?type=browse&pt=Accessory&o=",
+	"compatibleAccessory":        "https://pod01.api.acme.com/raptor/v1/search-promote/?type=browse&pt=Accessory&facets=true",
+	"authorization":              "https://pod01.api.acme.com/raptor/v1/oauth/v1/access",
+	"updateProfile":              "https://pod01.api.acme.com/raptor/v1/update-profile",
+	"ShippingOrderFees":          "https://pod01.api.acme.com/raptor/v1/order/fees",
+	"simKitDetails":              "https://pod01.api.acme.com/raptor/v1/productDetails/i-739C46ADBDEE4AE9ADE7BF05D984EAE1",
+	"shippingOptionsUrl":         "https://pod01.api.acme.com/raptor/v1/shipping-option/",
 
-	"creditCardInfo":             "https://pd01.api.t-mobile.com/creditcards/orders",
+	"creditCardInfo":             "https://pod01.api.acme.com/creditcards/orders",
 
-	"checkoutSetAddress":         "https://pd01.api.t-mobile.com/v1/orders/{{orderID}}/address",
-	"creditcheckUrl":             "https://pd01.api.t-mobile.com/v1/orders/creditcheck/",
-	"creditcardUrl":              "https://pd01.api.t-mobile.com/v1/orders/creditcards/",
+	"checkoutSetAddress":         "https://pod01.api.acme.com/v1/orders/{{orderID}}/address",
+	"creditcheckUrl":             "https://pod01.api.acme.com/v1/orders/creditcheck/",
+	"creditcardUrl":              "https://pod01.api.acme.com/v1/orders/creditcards/",
 
-	"getProfile":                 "https://pd01.api.t-mobile.com/v1/profile",
-	"authorableCarousel":         "https://pd01.api.t-mobile.com/v1/products",
+	"getProfile":                 "https://pod01.api.acme.com/v1/profile",
+	"authorableCarousel":         "https://pod01.api.acme.com/v1/products",
 
-	"getDefaultCart":             "https://pd01.api.t-mobile.com/v1/carts",
-	"removeAccessoryFromCart":    "https://pd01.api.t-mobile.com/v1/carts/",
-	"addAccessoryToCart":         "https://pd01.api.t-mobile.com/v1/carts/",
+	"getDefaultCart":             "https://pod01.api.acme.com/v1/carts",
+	"removeAccessoryFromCart":    "https://pod01.api.acme.com/v1/carts/",
+	"addAccessoryToCart":         "https://pod01.api.acme.com/v1/carts/",
 
   "storeLocator": {
     "search":            "kkcdrrnxwk.execute-api.us-west-2.amazonaws.com/dev/prod/getStoresByCoordinates",
@@ -45,8 +45,8 @@ While working on one of our projects I saw a great deal of duplication in our ap
     "storeSearch":       "kcdrrnxwk.execute-api.us-west-2.amazonaws.com/prod/getStoreByName",
     "getInLineReasons":  "kcdrrnxwk.execute-api.us-west-2.amazonaws.com/dev/prod/getReasons",
 
-    "addCustomerV2": "https://api.t-mobile.com/add-customer/v1/addCustomer",
-    "getLeadInfo":   "https://api.t-mobile.com/customer-interaction/v1/get-lead?leadId={{leadId}}",
+    "addCustomerV2": "https://api.acme.com/add-customer/v1/addCustomer",
+    "getLeadInfo":   "https://api.acme.com/customer-interaction/v1/get-lead?leadId={{leadId}}",
     ...
 ```
 
@@ -57,7 +57,7 @@ I tried to solve this problem by creating a hierarchical format to dry the confi
 ```json
 "product": {
   "stage": "http://stage.sp10050e1e.guided.ss-omtrdc.net",
-  "host": "https://pd01.api.t-mobile.com/raptor/v1",
+  "host": "https://pod01.api.acme.com/raptor/v1",
   "browse": {
     "service": "/search-promote/",
     "parameters": {
@@ -76,7 +76,7 @@ getPhoneCatalogUrl =
   config.urls.product.browse.service +
   config.urls.productbrowse.parameters.phone;
 
-// getPhoneCatalogUrl == "https://pd01.api.t-mobile.com/raptor/v1/search-promote/?type=browse&ps=handset/search-promote/?type=browse&ps=handset"
+// getPhoneCatalogUrl == "https://pod01.api.acme.com/raptor/v1/search-promote/?type=browse&ps=handset/search-promote/?type=browse&ps=handset"
 ```
 
 ## The solution:
@@ -93,8 +93,8 @@ With Percy I was able to take 5 configuration files, like the one shown above, a
 
 ```yaml
 default: !!map
-  _apiHost: !!str                 "pd01.api.t-mobile.com"
-  _storeLocatorAPIHost: !!str     "pd03.api.t-mobile.com"
+  _apiHost: !!str                 "pod01.api.acme.com"
+  _storeLocatorAPIHost: !!str     "pod03.api.acme.com"
   _storeLocatorAWSAPIHost: !!str  "kkcdrrnxwk.execute-api.us-west-2.amazonaws.com/dev"
 
   url: !!map
@@ -141,36 +141,36 @@ Then to modify specific attributes for various deployed environments we append a
 environments: !!map
 
   dailydev: !!map
-    _storeLocatorAPIHost:         "pd03.api.t-mobile.com"
+    _storeLocatorAPIHost:         "pod03.api.acme.com"
 
   demo: !!map
-    _apiHost: !!str               "pd02.api.t-mobile.com"
-    _storeLocatorAPIHost: !!str   "pd03.api.t-mobile.com"
+    _apiHost: !!str               "pod02.api.acme.com"
+    _storeLocatorAPIHost: !!str   "pod03.api.acme.com"
 
   devprd: !!map
-    _apiHost: !!str                "qat03-pd.api.t-mobile.com"
+    _apiHost: !!str                "qat.api.acme.com"
     _storeLocatorAWSAPIHost: !!str "md14ltwri9.execute-api.us-west-2.amazonaws.com/dev"
 
   local: !!map
-    _apiHost: !!str               "pd02.api.t-mobile.com"
-    _storeLocatorAPIHost: !!str   "qat03-pd.api.t-mobile.com"
+    _apiHost: !!str               "pod02.api.acme.com"
+    _storeLocatorAPIHost: !!str   "qat.api.acme.com"
 
   prod: !!map
-    _apiHost: !!str                "api.t-mobile.com"
-    _storeLocatorAPIHost: !!str    "api.t-mobile.com"
+    _apiHost: !!str                "api.acme.com"
+    _storeLocatorAPIHost: !!str    "api.acme.com"
     _storeLocatorAWSAPIHost: !!str "onmyj41p3c.execute-api.us-west-2.amazonaws.com/prod"
 
   qat: !!map
-    _apiHost: !!str                "api.t-mobile.com"
-    _storeLocatorAPIHost: !!str    "qat03-pd.api.t-mobile.com"
+    _apiHost: !!str                "api.acme.com"
+    _storeLocatorAPIHost: !!str    "qat.api.acme.com"
 
   qatprd: !!map
-    _apiHost: !!str                "pd03.api.t-mobile.com"
+    _apiHost: !!str                "pod03.api.acme.com"
     _storeLocatorAWSAPIHost: !!str "md14ltwri9.execute-api.us-west-2.amazonaws.com/dev"
 
   stage: !!map
-    _apiHost: !!str                "api.t-mobile.com"
-    _storeLocatorAPIHost: !!str    "api.t-mobile.com"
+    _apiHost: !!str                "api.acme.com"
+    _storeLocatorAPIHost: !!str    "api.acme.com"
   ...
 ```
 

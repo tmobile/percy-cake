@@ -23,7 +23,7 @@ default: !!map
 
   domain:
     dcp:
-      baseURL: !!str https://qat03-pd.api.test.com  # dcp qat03 url
+      baseURL: !!str https://qat.api.test.com  # dcd qat url
       connectionTimeout: 5000
       readTimeout: 30000
       clientId: regf2J8znJpfzOZjSijG9YiWwBtJc0BO
@@ -37,7 +37,7 @@ default: !!map
             key: !!str productCatalog # the base redis key in which data will be stored
 
     middleware:
-      baseURL: !!str https://qattbco533.unix.gsm1900.org:5116/genericesp/soap #middleware qlab03
+      baseURL: !!str https://qattbco533.unix.org:5116/genericesp/soap #middleware qlab
       connectionTimeout: 5000
       readTimeout: 30000
 environments: !!map
@@ -46,13 +46,13 @@ environments: !!map
       middleware:
         baseURL: !!str https://tugs-tx.internal.test.com:443/genericesp/soap  # Production middleware endpoint
       dcp:
-        baseURL: !!str https://qat03-pd.api.test.com  # dcp qat03 url
+        baseURL: !!str https://qat.api.test.com  # dcd qat url
   dev: !!map
     domain:
       middleware:
-        baseURL: !!str https://qattbco533.unix.gsm1900.org:5116/genericesp/soap #middleware qlab03
+        baseURL: !!str https://qattbco533.unix.org:5116/genericesp/soap # middleware qlab
       dcp:
-        baseURL: !!str https://qat03-pd.api.test.com  # dcp qat03 url
+        baseURL: !!str https://qat.api.test.com  # dcd qat url
   local: !!map
     s3:
       url: http://localhost:8000
@@ -64,7 +64,7 @@ environments: !!map
       level: info
     domain:
       middleware:
-        baseURL: !!str https://qattbco533.unix.gsm1900.org:5116/genericesp/soap #middleware qlab03
+        baseURL: !!str https://qattbco533.unix.org:5116/genericesp/soap # middleware qa
       dcp:
         baseURL: !!str http://localhost:3838 #mock-api-server
         endpoints: !!map #collection of endpoints and their properties

@@ -24,7 +24,7 @@
   },
   "domain": {
     "dcp": {
-      "baseURL": "https://qat03-pd.api.test.com",
+      "baseURL": "https://qat.api.test.com",
       "connectionTimeout": 5000,
       "readTimeout": 30000,
       "clientId": "regf2J8znJpfzOZjSijG9YiWwBtJc0BO",

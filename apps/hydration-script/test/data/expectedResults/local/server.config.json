@@ -41,7 +41,7 @@
       }
     },
     "middleware": {
-      "baseURL": "https://qattbco533.unix.gsm1900.org:5116/genericesp/soap",
+      "baseURL": "https://qattbco533.unix.org:5116/genericesp/soap",
       "connectionTimeout": 5000,
       "readTimeout": 30000
     }

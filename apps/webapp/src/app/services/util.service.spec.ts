@@ -57,7 +57,7 @@ default: !!map  # all known properties are defined in the default block.
   appVer: !!str "0.1.0"  # appVer comment line1
     # appVer comment line2
   host: !!str "www.mobilex.com"  # The url domain for the deployed environment
-  dataService: !!str "pd01.mobilex.com/data"  # url to access JSON Web API
+  dataService: !!str "pod01.mobilex.com/data"  # url to access JSON Web API
   myProp: !!bool true  # myProp comment line1
     # myProp comment line2
     #
@@ -72,7 +72,7 @@ environments: !!map  # specific environments can override the default values 1 p
         item2A: !!str "value2A"  #### value2A comment #####
         item2B: !!str "value2B"  # value2B comment
     host: !!str "{{api.host}}.mobilex.com"
-    dataService: !!str "pd03.mobilex.com/data"  # 'qat dataService'
+    dataService: !!str "pod03.mobilex.com/data"  # 'qat dataService'
   local: !!map  # local comment line1
     # local comment line2
     host: !!str "localhost"

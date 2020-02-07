@@ -24,7 +24,7 @@
   },
   "domain": {
     "dcp": {
-      "baseURL": "https://qat03-pd.api.test.com",
+      "baseURL": "https://qat-pd.api.test.com",
       "connectionTimeout": 5000,
       "readTimeout": 30000,
       "clientId": "regf2J8znJpfzOZjSijG9YiWwBtJc0BO",
@@ -41,7 +41,7 @@
       }
     },
     "middleware": {
-      "baseURL": "https://qattbco533.unix.gsm1900.org:5116/genericesp/soap",
+      "baseURL": "https://qattbco533.unix.org:5116/genericesp/soap",
       "connectionTimeout": 5000,
       "readTimeout": 30000
     }
