@@ -24,7 +24,7 @@
   "mac": {
     "icon": "media/appicon.512x512.png",
     "target": [
-      "pkg"
+      "dmg"
     ]
   },
   "linux": {
