@@ -215,16 +215,23 @@ describe("FileManagementService", () => {
     ).toEqual(sha);
   };
 
+  const assertMetadata = (user, metadata) => {
+    expect(user.branchName).toEqual(metadata.branchName);
+    expect(user.repoFolder).toEqual(metadata.repoFolder);
+    expect(user.repoName).toEqual(metadata.repoName);
+    expect(user.repositoryUrl).toEqual(metadata.repositoryUrl);
+    expect(user.token).toEqual(metadata.token);
+    expect(user.username).toEqual(metadata.username);
+    expect({}).toEqual(metadata.commitBaseSHA);
+    expect(percyConfig.repoMetadataVersion).toEqual(metadata.version);
+  };
+
   it("should clone repo successfully", async () => {
     const user = await fileService.accessRepo(TestUser);
 
     // Repo metadata should be written
     const metadata = await fs.readJson(repoMetadataFile);
-    expect({
-      ..._.omit(user, "password"),
-      commitBaseSHA: {},
-      version: percyConfig.repoMetadataVersion
-    }).toEqual(_.omit(metadata, "password"));
+    assertMetadata(user, metadata);
 
     expect(cloneStub.calls.count()).toEqual(1);
 
@@ -308,11 +315,7 @@ describe("FileManagementService", () => {
 
     // Repo metadata should be written
     const metadata = await fs.readJson(repoMetadataFile);
-    expect({
-      ..._.omit(user, "password"),
-      commitBaseSHA: {},
-      version: percyConfig.repoMetadataVersion
-    }).toEqual(_.omit(metadata, "password"));
+    assertMetadata(user, metadata);
 
     expect(fetchStub.calls.count()).toEqual(1);
     expect(fetchStub.calls.first().args[0].singleBranch).toBeFalsy();
