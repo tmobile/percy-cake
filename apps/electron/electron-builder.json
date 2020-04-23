@@ -4,6 +4,7 @@
   "directories": {
     "output": "release"
   },
+  "electronVersion": "3.1.13",
   "artifactName": "${productName}-${os}-${arch}.${ext}",
   "asar": true,
   "files": [
