@@ -10,10 +10,6 @@
     flex: 1;
 }
 
-.split-tree-view .tree-view .underline .value {
-	color: #fff;
-}
-
 .split-tree-view .tree-view .underline .btn-action {
 	color: #fff;
 	position: static;

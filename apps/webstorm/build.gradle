@@ -1,10 +1,10 @@
 plugins {
     id 'java'
-    id 'org.jetbrains.intellij' version '0.4.9'
+    id 'org.jetbrains.intellij' version '0.4.22'
 }
 
 group 'com.tmobile'
-version '1.0-SNAPSHOT'
+version '1.1-SNAPSHOT'
 
 apply plugin: 'java'
 apply plugin: 'org.jetbrains.intellij'
@@ -19,10 +19,11 @@ repositories {
 dependencies {
   compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.9'
   compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.9.9'
+  compile group: 'org.json', name: 'json', version: '20200518'
 }
 
 intellij {
-  version 'IC-2017.2'
+  version 'IC-2020.2'
   pluginName 'PercyEditor'
   updateSinceUntilBuild false
   downloadSources true
