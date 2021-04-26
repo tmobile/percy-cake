@@ -103,7 +103,7 @@ export async function loadEnvironmentsFile(
  */
 async function readYAML(filepath: string): Promise<object> {
   const file = await fs.readFile(filepath, "utf8");
-  return yaml.safeLoad(file);
+  return yaml.load(file);
 }
 
 /**
