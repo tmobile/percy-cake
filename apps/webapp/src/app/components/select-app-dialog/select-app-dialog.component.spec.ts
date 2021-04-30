@@ -1,4 +1,4 @@
-import { Setup, TestContext } from "test/test-helper";
+import { SETUP, TestContext } from "test/test-helper";
 
 import { percyConfig } from "config";
 import { FileTypes } from "models/config-file";
@@ -7,7 +7,7 @@ import { SelectAppDialogComponent } from "./select-app-dialog.component";
 
 describe("SelectAppDialogComponent", () => {
 
-  const setup = Setup(SelectAppDialogComponent, false);
+  const setup = SETUP(SelectAppDialogComponent, false);
 
   let ctx: TestContext<SelectAppDialogComponent>;
   beforeEach(() => {

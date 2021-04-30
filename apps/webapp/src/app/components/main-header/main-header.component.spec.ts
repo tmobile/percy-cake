@@ -1,4 +1,4 @@
-import { Setup, TestContext, assertDialogOpened, TestUser } from "test/test-helper";
+import { SETUP, TestContext, assertDialogOpened, TEST_USER } from "test/test-helper";
 import * as AuthActions from "store/actions/auth.actions";
 import { Initialized } from "store/actions/backend.actions";
 import { Principal } from "models/auth";
@@ -8,8 +8,8 @@ import { MainHeaderComponent } from "./main-header.component";
 
 describe("MainHeaderComponent", () => {
 
-  const setup = Setup(MainHeaderComponent, false);
-  const branches = [TestUser.branchName, "branch1", "branch2"];
+  const setup = SETUP(MainHeaderComponent, false);
+  const branches = [TEST_USER.branchName, "branch1", "branch2"];
 
   let fileService: FileManagementService;
   let ctx: TestContext<MainHeaderComponent>;
@@ -20,18 +20,19 @@ describe("MainHeaderComponent", () => {
     dispatchSpy = spyOn(ctx.store, "dispatch");
 
     fileService = ctx.resolve(FileManagementService);
-    spyOn(fileService, "listBranches").and.returnValue(branches);
-    spyOn(fileService, "getFiles").and.returnValue({ files: [], applications: [] });
+    spyOn(fileService, "listBranches").and.returnValue(Promise.resolve(branches));
+    spyOn(fileService, "getFiles").and.returnValue(
+        Promise.resolve({ appConfigs: {}, canPullRequest: false, canSyncMaster: false, files: [], applications: [] }));
 
     const principal: Principal = {
-      user: { ...TestUser },
-      repoMetadata: { ...TestUser, version: "1.0", commitBaseSHA: {} }
+      user: { ...TEST_USER },
+      repoMetadata: { ...TEST_USER, version: "1.0", commitBaseSHA: {} }
     };
     ctx.store.next(new Initialized({ principal }));
 
     ctx.component.getBranches();
 
-    await ctx.fixture.whenStable();
+    await ctx.asyncWait();
   });
 
   it("should create MainHeaderComponent", () => {
@@ -40,7 +41,7 @@ describe("MainHeaderComponent", () => {
 
   it("should get branches and current branch name", async () => {
     expect(ctx.component.branches).toEqual(branches);
-    expect(ctx.component.currentBranchName).toEqual(TestUser.branchName);
+    expect(ctx.component.currentBranchName).toEqual(TEST_USER.branchName);
   });
 
   it("should switch branch successfully", () => {

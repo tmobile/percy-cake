@@ -48,7 +48,7 @@ export const initialState: State = {
   isPageDirty: false,
 };
 
-export function reducer(state = initialState, action: EditorActionsUnion | BackendActionsUnion): State {
+export const reducer = (state = initialState, action: EditorActionsUnion | BackendActionsUnion): State => {
   switch (action.type) {
     case EditorActionTypes.PageRestore: {
       return {
@@ -186,7 +186,7 @@ export function reducer(state = initialState, action: EditorActionsUnion | Backe
       return state;
     }
   }
-}
+};
 
 export const getConfigFile = (state: State) => state.configFile;
 export const getConfiguration = (state: State) => state.configuration;

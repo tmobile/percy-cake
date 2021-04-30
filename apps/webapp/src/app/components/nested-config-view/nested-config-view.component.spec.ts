@@ -1,16 +1,15 @@
-import { Setup, assertDialogOpened, TestContext, utilService } from "test/test-helper";
+import { SETUP, assertDialogOpened, TestContext, utilService } from "test/test-helper";
 
 import { NestedConfigViewComponent } from "./nested-config-view.component";
 import { ConfirmationDialogComponent } from "../confirmation-dialog/confirmation-dialog.component";
-import { PROPERTY_VALUE_TYPES } from "config";
-import { ConfigProperty } from "models/config-property";
+import { ConfigProperty, PROPERTY_VALUE_TYPES } from "models/tree-node";
 import { Configuration } from "models/config-file";
 import { TreeNode } from "models/tree-node";
 
 describe("NestedConfigViewComponent", () => {
   const environments = ["dev", "qat"];
 
-  const setup = Setup(NestedConfigViewComponent, false);
+  const setup = SETUP(NestedConfigViewComponent, false);
 
   let ctx: TestContext<NestedConfigViewComponent>;
 
@@ -61,7 +60,7 @@ describe("NestedConfigViewComponent", () => {
     ctx.component.environments = environments;
     ctx.component.envFileMode = false;
     ctx.component.ngOnChanges({
-      configuration: <any>{}
+      configuration: {} as any
     });
   });
 
@@ -594,7 +593,7 @@ describe("NestedConfigViewComponent", () => {
     const refNode2 = new TreeNode("url", PROPERTY_VALUE_TYPES.STRING, "http://test2");
     config.environments.findChild(["dev"]).addChild(refNode2);
     ctx.component.ngOnChanges({
-      configuration: <any>{}
+      configuration: {} as any
     });
 
     ctx.component.scrollToReferenceNode(new Event("click"), refNode2);
@@ -603,7 +602,7 @@ describe("NestedConfigViewComponent", () => {
     const refNode3 = new TreeNode("url", PROPERTY_VALUE_TYPES.STRING, "http://test");
     config.environments.findChild(["qa"]).addChild(refNode3);
     ctx.component.ngOnChanges({
-      configuration: <any>{}
+      configuration: {} as any
     });
 
     ctx.component.scrollToReferenceNode(new Event("click"), refNode3);

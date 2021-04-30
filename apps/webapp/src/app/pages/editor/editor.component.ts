@@ -28,7 +28,7 @@ import {
   HostListener
 } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
-import { MatDialog } from "@angular/material";
+import { MatDialog } from "@angular/material/dialog";
 import { map } from "rxjs/operators";
 
 import { Store, select } from "@ngrx/store";
@@ -88,6 +88,7 @@ export class EditorPageComponent implements OnInit, OnDestroy {
 
   /**
    * creates the component
+   *
    * @param route the route
    * @param store the app store instance
    * @param dialog the mat dialog service
@@ -129,7 +130,7 @@ export class EditorPageComponent implements OnInit, OnDestroy {
     this.store.dispatch(
       new PageLoad({
         fileName: this.fileName,
-        fileType: <FileTypes>this.fileType,
+        fileType: this.fileType as FileTypes,
         applicationName,
         editMode: this.editMode
       })
@@ -161,6 +162,7 @@ export class EditorPageComponent implements OnInit, OnDestroy {
 
   /**
    * Checks if component can be deactivated
+   *
    * @returns true component can be deactivated, false otherwise
    */
   canDeactivate() {

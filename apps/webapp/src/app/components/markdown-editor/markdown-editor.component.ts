@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, Input, Output, EventEmitter } from "@angular/core";
+import { Component, OnDestroy, ViewChild, ElementRef, Input, Output, EventEmitter, AfterViewInit } from "@angular/core";
 import { Subscription } from "rxjs";
 import * as SimpleMDE from "simplemde";
 
@@ -8,7 +8,7 @@ import * as SimpleMDE from "simplemde";
   templateUrl: "./markdown-editor.component.html",
   styleUrls: ["./markdown-editor.component.scss"]
 })
-export class MarkdownEditorComponent implements OnInit, OnDestroy {
+export class MarkdownEditorComponent implements AfterViewInit, OnDestroy {
 
   @ViewChild("simplemde") textarea: ElementRef;
 
@@ -20,7 +20,7 @@ export class MarkdownEditorComponent implements OnInit, OnDestroy {
 
   constructor() { }
 
-  ngOnInit() {
+  ngAfterViewInit() {
     this.initMdEditor();
   }
 

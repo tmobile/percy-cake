@@ -21,7 +21,7 @@ software without specific prior written permission.
 ===========================================================================
 */
 
-import { StoreTestComponent, Setup, TestContext } from "test/test-helper";
+import { StoreTestComponent, SETUP, TestContext } from "test/test-helper";
 
 import { FileManagementService } from "services/file-management.service";
 import { ConfigFile, Configuration } from "models/config-file";
@@ -41,15 +41,15 @@ const file1: ConfigFile = {
 describe("Dashboard store action/effect/reducer", () => {
   let ctx: TestContext<StoreTestComponent>;
 
-  const setup = Setup(StoreTestComponent);
+  const setup = SETUP(StoreTestComponent);
 
   beforeEach(() => {
     ctx = setup();
     const fileService = ctx.resolve(FileManagementService);
-    spyOn(fileService, "getFiles").and.returnValue({ files: [file1], applications: ["app1"] });
-    spyOn(fileService, "commitFiles").and.returnValue([file1]);
-    spyOn(fileService, "saveDraft").and.returnValue(file1);
-    spyOn(fileService, "deleteFile").and.returnValue(false);
+    spyOn(fileService, "getFiles").and.returnValue(Promise.resolve({ files: [file1], applications: ["app1"] }));
+    spyOn(fileService, "commitFiles").and.returnValue(Promise.resolve([file1]));
+    spyOn(fileService, "saveDraft").and.returnValue(Promise.resolve(file1));
+    spyOn(fileService, "deleteFile").and.returnValue(Promise.resolve(false));
   });
 
   it("SelectApp action should be successful", async () => {

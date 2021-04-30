@@ -22,6 +22,6 @@ software without specific prior written permission.
 */
 
 export default interface IAppConfig {
-  default: object;
-  environments: object;
+  default: Record<string, unknown>;
+  environments: Record<string, unknown>;
 }

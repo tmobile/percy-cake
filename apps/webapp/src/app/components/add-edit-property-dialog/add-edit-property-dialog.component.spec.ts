@@ -1,14 +1,13 @@
 import * as _ from "lodash";
-import { Setup, TestContext, assertDialogOpened } from "test/test-helper";
+import { SETUP, TestContext, assertDialogOpened } from "test/test-helper";
 
-import { PROPERTY_VALUE_TYPES } from "config";
-import { TreeNode } from "models/tree-node";
+import { TreeNode, PROPERTY_VALUE_TYPES } from "models/tree-node";
 import { ConfirmationDialogComponent } from "../confirmation-dialog/confirmation-dialog.component";
 
 import { AddEditPropertyDialogComponent } from "./add-edit-property-dialog.component";
 
 describe("AddEditPropertyDialogComponent", () => {
-  const setup = Setup(AddEditPropertyDialogComponent, false);
+  const setup = SETUP(AddEditPropertyDialogComponent, false);
 
   let ctx: TestContext<AddEditPropertyDialogComponent>;
   let dispatchSpy: jasmine.Spy;
@@ -808,7 +807,7 @@ describe("AddEditPropertyDialogComponent", () => {
 
     assertDialogOpened(ConfirmationDialogComponent, {
       data: {
-        confirmationText: 'You have changed the value type, the corresponding property will be removed from all environments. Do you still want to make the change?' // tslint:disable-line
+        confirmationText: 'You have changed the value type, the corresponding property will be removed from all environments. Do you still want to make the change?' // eslint-disable-line
       }
     });
 

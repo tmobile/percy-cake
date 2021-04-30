@@ -39,7 +39,7 @@ export const initialState: State = {
   redirectUrl: null,
 };
 
-export function reducer(state = initialState, action: AuthActionsUnion|CheckoutSuccess): State {
+export const reducer = (state = initialState, action: AuthActionsUnion|CheckoutSuccess): State => {
   switch (action.type) {
 
     case AuthActionTypes.Login: {
@@ -92,7 +92,7 @@ export function reducer(state = initialState, action: AuthActionsUnion|CheckoutS
       return state;
     }
   }
-}
+};
 
 export const getCurrentUser = (state: State) => state.currentUser;
 export const getError = (state: State) => state.loginError;

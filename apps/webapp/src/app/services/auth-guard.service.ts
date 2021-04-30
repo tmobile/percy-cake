@@ -42,6 +42,7 @@ import { UtilService } from "./util.service";
 export class AuthGuardService implements CanActivate {
   /**
    * initializes the service
+   *
    * @param store the store instance
    * @param utilService the util service
    */
@@ -52,6 +53,7 @@ export class AuthGuardService implements CanActivate {
 
   /**
    * implements guard deciding if a child route which required authentication can be activated or not
+   *
    * @param route the route associated with a component load.
    * @param state the state of the router at a moment in time.
    */

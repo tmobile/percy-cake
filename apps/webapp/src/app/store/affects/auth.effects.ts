@@ -22,7 +22,7 @@ software without specific prior written permission.
 
 import { Injectable } from "@angular/core";
 import { Store, select } from "@ngrx/store";
-import { Actions, Effect, ofType } from "@ngrx/effects";
+import { Actions, createEffect, ofType } from "@ngrx/effects";
 import { exhaustMap, map, withLatestFrom } from "rxjs/operators";
 import * as _ from "lodash";
 
@@ -48,8 +48,7 @@ export class AuthEffects {
   ) {}
 
   // login request effect
-  @Effect()
-  login$ = this.actions$.pipe(
+  login$ = createEffect(() => this.actions$.pipe(
     ofType<Login>(AuthActionTypes.Login),
     map(action => action.payload),
     exhaustMap(async (authInfo: Authenticate) => {
@@ -60,27 +59,24 @@ export class AuthEffects {
         return new LoginFailure(error);
       }
     })
-  );
+  ));
 
   // login success effect
-  @Effect()
-  loginSuccess$ = this.actions$.pipe(
+  loginSuccess$ = createEffect(() => this.actions$.pipe(
     ofType<LoginSuccess>(AuthActionTypes.LoginSuccess),
     withLatestFrom(this.store.pipe(select(appStore.getRedirectUrl))),
     map(([_action, redirectUrl]) => new Navigate([redirectUrl || "/dashboard"]))
-  );
+  ));
 
   // login redirect effect
-  @Effect()
-  loginRedirect$ = this.actions$.pipe(
+  loginRedirect$ = createEffect(() => this.actions$.pipe(
     ofType(AuthActionTypes.LoginRedirect, AuthActionTypes.LogoutSuccess),
     map(() => new Navigate(["/login"]))
-  );
+  ));
 
   // logout request effect
-  @Effect()
-  logout$ = this.actions$.pipe(
+  logout$ = createEffect(() => this.actions$.pipe(
     ofType(AuthActionTypes.Logout),
     map(() => new LogoutSuccess())
-  );
+  ));
 }

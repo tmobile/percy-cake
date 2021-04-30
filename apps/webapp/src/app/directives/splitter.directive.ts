@@ -32,7 +32,7 @@ import {
 
 import { Subject, Subscription } from "rxjs";
 
-import Split from "split.js";
+import Split from "split.js/dist/split.es.js";
 
 @Directive({
   selector: "[appSplit]"
@@ -58,6 +58,7 @@ export class SplitDirective implements OnDestroy {
 
   /**
    * Add area.
+   *
    * @param area the split area to add
    */
   public addArea(area) {
@@ -83,6 +84,7 @@ export class SplitDirective implements OnDestroy {
 
   /**
    * Get options.
+   *
    * @returns options
    */
   private getOptions() {
@@ -106,11 +108,9 @@ export class SplitDirective implements OnDestroy {
     }
 
     if (this.splitFlexLayout) {
-      options.elementStyle = function(_dimension, size, gutterSize) {
-        return {
+      options.elementStyle = (_dimension, size, gutterSize) => ({
           "flex-basis": "calc(" + size + "% - " + gutterSize + "px)"
-        };
-      };
+        });
     }
 
     options.onDrag = () => {
@@ -136,6 +136,7 @@ export class SplitAreaDirective implements OnInit {
 
   /**
    * Constructor.
+   *
    * @param split The parent split directive
    * @param el The element reference to this area
    */

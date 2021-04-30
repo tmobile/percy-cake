@@ -110,6 +110,7 @@ export class PathFinder {
 export class FileManagementService {
   /**
    * initializes the service
+   *
    * @param utilService the util service
    * @param maintenanceService the maintenance service
    */
@@ -120,6 +121,7 @@ export class FileManagementService {
 
   /**
    * access the repository and receives the security token to be used in subsequent requests
+   *
    * @param auth the authenticate request
    * @param repo the repo
    */
@@ -410,16 +412,14 @@ export class FileManagementService {
       await this.writeHeadRef(repoDir, branch);
 
       try {
-        await this.doPush(fs, user, repoDir, branch, commit, async () => {
-          return await git.commit({
+        await this.doPush(fs, user, repoDir, branch, commit, async () => await git.commit({
             dir: repoDir,
             message: `[Percy] Create Branch ${branch}`,
             author: {
               name: user.username,
               email: user.username
             }
-          });
-        });
+          }));
       } catch (err) {
         await this.writeHeadRef(repoDir, previsouBranch);
         await git.deleteRef({
@@ -472,7 +472,7 @@ export class FileManagementService {
         });
         return r;
       },
-      <{ [key: string]: ConfigFile }>{}
+      {} as { [key: string]: ConfigFile }
     );
   }
 
@@ -520,10 +520,10 @@ export class FileManagementService {
       let parents: string[];
 
       try {
-        const commit = <git.CommitDescription>(await git.readObject({
+        const commit = (await git.readObject({
           dir: repoDir,
           oid: commitOid
-        })).object;
+        })).object as git.CommitDescription;
         // In case of merge commit which has 2 parents, the second parent represents tip common state and should come first
         parents = _.reverse(commit.parent);
       } catch (err) {
@@ -554,7 +554,7 @@ export class FileManagementService {
     const base =
       (await walkHistroy(targetCommitOid, targetHistory, srcHistory)) ||
       (await walkHistroy(srcCommitOid, srcHistory, targetHistory));
-    console.info( // tslint:disable-line
+    console.info( // eslint-disable-line
       `Merge base for source commit ${srcCommitOid} and target commit ${targetCommitOid}: ${base}`
     );
     return base;
@@ -656,6 +656,7 @@ export class FileManagementService {
 
   /**
    * Get branch diff which are elegible to be merged into target branch.
+   *
    * @param principal the logged in user principal
    * @param srcBranch the source branch
    * @param targetBranch the target branch
@@ -725,6 +726,7 @@ export class FileManagementService {
 
   /**
    * Merge source branch into target branch.
+   *
    * @param principal the logged in user principal
    * @param srcBranch the source branch
    * @param targetBranch the target branch
@@ -770,10 +772,10 @@ export class FileManagementService {
             email: user.username
           }
         });
-        const commit = <git.CommitDescription>(await git.readObject({
+        const commit = (await git.readObject({
           dir: repoDir,
           oid: commitOid
-        })).object;
+        })).object as git.CommitDescription;
         commit.parent.push(sourceCommit);
 
         const mergeCommitOid = await git.writeObject({
@@ -789,6 +791,7 @@ export class FileManagementService {
 
   /**
    * Sync head commit oid with remote commit oid.
+   *
    * @param repoDir the repo dir
    * @param src the source remote branch
    * @param target the target branch to update its head
@@ -804,6 +807,7 @@ export class FileManagementService {
 
   /**
    * Write head reference in .git/HEAD to given branch.
+   *
    * @param repoDir the repo dir
    * @param branch the branch name
    */
@@ -819,6 +823,7 @@ export class FileManagementService {
 
   /**
    * Write head commit oid in .git/refs/heads/{branch}.
+   *
    * @param repoDir the repo dir
    * @param branch the branch name
    * @param commitOid the commit oid
@@ -838,6 +843,7 @@ export class FileManagementService {
 
   /**
    * Write remote commit oid in .git/refs/remotes/origin/{branch}.
+   *
    * @param repoDir the repo dir
    * @param branch the branch name
    * @param commitOid the commit oid
@@ -908,6 +914,7 @@ export class FileManagementService {
 
   /**
    * get the app environments and percy config
+   *
    * @param principal the logged in user principal
    * @param applicationName the app name
    * @returns app environments and percy config
@@ -935,7 +942,7 @@ export class FileManagementService {
 
       const config = envFile.draftConfig || envFile.originalConfig;
       return _.map(
-        _.get(config.environments, "children", <TreeNode[]>[]),
+        _.get(config.environments, "children", [] as TreeNode[]),
         child => child.key
       );
     };
@@ -1015,12 +1022,12 @@ export class FileManagementService {
 
     if (depth === 0) {
       const { object: commit } = await git.readObject({ dir, oid: commitOid });
-      treeOid = (<CommitDescription>commit).tree;
+      treeOid = (commit as CommitDescription).tree;
     }
 
     const { object: tree } = await git.readObject({ dir, oid: treeOid });
 
-    for (const entry of (<TreeDescription>tree).entries) {
+    for (const entry of (tree as TreeDescription).entries) {
       if (depth === 0) {
         if (
           entry.path === percyConfig.yamlAppsFolder &&
@@ -1284,6 +1291,7 @@ export class FileManagementService {
 
   /**
    * get file content of provided file path
+   *
    * @param user the logged in user
    * @param file the file to get its draft and original content
    */
@@ -1480,6 +1488,7 @@ export class FileManagementService {
 
   /**
    * Read file content from repo.
+   *
    * @param repoDir the repo dir
    * @param commitOid the commit oid
    * @param filepath the file path
@@ -1509,6 +1518,7 @@ export class FileManagementService {
 
   /**
    * Check if file exists in repo.
+   *
    * @param repoDir the repo dir
    * @param commitOid the commit oid
    * @param filepath the file path
@@ -1537,6 +1547,7 @@ export class FileManagementService {
 
   /**
    * deletes the file within the given location from the repository
+   *
    * @param auth the logged in user
    * @param file the file to delete
    */
@@ -1716,6 +1727,7 @@ export class FileManagementService {
 
   /**
    * Commits the files
+   *
    * @param auth the logged in user
    * @param configFiles the config files to commit
    * @param message the commit message
@@ -1888,6 +1900,7 @@ export class FileManagementService {
 
   /**
    * Resolve conflicts
+   *
    * @param auth the logged in user
    * @param configFiles the config files to commit
    * @param message the commit message

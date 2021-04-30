@@ -1,5 +1,5 @@
 angular.json
-tslint.json
+.eslintrc.json
 readme.vscode.md
 src
 extension

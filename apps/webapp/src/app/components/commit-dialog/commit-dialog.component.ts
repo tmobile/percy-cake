@@ -22,7 +22,7 @@ software without specific prior written permission.
 */
 
 import { Component } from "@angular/core";
-import { MatDialogRef } from "@angular/material";
+import { MatDialogRef } from "@angular/material/dialog";
 import { FormControl } from "@angular/forms";
 import * as _ from "lodash";
 
@@ -41,6 +41,7 @@ export class CommitDialogComponent {
 
   /**
    * initializes the component
+   *
    * @param dialogRef the reference to a dialog opened via the MatDialog service
    */
   constructor(public dialogRef: MatDialogRef<CommitDialogComponent>) {}

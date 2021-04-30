@@ -3,7 +3,7 @@ import { FormControl, Validators } from "@angular/forms";
 import { combineLatest, Subscription } from "rxjs";
 import { map } from "rxjs/operators";
 import { Store, select } from "@ngrx/store";
-import { MatInput } from "@angular/material";
+import { MatInput } from "@angular/material/input";
 import * as _ from "lodash";
 
 import * as appStore from "store";
@@ -130,6 +130,7 @@ export class TextEditorComponent implements OnInit, OnChanges, OnDestroy {
   /**
    * returns the filename as validation result,
    * if filename is invalid (for a new file), then it returns null and focuses on the filename input
+   *
    * @return validation result.
    */
   validate() {
@@ -157,6 +158,7 @@ export class TextEditorComponent implements OnInit, OnChanges, OnDestroy {
 
   /**
    * Get normalized file name, only for markdown files
+   *
    * @returns normalized file name.
    */
   getFileName() {

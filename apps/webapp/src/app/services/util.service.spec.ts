@@ -22,10 +22,10 @@ software without specific prior written permission.
 
 import * as cheerio from "cheerio";
 
-import { TreeNode } from "models/tree-node";
+import { TreeNode, PROPERTY_VALUE_TYPES } from "models/tree-node";
 import { Configuration } from "models/config-file";
-import { PROPERTY_VALUE_TYPES, percyConfig } from "config";
-import { TestUser, utilService } from "test/test-helper";
+import { percyConfig } from "config";
+import { TEST_USER, utilService } from "test/test-helper";
 
 import { git } from "./util.service";
 
@@ -772,10 +772,10 @@ envstr: !!str "prod/file.json"`
   });
 
   it("should get repo folder", () => {
-    const { repoName, repoFolder } = utilService.getRepoFolder(TestUser);
+    const { repoName, repoFolder } = utilService.getRepoFolder(TEST_USER);
 
-    expect(repoName).toEqual(TestUser.repoName);
-    expect(repoFolder).toEqual(TestUser.repoFolder);
+    expect(repoName).toEqual(TEST_USER.repoName);
+    expect(repoFolder).toEqual(TEST_USER.repoFolder);
   });
 
   it("should highlight variable correctly", () => {
@@ -866,42 +866,42 @@ envstr: !!str "prod/file.json"`
     config.environments.addChild(new TreeNode("dev"));
 
     const variableConfig = {
-      "key1": {
+      key1: {
         cascadedValue: nodeKey1.value,
         hasError: false,
         referenceNode: nodeKey1
       },
-      "key2": {
+      key2: {
         cascadedValue: nodeKey2.value,
         hasError: false,
         referenceNode: nodeKey2
       },
-      "key3": {
+      key3: {
         cascadedValue: nodeKey3.value,
         hasError: false,
         referenceNode: nodeKey3
       },
-      "key4": {
+      key4: {
         cascadedValue: nodeKey1.value,
         hasError: false,
         referenceNode: nodeKey4
       },
-      "keyUndefined": {
+      keyUndefined: {
         cascadedValue: nodeKeyUndefined.value,
         hasError: false,
         referenceNode: nodeKeyUndefined
       },
-      "var3": {
+      var3: {
         cascadedValue: LOOP_VARIABLE_ERROR,
         hasError: true,
         referenceNode: nodeVar3
       },
-      "var2": {
+      var2: {
         cascadedValue: LOOP_VARIABLE_ERROR,
         hasError: true,
         referenceNode: nodeVar2
       },
-      "var1": {
+      var1: {
         cascadedValue: LOOP_VARIABLE_ERROR,
         hasError: true,
         referenceNode: nodeVar1
@@ -909,13 +909,13 @@ envstr: !!str "prod/file.json"`
     };
     expect(utilService.getEnvsVariablesConfig(config))
     .toEqual({
-      "default": {
+      default: {
         ...variableConfig,
         [percyConfig.envVariableName]: {
           cascadedValue: "default"
         }
       },
-      "dev": {
+      dev: {
         ...variableConfig,
         [percyConfig.envVariableName]: {
           cascadedValue: "dev"

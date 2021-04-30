@@ -22,7 +22,18 @@ software without specific prior written permission.
 
 import * as _ from "lodash";
 
-import { PROPERTY_VALUE_TYPES } from "config";
+
+// property value type options
+export enum PROPERTY_VALUE_TYPES {
+    STRING = "string",
+    BOOLEAN = "boolean",
+    NUMBER = "number",
+    OBJECT = "object",
+    STRING_ARRAY = "string[]",
+    NUMBER_ARRAY = "number[]",
+    BOOLEAN_ARRAY = "boolean[]",
+    OBJECT_ARRAY = "object[]"
+}
 
 /**
  * Tree node data with nested structure. Each node has a key and value type, and depends on value type
@@ -37,6 +48,7 @@ export class TreeNode {
 
   /**
    * Creates a new tree node.
+   *
    * @param key the key of node
    * @param valueType the type of node, defaults to be 'object'
    * @param value the value of node
@@ -55,6 +67,7 @@ export class TreeNode {
 
   /**
    * Check if the given type represetns a leaf type.
+   *
    * @param type the type to check
    * @returns true if given type is string/boolean/number, false otherwise
    */
@@ -68,6 +81,7 @@ export class TreeNode {
 
   /**
    * Get anchor names of this node and its decendants.
+   *
    * @returns array of anchor names
    */
   getAnchors() {
@@ -85,6 +99,7 @@ export class TreeNode {
 
   /**
    * Find node of given anchor name.
+   *
    * @param anchor The anchor name
    * @returns found node
    */
@@ -101,10 +116,12 @@ export class TreeNode {
         }
       }
     }
+    return undefined;
   }
 
   /**
    * Add child.
+   *
    * @param child the child to add
    */
   addChild(child: TreeNode) {
@@ -115,6 +132,7 @@ export class TreeNode {
 
   /**
    * Check if this node represetns a leaf node.
+   *
    * @returns true if this node's type is string/boolean/number, false otherwise
    */
   isLeaf() {
@@ -123,6 +141,7 @@ export class TreeNode {
 
   /**
    * Check if this node represetns an object item in array.
+   *
    * @returns true if this represetns an object item in array, false otherwise
    */
   isObjectInArray() {
@@ -135,6 +154,7 @@ export class TreeNode {
 
   /**
    * Check if this node represetns an array node.
+   *
    * @returns true if this node's type is string[]/boolean[]/number[]/object[]/array, false otherwise
    */
   isArray() {
@@ -149,6 +169,7 @@ export class TreeNode {
 
   /**
    * Get array item type.
+   *
    * @returns array item type
    */
   getArrayItemType() {
@@ -161,11 +182,14 @@ export class TreeNode {
         return PROPERTY_VALUE_TYPES.NUMBER;
       case PROPERTY_VALUE_TYPES.OBJECT_ARRAY:
         return PROPERTY_VALUE_TYPES.OBJECT;
+      default:
+        return undefined;
     }
   }
 
   /**
    * Get string representation of comments array, and truncate it to 300 characters if truncated is true
+   *
    * @param truncated  optional parameter which if true the comment string should be truncated
    * @returns comment string
    */
@@ -181,6 +205,7 @@ export class TreeNode {
 
   /**
    * Get level of this node (root node has level 0).
+   *
    * @returns level of this node
    */
   getLevel() {
@@ -195,6 +220,7 @@ export class TreeNode {
 
   /**
    * Get paths of this node.
+   *
    * @returns array of paths
    */
   getPaths() {
@@ -209,6 +235,7 @@ export class TreeNode {
 
   /**
    * Get paths of this node without the root key.
+   *
    * @returns array of paths
    */
   getPathsWithoutRoot() {
@@ -217,6 +244,7 @@ export class TreeNode {
 
   /**
    * Get string repsentation of paths of this node.
+   *
    * @returns string repsentation of paths
    */
   getPathsString() {
@@ -225,6 +253,7 @@ export class TreeNode {
 
   /**
    * Find child based on given paths.
+   *
    * @param paths array of paths
    * @returns child found or null
    */
@@ -243,6 +272,7 @@ export class TreeNode {
 
   /**
    * Remove children of given keys.
+   *
    * @param keys The keys of children to remove.
    */
   removeChildren(keys: string[]) {
@@ -258,6 +288,7 @@ export class TreeNode {
 
   /**
    * Check if this node is in 'default' tree.
+   *
    * @returns true if this node is in 'default' tree, false otherwise
    */
   isDefaultNode() {
@@ -266,6 +297,7 @@ export class TreeNode {
 
   /**
    * Get top parent node, aka the root.
+   *
    * @returns top root
    */
   getTopParent() {
@@ -275,4 +307,15 @@ export class TreeNode {
     }
     return top;
   }
+}
+
+/**
+ * Interface that describes the config property for add/edit
+ */
+export interface ConfigProperty {
+    editMode: boolean;
+    envFileMode?: boolean;
+    keyOptions: { key: string; type: string }[];
+    node: TreeNode; // When in edit mode, this is node being edited; when in add mode, this is the parent node being added to
+    defaultTree: TreeNode; // The 'default' root tree
 }

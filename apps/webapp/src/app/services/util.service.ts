@@ -31,7 +31,7 @@ import * as _ from "lodash";
 
 import { percyConfig, electronApi } from "config";
 import { Authenticate } from "models/auth";
-import * as filesystem from "filesystem";
+import filesystem from "filesystem/filesystem";
 
 import { YamlService } from "./yaml.service";
 
@@ -52,6 +52,7 @@ export class UtilService extends YamlService {
 
   /**
    * Wrap the function in angular zone.
+   *
    * @param func The function to wrap
    */
   wrapInZone(func) {
@@ -91,12 +92,13 @@ export class UtilService extends YamlService {
     await fs.ensureDir(percyConfig.draftFolder);
     await fs.ensureDir(percyConfig.metaFolder);
 
-    console.info("Browser Git initialized"); // tslint:disable-line
+    console.info("Browser Git initialized"); // eslint-disable-line
     return fs;
   }
 
   /**
    * Encrypt.
+   *
    * @param text The text to encrypt
    * @returns encrypted text
    */
@@ -117,6 +119,7 @@ export class UtilService extends YamlService {
 
   /**
    * Decrypt.
+   *
    * @param encrypted The encrypted text
    * @returns decrypted text
    */
@@ -137,6 +140,7 @@ export class UtilService extends YamlService {
 
   /**
    * Convert Git error.
+   *
    * @param err The Git error
    * @returns converted error
    */
@@ -162,6 +166,7 @@ export class UtilService extends YamlService {
 
   /**
    * Get repo name.
+   *
    * @param url The repo url
    * @returns the repo name
    */
@@ -172,6 +177,7 @@ export class UtilService extends YamlService {
 
   /**
    * Get repo folder name.
+   *
    * @param auth The authenticate
    * @returns the repo folder name
    */
@@ -185,6 +191,7 @@ export class UtilService extends YamlService {
 
   /**
    * Get metadata file path.
+   *
    * @param repoFolder The repo folder name
    * @returns the path to metadata file
    */

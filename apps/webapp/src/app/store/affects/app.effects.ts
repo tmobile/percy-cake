@@ -22,10 +22,10 @@ software without specific prior written permission.
 
 import { Injectable } from "@angular/core";
 import { Router } from "@angular/router";
-import { MatDialog } from "@angular/material";
-import { of, Observable } from "rxjs";
-import { map, tap, exhaustMap } from "rxjs/operators";
-import { Actions, Effect, ofType } from "@ngrx/effects";
+import { MatDialog } from "@angular/material/dialog";
+import { EMPTY, of } from "rxjs";
+import { map, tap, exhaustMap, switchMap } from "rxjs/operators";
+import { Actions, createEffect, ofType } from "@ngrx/effects";
 
 import { Logout } from "../actions/auth.actions";
 import {
@@ -49,8 +49,7 @@ export class AppEffects {
   /**
    * alert effect
    */
-  @Effect({ dispatch: false })
-  alert$ = this.actions$.pipe(
+  alert$ = createEffect(() => this.actions$.pipe(
     ofType<Alert>(CommonActionTypes.Alert),
     map(action => action.payload),
     tap(data => {
@@ -60,36 +59,34 @@ export class AppEffects {
       }
       this.dialog.open(AlertDialogComponent, { data });
     })
-  );
+  ), { dispatch: false });
 
   /**
    * alert closed effect
    */
-  @Effect()
-  alertClosed$: Observable<Logout | Navigate> = this.actions$.pipe(
+  alertClosed$ = createEffect(() => this.actions$.pipe(
     ofType<AlertClosed>(CommonActionTypes.AlertClosed),
-    map(action => action.payload),
-    exhaustMap(data => {
+    switchMap((action) => {
+      const data = action.payload;
       if (data.alertType === "logout") {
         return of(new Logout());
       }
       if (data.alertType === "go-to-dashboard") {
         return of(new Navigate(["/dashboard"]));
       }
-      return of();
+      return EMPTY;
     })
-  );
+  ));
 
   // global error effect for API error to log
-  @Effect()
-  apiError$ = this.actions$.pipe(
+  apiError$ = createEffect(() => this.actions$.pipe(
     ofType<APIError>(CommonActionTypes.APIError),
     map(action => action.payload),
     exhaustMap(payload => {
       const message = payload.message;
       return of(
         new Alert({
-          message: message,
+          message,
           alertType:
             payload.statusCode === 401 || payload.statusCode === 403
               ? "logout"
@@ -97,16 +94,15 @@ export class AppEffects {
         })
       );
     })
-  );
+  ));
 
   /**
    * navigate effect
    */
-  @Effect({ dispatch: false })
-  navigate$ = this.actions$.pipe(
+  navigate$ = createEffect(() => this.actions$.pipe(
     ofType<Navigate>(CommonActionTypes.Navigate),
     tap(action => {
       this.router.navigate(action.payload);
     })
-  );
+  ), { dispatch: false });
 }

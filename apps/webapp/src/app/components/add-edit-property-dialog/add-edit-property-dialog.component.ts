@@ -31,14 +31,13 @@ import {
   ElementRef
 } from "@angular/core";
 import { FormControl, Validators } from "@angular/forms";
-import { MatDialog } from "@angular/material";
+import { MatDialog } from "@angular/material/dialog";
 import { Store } from "@ngrx/store";
 import * as _ from "lodash";
 
-import { PROPERTY_VALUE_TYPES, percyConfig } from "config";
+import { percyConfig } from "config";
 import * as appStore from "store";
-import { TreeNode } from "models/tree-node";
-import { ConfigProperty } from "models/config-property";
+import { TreeNode, ConfigProperty, PROPERTY_VALUE_TYPES } from "models/tree-node";
 import { Alert } from "store/actions/common.actions";
 import { ConfirmationDialogComponent } from "../confirmation-dialog/confirmation-dialog.component";
 import { NotEmpty } from "services/validators";
@@ -76,6 +75,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
 
   /**
    * constructs the component
+   *
    * @param dialogRef the reference to a dialog opened via the MatDialog service
    * @param store the application state store
    */
@@ -162,6 +162,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
 
   /**
    * Determine if key should be disabled.
+   *
    * @returns true if key should be disabled, false otherwise
    */
   keyDisabled() {
@@ -176,6 +177,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
 
   /**
    * Determine if value type should be disabled.
+   *
    * @returns true if key should be disabled, false otherwise
    */
   valueTypeDisabled() {
@@ -188,6 +190,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
 
   /**
    * Determine if user is adding/editing environment in environment.yaml file.
+   *
    * @returns true if user is defining environment, false otherwise
    */
   isDefineEnv() {
@@ -202,6 +205,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
 
   /**
    * Determine if user is editing an item within array.
+   *
    * @returns true if user is editing an item within array, false otherwise
    */
   isEditArrayItem() {
@@ -215,6 +219,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
 
   /**
    * Determine if user is editing a non-first object item within array.
+   *
    * @returns true if user is editing a non-first object item within array, false otherwise
    */
   isNonFirstObjectInArray() {
@@ -232,6 +237,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
 
   /**
    * Determine if user is editing the root node.
+   *
    * @returns true if user is editing the root node, false otherwise
    */
   isEditRootNode() {
@@ -317,6 +323,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
 
   /**
    * Construct inherits options available for user to choose from.
+   *
    * @returns inherits options
    */
   private constructInheritsOptions() {
@@ -331,7 +338,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
     }
 
     // Used to exclude the cylic options
-    const hasCylic = child => {
+    const hasCylic = (child: TreeNode) => {
       let inherited = child;
       while (inherited) {
         const inheritedEnv = _.find(
@@ -354,6 +361,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
 
   /**
    * Get bread crumb to display.
+   *
    * @returns bread crumb
    */
   getBreadCrumb() {
@@ -378,6 +386,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
 
   /**
    * Checks to copy property from default tree.
+   *
    * @param $event user's check event
    */
   useDefault($event) {
@@ -393,6 +402,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
 
   /**
    * Checks to copy properties from first sibling object item in array.
+   *
    * @param $event user's check event
    */
   useFirstSibling($event) {
@@ -406,6 +416,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
 
   /**
    * Checks to auto trim string value.
+   *
    * @param $event user's check event
    */
   useAutoTrim($event) {
@@ -509,7 +520,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
       const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
         data: {
           confirmationText:
-            "You have changed the value type, the corresponding property will be removed from all environments. Do you still want to make the change?" // tslint:disable-line
+            "You have changed the value type, the corresponding property will be removed from all environments. Do you still want to make the change?" // eslint-disable-line
         }
       });
 
@@ -603,6 +614,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
 
   /**
    * Get default node to duplicate.
+   *
    * @return default node to duplicate
    */
   private getDefaultNodeToDuplicate() {
@@ -630,10 +642,10 @@ export class AddEditPropertyDialogComponent implements OnChanges {
 
     // Find the respective defalut node
     let defaultNode = this.data.defaultTree;
-    for (let i = 0; i < keyHierarchy.length; i++) {
+    for (const hier of keyHierarchy) {
       defaultNode = _.find(
         defaultNode.children,
-        child => child.key === keyHierarchy[i]
+        child => child.key === hier
       );
     }
     return defaultNode;
@@ -641,6 +653,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
 
   /**
    * Check whether can duplicate default.
+   *
    * @return true if can duplicate default, false otherwise
    */
   canDuplicateDefault() {
@@ -654,6 +667,7 @@ export class AddEditPropertyDialogComponent implements OnChanges {
 
   /**
    * Clone tree node without parent relationship.
+   *
    * @param node the node to clone
    * @return cloned node
    */

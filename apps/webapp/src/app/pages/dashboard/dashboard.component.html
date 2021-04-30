@@ -24,12 +24,12 @@
         </button>
       </div>
       <div matTooltip="Merge Master Branch">
-        <button type="button" *ngIf="(currentUser|async)?.branchName !== 'master'" mat-raised-button [disabled]="!(canSyncMaster|async)" color="primary" class="btn-icon" (click)="syncMaster()">
+        <button type="button" *ngIf="(currentUser|async)?.branchName !== 'master'" mat-raised-button [disabled]="(canSyncMaster|async) === false" color="primary" class="btn-icon" (click)="syncMaster()">
           <mat-icon svgIcon="sync"></mat-icon>
         </button>
       </div>
       <div matTooltip="{{pullRequestTooltip}}">
-        <a *ngIf="(currentUser|async)?.branchName !== 'master' && pullRequestUrl" mat-raised-button [disabled]="!(canPullRequest|async)" color="primary" class="btn-icon" href="{{pullRequestUrl}}" target="_blank">
+        <a *ngIf="(currentUser|async)?.branchName !== 'master' && pullRequestUrl" mat-raised-button [disabled]="(canPullRequest|async) === false" color="primary" class="btn-icon" href="{{pullRequestUrl}}" target="_blank">
           <mat-icon svgIcon="pull_request"></mat-icon>
         </a>
       </div>

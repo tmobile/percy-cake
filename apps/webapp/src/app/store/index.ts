@@ -50,12 +50,10 @@ export const reducers: ActionReducerMap<AppState> = {
   editor: fromEditor.reducer,
 };
 
-export function localStorageSyncReducer(reducer: ActionReducer<AppState>): ActionReducer<AppState> {
-  return localStorageSync({ keys: [{ "auth": ["currentUser", "loggedIn"] }], rehydrate: true })(reducer);
-}
+export const localStorageSyncReducer = (reducer: ActionReducer<AppState>): ActionReducer<AppState> =>
+  localStorageSync({ keys: [{ auth: ["currentUser", "loggedIn"] }], rehydrate: true })(reducer);
 
-export function clearState(reducer) {
-  return function (state, action) {
+export const clearState = (reducer) => (state, action) => {
 
     if (action.type === AuthActionTypes.LogoutSuccess) {
       state = undefined;
@@ -63,7 +61,6 @@ export function clearState(reducer) {
 
     return reducer(state, action);
   };
-}
 
 export const metaReducers: MetaReducer<AppState>[] = [localStorageSyncReducer, clearState];
 

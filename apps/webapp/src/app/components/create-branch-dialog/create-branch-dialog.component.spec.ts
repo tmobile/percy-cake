@@ -1,12 +1,12 @@
-import { Setup, TestContext, TestUser } from "test/test-helper";
+import { SETUP, TestContext, TEST_USER } from "test/test-helper";
 
 import { CreateBranchDialogComponent } from "./create-branch-dialog.component";
 import { percyConfig } from "config";
 
 describe("CreateBranchDialogComponent", () => {
 
-  const setup = Setup(CreateBranchDialogComponent, false);
-  const branches = [TestUser.branchName, "branch1", "branch2"];
+  const setup = SETUP(CreateBranchDialogComponent, false);
+  const branches = [TEST_USER.branchName, "branch1", "branch2"];
 
   let ctx: TestContext<CreateBranchDialogComponent>;
 
@@ -19,7 +19,7 @@ describe("CreateBranchDialogComponent", () => {
     ctx.component.data = data;
     ctx.detectChanges();
 
-    await ctx.fixture.whenStable();
+    await ctx.asyncWait();
   });
 
   it("should create CreateBranchDialogComponent", () => {
@@ -39,7 +39,7 @@ describe("CreateBranchDialogComponent", () => {
   });
 
   it("new branch name should not be duplicate", async () => {
-    ctx.component.newBranchName.setValue(TestUser.branchName);
+    ctx.component.newBranchName.setValue(TEST_USER.branchName);
     ctx.component.createBranch();
     expect(ctx.component.newBranchName.hasError("duplicate")).toBeTruthy();
   });

@@ -4,7 +4,7 @@
   "description": "WebStorm plugin for percy editor",
   "repository": "https://github.com/tmobile/percy-cake",
   "scripts": {
-    "build": "cp ../vscode/dist/percy.bundle.min.js ./src/main/resources",
+    "build": "cp ../vscode/dist/percy.bundle.min.js ./src/main/resources; cp ../vscode/dist/styles.css ./src/main/resources",
     "package": "./gradlew assemble",
     "launch": "./gradlew runIde"
   },

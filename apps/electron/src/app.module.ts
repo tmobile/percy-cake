@@ -85,7 +85,13 @@ import { PreferencesComponent } from "./components/preferences/preferences.compo
     MarkdownModule.forRoot(),
     ElectronAppRoutingModule,
     CommonModule,
-    StoreModule.forRoot(reducers, { metaReducers }),
+    StoreModule.forRoot(reducers, {
+        metaReducers,
+        runtimeChecks: {
+          strictStateImmutability: false,
+          strictActionImmutability: false
+        }
+    }),
     EffectsModule.forRoot([
       AuthEffects,
       AppEffects,

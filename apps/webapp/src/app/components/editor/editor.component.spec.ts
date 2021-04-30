@@ -1,8 +1,8 @@
-import { Setup, assertDialogOpened, TestContext, utilService } from "test/test-helper";
+import { SETUP, assertDialogOpened, TestContext, utilService } from "test/test-helper";
 import * as _ from "lodash";
 
-import { PROPERTY_VALUE_TYPES, appPercyConfig } from "config";
-import { TreeNode } from "models/tree-node";
+import { appPercyConfig } from "config";
+import { TreeNode, PROPERTY_VALUE_TYPES} from "models/tree-node";
 import { Configuration, FileTypes } from "models/config-file";
 import { Alert } from "store/actions/common.actions";
 
@@ -14,7 +14,7 @@ import { AlertDialogComponent } from "components/alert-dialog/alert-dialog.compo
 import { EditorComponent } from "./editor.component";
 
 describe("EditorComponent", () => {
-  const setup = Setup(EditorComponent);
+  const setup = SETUP(EditorComponent);
 
   const file = {
     applicationName: "app1",
@@ -51,7 +51,7 @@ describe("EditorComponent", () => {
     ctx.component.configuration = new Configuration();
 
     ctx.component.ngOnChanges({
-      fileName: <any>{}
+      fileName: {} as any
     });
 
     expect(ctx.component.filename.value).toEqual("test.yaml");
@@ -68,7 +68,7 @@ describe("EditorComponent", () => {
     ctx.component.configuration = new Configuration();
 
     ctx.component.ngOnChanges({
-      fileName: <any>{}
+      fileName: {} as any
     });
 
     const focusSpy = spyOn(ctx.component.fileNameInput, "focus");
@@ -76,7 +76,7 @@ describe("EditorComponent", () => {
     await new Promise((resolve) => {
       setImmediate(async () => {
         await expect(focusSpy.calls.count()).toEqual(1);
-        resolve();
+        resolve(true);
       });
     });
 
@@ -94,7 +94,7 @@ describe("EditorComponent", () => {
     modified: true
   };
 
-  async function initNewFileMode() {
+  const initNewFileMode = async () => {
     ctx.component.editMode = false;
     ctx.component.appName = "app1";
     ctx.component.fileName = null;
@@ -106,10 +106,10 @@ describe("EditorComponent", () => {
     ctx.store.next(new GetFileContentSuccess({file: newFile, newlyCreated: true}));
 
     ctx.component.ngOnChanges({
-      fileName: <any>{}
+      fileName: {} as any
     });
-    await ctx.fixture.whenStable();
-  }
+    await ctx.asyncWait();
+  };
 
   it("should not change to existing file name", async () => {
     await initNewFileMode();
@@ -229,6 +229,7 @@ describe("EditorComponent", () => {
 
     const node = new TreeNode("key");
     ctx.component.onSaveAddEditProperty(node);
+    expect(spy.saveAddEditProperty.calls.mostRecent().args[0]).toEqual(node);
   });
 
   it("show compiled YAML should work", async () => {

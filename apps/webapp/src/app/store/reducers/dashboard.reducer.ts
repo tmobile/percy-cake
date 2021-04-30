@@ -47,7 +47,7 @@ export const initialState: State = {
   collapsedApps: [],
 };
 
-export function reducer(state = initialState, action: BackendActionsUnion | DashboardActionsUnion): State {
+export const reducer = (state = initialState, action: BackendActionsUnion | DashboardActionsUnion): State => {
   switch (action.type) {
     case DashboardActionTypes.SelectApp: {
       return {
@@ -153,7 +153,7 @@ export function reducer(state = initialState, action: BackendActionsUnion | Dash
       return state;
     }
   }
-}
+};
 
 export const getSelectedApp = (state: State) => state.selectedApp;
 export const getTableSort = (state: State) => state.tableSort;

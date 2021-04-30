@@ -23,7 +23,7 @@ software without specific prior written permission.
 
 import { Component, OnInit } from "@angular/core";
 import { Router } from "@angular/router";
-import { MatDialog } from "@angular/material";
+import { MatDialog } from "@angular/material/dialog";
 import { Store } from "@ngrx/store";
 import { BehaviorSubject } from "rxjs";
 
@@ -41,6 +41,7 @@ import { PreferencesComponent } from "./components/preferences/preferences.compo
 export class ElectronAppComponent implements OnInit {
   /**
    * constructs the component.
+   *
    * @param router the router service
    * @param dialog the dialog service
    * @param utilService the util service
@@ -54,6 +55,7 @@ export class ElectronAppComponent implements OnInit {
 
   /**
    * Wrap the callbacks in angular zone.
+   *
    * @param callbacks The callbacks
    */
   private wrapInZone(callbacks) {

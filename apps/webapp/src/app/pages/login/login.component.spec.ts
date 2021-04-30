@@ -1,5 +1,5 @@
 import * as HttpErrors from "http-errors";
-import { TestUser, Setup, TestContext } from "test/test-helper";
+import { TEST_USER, SETUP, TestContext } from "test/test-helper";
 
 import { percyConfig } from "config";
 import { LoginRedirect, LoginSuccess, LoginFailure } from "store/actions/auth.actions";
@@ -8,7 +8,7 @@ import { MaintenanceService } from "services/maintenance.service";
 import { LoginComponent } from "./login.component";
 
 describe("LoginComponent", () => {
-  const setup = Setup(LoginComponent);
+  const setup = SETUP(LoginComponent);
 
   let ctx: TestContext<LoginComponent>;
   let maintenanceService: MaintenanceService;
@@ -26,7 +26,7 @@ describe("LoginComponent", () => {
 
   it("should redirect to dashboard page if already logged in", () => {
 
-    ctx.store.next(new LoginSuccess(TestUser));
+    ctx.store.next(new LoginSuccess(TEST_USER));
 
     expect(ctx.routerStub.value).toEqual(["/dashboard"]);
   });
@@ -34,7 +34,7 @@ describe("LoginComponent", () => {
   it("should redirect to given page if already logged in", () => {
 
     ctx.store.next(new LoginRedirect({ redirectUrl: "/redirect-to" }));
-    ctx.store.next(new LoginSuccess(TestUser));
+    ctx.store.next(new LoginSuccess(TEST_USER));
 
     expect(ctx.routerStub.value).toEqual(["/redirect-to"]);
   });
@@ -48,7 +48,7 @@ describe("LoginComponent", () => {
       "Mike",
       "Muller",
     ];
-    spyOn(maintenanceService, "getUserTypeAhead").and.returnValue(usernames);
+    spyOn(maintenanceService, "getUserTypeAhead").and.returnValue(Promise.resolve(usernames));
 
     ctx.component.username.setValue("m");
     await new Promise(resolve => setTimeout(resolve, 250)); // wait for debouce time
@@ -94,7 +94,7 @@ describe("LoginComponent", () => {
   });
 
   it("invalid url, should not login", () => {
-    ctx.component.username.setValue(TestUser.username);
+    ctx.component.username.setValue(TEST_USER.username);
     ctx.component.username.setErrors(null);
     ctx.component.password.setValue("test-pass");
     ctx.component.password.setErrors(null);
@@ -107,18 +107,18 @@ describe("LoginComponent", () => {
 
   it("login function should work", () => {
 
-    ctx.component.username.setValue(TestUser.username);
+    ctx.component.username.setValue(TEST_USER.username);
     ctx.component.username.setErrors(null);
     ctx.component.password.setValue("test-pass");
     ctx.component.password.setErrors(null);
-    ctx.component.repositoryURL.setValue(TestUser.repositoryUrl);
+    ctx.component.repositoryURL.setValue(TEST_USER.repositoryUrl);
     ctx.component.repositoryURL.setErrors(null);
     ctx.component.login();
 
     const payload = dispatchSpy.calls.mostRecent().args[0].payload;
     expect(payload).toEqual({
-      repositoryUrl: TestUser.repositoryUrl,
-      username: TestUser.username,
+      repositoryUrl: TEST_USER.repositoryUrl,
+      username: TEST_USER.username,
       password: "test-pass"
     });
   });

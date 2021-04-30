@@ -21,7 +21,9 @@ software without specific prior written permission.
 */
 
 import { Component, OnInit, OnDestroy } from "@angular/core";
-import { MatDialog, Sort, MatIconRegistry } from "@angular/material";
+import { MatDialog } from "@angular/material/dialog";
+import { Sort } from "@angular/material/sort";
+import { MatIconRegistry } from "@angular/material/icon";
 import { Router } from "@angular/router";
 import { DomSanitizer } from "@angular/platform-browser";
 import { Store, select } from "@ngrx/store";
@@ -123,6 +125,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   /**
    * creates the component
+   *
    * @param store the application store
    * @param router the router instance
    * @param dialog the material dialog instance
@@ -146,7 +149,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       (icon, key) => {
         this.matIconRegistry.addSvgIconLiteral(
           key,
-          this.domSanitizer.bypassSecurityTrustHtml(icon)
+          this.domSanitizer.bypassSecurityTrustHtml(icon.default)
         );
       }
     );
@@ -276,6 +279,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   /**
    * Check if file is env file.
+   *
    * @param file the file to check
    * @returns true if file is env file, false otherwise
    */
@@ -292,6 +296,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   /**
    * Expand/collapse an application.
+   *
    * @param app the application to expand/collapse
    */
   toggleApp(app) {
@@ -300,6 +305,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   /**
    * Expand/collapse all applications.
+   *
    * @param $event the toggle event
    */
   toggleAllApps($event) {
@@ -323,6 +329,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   /**
    * On sort column/order change.
+   *
    * @param sort the new sort column/order
    */
   onSortChange(sort: Sort) {
@@ -331,6 +338,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   /**
    * On select application.
+   *
    * @param $event the selection event
    */
   onSelectApp($event) {
@@ -367,10 +375,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
                 appName,
                 envFileName
               ]);
+            } else if (appName === "") {
+              this.router.navigate(["/files/new", fileType]);
             } else {
-              appName === "" ?
-                this.router.navigate(["/files/new", fileType]) :
-                this.router.navigate(["/files/new", appName, fileType]);
+              this.router.navigate(["/files/new", appName, fileType]);
             }
           }
         });
@@ -379,23 +387,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   /**
    * Edit existing file.
+   *
    * @param file the file to edit
    */
   editFile(file: ConfigFile) {
     const { fileName, applicationName } = file;
 
-    applicationName === "" ?
-      this.router.navigate([
-        "/files/edit",
-        fileName
-      ]) :
-      this.router.navigate([
-        fileName === percyConfig.environmentsFile
-          ? "/files/editenv"
-          : "/files/edit",
-        applicationName,
-        fileName
-      ]);
+    if (applicationName === "") {
+        this.router.navigate([
+            "/files/edit",
+            fileName
+          ]);
+    } else {
+        this.router.navigate([
+            fileName === percyConfig.environmentsFile
+              ? "/files/editenv"
+              : "/files/edit",
+            applicationName,
+            fileName
+          ]);
+    }
   }
 
   /**
@@ -418,6 +429,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   /**
    * Deletes the file
+   *
    * @param file the file to delete
    */
   deleteFile(file: ConfigFile) {

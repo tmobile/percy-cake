@@ -34,7 +34,7 @@ const hydrate = new Hydrate({
 
 const compareJson = new CompareJson({});
 
-async function demo() {
+const demo = async () => {
   const testDataDir = path.join(__dirname, "../../hydration-script/test/data");
   const inputFolder = path.join(testDataDir, "apps");
 
@@ -47,7 +47,7 @@ async function demo() {
     path.join(testDataDir, "modified.percyrc")
   );
   console.log(diff);
-}
+};
 
 demo().then(() => {
   // done

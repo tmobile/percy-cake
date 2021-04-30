@@ -24,7 +24,7 @@ software without specific prior written permission.
 import { Component, OnInit } from "@angular/core";
 import { Router, NavigationEnd } from "@angular/router";
 import { Store, select } from "@ngrx/store";
-import { MatDialog } from "@angular/material";
+import { MatDialog } from "@angular/material/dialog";
 import { Observable } from "rxjs";
 import { take } from "rxjs/operators";
 import { split } from "lodash";
@@ -84,6 +84,7 @@ export class MainHeaderComponent implements OnInit {
 
   /**
     checkout new branch, only if its not already selected
+   *
    * @param branch - new branch selected
    */
   checkoutBranch(branch: string) {

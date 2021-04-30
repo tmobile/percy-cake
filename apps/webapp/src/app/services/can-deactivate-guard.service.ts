@@ -39,6 +39,7 @@ export class CanDeactivateGuard
   implements CanDeactivate<CanComponentDeactivate> {
   /**
    * checks if component can be deactivated or not
+   *
    * @param component the component instance
    */
   canDeactivate(

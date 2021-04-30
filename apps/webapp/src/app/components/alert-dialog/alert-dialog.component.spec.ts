@@ -1,11 +1,11 @@
-import { Setup, TestContext } from "test/test-helper";
+import { SETUP, TestContext } from "test/test-helper";
 
 import { AlertDialogComponent } from "./alert-dialog.component";
 import { AlertClosed } from "store/actions/common.actions";
 
 describe("AlertDialogComponent", () => {
 
-  const setup = Setup(AlertDialogComponent, false);
+  const setup = SETUP(AlertDialogComponent, false);
 
   let ctx: TestContext<AlertDialogComponent>;
   beforeEach(() => {

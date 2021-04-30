@@ -45,3 +45,6 @@ export interface Principal {
   user: User;
   repoMetadata: RepoMetadata;
 }
+
+// user key for local or session storage after login
+export const LOGGED_IN_USER_KEY = "auth";

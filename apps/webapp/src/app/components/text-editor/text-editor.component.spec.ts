@@ -1,4 +1,4 @@
-import { Setup, TestContext } from "test/test-helper";
+import { SETUP, TestContext } from "test/test-helper";
 import * as _ from "lodash";
 
 import { FileTypes } from "models/config-file";
@@ -8,7 +8,7 @@ import { PageLoadSuccess } from "store/actions/editor.actions";
 import { LoadFilesSuccess, GetFileContentSuccess } from "store/actions/backend.actions";
 
 describe("TextEditorComponent", () => {
-  const setup = Setup(TextEditorComponent, false);
+  const setup = SETUP(TextEditorComponent, false);
   let ctx: TestContext<TextEditorComponent>;
 
   const fileEdit = {
@@ -50,7 +50,7 @@ describe("TextEditorComponent", () => {
     ctx.detectChanges();
 
     ctx.component.ngOnChanges({
-      editMode: <any>{}
+      editMode: {} as any
     });
 
     expect(ctx.component.editMode).toBeTruthy();
@@ -59,7 +59,7 @@ describe("TextEditorComponent", () => {
     expect(ctx.component.fileContent).toEqual("test");
   });
 
-  async function initNewFileMode(file) {
+  const initNewFileMode = async (file) => {
     ctx.component.editMode = false;
     ctx.component.file = file;
     ctx.component.isPercyrcFile = file.fileType === FileTypes.PERCYRC;
@@ -69,8 +69,8 @@ describe("TextEditorComponent", () => {
     ctx.store.next(new PageLoadSuccess({ environments: ["dev"] }));
     ctx.store.next(new GetFileContentSuccess({file, newlyCreated: true}));
 
-    await ctx.fixture.whenStable();
-  }
+    await ctx.asyncWait();
+  };
 
   it("should init TextEditorComponent with new file mode", async () => {
     await initNewFileMode(fileNew1);
@@ -80,7 +80,7 @@ describe("TextEditorComponent", () => {
     await new Promise((resolve) => {
       setImmediate(async () => {
         await expect(focusSpy.calls.count()).toEqual(1);
-        resolve();
+        resolve(true);
       });
     });
 

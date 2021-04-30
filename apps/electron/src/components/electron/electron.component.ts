@@ -30,10 +30,10 @@ import { ActivatedRoute } from "@angular/router";
 import { Component, OnInit, OnDestroy, HostListener } from "@angular/core";
 import { NestedTreeControl } from "@angular/cdk/tree";
 import {
-  MatTreeNestedDataSource,
   MatDialog,
   MatDialogRef
-} from "@angular/material";
+} from "@angular/material/dialog";
+import { MatTreeNestedDataSource } from "@angular/material/tree";
 import { Store, select } from "@ngrx/store";
 
 import { electronApi, percyConfig, appPercyConfig } from "config";
@@ -80,6 +80,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * creates the component
+   *
    * @param route the route
    * @param store the app store instance
    * @param dialog the mat dialog service
@@ -189,6 +190,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * Checks if component can be deactivated
+   *
    * @returns true component can be deactivated, false otherwise
    */
   canDeactivate() {
@@ -225,6 +227,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * Find folder.
+   *
    * @param folderPath the folder path
    * @param folders the folders to find
    * @returns folder found
@@ -244,6 +247,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * Refresh folder.
+   *
    * @param folderPath the folder path
    */
   refreshFolder(folderPath: string) {
@@ -273,6 +277,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * Populate folder.
+   *
    * @param folder The folder to populate
    * @param refreshExplorer Flag indicates whether to refresh file explorer, default to true
    */
@@ -286,6 +291,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * Sort folder's children.
+   *
    * @param folder The folder to sort its children
    */
   private sortFolderChildren(folder: File) {
@@ -312,6 +318,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * Refresh file explorer.
+   *
    * @param updateBackend Flag indicates whether to update backend, default to true
    */
   private refreshFileExplorer(updateBackend: boolean = true) {
@@ -341,6 +348,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * Get all files in folder rescursively.
+   *
    * @param folder the folder
    * @returns all files in folder
    */
@@ -360,6 +368,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * Get file title.
+   *
    * @param file the file
    * @returns file title
    */
@@ -375,6 +384,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * Toggle folder.
+   *
    * @param folder the folder to toggle
    */
   toggle(folder: File) {
@@ -388,6 +398,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * Find opened file.
+   *
    * @param filePath The file path
    * @returns found file
    */
@@ -397,6 +408,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * Get environments of folder.
+   *
    * @param folderPath The folder path
    * @returns environments
    */
@@ -410,7 +422,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
     if (envContent) {
       const envConfig = this.parseYaml(envContent, envPath);
       return _.map(
-        _.get(envConfig.environments, "children", <TreeNode[]>[]),
+        _.get(envConfig.environments, "children", [] as TreeNode[]),
         child => child.key
       );
     } else {
@@ -420,6 +432,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * Edit file.
+   *
    * @param file the file to edit
    */
   editFile(file: File) {
@@ -462,6 +475,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * Watch file.
+   *
    * @param file the file to watch
    */
   private watchFile(file: File) {
@@ -513,6 +527,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * Set editor state.
+   *
    * @param file the file in editting
    * @param dispath the flag indicates whether to dispatch state
    */
@@ -534,6 +549,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * Select a tab of the opened files to show.
+   *
    * @param index the index of tab to show
    */
   selectTab(index: number) {
@@ -553,6 +569,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * Reset file by discarding changes.
+   *
    * @param file the file to reset
    */
   reset(file: File) {
@@ -569,6 +586,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * Save config.
+   *
    * @param editor the editor component
    * @param file the file to save
    */
@@ -675,6 +693,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * Get folder's env file.
+   *
    * @param folder the folder to get its env file
    * @returns folder's env file
    */
@@ -686,6 +705,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * returns true if folder has percyrc file
+   *
    * @param folder the folder to check for
    */
   folderHasPercyrcFile(folder: File): boolean {
@@ -696,6 +716,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * Check if file is env file.
+   *
    * @param file the file to check
    * @returns true if file is env file, false otherwise
    */
@@ -705,6 +726,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * Add new file.
+   *
    * @param folder the folder to add new file
    */
   addNewFile(folder: File, fileType: FileTypes) {
@@ -737,6 +759,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * Add env file.
+   *
    * @param folder the folder to add env file
    */
   addEnvironmentsFile(folder: File) {
@@ -769,6 +792,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * Close file editor.
+   *
    * @param file the file to close its editor
    * @param force the flag indicates whether to force closing editor even there is change
    */
@@ -794,6 +818,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * Show unsaved dialog.
+   *
    * @param message the message to show
    */
   private showUnsaveDialog(message: string) {
@@ -807,6 +832,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * Do close file.
+   *
    * @param file the file to close its editor
    * @param index the index of file within opened files
    */
@@ -836,6 +862,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * Delete file.
+   *
    * @param the file to delete
    */
   deleteFile(file: File) {
@@ -858,6 +885,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * Parse yaml. Will hanle error if any.
+   *
    * @param content the yaml content
    * @param filePath the file path
    */
@@ -876,6 +904,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * Open right click context menu in file explorer.
+   *
    * @param event the event
    * @param menuTrigger the menu trigger
    */
@@ -889,6 +918,7 @@ export class ElectronPageComponent implements OnInit, OnDestroy {
 
   /**
    * Open right click context menu in file explorer.
+   *
    * @param event the event
    * @param menuButton the menu button
    */

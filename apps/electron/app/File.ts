@@ -20,6 +20,8 @@ its contributors may be used to endorse or promote products derived from this
 software without specific prior written permission.
 ===========================================================================
 */
+import { Configuration, FileTypes } from "../../webapp/src/app/models/config-file";
+export { FileTypes } from "../../webapp/src/app/models/config-file";
 
 export class File {
   ino: number;
@@ -32,8 +34,8 @@ export class File {
   expanded: boolean;
 
   environments: string[];
-  originalConfig: any;
-  configuration: any;
+  originalConfig: Configuration;
+  configuration: Configuration;
   originalContent: string;
 
   folderPopulated = false;
@@ -47,12 +49,12 @@ export class File {
     public fileType?: FileTypes
   ) {}
 
-  addChild(child: File) {
+  addChild(child: File): void {
     this.children.push(child);
     child.parent = this;
   }
 
-  hasChild(childPath: string) {
+  hasChild(childPath: string): boolean {
     for (const child of this.children) {
       if (child.path === childPath) {
         return true;
@@ -60,14 +62,8 @@ export class File {
     }
     return false;
   }
-  removeChild(childPath: string) {
+  removeChild(childPath: string): void {
     this.children = this.children.filter(c => c.path !== childPath);
   }
 }
 
-export enum FileTypes {
-  YAML = "yaml",
-  YML = "yml",
-  PERCYRC = "percyrc",
-  MD = "md"
-}

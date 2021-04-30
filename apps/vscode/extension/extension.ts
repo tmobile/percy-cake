@@ -210,7 +210,7 @@ class PercyEditorPanel {
 
                 if (!new RegExp(CONFIG.FILE_NAME_REGEX).test(newFileName)) {
                   vscode.window.showErrorMessage(
-                    'The file name should only contain these characters: "0-9a-zA-Z-_."'
+                    `The file name should only contain these characters: "0-9a-zA-Z-_."`
                   );
                   this._panel.webview.postMessage({
                     type: MESSAGE_TYPES.SAVE_CANCELLED
@@ -289,7 +289,7 @@ class PercyEditorPanel {
     );
     const envFileName = getEnvFileName();
 
-    const message: any = {
+    const message: Record<string, unknown> = {
       type: MESSAGE_TYPES.RENDER,
       editMode: this._editMode,
       envFileMode: fileName === envFileName,
@@ -401,6 +401,11 @@ function getHtmlForWebview(extensionPath: string): string {
   );
   const scriptUri = scriptPathOnDisk.with({ scheme: "vscode-resource" });
 
+  const cssPathOnDisk = vscode.Uri.file(
+    path.join(extensionPath, "dist/styles.css")
+  );
+  const cssUri = cssPathOnDisk.with({ scheme: "vscode-resource" });
+
   return `
     <!doctype html>
     <html lang="en">
@@ -410,6 +415,7 @@ function getHtmlForWebview(extensionPath: string): string {
         <base href="/">
 
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" type="text/css" href="${cssUri}">
       </head>
       <body class="default-theme vscode-theme">
         <app-vscode-root></app-vscode-root>
@@ -503,7 +509,7 @@ function editFile(
  * @param uri Folder uri
  * @param callback The callback function
  */
-function createNewFile(uri: vscode.Uri, callback: Function) {
+function createNewFile(uri: vscode.Uri, callback: (uri: vscode.Uri) => void) {
   if (!uri) {
     const options: vscode.OpenDialogOptions = {
       canSelectFiles: false,
@@ -529,7 +535,7 @@ function createNewFile(uri: vscode.Uri, callback: Function) {
  * Activate this extension. Register all the commands this extension supports.
  * @param context the extension context
  */
-export function activate(context: vscode.ExtensionContext) {
+export function activate(context: vscode.ExtensionContext): void {
   // Edit file
   const editCommand = vscode.commands.registerCommand(
     COMMANDS.EDIT,

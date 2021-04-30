@@ -40,12 +40,14 @@ import { take, switchMap } from "rxjs/operators";
 export class InitGuardService implements CanActivate {
   /**
    * initializes the service
+   *
    * @param store the store instance
    */
   constructor(private store: Store<fromStore.AppState>) {}
 
   /**
    * implements guard deciding if a child route which required initialize can be activated or not
+   *
    * @param route the route associated with a component load.
    * @param state the state of the router at a moment in time.
    */

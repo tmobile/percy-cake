@@ -22,10 +22,10 @@ software without specific prior written permission.
 
 
 import { Injectable } from "@angular/core";
-import { MatDialog } from "@angular/material";
+import { MatDialog } from "@angular/material/dialog";
 import { Store, select } from "@ngrx/store";
-import { Actions, Effect, ofType } from "@ngrx/effects";
-import { of } from "rxjs";
+import { Actions, createEffect, ofType } from "@ngrx/effects";
+import { EMPTY, of } from "rxjs";
 import { map, withLatestFrom, switchMap } from "rxjs/operators";
 import * as HttpErrors from "http-errors";
 import * as _ from "lodash";
@@ -56,23 +56,20 @@ export class BackendEffects {
   ) { }
 
   // initialize redirect effect
-  @Effect()
-  initialize$ = this.actions$.pipe(
+  initialize$ = createEffect(() => this.actions$.pipe(
     ofType<Initialize>(BackendActionTypes.Initialize),
     map(() => new Navigate(["/init"]))
-  );
+  ));
 
   // login success effect
-  @Effect()
-  initialized$ = this.actions$.pipe(
+  initialized$ = createEffect(() => this.actions$.pipe(
     ofType<Initialized>(BackendActionTypes.Initialized),
     withLatestFrom(this.store.pipe(select(appStore.backendState))),
     map(([_action, backendState]) => new Navigate([backendState.redirectUrl || "/dashboard"]))
-  );
+  ));
 
   // load files effect
-  @Effect()
-  loadFiles$ = this.actions$.pipe(
+  loadFiles$ = createEffect(() => this.actions$.pipe(
     ofType<LoadFiles>(BackendActionTypes.LoadFiles, BackendActionTypes.Initialized, BackendActionTypes.DeleteFileFailure),
     withLatestFrom(this.store.pipe(select(appStore.getPrincipal))),
     switchMap(async ([_action, user]) => {
@@ -83,18 +80,16 @@ export class BackendEffects {
         return new LoadFilesFailure(error);
       }
     })
-  );
+  ));
 
   // load files failure effect
-  @Effect()
-  loadFilesFailure$ = this.actions$.pipe(
+  loadFilesFailure$ = createEffect(() => this.actions$.pipe(
     ofType<LoadFilesFailure>(BackendActionTypes.LoadFilesFailure),
     map((action) => new APIError(action.payload))
-  );
+  ));
 
   // refresh repo effect
-  @Effect()
-  refreshFiles$ = this.actions$.pipe(
+  refreshFiles$ = createEffect(() => this.actions$.pipe(
     ofType<Refresh>(BackendActionTypes.Refresh),
     withLatestFrom(this.store.pipe(select(appStore.getPrincipal))),
     switchMap(async ([_action, pricinpal]) => {
@@ -117,18 +112,16 @@ export class BackendEffects {
       }
     }),
     switchMap(res => res),
-  );
+  ));
 
   // refresh failure effect
-  @Effect()
-  refreshFailure$ = this.actions$.pipe(
+  refreshFailure$ = createEffect(() => this.actions$.pipe(
     ofType<RefreshFailure>(BackendActionTypes.RefreshFailure),
     map((action) => new APIError(action.payload))
-  );
+  ));
 
   // get file content effect
-  @Effect()
-  getFileContent$ = this.actions$.pipe(
+  getFileContent$ = createEffect(() => this.actions$.pipe(
     ofType<GetFileContent>(BackendActionTypes.GetFileContent),
     withLatestFrom(this.store.pipe(select(appStore.getPrincipal))),
     switchMap(async ([action, user]) => {
@@ -139,18 +132,16 @@ export class BackendEffects {
         return new GetFileContentFailure(error);
       }
     })
-  );
+  ));
 
   // get file failure effect
-  @Effect()
-  getFileContentFailure$ = this.actions$.pipe(
+  getFileContentFailure$ = createEffect(() => this.actions$.pipe(
     ofType<GetFileContentFailure>(BackendActionTypes.GetFileContentFailure),
     map((action) => new APIError(action.payload))
-  );
+  ));
 
   // save draft success effect
-  @Effect()
-  saveDraft$ = this.actions$.pipe(
+  saveDraft$ = createEffect(() => this.actions$.pipe(
     ofType<SaveDraft>(BackendActionTypes.SaveDraft),
     withLatestFrom(this.store.pipe(select(appStore.getPrincipal))),
     switchMap(async ([action, user]) => {
@@ -168,18 +159,16 @@ export class BackendEffects {
       }
     }),
     switchMap(res => res),
-  );
+  ));
 
   // save draft failure effect
-  @Effect()
-  saveDraftFailure$ = this.actions$.pipe(
+  saveDraftFailure$ = createEffect(() => this.actions$.pipe(
     ofType<SaveDraftFailure>(BackendActionTypes.SaveDraftFailure),
     map((action) => new APIError(action.payload))
-  );
+  ));
 
   // commit changes effect
-  @Effect()
-  commitChanges$ = this.actions$.pipe(
+  commitChanges$ = createEffect(() => this.actions$.pipe(
     ofType<CommitChanges>(BackendActionTypes.CommitChanges),
     withLatestFrom(this.store.pipe(select(appStore.getPrincipal))),
     switchMap(async ([action, user]) => {
@@ -206,11 +195,10 @@ export class BackendEffects {
       }
     }),
     switchMap(res => res)
-  );
+  ));
 
   // commit files failure effect
-  @Effect()
-  commitChangesFailure$ = this.actions$.pipe(
+  commitChangesFailure$ = createEffect(() => this.actions$.pipe(
     ofType<CommitChangesFailure>(BackendActionTypes.CommitChangesFailure),
     switchMap((action) => {
       const error: any = action.payload.error;
@@ -239,16 +227,15 @@ export class BackendEffects {
             this.store.dispatch(new LoadFiles());
           }
         });
-        return of();
+        return EMPTY;
       } else {
         return of(new APIError(error));
       }
     })
-  );
+  ));
 
   // merge branch effect
-  @Effect()
-  MergeBranch$ = this.actions$.pipe(
+  MergeBranch$ = createEffect(() => this.actions$.pipe(
     ofType<MergeBranch>(BackendActionTypes.MergeBranch),
     withLatestFrom(this.store.pipe(select(appStore.getPrincipal))),
     switchMap(async ([action, pricinpal]) => {
@@ -289,11 +276,10 @@ export class BackendEffects {
       }
     }),
     switchMap(res => res)
-  );
+  ));
 
   // merge branch failure effect
-  @Effect()
-  MergeBranchFailure$ = this.actions$.pipe(
+  MergeBranchFailure$ = createEffect(() => this.actions$.pipe(
     ofType<MergeBranchFailure>(BackendActionTypes.MergeBranchFailure),
     switchMap((action) => {
       const error: any = action.payload;
@@ -319,16 +305,15 @@ export class BackendEffects {
           }
         });
 
-        return of();
+        return EMPTY;
       } else {
         return of(new APIError(error));
       }
     })
-  );
+  ));
 
   // delete file effect
-  @Effect()
-  deleteFile$ = this.actions$.pipe(
+  deleteFile$ = createEffect(() => this.actions$.pipe(
     ofType<DeleteFile>(BackendActionTypes.DeleteFile),
     withLatestFrom(this.store.pipe(select(appStore.getPrincipal))),
     switchMap(async ([action, user]) => {
@@ -337,11 +322,11 @@ export class BackendEffects {
         await this.fileManagementService.deleteFile(user, file);
 
         const result = [];
-        result.push(new DeleteFileSuccess(file)),
-          result.push(new Alert({
-            message: `${file.applicationName}/${file.fileName} is deleted successfully.`,
-            alertType: "delete"
-          }));
+        result.push(new DeleteFileSuccess(file));
+        result.push(new Alert({
+          message: `${file.applicationName}/${file.fileName} is deleted successfully.`,
+          alertType: "delete"
+        }));
 
         result.push(new LoadFiles());
         return result;
@@ -350,18 +335,16 @@ export class BackendEffects {
       }
     }),
     switchMap(res => res)
-  );
+  ));
 
   // delete file failure effect
-  @Effect()
-  deleteFileFailure$ = this.actions$.pipe(
+  deleteFileFailure$ = createEffect(() => this.actions$.pipe(
     ofType<DeleteFileFailure>(BackendActionTypes.DeleteFileFailure),
     map((action) => new APIError(action.payload))
-  );
+  ));
 
   // checkout branch effect
-  @Effect()
-  checkout$ = this.actions$.pipe(
+  checkout$ = createEffect(() => this.actions$.pipe(
     ofType<Checkout>(BackendActionTypes.Checkout),
     withLatestFrom(this.store.pipe(select(appStore.getPrincipal))),
     switchMap(async ([action, pricinpal]) => {
@@ -377,12 +360,11 @@ export class BackendEffects {
       }
     }),
     switchMap(res => res),
-  );
+  ));
 
   // checkout branch failure effect
-  @Effect()
-  checkoutFailure$ = this.actions$.pipe(
+  checkoutFailure$ = createEffect(() => this.actions$.pipe(
     ofType<CheckoutFailure>(BackendActionTypes.CheckoutFailure),
     map((action) => new APIError(action.payload))
-  );
+  ));
 }
