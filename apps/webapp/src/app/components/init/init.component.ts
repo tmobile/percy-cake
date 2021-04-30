@@ -45,6 +45,7 @@ export class InitComponent implements OnInit {
 
   /**
    * initializes the service
+   *
    * @param store the store instance
    * @param utilService the util server
    * @param maintenanceService the maintenance service
@@ -78,6 +79,7 @@ export class InitComponent implements OnInit {
 
   /**
    * Initialize browser fs, validate logged in user and repo metadata.
+   *
    * @param user the logged in user
    * @returns the user principal and repo metadata
    */

@@ -21,6 +21,8 @@ software without specific prior written permission.
 ===========================================================================
 */
 
+import { of } from "rxjs";
+
 import { NgModule } from "@angular/core";
 import { LocationStrategy, HashLocationStrategy } from "@angular/common";
 import { BrowserModule } from "@angular/platform-browser";
@@ -28,8 +30,6 @@ import { BrowserModule } from "@angular/platform-browser";
 import { MaterialComponentsModule } from "material-components/material-components.module";
 
 import { HIGHLIGHT_OPTIONS } from "ngx-highlightjs";
-import * as yaml from "highlight.js/lib/languages/yaml";
-import * as json from "highlight.js/lib/languages/json";
 
 // components
 import { LoaderComponent } from "components/loader/loader.component";
@@ -46,10 +46,9 @@ import {
 } from "directives/splitter.directive";
 import { HighlightDirective } from "directives/highlight.directive";
 
-export const hljsLanguages = () => [
-  { name: "yaml", func: yaml },
-  { name: "json", func: json }
-];
+const highlightjs = { default: require("highlight.js/lib/core") };
+const yamlLang = { default: require("highlight.js/lib/languages/yaml") };
+const jsonLang = { default: require("highlight.js/lib/languages/json") };
 
 @NgModule({
   declarations: [
@@ -79,7 +78,16 @@ export const hljsLanguages = () => [
   ],
   entryComponents: [ConfirmationDialogComponent, AlertDialogComponent],
   providers: [
-    { provide: HIGHLIGHT_OPTIONS, useValue: { languages: hljsLanguages } },
+    {
+      provide: HIGHLIGHT_OPTIONS,
+      useValue: {
+        coreLibraryLoader: () => of(highlightjs),
+        languages: {
+          yaml: () => of(yamlLang),
+          json: () => of(jsonLang)
+        }
+      }
+    },
     { provide: LocationStrategy, useClass: HashLocationStrategy }
   ]
 })

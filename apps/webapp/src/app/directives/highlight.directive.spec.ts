@@ -24,7 +24,7 @@ import { Component, Input } from "@angular/core";
 import { By } from "@angular/platform-browser";
 import * as cheerio from "cheerio";
 
-import { Setup, TestContext, utilService } from "test/test-helper";
+import { SETUP, TestContext, utilService } from "test/test-helper";
 import { percyConfig } from "config";
 
 const constructVar = utilService.constructVariable;
@@ -40,7 +40,7 @@ class TestHighlightComponent {
 }
 
 describe("HighlightDirective", () => {
-  const setup = Setup(TestHighlightComponent);
+  const setup = SETUP(TestHighlightComponent, true);
 
   let ctx: TestContext<TestHighlightComponent>;
 
@@ -51,7 +51,7 @@ describe("HighlightDirective", () => {
   it("Should highlight correcly", async () => {
     ctx.component.previewCode = `
 default: !!map
-  name: !!str "TestUser"
+  name: !!str "TEST_USER"
   host: !!str "${constructVar("name")}/${constructVar("age")}/${constructVar(
       "flag"
     )}/_{host1}"
@@ -61,15 +61,15 @@ default: !!map
 `;
 
     ctx.detectChanges();
-    await ctx.fixture.whenStable();
+    await ctx.asyncWait();
 
     const codeEle = ctx.fixture.debugElement.query(By.css("code"));
 
     const $ = cheerio.load(codeEle.properties.innerHTML);
     const spans = $("span.hljs-string");
 
-    // check "TestUser"
-    expect(spans.eq(0).text()).toEqual("\"TestUser\"");
+    // check "TEST_USER"
+    expect(spans.eq(0).text()).toEqual("\"TEST_USER\"");
 
     // Check "${name}$/${age}$/${flag}$/_{host1}"
     expect(spans.eq(1).children().length).toEqual(7);
@@ -184,5 +184,5 @@ default: !!map
         .eq(4)
         .text()
     ).toEqual(percyConfig.variableSuffix + "\"");
-  });
+  }, 20000);
 });

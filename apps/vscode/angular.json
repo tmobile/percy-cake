@@ -15,8 +15,11 @@
       },
       "architect": {
         "build": {
-          "builder": "../builders:browser",
+          "builder": "@angular-builders/custom-webpack:browser",
           "options": {
+            "customWebpackConfig": {
+              "path": "../builders/merge.js"
+            },
             "outputPath": "dist",
             "index": "../builders/index.html",
             "main": "src/main.ts",
@@ -37,6 +40,9 @@
           },
           "configurations": {
             "production": {
+              "customWebpackConfig": {
+                "path": "../builders/merge.js"
+              },
               "fileReplacements": [
                 {
                   "replace": "../webapp/src/app/material-components/material-components.module.ts",
@@ -44,9 +50,8 @@
                 }
               ],
               "optimization": true,
-              "outputHashing": "all",
+              "outputHashing": "none",
               "sourceMap": false,
-              "extractCss": false,
               "namedChunks": false,
               "aot": true,
               "extractLicenses": false,
@@ -56,13 +61,12 @@
           }
         },
         "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
+          "builder": "@angular-eslint/builder:lint",
           "options": {
-            "tsConfig": [
-              "src/tsconfig.json"
-            ],
-            "exclude": [
-              "**/node_modules/**"
+            "lintFilePatterns": [
+              "extension/**/*.ts",
+              "src/**/*.ts",
+              "src/**/*.html"
             ]
           }
         }

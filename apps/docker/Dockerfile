@@ -1,15 +1,6 @@
-FROM nginx:1.15
+FROM nginx:1.20-alpine
 
-RUN apt-get update \
-  && apt-get -y install wget gnupg \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
-
-RUN wget https://deb.nodesource.com/setup_10.x && chmod +x setup_10.x
-
-RUN ./setup_10.x
-
-RUN apt-get install -y nodejs && apt-get clean
+RUN apk add --no-cache --repository http://nl.alpinelinux.org/alpine/v3.13/main libuv nodejs nodejs-npm
 
 RUN npm i -g @isomorphic-git/cors-proxy
 

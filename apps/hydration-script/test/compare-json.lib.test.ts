@@ -23,6 +23,10 @@ software without specific prior written permission.
 
 import "jest";
 
+declare const describe: jest.Describe;
+declare const test: jest.It;
+declare const expect: jest.Expect;
+
 import { CompareJson } from "../src/lib/compare-json.lib";
 
 const compareJson = new CompareJson({});

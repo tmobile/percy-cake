@@ -39,10 +39,10 @@ export const CHANNELS = {
  * Register renderer ipc events listeners.
  * @param listeners the ipc events listeners.
  */
-export function registerRendererListeners(listeners) {
+export function registerRendererListeners(listeners: Record<string, (arg?: string) => void>): void {
   electron.ipcRenderer.on(
     CHANNELS.OPEN_FOLER,
-    (_event: any, folder: string) => {
+    (_event: electron.IpcRendererEvent, folder: string) => {
       listeners.openFolder(folder);
     }
   );
@@ -91,14 +91,14 @@ function getState() {
  * Get recent folders.
  * @returns recent folders.
  */
-export function getRecentFolders() {
+export function getRecentFolders() : string[] {
   return getState().recentFolders || [];
 }
 
 /**
  * Clear recent folders.
  */
-export function clearRecentFolders() {
+export function clearRecentFolders(): void {
   const state = getState();
   state.recentFolders = [];
   fs.writeFileSync(getStateFile(), JSON.stringify(state));
@@ -134,7 +134,7 @@ function getBrowserWindow(win?: Electron.BrowserWindow) {
  * @param folerPath The folder path
  * @param win The browser window
  */
-export function openFolder(folerPath: string, win?: Electron.BrowserWindow) {
+export function openFolder(folerPath: string, win?: Electron.BrowserWindow): void {
   win = getBrowserWindow(win);
 
   if (!fs.existsSync(folerPath)) {
@@ -153,25 +153,26 @@ export function openFolder(folerPath: string, win?: Electron.BrowserWindow) {
  * Open folder dialog.
  * @param win The browser window
  */
-export function openFolderDialog(win?: Electron.BrowserWindow) {
+export function openFolderDialog(win?: Electron.BrowserWindow): void {
   win = getBrowserWindow(win);
 
   (electron.dialog || electron.remote.dialog).showOpenDialog(
     win,
-    { properties: ["openDirectory"] },
-    result => {
-      if (result && result[0]) {
-        openFolder(result[0], win);
+    { properties: ["openDirectory"] }
+  ).then(result => {
+    if (result && result.filePaths && result.filePaths[0]) {
+        openFolder(result.filePaths[0], win);
       }
-    }
-  );
+  }).catch(error => {
+      console.log(error); 
+  });
 }
 
 /**
  * Open repo.
  * @param win The browser window
  */
-export function openRepo(win?: Electron.BrowserWindow) {
+export function openRepo(win?: Electron.BrowserWindow): void {
   win = getBrowserWindow(win);
   win.webContents.send(CHANNELS.OPEN_REPO);
 }
@@ -188,7 +189,7 @@ function getPreferencesFile() {
  * Get preferences.
  * @returns preferences
  */
-export function getPreferences() {
+export function getPreferences(): Record<string, unknown> {
   const prefFile = getPreferencesFile();
 
   const result = readFile(prefFile);
@@ -207,7 +208,7 @@ export function getPreferences() {
  * Show preferences.
  * @param win The browser window
  */
-export function showPreferences(win?: Electron.BrowserWindow) {
+export function showPreferences(win?: Electron.BrowserWindow): void {
   win = getBrowserWindow(win);
   win.webContents.send(CHANNELS.SHOW_PREFERENCES);
 }
@@ -216,7 +217,7 @@ export function showPreferences(win?: Electron.BrowserWindow) {
  * Save preferences.
  * @param prefs The preferences to save
  */
-export function savePreferences(prefs) {
+export function savePreferences(prefs: Record<string, unknown>): void {
   const prefFile = getPreferencesFile();
   fs.writeFileSync(prefFile, JSON.stringify(prefs));
 }
@@ -225,7 +226,7 @@ export function savePreferences(prefs) {
  * Get app's specific percy config.
  * @param file The file to get its specific percy config
  */
-export function getAppPercyConfig(file: File) {
+export function getAppPercyConfig(file: File): Record<string, string> {
   let appPercyConfig = {};
   let parent = file.parent;
   while (parent) {
@@ -250,7 +251,7 @@ export function getAppPercyConfig(file: File) {
  * @param parent the parent folder
  * @returns new folder instance
  */
-export function constructFolder(folderPath: string, parent?: File) {
+export function constructFolder(folderPath: string, parent?: File): File {
   const folder = new File(
     path.normalize(folderPath),
     path.basename(folderPath),
@@ -267,7 +268,7 @@ export function constructFolder(folderPath: string, parent?: File) {
  * Populate folder.
  * @param folder The folder to populate
  */
-export function populateFolder(folder: File) {
+export function populateFolder(folder: File): void {
   if (folder.folderPopulated) {
     return;
   }
@@ -306,7 +307,7 @@ export function populateFolder(folder: File) {
  * @param filePath The file path to read
  * @returns file content
  */
-export function readFile(filePath: string) {
+export function readFile(filePath: string): string | null {
   if (fs.existsSync(filePath)) {
     return fs.readFileSync(filePath, "utf8");
   }
@@ -318,7 +319,7 @@ export function readFile(filePath: string) {
  * @param filePath The file path to save
  * @param fileContent The file content to save
  */
-export function saveFile(filePath: string, fileContent: string) {
+export function saveFile(filePath: string, fileContent: string): void {
   fs.writeFileSync(filePath, fileContent);
 }
 
@@ -326,7 +327,7 @@ export function saveFile(filePath: string, fileContent: string) {
  * Remove file.
  * @param filePath The file path to remove
  */
-export function removeFile(filePath: string) {
+export function removeFile(filePath: string): void {
   fs.unlinkSync(filePath);
 }
 
@@ -335,7 +336,7 @@ export function removeFile(filePath: string) {
  * @param filePath The file path to watch
  * @param callback The callback function
  */
-export function watchFile(filePath: string, callback) {
+export function watchFile(filePath: string, callback: (event: string) => void): void {
   fs.watchFile(filePath, { interval: 1000 }, (curr, prev) => {
     if (!fs.existsSync(filePath)) {
       callback("deleted");
@@ -349,6 +350,6 @@ export function watchFile(filePath: string, callback) {
  * Unwatch file.
  * @param filePath The file path to unwatch
  */
-export function unwatchFile(filePath: string) {
+export function unwatchFile(filePath: string): void {
   fs.unwatchFile(filePath);
 }

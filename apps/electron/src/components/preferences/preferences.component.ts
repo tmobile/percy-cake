@@ -23,7 +23,7 @@ software without specific prior written permission.
 
 import { Component, OnInit } from "@angular/core";
 import { FormControl, Validators } from "@angular/forms";
-import { MatDialogRef } from "@angular/material";
+import { MatDialogRef } from "@angular/material/dialog";
 import * as _ from "lodash";
 
 import { NotEmpty } from "services/validators";
@@ -58,6 +58,7 @@ export class PreferencesComponent implements OnInit {
 
   /**
    * constructs the component.
+   *
    * @param dialogRef the dialog reference
    */
   constructor(private dialogRef: MatDialogRef<PreferencesComponent>) {}

@@ -24,7 +24,7 @@ import { Component, OnInit, ViewChild, Inject } from "@angular/core";
 import { Router } from "@angular/router";
 import { DOCUMENT } from "@angular/common";
 import { FormControl, Validators } from "@angular/forms";
-import { MatAutocompleteTrigger } from "@angular/material";
+import { MatAutocompleteTrigger } from "@angular/material/autocomplete";
 
 import { Store, select } from "@ngrx/store";
 import { BehaviorSubject } from "rxjs";
@@ -75,6 +75,7 @@ export class LoginComponent implements OnInit {
 
   /**
    * constructs the component
+   *
    * @param router the router instance
    * @param store the app store instance
    * @param maintenanceService the maintenance service
@@ -89,6 +90,7 @@ export class LoginComponent implements OnInit {
 
   /**
    * Check if is running electron.
+   *
    * @returns true if is running electron, false otherwise
    */
   isElectron() {
@@ -104,6 +106,7 @@ export class LoginComponent implements OnInit {
 
   /**
    * Set open mode.
+   *
    * @param openMode the open mode
    */
   setOpenMode(openMode: string) {
@@ -220,6 +223,7 @@ export class LoginComponent implements OnInit {
    * this is used to support browser auto fill pass the validation
    * otherwise chrome will show required for username when username is
    * filled from browser auto fill
+   *
    * @param event the key board input event
    */
   onInput = (event: KeyboardEvent) => {
@@ -228,10 +232,11 @@ export class LoginComponent implements OnInit {
     if (this._document.activeElement !== target) {
       this.autoTrigger._onChange(target.value);
     }
-  }
+  };
 
   /**
    * filters the usernames with given prefix
+   *
    * @param value the prefix
    */
   private async _filter(value: string) {

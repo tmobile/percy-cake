@@ -9,18 +9,11 @@
   "icon": "media/appicon.128x128.png",
   "main": "dist/extension",
   "scripts": {
-    "postinstall": "vscode-install",
-    "build:prod": "cross-env NODE_ENV=prod ng build --prod && rimraf dist/index.html && tsc -p ./extension",
+    "build:prod": "cross-env NODE_ENV=prod ng build --prod && tsc -p ./extension && grunt --gruntfile ../builders/grunt.js build:vscode",
     "package": "vsce package",
     "lint": "ng lint"
   },
   "devDependencies": {
-    "@angular/cli": "^7.2.0",
-    "cross-env": "^5.2.0",
-    "rimraf": "^2.6.3",
-    "typescript": "^3.2.4",
-    "vsce": "^1.54.0",
-    "vscode": "^1.1.26"
   },
   "activationEvents": [
     "onCommand:vscode-percy-editor.new",

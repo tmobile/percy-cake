@@ -20,11 +20,11 @@ software without specific prior written permission.
 ===========================================================================
 */
 
-import { Directive, NgZone, HostBinding } from "@angular/core";
-
-import { Highlight, HighlightJS, HighlightResult } from "ngx-highlightjs";
+import { Directive, Inject, Optional, ElementRef, HostBinding } from "@angular/core";
+import { DomSanitizer } from "@angular/platform-browser";
+import { animationFrameScheduler } from "rxjs";
 import * as cheerio from "cheerio";
-
+import { HIGHLIGHT_OPTIONS, HighlightOptions, Highlight, HighlightJS, HighlightResult } from "ngx-highlightjs";
 import { YamlService } from "services/yaml.service";
 
 /**
@@ -35,22 +35,22 @@ import { YamlService } from "services/yaml.service";
 })
 export class HighlightDirective extends Highlight {
   @HostBinding("class.hljs") hljsClass = true;
-  @HostBinding("innerHTML") renderedCode: string;
 
   /**
    * Construct the component.
+   *
    * @param hljs The HighlightJS service
    * @param zone NgZone
    * @param yamlService the util service
    */
-  constructor(hljs: HighlightJS, zone: NgZone, yamlService: YamlService) {
-    super(hljs, zone);
+  constructor(private el: ElementRef, hljs: HighlightJS, sanitizer: DomSanitizer,
+    @Optional() @Inject(HIGHLIGHT_OPTIONS) _options: HighlightOptions, yamlService: YamlService) {
+    super(el, hljs, sanitizer, _options);
 
     this.highlighted.subscribe((res: HighlightResult) => {
-      const code = res.value;
+      let code = res.value;
 
       if (res.language !== "yaml") {
-        this.renderedCode = code;
         return;
       }
 
@@ -62,9 +62,9 @@ export class HighlightDirective extends Highlight {
         if (
           !span.prev ||
           !span.prev.prev ||
-          !span.prev.prev.firstChild ||
-          (span.prev.prev.firstChild.data !== "!!int" &&
-            span.prev.prev.firstChild.data !== "!!float")
+          !(span.prev.prev as any).firstChild ||
+          ((span.prev.prev as any).firstChild.data !== "!!int" &&
+          (span.prev.prev as any).firstChild.data !== "!!float")
         ) {
           $(span)
             .removeClass("hljs-number")
@@ -80,8 +80,8 @@ export class HighlightDirective extends Highlight {
         if (
           !span.prev ||
           !span.prev.prev ||
-          !span.prev.prev.firstChild ||
-          span.prev.prev.firstChild.data !== "!!str"
+          !(span.prev.prev as any).firstChild ||
+          (span.prev.prev as any).firstChild.data !== "!!str"
         ) {
           spanNode.removeClass("hljs-string").addClass("hljs-attr");
           return;
@@ -95,12 +95,16 @@ export class HighlightDirective extends Highlight {
         }
       });
 
-      this.renderedCode = $.html();
+      code = $.html();
+      animationFrameScheduler.schedule(() =>
+        this.el.nativeElement.innerHTML = code || ""
+      );
     });
   }
 
   /**
    * Highlight the yaml code. We override this method to ensure a non-null code is passed in.
+   *
    * @param code The yaml code
    * @param languages The yaml languages
    */

@@ -23,7 +23,7 @@ software without specific prior written permission.
 
 import { Component, OnInit, Inject } from "@angular/core";
 import { FormControl, Validators } from "@angular/forms";
-import { MatDialogRef, MAT_DIALOG_DATA } from "@angular/material";
+import { MatDialogRef, MAT_DIALOG_DATA } from "@angular/material/dialog";
 import * as _ from "lodash";
 
 import { percyConfig } from "config";
@@ -45,6 +45,7 @@ export class CreateBranchDialogComponent implements OnInit {
 
   /**
    * creates the component
+   *
    * @param dialogRef the reference to a dialog opened via the MatDialog service
    * @param store the state store instance
    * @param data the injection token that can be used to access the data that was passed in to a dialog

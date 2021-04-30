@@ -33,17 +33,15 @@ import {
 } from "@angular/core";
 import { FlatTreeControl } from "@angular/cdk/tree";
 import { MatTreeFlatDataSource, MatTreeFlattener } from "@angular/material/tree";
-import { MatDialog } from "@angular/material";
+import { MatDialog } from "@angular/material/dialog";
 import { CdkVirtualScrollViewport } from "@angular/cdk/scrolling";
 import { Observable } from "rxjs";
 import { select, Store } from "@ngrx/store";
 import * as _ from "lodash";
 
-import { PROPERTY_VALUE_TYPES } from "config";
 import { User } from "models/auth";
 import { Configuration, EnvsVariablesConfig } from "models/config-file";
-import { TreeNode } from "models/tree-node";
-import { ConfigProperty } from "models/config-property";
+import { TreeNode, ConfigProperty, PROPERTY_VALUE_TYPES } from "models/tree-node";
 
 import * as appStore from "store";
 import { ConfirmationDialogComponent } from "../confirmation-dialog/confirmation-dialog.component";
@@ -92,6 +90,7 @@ export class NestedConfigViewComponent implements OnChanges {
 
   /**
    * initializes the component
+   *
    * @param dialog the material dialog instance
    * @param yamlService the yaml service
    */
@@ -120,6 +119,7 @@ export class NestedConfigViewComponent implements OnChanges {
 
   /**
    * handle component changes
+   *
    * @param changes the changes
    */
   ngOnChanges(changes: SimpleChanges) {
@@ -177,9 +177,7 @@ export class NestedConfigViewComponent implements OnChanges {
         return keyOptions;
       }
 
-      keyOptions = _.map(this.environments, environment => {
-        return { key: environment, type: PROPERTY_VALUE_TYPES.OBJECT };
-      });
+      keyOptions = _.map(this.environments, environment => ({ key: environment, type: PROPERTY_VALUE_TYPES.OBJECT }));
 
       const existingKeys = _.map(
         this.configuration.environments.children,
@@ -227,8 +225,8 @@ export class NestedConfigViewComponent implements OnChanges {
           parentNode = parentNode.parent;
         }
 
-        for (let i = 0; i < keyHierarchy.length; i++) {
-          defaultNode = _.find(defaultNode.children, { key: keyHierarchy[i] });
+        for (const key of keyHierarchy) {
+          defaultNode = _.find(defaultNode.children, { key });
         }
       }
 
@@ -290,6 +288,7 @@ export class NestedConfigViewComponent implements OnChanges {
 
   /**
    * When a property name changes, rename any referenced variable.
+   *
    * @param node the TreeNode
    * @param oldName old name of the property
    * @param newName new name of the property
@@ -324,6 +323,7 @@ export class NestedConfigViewComponent implements OnChanges {
 
   /**
    * When anchor name changes, rename any referenced alias.
+   *
    * @param node the TreeNode
    * @param oldName old name of anchor
    * @param newName new name of anchor
@@ -338,6 +338,7 @@ export class NestedConfigViewComponent implements OnChanges {
 
   /**
    * Do save property
+   *
    * @param node the added/edited node
    */
   private doSaveAddEditProperty(node: TreeNode) {
@@ -422,6 +423,7 @@ export class NestedConfigViewComponent implements OnChanges {
 
   /**
    * Saves the node
+   *
    * @param node the added/edited node
    */
   saveAddEditProperty(node: TreeNode) {
@@ -466,6 +468,7 @@ export class NestedConfigViewComponent implements OnChanges {
 
   /**
    * deletes the property from configuration
+   *
    * @param node node to delete
    */
   deleteProperty(node: TreeNode) {
@@ -489,6 +492,7 @@ export class NestedConfigViewComponent implements OnChanges {
 
   /**
    * Do delete property
+   *
    * @param node the deleted node
    */
   private doDeleteProperty(node: TreeNode) {
@@ -533,6 +537,7 @@ export class NestedConfigViewComponent implements OnChanges {
 
   /**
    * shows the detail of node in right side
+   *
    * @param node node to show as selected
    */
   showDetail(node: TreeNode) {
@@ -541,6 +546,7 @@ export class NestedConfigViewComponent implements OnChanges {
 
   /**
    * scroll to a reference node, in a particular viewport (default or env)
+   *
    * @param node  the reference node to scroll to
    */
   scrollToReferenceNode(event, node: TreeNode) {
@@ -562,6 +568,7 @@ export class NestedConfigViewComponent implements OnChanges {
 
   /**
    * view compiled YAML action handler
+   *
    * @param environment the environment to compile
    */
   viewCompiledYAML(environment: string) {
@@ -570,6 +577,7 @@ export class NestedConfigViewComponent implements OnChanges {
 
   /**
    * align the corresponding nodes from other environments
+   *
    * @param node node which is modified/deleted
    * @param action the alignment action
    */

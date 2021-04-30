@@ -20,7 +20,7 @@ software without specific prior written permission.
 ===========================================================================
 */
 
-import { TestUser, utilService } from "test/test-helper";
+import { TEST_USER, utilService } from "test/test-helper";
 import { FS } from "./util.service";
 
 import * as path from "path";
@@ -39,15 +39,22 @@ describe("MaintenanceService", () => {
   );
 
   let fs: FS;
+  let maintenanceService: MaintenanceService;
   beforeAll(async () => {
     fs = await utilService.getBrowserFS();
   });
 
-  it("should get user type ahead", async () => {
-    const maintenanceService = new MaintenanceService(utilService);
-
+  beforeEach(async () => {
+    await fs.remove(sessionsMetaFile);
     await fs.remove(loggedInUsersMetaFile);
+    maintenanceService = new MaintenanceService(utilService);
+  });
 
+  afterEach(() => {
+    maintenanceService.ngOnDestroy();
+  });
+
+  it("should get user type ahead", async () => {
     let names = await maintenanceService.getUserTypeAhead("u");
     expect(names).toEqual([]);
 
@@ -63,7 +70,6 @@ describe("MaintenanceService", () => {
   });
 
   it("should get user type ahead from metafile", async () => {
-    const maintenanceService = new MaintenanceService(utilService);
 
     await fs.outputJson(loggedInUsersMetaFile, ["Bob", "Tom", "Bike"]);
 
@@ -72,46 +78,40 @@ describe("MaintenanceService", () => {
   });
 
   it("should be successful to check session timout", async () => {
-    const maintenanceService = new MaintenanceService(utilService);
-
-    await fs.remove(sessionsMetaFile);
-
     const principal = {
-      user: TestUser,
+      user: TEST_USER,
       repoMetadata: null
     };
 
     await maintenanceService.checkSessionTimeout(principal);
     await maintenanceService.checkSessionTimeout(principal);
-    await new Promise(resolve => setTimeout(resolve, 550)); // wait for debouce time
+    await new Promise(resolve => setTimeout(resolve, 1000)); // wait for debouce time
 
     const sessions = await fs.readJson(sessionsMetaFile);
-    expect(sessions[TestUser.username]).toBeDefined();
+    expect(sessions[TEST_USER.username]).toBeDefined();
   });
 
   it("error expected because session timout", async () => {
-    const maintenanceService = new MaintenanceService(utilService);
 
     let sessions = {
-      [TestUser.username]: Date.now() - 1000
+      [TEST_USER.username]: Date.now() - 1000
     };
     await fs.outputJson(sessionsMetaFile, sessions);
-    await new Promise(resolve => setTimeout(resolve, 550)); // wait for debouce time
 
     const principal = {
-      user: TestUser,
+      user: TEST_USER,
       repoMetadata: null
     };
 
     try {
       await maintenanceService.checkSessionTimeout(principal);
-      fail("error expected");
+      fail("Session expired error expected");
     } catch (err) {
       expect(err.message.indexOf("Session expired") > -1).toBeTruthy();
 
-      await new Promise(resolve => setTimeout(resolve, 550)); // wait for debouce time
-      sessions = JSON.parse((await fs.readFile(sessionsMetaFile)).toString());
-      expect(sessions[TestUser.username]).toBeUndefined();
+      await new Promise(resolve => setTimeout(resolve, 1000)); // wait for debouce time
+      sessions = await fs.readJson(sessionsMetaFile);
+      expect(sessions[TEST_USER.username]).toBeUndefined();
     }
   });
 });

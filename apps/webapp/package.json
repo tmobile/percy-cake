@@ -4,14 +4,11 @@
   "repository": "https://github.com/tmobile/percy-cake",
   "scripts": {
     "start": "cors-proxy stop && cors-proxy start -d -p 9999 && ng serve",
-    "build:prod": "cross-env NODE_ENV=prod ng build --prod",
+    "build:prod": "cross-env NODE_ENV=prod ng build --prod && grunt --gruntfile ../builders/grunt.js build:webapp",
     "test": "cross-env NODE_ENV=test ng test",
     "lint": "ng lint"
   },
   "devDependencies": {
-    "@angular/cli": "^7.2.0",
-    "@isomorphic-git/cors-proxy": "^2.3.0",
-    "cross-env": "^5.2.0"
   },
   "license": "Apache-2.0",
   "licenses": [

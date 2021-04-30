@@ -34,9 +34,7 @@ if (!navigator.userAgent.includes("Trident/")) {
 
   const indexedDBVersion = "2.0";
   const $open = BrowserIndexedDB.open;
-  BrowserIndexedDB.open = name => {
-    return $open.apply(BrowserIndexedDB, [name, indexedDBVersion]);
-  };
+  BrowserIndexedDB.open = name => $open.apply(BrowserIndexedDB, [name, indexedDBVersion]);
 }
 
 /**
@@ -48,12 +46,14 @@ class MemoryCache {
 
   /**
    * Creates memory cache.
+   *
    * @param name the cache name
    */
   constructor(public name: string) {}
 
   /**
    * Get value form memory cache.
+   *
    * @param key the key
    * @return value
    */
@@ -63,6 +63,7 @@ class MemoryCache {
 
   /**
    * Put value into memory cache.
+   *
    * @param key the key
    * @param value the key
    */
@@ -72,6 +73,7 @@ class MemoryCache {
 
   /**
    * Delete value form memory cache.
+   *
    * @param key the key
    */
   delete(key) {
@@ -91,14 +93,15 @@ export const MemoryPool: { [key: string]: MemoryCache } = {};
 
 /**
  * Create memory cache.
+ *
  * @param name the cache name
  */
-function createMemoryCache(name: string) {
+const createMemoryCache = (name: string) => {
   if (!MemoryPool[name]) {
     MemoryPool[name] = new MemoryCache(name);
   }
   return MemoryPool[name];
-}
+};
 
 /**
  * This context adds a cache layer in front of IndexedDB to speed read operations.
@@ -107,6 +110,7 @@ function createMemoryCache(name: string) {
 class CacheStorageContext {
   /**
    * Creates the context.
+   *
    * @param indexedDB the IndexedDB storage
    * @param memoryCache the memory cache
    */
@@ -114,6 +118,7 @@ class CacheStorageContext {
 
   /**
    * Call IndexedDB.
+   *
    * @param method the method name to call
    * @param args the arguments of the method
    * @param callback the callback
@@ -128,6 +133,7 @@ class CacheStorageContext {
 
   /**
    * Read cache, if not present call IndexedDB.
+   *
    * @param key the key of cache
    * @param method the IndexedDB method name to call
    * @param callback the callback
@@ -154,6 +160,7 @@ class CacheStorageContext {
 
   /**
    * Get object.
+   *
    * @param key the key of object
    * @param callback the callback
    */
@@ -163,6 +170,7 @@ class CacheStorageContext {
 
   /**
    * Get object.
+   *
    * @param key the key of buffer
    * @param callback the callback
    */
@@ -172,6 +180,7 @@ class CacheStorageContext {
 
   /**
    * Put object.
+   *
    * @param key the key of object
    * @param value the value of object
    * @param callback the callback
@@ -188,6 +197,7 @@ class CacheStorageContext {
 
   /**
    * Put buffer.
+   *
    * @param key the key of buffer
    * @param value the value of buffer
    * @param callback the callback
@@ -204,6 +214,7 @@ class CacheStorageContext {
 
   /**
    * Delete object/buffer.
+   *
    * @param key the key to delete
    * @param callback the callback
    */
@@ -239,12 +250,14 @@ export class CacheStorage {
 
   /**
    * Creates storage.
+   *
    * @param name the storage name.
    */
   constructor(private name: string) {}
 
   /**
    * Open the storage.
+   *
    * @param callback the callback function
    */
   open(callback) {
@@ -263,6 +276,7 @@ export class CacheStorage {
 
   /**
    * Get read/write context.
+   *
    * @return read/write context
    */
   getReadWriteContext() {

@@ -26,7 +26,6 @@ software without specific prior written permission.
  */
 import * as fs from "fs-extra";
 import * as yaml from "js-yaml";
-// @ts-ignore
 import { Validator } from "jsonschema";
 import * as _ from "lodash";
 import * as path from "path";
@@ -44,7 +43,7 @@ export async function readAppConfigYAML(
   environments: string[],
   percyConfig: IPercyConfig,
   colorConsole?: boolean
-): Promise<object> {
+): Promise<Record<string, unknown>> {
   const appConfig = await readYAML(filePath);
   const validatedAppConfig = validateAppConfig(appConfig, filePath);
   let envNodes;
@@ -53,14 +52,14 @@ export async function readAppConfigYAML(
   } catch (e) {
     throw new Error(`Error in process file: ${filePath}. Cause:\n${e.message}`);
   }
-  const result: object = {};
+  const result = {};
   // Resolve variables of each environment
   _.each(envNodes, (envNode, environment) => {
     try {
       _.set(
         result,
         environment,
-        resolveVariables(envNode, environment, percyConfig)
+        resolveVariables(envNode as Record<string, unknown>, environment, percyConfig)
       );
     } catch (e) {
       getLogger(colorConsole).error(e.message);
@@ -79,10 +78,10 @@ export async function readAppConfigYAML(
  */
 export async function loadEnvironmentsFile(
   envFileFolderPath: string,
-  configOptions: any,
+  configOptions: Record<string, unknown>,
   colorConsole?: boolean
 ): Promise<string[]> {
-  const envFileName: string = configOptions.ENVIRONMENT_FILE_NAME;
+  const envFileName: string = configOptions.ENVIRONMENT_FILE_NAME as string;
   const envFilePath = path.join(envFileFolderPath, envFileName);
   const isFileExists = await fs.pathExists(envFilePath);
   if (!isFileExists) {
@@ -101,7 +100,7 @@ export async function loadEnvironmentsFile(
  * Read yaml file and parse it
  * @param filepath filepath
  */
-async function readYAML(filepath: string): Promise<object> {
+async function readYAML(filepath: string): Promise<IAppConfig> {
   const file = await fs.readFile(filepath, "utf8");
   return yaml.load(file);
 }
@@ -113,10 +112,10 @@ async function readYAML(filepath: string): Promise<object> {
  * @param env the environment name
  */
 function resolveVariables(
-  envNode: object,
+  envNode: Record<string, unknown>,
   env: string,
   percyConfig: IPercyConfig
-): object {
+): Record<string, unknown> {
   const tokens = resolveTokens(envNode, env, percyConfig);
   // substitute
   let result = substitute(envNode, tokens, percyConfig);
@@ -141,19 +140,19 @@ function resolveVariables(
  * @returns the resolved tokens
  */
 function resolveTokens(
-  envNode: object,
+  envNode: Record<string, unknown>,
   env: string,
   percyConfig: IPercyConfig
-): object {
-  const tokens: any = {};
+): Record<string, string> {
+  const tokens: Record<string, string> = {};
   tokens[percyConfig.envVariableName] = env;
   _.each(envNode, (value, key) => {
     if (!_.isArray(value) && !_.isObject(value)) {
-      tokens[key] = value;
+      tokens[key] = value as string;
     }
   });
-  const result: any = _.cloneDeep(tokens);
-  const referenceLinks: any[] = [];
+  const result: Record<string, string> = _.cloneDeep(tokens);
+  const referenceLinks: string[][] = [];
   while (true) {
     let referenceFound = false;
     _.each(result, (value, key) => {
@@ -197,15 +196,15 @@ function resolveTokens(
  * @returns {object} the substitute object.
  */
 function substitute(
-  obj: object,
-  tokens: object,
+  obj: Record<string, unknown>,
+  tokens: Record<string, string>,
   percyConfig: IPercyConfig
-): object {
+): Record<string, unknown> {
   _.each(obj, (value, key) => {
     if (_.isArray(value)) {
       _.set(obj, key, substituteArray(value, tokens, percyConfig));
     } else if (_.isObject(value)) {
-      _.set(obj, key, substitute(value, tokens, percyConfig));
+      _.set(obj, key, substitute(value as Record<string, unknown>, tokens, percyConfig));
     } else if (_.isString(value)) {
       _.set(obj, key, substituteString(value, tokens, percyConfig));
     }
@@ -221,14 +220,14 @@ function substitute(
  * @returns {object} the substitute object.
  */
 function substituteArray(
-  items: any[],
-  tokens: object,
+  items: (Record<string, unknown>[] | Record<string, unknown> | string)[],
+  tokens: Record<string, string>,
   percyConfig: IPercyConfig
-): any[] {
+): (Record<string, unknown>[] | Record<string, unknown> | string)[] {
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
     if (_.isArray(item)) {
-      items[i] = substituteArray(item, tokens, percyConfig);
+      items[i] = substituteArray(item, tokens, percyConfig) as Record<string, unknown>[];
     } else if (_.isObject(item)) {
       items[i] = substitute(item, tokens, percyConfig);
     } else if (_.isString(item)) {
@@ -247,7 +246,7 @@ function substituteArray(
  */
 function substituteString(
   str: string,
-  tokens: object,
+  tokens: Record<string, string>,
   percyConfig: IPercyConfig
 ): string {
   let retValue = str;
@@ -298,7 +297,7 @@ function createRegExp(percyConfig: IPercyConfig) {
  * @throws Error if loop reference detected
  */
 function addTokenReference(
-  referenceLinks: any[],
+  referenceLinks: string[][],
   refFrom: string,
   refTo: string
 ) {
@@ -336,8 +335,8 @@ function addTokenReference(
 function mergeEnvNodes(
   appConfig: IAppConfig,
   environments: string[]
-): object {
-  const mergedEnvNodes: object = {};
+): Record<string, unknown> {
+  const mergedEnvNodes: Record<string, unknown> = {};
   // calculate the env in inherits order
   const sortedEnv = sortEnvByInherits(environments, appConfig.environments);
   // Apply default values to each environment
@@ -360,7 +359,7 @@ function mergeEnvNodes(
  * @param appConfig app configuration object
  */
 function mergeEnvNode(
-  mergedEnvNodes: object,
+  mergedEnvNodes: unknown,
   env: string,
   appConfig: IAppConfig
 ) {
@@ -369,7 +368,7 @@ function mergeEnvNode(
 
   const mergedEnvNode = _.cloneDeep(parentEnvNode);
 
-  mergeProperties(mergedEnvNode, currentEnvNode, env, "");
+  mergeProperties(mergedEnvNode, currentEnvNode as Record<string, unknown>, env, "");
 
   return mergedEnvNode;
 }
@@ -383,8 +382,8 @@ function mergeEnvNode(
  * @param {string} propertyName the property name.
  */
 function mergeProperties(
-  dest: object,
-  src: object,
+  dest: Record<string, unknown>,
+  src: Record<string, unknown>,
   env: string,
   propertyName: string
 ) {
@@ -403,7 +402,7 @@ function mergeProperties(
       }
 
       if (_.isPlainObject(value) && _.isPlainObject(valueInDest)) {
-        mergeProperties(valueInDest, value, env, name);
+        mergeProperties(valueInDest as Record<string, unknown>, value as Record<string, unknown>, env, name);
       } else {
         _.set(dest, key, value);
       }
@@ -419,13 +418,13 @@ function mergeProperties(
  * @returns {object} the inherited value.
  */
 function getParentEnvNode(
-  mergedEnvNodes: object,
+  mergedEnvNodes: unknown,
   env: string,
   appConfig: IAppConfig
-): object {
+): Record<string, unknown> {
   const inherits = _.get(_.get(appConfig.environments, env), "inherits");
   if (inherits) {
-    return _.get(mergedEnvNodes, inherits);
+    return _.get(mergedEnvNodes, inherits) as Record<string, unknown>;
   }
   // no inherits, return default node
   return appConfig.default;
@@ -437,7 +436,7 @@ function getParentEnvNode(
  * @param {object} envNodes the config of the env nodes.
  * @returns {string[]} the calculated order.
  */
-function sortEnvByInherits(environments: string[], envNodes: object): string[] {
+function sortEnvByInherits(environments: string[], envNodes: Record<string, unknown>): string[] {
   const orderedEnv: string[] = [];
   for (const env of environments) {
     if (orderedEnv.indexOf(env) >= 0) {
@@ -475,7 +474,7 @@ function sortEnvByInherits(environments: string[], envNodes: object): string[] {
  * @param configFilePath config file path for logging purposes (optional)
  */
 function validateAppConfig(
-  appConfig: object,
+  appConfig: IAppConfig,
   configFilePath?: string,
   colorConsole?: boolean
 ): IAppConfig {
@@ -506,7 +505,7 @@ function validateAppConfig(
       }`
     );
   }
-  return appConfig as IAppConfig;
+  return appConfig;
 }
 
 /**
@@ -531,7 +530,7 @@ async function ensureEnvironmentFolders(
  * @param percyConfig the percy config
  */
 export async function writeResult(
-  envNode: object,
+  envNode: Record<string, unknown>,
   yamlFilePath: string,
   outputFolder: string,
   percyConfig: IPercyConfig
@@ -589,6 +588,7 @@ export async function findSubFolders(folderPath: string): Promise<string[]> {
  * strips the ansi color from string
  * @param str the string to strip
  */
-export function stripColor(str: string) {
+export function stripColor(str: string) : string {
+  // eslint-disable-next-line no-control-regex
   return str.replace(/\x1B[[(?);]{0,2}(;?\d)*./g, "");
 }

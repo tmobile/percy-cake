@@ -23,7 +23,7 @@ software without specific prior written permission.
 
 import { Injectable } from "@angular/core";
 import { Store, select } from "@ngrx/store";
-import { Actions, Effect, ofType } from "@ngrx/effects";
+import { Actions, createEffect, ofType } from "@ngrx/effects";
 import { map, withLatestFrom, switchMap } from "rxjs/operators";
 import * as _ from "lodash";
 
@@ -40,7 +40,7 @@ import {
   PageLoadFailure,
 } from "../actions/editor.actions";
 import { GetFileContentSuccess } from "store/actions/backend.actions";
-import { GetConfigFile } from "store/reducers/backend.reducers";
+import { getConfigFile } from "store/reducers/backend.reducers";
 
 import { FileManagementService } from "services/file-management.service";
 
@@ -54,8 +54,7 @@ export class EditorEffects {
   ) { }
 
   // handles the page load request
-  @Effect()
-  pageLoad$ = this.actions$.pipe(
+  pageLoad$ = createEffect(() => this.actions$.pipe(
     ofType<PageLoad>(EditorActionTypes.PageLoad),
     withLatestFrom(this.store.pipe(select(appStore.getAppState))),
     switchMap(async ([action, appState]) => {
@@ -87,7 +86,7 @@ export class EditorEffects {
           };
           result.push(new GetFileContentSuccess({ file, newlyCreated: true }));
         } else {
-          const file = GetConfigFile(appState.backend, fileName, applicationName);
+          const file = getConfigFile(appState.backend, fileName, applicationName);
 
           if (file && (
                 (file.fileType === FileTypes.YAML && (file.originalConfig || file.draftConfig)) ||
@@ -117,11 +116,10 @@ export class EditorEffects {
       }
     }),
     switchMap(res => res),
-  );
+  ));
 
   // load environment failure effect
-  @Effect()
-  pageLoadFailure$ = this.actions$.pipe(
+  pageLoadFailure$ = createEffect(() => this.actions$.pipe(
     ofType<PageLoadFailure>(EditorActionTypes.PageLoadFailure),
     map((action) => {
       const alertType = action.payload.statusCode === 401 || action.payload.statusCode === 403 ? "logout" : "go-to-dashboard";
@@ -130,5 +128,5 @@ export class EditorEffects {
         alertType
       });
     })
-  );
+  ));
 }

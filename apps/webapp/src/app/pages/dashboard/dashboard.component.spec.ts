@@ -1,6 +1,6 @@
-import { Sort } from "@angular/material";
+import { Sort } from "@angular/material/sort";
 
-import { Setup, assertDialogOpened, TestContext, TestUser } from "test/test-helper";
+import { SETUP, assertDialogOpened, TestContext, TEST_USER } from "test/test-helper";
 
 import { DashboardComponent } from "./dashboard.component";
 import { LoadFilesSuccess, Refresh } from "store/actions/backend.actions";
@@ -14,7 +14,7 @@ import { ToggleApp, CollapseApps, TableSort, SelectApp } from "store/actions/das
 import { LoginSuccess } from "store/actions/auth.actions";
 
 describe("DashboardComponent", () => {
-  const setup = Setup(DashboardComponent);
+  const setup = SETUP(DashboardComponent);
 
   const files = [
     {
@@ -106,17 +106,17 @@ describe("DashboardComponent", () => {
     expect(ctx.component.isEnvFile(files[0])).toBeFalsy();
     expect(ctx.component.isEnvFile(files[5])).toBeTruthy();
 
-    ctx.store.next(new LoginSuccess({...TestUser, repositoryUrl: "https://bitbucket.org/repo"}));
-    expect(ctx.component.pullRequestUrl).toEqual(`https://bitbucket.org/repo/pull-requests/new?source=${TestUser.branchName}&t=1#diff`);
+    ctx.store.next(new LoginSuccess({...TEST_USER, repositoryUrl: "https://bitbucket.org/repo"}));
+    expect(ctx.component.pullRequestUrl).toEqual(`https://bitbucket.org/repo/pull-requests/new?source=${TEST_USER.branchName}&t=1#diff`);
 
-    ctx.store.next(new LoginSuccess({...TestUser, repositoryUrl: "https://github.com/repo"}));
-    expect(ctx.component.pullRequestUrl).toEqual(`https://github.com/repo/pull/new/${TestUser.branchName}`);
+    ctx.store.next(new LoginSuccess({...TEST_USER, repositoryUrl: "https://github.com/repo"}));
+    expect(ctx.component.pullRequestUrl).toEqual(`https://github.com/repo/pull/new/${TEST_USER.branchName}`);
 
-    ctx.store.next(new LoginSuccess({...TestUser, repositoryUrl: "https://gitlab.com/repo"}));
+    ctx.store.next(new LoginSuccess({...TEST_USER, repositoryUrl: "https://gitlab.com/repo"}));
     expect(ctx.component.pullRequestUrl).toEqual(
-      `https://gitlab.com/repo/merge_requests/new/diffs?merge_request%5Bsource_branch%5D=${TestUser.branchName}`);
+      `https://gitlab.com/repo/merge_requests/new/diffs?merge_request%5Bsource_branch%5D=${TEST_USER.branchName}`);
 
-    ctx.store.next(new LoginSuccess({...TestUser, repositoryUrl: "https://not-supported.com/repo"}));
+    ctx.store.next(new LoginSuccess({...TEST_USER, repositoryUrl: "https://not-supported.com/repo"}));
     expect(ctx.component.pullRequestUrl).toBeNull();
 
     ctx.component.ngOnDestroy();
@@ -556,13 +556,13 @@ describe("DashboardComponent", () => {
 
   it("should sync master successfully", () => {
 
-    ctx.store.next(new LoginSuccess(TestUser));
+    ctx.store.next(new LoginSuccess(TEST_USER));
 
     ctx.component.syncMaster();
 
     expect(dispatchSpy.calls.mostRecent().args[0].payload).toEqual({
       srcBranch: "master",
-      targetBranch: TestUser.branchName,
+      targetBranch: TEST_USER.branchName,
     });
   });
 

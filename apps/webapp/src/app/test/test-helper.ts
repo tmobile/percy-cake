@@ -23,13 +23,12 @@ software without specific prior written permission.
 
 import { Router, ActivatedRoute } from "@angular/router";
 import { Type, NO_ERRORS_SCHEMA, Component } from "@angular/core";
-import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from "@angular/material";
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from "@angular/material/dialog";
 import { HttpClient } from "@angular/common/http";
 import { Observable, isObservable, BehaviorSubject, Subscription, of } from "rxjs";
 import { Store, StoreModule } from "@ngrx/store";
 import { EffectsModule } from "@ngrx/effects";
 import { HIGHLIGHT_OPTIONS } from "ngx-highlightjs";
-import * as yaml from "highlight.js/lib/languages/yaml";
 import * as _ from "lodash";
 
 import { TestBed } from "@angular/core/testing";
@@ -49,17 +48,22 @@ import { UtilService } from "services/util.service";
 import { HighlightDirective } from "directives/highlight.directive";
 
 import { percyConfig } from "config";
+import { LogoutSuccess } from "store/actions/auth.actions";
 
-declare var beforeEach: (any) => any;
-declare var afterEach: (any) => any;
+declare let beforeEach: (any) => any;
+declare let afterEach: (any) => any;
 
 const percyTestConfig = require("../../percy.conf.test.json");
+
+const highlightjs = { default: require("highlight.js/lib/core") };
+const yamlLang = { default: require("highlight.js/lib/languages/yaml") };
+const jsonLang = { default: require("highlight.js/lib/languages/json") };
 
 // Inject test config
 _.assign(percyConfig, percyTestConfig);
 
 const httpSpy = jasmine.createSpyObj("httpSpy", ["get"]);
-(<jasmine.Spy> httpSpy.get).and.callFake((url: string) => {
+(httpSpy.get as jasmine.Spy).and.callFake((url: string) => {
   if (url === "percy.conf.json") {
     return of(percyConfig);
   }
@@ -68,7 +72,7 @@ const httpSpy = jasmine.createSpyObj("httpSpy", ["get"]);
 const ngZoneSpy = jasmine.createSpyObj("ngZoneSpy", ["run"]);
 export const utilService = new UtilService(httpSpy, ngZoneSpy);
 
-export const TestUser: User = {
+export const TEST_USER: User = {
   username: "test-user",
   repositoryUrl: "https://bitbucket.org/tc/repo",
   branchName: "admin",
@@ -85,16 +89,16 @@ export class StoreTestComponent {
   constructor(public store: Store<AppState>) { }
 }
 
-const DialogStub = {
+const DIALOG_STUB = {
   input: new BehaviorSubject(undefined),
   output: new BehaviorSubject(undefined)
 };
-const RouterStub = new BehaviorSubject<string[]>(undefined);
+const ROUTER_STUB = new BehaviorSubject<string[]>(undefined);
 
 export class TestContext<T> extends TestCtx<T> {
 
-  readonly routerStub = RouterStub;
-  readonly dialogStub = DialogStub;
+  readonly routerStub = ROUTER_STUB;
+  readonly dialogStub = DIALOG_STUB;
   readonly activatedRouteStub: any;
   readonly store: Store<AppState>;
   readonly observables: { [name: string]: BehaviorSubject<any> } = {};
@@ -120,6 +124,12 @@ export class TestContext<T> extends TestCtx<T> {
   editorState() {
     return this.observables.store.value.editor;
   }
+
+  async asyncWait() {
+    await Promise.resolve();
+    await this.fixture.whenStable();
+    await this.fixture.whenRenderingDone();
+  }
 }
 
 class ValueOfObservable<T> extends BehaviorSubject<T> {
@@ -138,16 +148,22 @@ class ValueOfObservable<T> extends BehaviorSubject<T> {
 }
 
 export const assertDialogOpened = <T>(dialogType: Type<T>, options?) => {
-  expect(DialogStub.input.value).toEqual({ dialogType, options });
+  expect(DIALOG_STUB.input.value).toEqual({ dialogType, options });
 };
 
-export const Setup = <T>(componentType: Type<T>, triggerLifecyle: boolean = true) => {
+export const SETUP = <T>(componentType: Type<T>, triggerLifecyle: boolean = true) => {
 
   configureTestSuite(() => {
     TestBed.configureTestingModule({
       imports: [
         MaterialComponentsModule,
-        StoreModule.forRoot(reducers, { metaReducers }),
+        StoreModule.forRoot(reducers, {
+            metaReducers,
+            runtimeChecks: {
+              strictStateImmutability: false,
+              strictActionImmutability: false
+            }
+        }),
         EffectsModule.forRoot([AppEffects, AuthEffects, BackendEffects, DashboardEffects, EditorEffects])
       ],
       declarations: [
@@ -159,7 +175,7 @@ export const Setup = <T>(componentType: Type<T>, triggerLifecyle: boolean = true
           provide: Router,
           useValue: {
             navigate: (paths) => {
-              RouterStub.next(paths);
+              ROUTER_STUB.next(paths);
             }
           }
         },
@@ -169,12 +185,12 @@ export const Setup = <T>(componentType: Type<T>, triggerLifecyle: boolean = true
         },
         {
           provide: MatDialog, useValue: {
-            open(dialogType, options) {
-              DialogStub.input.next({ dialogType, options });
+            open: (dialogType, options) => {
+              DIALOG_STUB.input.next({ dialogType, options });
               return {
                 afterClosed: () => {
-                  DialogStub.output = new BehaviorSubject(undefined);
-                  return DialogStub.output;
+                  DIALOG_STUB.output = new BehaviorSubject(undefined);
+                  return DIALOG_STUB.output;
                 }
               };
             }
@@ -183,7 +199,7 @@ export const Setup = <T>(componentType: Type<T>, triggerLifecyle: boolean = true
         {
           provide: MatDialogRef, useValue: {
             close: (value) => {
-              DialogStub.output.next(value);
+              DIALOG_STUB.output.next(value);
             }
           },
         },
@@ -194,7 +210,14 @@ export const Setup = <T>(componentType: Type<T>, triggerLifecyle: boolean = true
           provide: MAT_DIALOG_DATA, useValue: {},
         },
         {
-          provide: HIGHLIGHT_OPTIONS, useValue: { languages: () => [{ name: "yaml", func: yaml }] }
+          provide: HIGHLIGHT_OPTIONS,
+          useValue: {
+            coreLibraryLoader: () => of(highlightjs),
+            languages: {
+              yaml: () => of(yamlLang),
+              json: () => of(jsonLang)
+            }
+          }
         },
       ],
       schemas: [NO_ERRORS_SCHEMA],
@@ -204,13 +227,15 @@ export const Setup = <T>(componentType: Type<T>, triggerLifecyle: boolean = true
   let ctx: TestContext<T>;
 
   beforeEach(async () => {
-    // Reset the stub values before each test
-    RouterStub.next(undefined);
-    DialogStub.output = new BehaviorSubject(undefined);
-    DialogStub.input = new BehaviorSubject(undefined);
 
     // Create component and the test context
     ctx = new TestContext(createTestContext(componentType));
+    ctx.store.next(new LogoutSuccess());
+
+    // Reset the stub values before each test
+    ROUTER_STUB.next(undefined);
+    DIALOG_STUB.output = new BehaviorSubject(undefined);
+    DIALOG_STUB.input = new BehaviorSubject(undefined);
 
     // For best practice, the component's observables should be
     // created directly as component's instance properties

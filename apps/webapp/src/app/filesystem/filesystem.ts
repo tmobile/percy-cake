@@ -63,19 +63,19 @@ const ShimFS = {
 
           // Filer will write file changes events to localstorage when context.close
           // We don't need that feature presently, shim context.close to an empty method
-          function shimContext(method) {
+          const shimContext = (method) => {
             const $method = filerFS.provider[method];
             filerFS.provider[method] = (...args) => {
               const context = $method.apply(filerFS, args);
               context.close = () => {};
               return context;
             };
-          }
+          };
 
           shimContext("openReadWriteContext");
           shimContext("openReadOnlyContext");
 
-          git.plugins.set("fs", <any>ShimFS);
+          git.plugins.set("fs", ShimFS as any);
 
           resolve();
         }
@@ -85,6 +85,7 @@ const ShimFS = {
 
   /**
    * Check whether filesystem is initiliazed.
+   *
    * @returns true if filesystem is initiliazed, false otherwise
    */
   initialized: () => filerFS && filerFS.readyState === "READY"
@@ -130,7 +131,7 @@ const ShimFS = {
   "removexattr",
   "fremovexattr"
 ].forEach(key => {
-  ShimFS[key] = function(...args) {
+  ShimFS[key] = (...args) => {
     // For writeFile/appendFile, normalize the options arg with encoding and flag
     if (key === "writeFile" && _.isEmpty(args[2])) {
       args[2] = {
@@ -154,4 +155,4 @@ const streams = legacy(ShimFS);
 ShimFS["ReadStream"] = streams.ReadStream;
 ShimFS["WriteStream"] = streams.WriteStream;
 
-export = ShimFS;
+export default ShimFS;

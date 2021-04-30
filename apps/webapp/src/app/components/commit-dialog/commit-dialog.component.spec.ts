@@ -1,10 +1,10 @@
-import { Setup, TestContext } from "test/test-helper";
+import { SETUP, TestContext } from "test/test-helper";
 
 import { CommitDialogComponent } from "./commit-dialog.component";
 
 describe("CommitDialogComponent", () => {
 
-  const setup = Setup(CommitDialogComponent);
+  const setup = SETUP(CommitDialogComponent);
 
   let ctx: TestContext<CommitDialogComponent>;
   beforeEach(() => {

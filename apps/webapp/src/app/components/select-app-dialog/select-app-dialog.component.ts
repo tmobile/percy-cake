@@ -23,7 +23,7 @@ software without specific prior written permission.
 
 import { Component, Inject, OnInit, OnDestroy } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { MatDialogRef, MAT_DIALOG_DATA } from "@angular/material";
+import { MatDialogRef, MAT_DIALOG_DATA } from "@angular/material/dialog";
 import { Subscription } from "rxjs";
 
 import * as _ from "lodash";
@@ -56,6 +56,7 @@ export class SelectAppDialogComponent implements OnInit, OnDestroy {
 
   /**
    * constructs the component
+   *
    * @param dialogRef the reference to a dialog opened via the MatDialog service
    * @param data the injection token that can be used to access the data that was passed in to a dialog
    */
@@ -109,6 +110,7 @@ export class SelectAppDialogComponent implements OnInit, OnDestroy {
 
   /**
    * handles selected app changes event
+   *
    * @param app the newly selected app
    */
   private onAppChange(app) {

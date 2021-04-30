@@ -20,8 +20,8 @@ software without specific prior written permission.
 ===========================================================================
 */
 
-import { Injectable } from "@angular/core";
-import { BehaviorSubject } from "rxjs";
+import { Injectable, OnDestroy } from "@angular/core";
+import { BehaviorSubject, Subscription } from "rxjs";
 import { debounceTime } from "rxjs/operators";
 import * as path from "path";
 import * as HttpErrors from "http-errors";
@@ -36,7 +36,7 @@ import { Principal } from "models/auth";
  * This service provides the methods around the maintenance API endpoints
  */
 @Injectable({ providedIn: "root" })
-export class MaintenanceService {
+export class MaintenanceService implements OnDestroy {
   /**
    * the user names cache variable
    */
@@ -47,13 +47,16 @@ export class MaintenanceService {
    */
   private userSessionsCache: { [username: string]: number };
   private userSessions$ = new BehaviorSubject(null);
+  private subscription: Subscription;
 
   /**
    * Creats the service
+   *
    * @param utilService the util service
    */
   constructor(private utilService: UtilService) {
-    this.userSessions$.pipe(debounceTime(500)).subscribe(async () => {
+    // Listen to change of userSessionsCache, and debounce the write to json file
+    this.subscription = this.userSessions$.pipe(debounceTime(500)).subscribe(async () => {
       if (this.userSessionsCache) {
         try {
           const fs = await this.utilService.getBrowserFS();
@@ -69,8 +72,13 @@ export class MaintenanceService {
     });
   }
 
+  ngOnDestroy() {
+      this.subscription.unsubscribe();
+  }
+
   /**
    * Check user session timeout.
+   *
    * @param principal the logged in user principal
    * @returns given principal
    */
@@ -115,6 +123,7 @@ export class MaintenanceService {
 
   /**
    * Gets the user type ahead based on prefix
+   *
    * @param prefix the prefix
    * @returns user type ahead
    */
@@ -139,6 +148,7 @@ export class MaintenanceService {
 
   /**
    * Adds user name.
+   *
    * @param username the user name
    */
   async addUserName(username: string) {

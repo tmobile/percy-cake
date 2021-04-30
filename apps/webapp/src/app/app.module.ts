@@ -85,7 +85,13 @@ import { EditorEffects } from "store/affects/editor.effects";
     MarkdownModule.forRoot(),
     AppRoutingModule,
     CommonModule,
-    StoreModule.forRoot(reducers, { metaReducers }),
+    StoreModule.forRoot(reducers, {
+        metaReducers,
+        runtimeChecks: {
+          strictStateImmutability: false,
+          strictActionImmutability: false
+        }
+    }),
     !environment.production ? StoreDevtoolsModule.instrument() : [],
     EffectsModule.forRoot([
       AuthEffects,

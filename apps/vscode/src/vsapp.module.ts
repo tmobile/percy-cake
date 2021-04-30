@@ -46,7 +46,12 @@ import { VSAppComponent } from "./vsapp.component";
         component: VSAppComponent
       }
     ]),
-    StoreModule.forRoot(reducers),
+    StoreModule.forRoot(reducers, {
+        runtimeChecks: {
+          strictStateImmutability: false,
+          strictActionImmutability: false
+        }
+    }),
     EffectsModule.forRoot([AppEffects])
   ],
   bootstrap: [VSAppComponent]

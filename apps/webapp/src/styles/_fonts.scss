@@ -2,23 +2,23 @@
   font-family: 'Roboto';
   font-style: normal;
   font-weight: 300;
-  src: local('Roboto Light'), local('Roboto-Light'), url('./assets/Roboto-Light.woff') format('woff');
+  src: local('Roboto Light'), local('Roboto-Light'), url('../assets/Roboto-Light.woff') format('woff');
 }
 @font-face {
   font-family: 'Roboto';
   font-style: normal;
   font-weight: 400;
-  src: local('Roboto'), local('Roboto-Regular'), url('./assets/Roboto-Regular.woff') format('woff');
+  src: local('Roboto'), local('Roboto-Regular'), url('../assets/Roboto-Regular.woff') format('woff');
 }
 @font-face {
   font-family: 'Roboto';
   font-style: normal;
   font-weight: 700;
-  src: local('Roboto Bold'), local('Roboto-Bold'), url('./assets/Roboto-Bold.woff') format('woff');
+  src: local('Roboto Bold'), local('Roboto-Bold'), url('../assets/Roboto-Bold.woff') format('woff');
 }
 @font-face {
   font-family: 'Material Icons';
   font-style: normal;
   font-weight: 400;
-  src: url('./assets/mat-icon.woff') format('woff');
+  src: url('../assets/mat-icon.woff') format('woff');
 }

@@ -25,8 +25,8 @@ import * as yamlJS from "yaml-js";
 import * as _ from "lodash";
 import * as cheerio from "cheerio";
 
-import { PROPERTY_VALUE_TYPES, percyConfig, appPercyConfig } from "config";
-import { TreeNode } from "models/tree-node";
+import { percyConfig, appPercyConfig } from "config";
+import { TreeNode, PROPERTY_VALUE_TYPES } from "models/tree-node";
 import { Configuration, EnvsVariablesConfig, VariableConfig } from "models/config-file";
 import { Injectable } from "@angular/core";
 
@@ -74,6 +74,7 @@ class YamlParser {
 
   /**
    * Get event and forward cursor to next.
+   *
    * @param forward Flag indicates whether to forward cursor
    */
   private getEvent(forward: boolean = true) {
@@ -93,6 +94,7 @@ class YamlParser {
 
   /**
    * Parse yaml.
+   *
    * @param yaml The yaml string
    * @param simpleArray The flag indicates whether only supports simple array
    * @returns TreeNode parsed.
@@ -121,6 +123,7 @@ class YamlParser {
 
   /**
    * Parse event.
+   *
    * @returns TreeNode parsed.
    */
   private parseEvent() {
@@ -152,6 +155,7 @@ class YamlParser {
 
   /**
    * Parse alias event.
+   *
    * @returns TreeNode parsed.
    */
   private parseAliasEvent() {
@@ -171,6 +175,7 @@ class YamlParser {
 
   /**
    * Parse mapping event.
+   *
    * @returns TreeNode parsed.
    */
   private parseMappingEvent() {
@@ -201,6 +206,7 @@ class YamlParser {
 
   /**
    * Parse sequence event.
+   *
    * @returns TreeNode parsed.
    */
   private parseSequenceEvent() {
@@ -260,6 +266,7 @@ class YamlParser {
 
   /**
    * Parse scalar event.
+   *
    * @param forKeyNode Flag indicates whether this scalar event is for key node
    * @returns TreeNode parsed.
    */
@@ -324,6 +331,7 @@ class YamlParser {
 
   /**
    * Extract yaml data type.
+   *
    * @param tag The tag to extract data type
    * @returns extracted data type or empty if it is not a data type
    */
@@ -338,6 +346,7 @@ class YamlParser {
 
   /**
    * Convert yaml data type.
+   *
    * @param yamlType The yaml data type
    * @returns converted data type or empty if it is not a data type
    */
@@ -348,6 +357,7 @@ class YamlParser {
 
   /**
    * Parse comment, will take care root comment.
+   *
    * @param node The TreeNode to set comment
    * @param startMark The start mark
    */
@@ -373,6 +383,7 @@ class YamlParser {
 
   /**
    * Parse yaml comments from multiple lines.
+   *
    * @param startMark The start mark
    * @returns parsed comments or undefined if there is not any
    */
@@ -407,6 +418,7 @@ class YamlParser {
 
   /**
    * Extract yaml comment.
+   *
    * @param comment The comment to extract
    * @returns extracted comment or undefined if it is not a comment
    */
@@ -436,6 +448,7 @@ class YamlRender {
 
   /**
    * Convert TreeNode object to yaml format.
+   *
    * @param tree The TreeNode object
    * @returns Yaml format string
    */
@@ -463,6 +476,7 @@ class YamlRender {
 
   /**
    * Render yaml comment.
+   *
    * @param comment The comment to render
    * @returns the comment rendered
    */
@@ -482,6 +496,7 @@ class YamlRender {
 
   /**
    * Render comments.
+   *
    * @param comments Multiple lines of comments
    * @param result The render result
    * @param indent The indent spaces
@@ -498,6 +513,7 @@ class YamlRender {
 
   /**
    * Walk TreeNode, convert to yaml format.
+   *
    * @param treeNode The TreeNode
    * @param indent The indent spaces
    * @returns Yaml format string
@@ -599,6 +615,7 @@ class YamlRender {
 export class YamlService {
   /**
    * Convert yaml to TreeNode object.
+   *
    * @param yaml The yaml string
    * @param simpleArray The flag indicates whether only supports simple array
    * @returns TreeNode object
@@ -609,6 +626,7 @@ export class YamlService {
 
   /**
    * Parse yaml to Configuration object.
+   *
    * @param yaml The yaml string
    * @param simpleArray The flag indicates whether only supports simple array
    * @returns Configuration object
@@ -621,6 +639,7 @@ export class YamlService {
 
   /**
    * Convert TreeNode object to yaml format.
+   *
    * @param tree The TreeNode object
    * @param validate Whether validate converted yaml string, defaults to true
    * @returns Yaml format string
@@ -690,6 +709,7 @@ export class YamlService {
 
   /**
    * When resolve token variable references, we collect them to detect loop reference.
+   *
    * @param referenceLinks the collected reference links
    * @param refFrom the reference from (left side)
    * @param refTo the reference to (right side)
@@ -902,6 +922,7 @@ export class YamlService {
 
   /**
    * Compile yaml for given environment.
+   *
    * @param env the environment name
    * @param config the configuration object
    * @returns compiled yaml string
@@ -981,9 +1002,7 @@ export class YamlService {
       percyConfig.variableNamePrefix
     );
     if (variableNamePrefix) {
-      substituted.children = _.filter(substituted.children, c => {
-        return !c.isLeaf() || !c.key.startsWith(variableNamePrefix);
-      });
+      substituted.children = _.filter(substituted.children, c => !c.isLeaf() || !c.key.startsWith(variableNamePrefix));
     }
 
     return this.convertTreeToYaml(substituted, false);
@@ -991,19 +1010,18 @@ export class YamlService {
 
   /**
    * gets variables config, like cascaded value and reference node for all environments including default
+   *
    * @param config the configuration object
    */
   getEnvsVariablesConfig(config: Configuration): EnvsVariablesConfig {
     const allEnvsVariablesConfig = {};
     const defaultTree = _.cloneDeep(config.default);
 
-    const possibleVariables = _.reduce(defaultTree.children, (accu, child) => {
-      return child.isLeaf() ? accu.concat(child.key) : accu;
-    }, []);
+    const possibleVariables = _.reduce(defaultTree.children, (accu, child) => child.isLeaf() ? accu.concat(child.key) : accu, []);
 
     _.each([ ...config.environments.children, defaultTree ], envNode => {
       const envKey = envNode.key;
-      const mergeStack = [];
+      const mergeStack: TreeNode[] = [];
       const inheritedEnvs = [envKey];
       let hasCyclicError = false;
 
@@ -1097,11 +1115,12 @@ export class YamlService {
 
   /**
    * Highlight variable within yaml text string value
+   *
    * @param text the yaml text string value
    * @param parentSpan the parent span node contains the text
    * @returns span element with variable highlighted, or given parent span if there is no variable found
    */
-  highlightVariable(text: string, parentSpan?: Cheerio) {
+  highlightVariable(text: string, parentSpan?) {
     const prefix = _.defaultTo(
       appPercyConfig.variablePrefix,
       percyConfig.variablePrefix
@@ -1110,7 +1129,7 @@ export class YamlService {
     // Find out the variable token, wrap it in '<span class="yaml-var">${tokenName}</span>'
     let leftIdx = 0;
     let regExpResult;
-    let newSpan: Cheerio = null;
+    let newSpan = null;
     const $ = cheerio.load("");
     const regExp = this.createRegExp();
     while ((regExpResult = regExp.exec(text))) {
@@ -1141,6 +1160,7 @@ export class YamlService {
 
   /**
    * Highlight variable within yaml text string value in a TreeNode
+   *
    * @param node the string TreeNode to highlight its value
    * @returns html rendered with highlighted variable
    */
@@ -1154,6 +1174,7 @@ export class YamlService {
 
   /**
    * parse string type node values for variables and return value as a config which can then be rendered
+   *
    * @param node the string TreeNode to highlight its value
    * @param envsVariablesConfig  pre calculated variable config for each environment
    */
@@ -1192,6 +1213,7 @@ export class YamlService {
 
   /**
    * Get tooltip for app's specific percy config.
+   *
    * @param appConfig app's specific percy config
    * @returns tooltip for app's specific percy config
    */

@@ -4,12 +4,13 @@
   "directories": {
     "output": "release"
   },
-  "electronVersion": "3.1.13",
+  "electronVersion": "9.4.4",
   "artifactName": "${productName}-${os}-${arch}.${ext}",
   "asar": true,
   "files": [
-    "dist/*",
+    "dist/**/*",
     "media/*",
+    "../../node_modules/lodash/**/*",
     "../../node_modules/mkdirp/**/*",
     "../../node_modules/jsonfile/**/*",
     "../../node_modules/minimist/**/*",

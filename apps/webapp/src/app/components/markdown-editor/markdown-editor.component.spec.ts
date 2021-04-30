@@ -1,9 +1,9 @@
-import { Setup, TestContext } from "test/test-helper";
+import { SETUP, TestContext } from "test/test-helper";
 
 import { MarkdownEditorComponent } from "./markdown-editor.component";
 
 describe("MarkdownEditorComponent", () => {
-  const setup = Setup(MarkdownEditorComponent, false);
+  const setup = SETUP(MarkdownEditorComponent, false);
   let ctx: TestContext<MarkdownEditorComponent>;
 
   beforeEach(() => {

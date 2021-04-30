@@ -31,13 +31,13 @@ import * as jsondiffpatch from "jsondiffpatch";
  * The compare json options.
  */
 export class CompareJson {
-  private options: any;
+  private options: Record<string, unknown>;
 
   /**
    * the constructor.
    * @param options the options.
    */
-  constructor(options: any) {
+  constructor(options: Record<string, unknown>) {
     this.options = options;
   }
   /**

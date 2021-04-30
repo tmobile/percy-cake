@@ -20,8 +20,7 @@ software without specific prior written permission.
 ===========================================================================
 */
 
-import { PROPERTY_VALUE_TYPES } from "config";
-import { TreeNode } from "./tree-node";
+import { TreeNode, PROPERTY_VALUE_TYPES } from "./tree-node";
 
 /**
  * Represents yaml configuration. It contains a 'default' tree and a 'environments' tree.
@@ -32,6 +31,7 @@ export class Configuration extends TreeNode {
 
   /**
    * Create configuration from tree node.
+   *
    * @param root the root tree node
    * @returns new configuration
    */
@@ -44,6 +44,7 @@ export class Configuration extends TreeNode {
 
   /**
    * Constructor with 'default' tree and 'environments' tree
+   *
    * @param _default the 'default' tree
    * @param _environments the 'environments' tree
    */
@@ -110,6 +111,6 @@ export interface VariableConfig {
 
 export interface EnvsVariablesConfig {
   [env: string]: {
-    [variable: string]: VariableConfig
+    [variable: string]: VariableConfig;
   };
 }

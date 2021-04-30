@@ -42,18 +42,17 @@ export interface State {
   loadingFiles: boolean;
 }
 
-const ConfigFileAdapter: EntityAdapter<ConfigFile> = createEntityAdapter<ConfigFile>({
+const CONFIG_FILE_ADAPTER: EntityAdapter<ConfigFile> = createEntityAdapter<ConfigFile>({
   selectId: (file) => `${file.applicationName}/${file.fileName}`,
 });
 
-export const GetConfigFile = (state: State, fileName: string, applicationName: string) => {
-  return state.files.entities[ConfigFileAdapter.selectId({ fileName, applicationName })];
-};
+export const getConfigFile = (state: State, fileName: string, applicationName: string) =>
+  state.files.entities[CONFIG_FILE_ADAPTER.selectId({ fileName, applicationName })];
 
 export const initialState: State = {
   applications: null,
   appConfigs: {},
-  files: ConfigFileAdapter.getInitialState(),
+  files: CONFIG_FILE_ADAPTER.getInitialState(),
   principal: null,
   redirectUrl: null,
   canPullRequest: false,
@@ -61,7 +60,7 @@ export const initialState: State = {
   loadingFiles: false
 };
 
-export function reducer(state = initialState, action: BackendActionsUnion): State {
+export const reducer = (state = initialState, action: BackendActionsUnion): State => {
   switch (action.type) {
 
     case BackendActionTypes.Initialize: {
@@ -86,12 +85,12 @@ export function reducer(state = initialState, action: BackendActionsUnion): Stat
     }
 
     case BackendActionTypes.LoadFilesSuccess: {
-      const freshFiles = _.mapKeys(action.payload.files, configFile => ConfigFileAdapter.selectId(configFile));
+      const freshFiles = _.mapKeys(action.payload.files, configFile => CONFIG_FILE_ADAPTER.selectId(configFile));
       let files = state.files;
 
       _.each(state.files.ids, (id: string) => {
         if (!freshFiles[id]) {
-          files = ConfigFileAdapter.removeOne(id, files);
+          files = CONFIG_FILE_ADAPTER.removeOne(id, files);
         } else {
           const freshFile = freshFiles[id];
           const oldOid = state.files.entities[id].oid;
@@ -99,12 +98,12 @@ export function reducer(state = initialState, action: BackendActionsUnion): Stat
           if ((!oldOid && newOid) || (oldOid && !newOid) || (oldOid && newOid && oldOid !== newOid)) {
             freshFile.originalConfig = freshFile.draftConfig = undefined; // Nullify the config (so it will reload)
           }
-          files = ConfigFileAdapter.upsertOne(freshFile, files);
+          files = CONFIG_FILE_ADAPTER.upsertOne(freshFile, files);
           delete freshFiles[id];
         }
       });
 
-      files = ConfigFileAdapter.addMany(_.values(freshFiles), files);
+      files = CONFIG_FILE_ADAPTER.addMany(_.values(freshFiles), files);
 
       return {
         ...state,
@@ -130,7 +129,7 @@ export function reducer(state = initialState, action: BackendActionsUnion): Stat
       }
       return {
         ...state,
-        files: ConfigFileAdapter.upsertOne(action.payload.file, state.files)
+        files: CONFIG_FILE_ADAPTER.upsertOne(action.payload.file, state.files)
       };
     }
 
@@ -147,7 +146,7 @@ export function reducer(state = initialState, action: BackendActionsUnion): Stat
 
       return {
         ...state,
-        files: ConfigFileAdapter.upsertOne(file, state.files),
+        files: CONFIG_FILE_ADAPTER.upsertOne(file, state.files),
         appConfigs
       };
     }
@@ -155,14 +154,14 @@ export function reducer(state = initialState, action: BackendActionsUnion): Stat
     case BackendActionTypes.CommitChangesSuccess: {
       return {
         ...state,
-        files: ConfigFileAdapter.upsertMany(action.payload.files, state.files)
+        files: CONFIG_FILE_ADAPTER.upsertMany(action.payload.files, state.files)
       };
     }
 
     case BackendActionTypes.DeleteFileSuccess: {
       return {
         ...state,
-        files: ConfigFileAdapter.removeOne(ConfigFileAdapter.selectId(action.payload) + "", state.files)
+        files: CONFIG_FILE_ADAPTER.removeOne(CONFIG_FILE_ADAPTER.selectId(action.payload) + "", state.files)
       };
     }
 
@@ -187,7 +186,7 @@ export function reducer(state = initialState, action: BackendActionsUnion): Stat
       return state;
     }
   }
-}
+};
 
 export const getPrincipal = (state: State) => state.principal;
 export const getCanPullRequest = (state: State) => state.canPullRequest;
@@ -195,7 +194,7 @@ export const getCanSyncMaster = (state: State) => state.canSyncMaster;
 export const getApplications = (state: State) => state.applications;
 export const getAppConfigs = (state: State) => state.appConfigs;
 export const getAllFiles = (state: State) => {
-  const files = ConfigFileAdapter.getSelectors().selectAll(state.files);
+  const files = CONFIG_FILE_ADAPTER.getSelectors().selectAll(state.files);
   const grouped = _.groupBy(files, (file) => file.applicationName);
   _.each(state.applications, (app) => {
     if (!grouped[app]) {

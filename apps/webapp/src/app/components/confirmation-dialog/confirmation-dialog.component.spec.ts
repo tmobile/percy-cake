@@ -1,10 +1,10 @@
-import { Setup, TestContext } from "test/test-helper";
+import { SETUP, TestContext } from "test/test-helper";
 
 import { ConfirmationDialogComponent } from "./confirmation-dialog.component";
 
 describe("ConfirmationDialogComponent", () => {
 
-  const setup = Setup(ConfirmationDialogComponent, false);
+  const setup = SETUP(ConfirmationDialogComponent, false);
 
   let ctx: TestContext<ConfirmationDialogComponent>;
   beforeEach(() => {

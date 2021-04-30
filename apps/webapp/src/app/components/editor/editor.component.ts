@@ -35,7 +35,7 @@ import {
   ElementRef
 } from "@angular/core";
 import { FormControl, Validators } from "@angular/forms";
-import { MatInput } from "@angular/material";
+import { MatInput } from "@angular/material/input";
 import { of, combineLatest, Subscription, Observable } from "rxjs";
 import { map, take, tap } from "rxjs/operators";
 import { Store, select } from "@ngrx/store";
@@ -47,16 +47,13 @@ import { ConfigurationChange } from "store/actions/editor.actions";
 
 import { percyConfig, appPercyConfig } from "config";
 
-import { TreeNode } from "models/tree-node";
+import { TreeNode, ConfigProperty } from "models/tree-node";
 import { Configuration } from "models/config-file";
-import { ConfigProperty } from "models/config-property";
 import { NotEmpty } from "services/validators";
 
 import { NestedConfigViewComponent } from "components/nested-config-view/nested-config-view.component";
 import { YamlService } from "services/yaml.service";
 import { User } from "models/auth";
-
-declare var setImmediate: Function;
 
 /*
   Configurations editor page
@@ -117,6 +114,7 @@ export class EditorComponent implements OnInit, OnDestroy, OnChanges {
 
   /**
    * creates the component
+   *
    * @param route the route
    * @param store the app store instance
    * @param dialog the mat dialog service
@@ -179,6 +177,7 @@ export class EditorComponent implements OnInit, OnDestroy, OnChanges {
 
   /**
    * Handles the component changes.
+   *
    * @param changes The component changes
    */
   ngOnChanges(changes: SimpleChanges) {
@@ -196,6 +195,7 @@ export class EditorComponent implements OnInit, OnDestroy, OnChanges {
 
   /**
    * Get normalized file name.
+   *
    * @returns normalized file name.
    */
   getFileName() {
@@ -205,6 +205,7 @@ export class EditorComponent implements OnInit, OnDestroy, OnChanges {
 
   /**
    * Validate before save/commit.
+   *
    * @return validation result.
    */
   validate() {
@@ -247,6 +248,7 @@ export class EditorComponent implements OnInit, OnDestroy, OnChanges {
 
   /**
    * Handles the configuration change.
+   *
    * @param configuration the new configuration
    */
   onConfigChange(configuration) {
@@ -270,6 +272,7 @@ export class EditorComponent implements OnInit, OnDestroy, OnChanges {
 
   /**
    * Handles the node selected request to show the detail.
+   *
    * @param node the selected node
    */
   onNodeSelected(node: TreeNode) {
@@ -296,6 +299,7 @@ export class EditorComponent implements OnInit, OnDestroy, OnChanges {
 
   /**
    * Handles the open add/edit property request.
+   *
    * @param property the property to add/edit
    */
   onAddEditProperty(property: ConfigProperty) {
@@ -320,6 +324,7 @@ export class EditorComponent implements OnInit, OnDestroy, OnChanges {
 
   /**
    * Handles the edit node request.
+   *
    * @param node the node to edit
    */
   openEditPropertyDialog(node: TreeNode) {
@@ -328,6 +333,7 @@ export class EditorComponent implements OnInit, OnDestroy, OnChanges {
 
   /**
    * Handles the compiled YAML view request.
+   *
    * @param environment the environment to compile its yaml
    */
   showCompiledYAML(environment: string) {

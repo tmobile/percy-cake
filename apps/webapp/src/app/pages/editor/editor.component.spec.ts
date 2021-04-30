@@ -1,9 +1,9 @@
 import { convertToParamMap } from "@angular/router";
 
-import { Setup, assertDialogOpened, TestContext } from "test/test-helper";
+import { SETUP, assertDialogOpened, TestContext } from "test/test-helper";
 
-import { PROPERTY_VALUE_TYPES, appPercyConfig, percyConfig } from "config";
-import { TreeNode } from "models/tree-node";
+import { appPercyConfig, percyConfig } from "config";
+import { TreeNode, PROPERTY_VALUE_TYPES } from "models/tree-node";
 import { Configuration, FileTypes } from "models/config-file";
 import { Alert } from "store/actions/common.actions";
 
@@ -17,7 +17,7 @@ import { EditorPageComponent } from "./editor.component";
 import { of } from "rxjs";
 
 describe("EditorPageComponent", () => {
-  const setup = Setup(EditorPageComponent, false);
+  const setup = SETUP(EditorPageComponent, false);
 
   const file = {
     applicationName: "app1",
@@ -126,7 +126,7 @@ describe("EditorPageComponent", () => {
 
   });
 
-  async function initNewFileMode(newFile) {
+  const initNewFileMode = async (newFile) => {
 
     ctx.activatedRouteStub.snapshot = {
       data: {
@@ -151,8 +151,8 @@ describe("EditorPageComponent", () => {
     ctx.store.next(new GetFileContentSuccess({file: newFile, newlyCreated: true}));
 
     ctx.detectChanges();
-    await ctx.fixture.whenStable();
-  }
+    await ctx.asyncWait();
+  };
 
   const newFile1 = {
     fileName: null,

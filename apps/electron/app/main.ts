@@ -49,7 +49,7 @@ let unloadAllowed = false;
  * Setup application menu.
  */
 function setupMenu() {
-  const template: any[] = [
+  const template: Record<string, unknown>[] = [
     {
       label: "Open",
       submenu: [
@@ -207,7 +207,8 @@ function getMainWindow() {
     icon: path.resolve(app.getAppPath(), "media/appicon.512x512.png"),
     webPreferences: {
       nodeIntegration: false,
-      preload: path.resolve(app.getAppPath(), "dist/preload.js")
+      enableRemoteModule: true,
+      preload: path.resolve(app.getAppPath(), "dist/electron/app/preload.js")
     }
   });
 
@@ -253,24 +254,23 @@ function getMainWindow() {
         message: `There may be unsaved changes. Are you sure you want to ${
           quitting ? "quit" : "reload"
         }?`
-      },
-      function(response) {
-        if (response === 0) {
-          // Runs the following if 'Yes' is clicked
-          e.preventDefault();
-          unloadAllowed = true;
-          if (quitting) {
-            app.quit();
-          } else {
-            win.reload();
-          }
-        } else {
-          // Prevented quit/reload
-          quitting = false;
-          unloadAllowed = false;
-        }
       }
-    );
+    ).then(result => {
+        if (result.response === 0) {
+            // Runs the following if 'Yes' is clicked
+            e.preventDefault();
+            unloadAllowed = true;
+            if (quitting) {
+              app.quit();
+            } else {
+              win.reload();
+            }
+          } else {
+            // Prevented quit/reload
+            quitting = false;
+            unloadAllowed = false;
+          }
+    });
   });
 
   win.on("close", event => {

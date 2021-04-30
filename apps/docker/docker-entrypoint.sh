@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 envsubst '${NGINX_PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 

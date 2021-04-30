@@ -4,11 +4,11 @@
   "description": "Percy Electron App",
   "version": "1.0.7",
   "repository": "https://github.com/tmobile/percy-cake",
-  "main": "dist/main.js",
+  "main": "dist/electron/app/main.js",
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
     "start": "cors-proxy stop && cors-proxy start -d -p 9999 && ng serve",
-    "build:prod": "cross-env NODE_ENV=prod ng build --prod && tsc -p ./app",
+    "build:prod": "cross-env NODE_ENV=prod ng build --prod && tsc -p ./app && grunt --gruntfile ../builders/grunt.js build:electron",
     "package:win": "electron-builder -w",
     "package:linux": "electron-builder -l",
     "package:mac": "electron-builder -m",
@@ -16,19 +16,10 @@
     "electron:dev": "concurrently \"ng build --watch\" \"tsc -p ./app && electron .\""
   },
   "dependencies": {
-    "electron-window-state": "^5.0.3"
+    "electron-window-state": "^5.0.3",
+    "lodash": "^4.17.21"
   },
-  "devDependencies": {
-    "@angular/cli": "^7.2.0",
-    "@isomorphic-git/cors-proxy": "^2.3.0",
-    "concurrently": "^4.1.1",
-    "cross-env": "^5.2.0",
-    "electron": "^7.2.4",
-    "electron-builder": "^22.5.1",
-    "electron-reload": "^1.4.1",
-    "rimraf": "^2.6.3",
-    "typescript": "^3.2.4"
-  },
+  "devDependencies": {},
   "license": "Apache-2.0",
   "licenses": [
     {

@@ -22,7 +22,7 @@ software without specific prior written permission.
 */
 
 import { Component, Inject, OnInit } from "@angular/core";
-import { MatDialogRef, MAT_DIALOG_DATA } from "@angular/material";
+import { MatDialogRef, MAT_DIALOG_DATA } from "@angular/material/dialog";
 import * as _ from "lodash";
 
 import { ConfigFile, ConflictFile, FileTypes } from "models/config-file";
@@ -41,6 +41,7 @@ export class ConflictDialogComponent implements OnInit {
 
   /**
    * initializes the component
+   *
    * @param dialogRef the reference to a dialog opened via the MatDialog service
    * @param data the injection token that can be used to access the data that was passed in to a dialog
    */

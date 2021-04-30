@@ -34,9 +34,9 @@ import { IPercyConfig } from "./interfaces";
  * The hydrate methods.
  */
 export class Hydrate {
-  public errors: any = {};
+  public errors: Record<string, unknown> = {};
   // the options
-  private readonly options: any = {};
+  private readonly options: Record<string, unknown> = {};
   private readonly logger: winston.Logger;
   private readonly colorConsole?: boolean = undefined;
 
@@ -44,7 +44,7 @@ export class Hydrate {
    * the constructor.
    * @param options the options.
    */
-  constructor(options: any, colorConsole?: boolean) {
+  constructor(options: Record<string, unknown>, colorConsole?: boolean) {
     this.options = options;
     this.colorConsole = colorConsole;
     this.logger = getLogger(colorConsole);
@@ -196,13 +196,13 @@ export class Hydrate {
    */
   private async loadPercyConfig(
     percyConfigFolderPath: string,
-    hasParent: boolean = false,
-    loadDefaultConfig: boolean = true
+    hasParent = false,
+    loadDefaultConfig = true
   ): Promise<IPercyConfig> {
     let defaultPercyConfig;
     let parentFolderPercyConfig;
     let currentFolderPercyConfig;
-    const percyConfigFileName: string = this.options.PERCY_CONFIG_FILE_NAME;
+    const percyConfigFileName: string = this.options.PERCY_CONFIG_FILE_NAME as string;
     const currentFolderConfigPath = path.join(
       percyConfigFolderPath,
       percyConfigFileName

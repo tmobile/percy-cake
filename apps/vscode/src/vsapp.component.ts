@@ -22,7 +22,7 @@ software without specific prior written permission.
 */
 
 import { Component, ViewChild, HostListener, OnInit } from "@angular/core";
-import { MatDialog } from "@angular/material";
+import { MatDialog } from "@angular/material/dialog";
 import { Store, select } from "@ngrx/store";
 import * as _ from "lodash";
 
@@ -47,10 +47,10 @@ import { MESSAGE_TYPES } from "../extension/constants";
 window["sendMessage"] = (data) => {
   window.postMessage(JSON.parse(data), "*");
 };
-declare var acquireVsCodeApi;
+declare let acquireVsCodeApi;
 let vscode;
 
-function getVscode() {
+const getVscode = () => {
   if (vscode) {
     return vscode;
   }
@@ -61,7 +61,7 @@ function getVscode() {
 
   vscode = acquireVsCodeApi();
   return vscode;
-}
+};
 
 @Component({
   selector: "app-vscode-root",
@@ -90,6 +90,7 @@ export class VSAppComponent implements OnInit {
 
   /**
    * creates the component
+   *
    * @param store the app store instance
    * @param dialog the mat dialog service
    * @param yamlService the yaml service
@@ -124,6 +125,7 @@ export class VSAppComponent implements OnInit {
 
   /**
    * Listener for post message from extension.
+   *
    * @param $event post message event
    */
   @HostListener("window:message", ["$event"])
@@ -205,7 +207,7 @@ export class VSAppComponent implements OnInit {
         `${this.appName}${this.pathSep}${percyConfig.environmentsFile}`
       );
       this.environments = _.map(
-        _.get(envConfig.environments, "children", <TreeNode[]>[]),
+        _.get(envConfig.environments, "children", [] as TreeNode[]),
         child => child.key
       );
     }
@@ -255,6 +257,7 @@ export class VSAppComponent implements OnInit {
 
   /**
    * Parse yaml. Will hanle error if any.
+   *
    * @param content the yaml content
    * @param filePath the file path
    */
