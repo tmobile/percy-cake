@@ -1,6 +1,6 @@
 {
   "name": "percy-cake",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "repository": "https://github.com/tmobile/percy-cake",
   "engines": {
     "node": ">=10 <15",
