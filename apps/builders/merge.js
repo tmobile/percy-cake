@@ -30,7 +30,7 @@ const customWebpackConfig = require("./custom-webpack.config.js");
  * Merge Angular's default webpack config with custom-webpack.config.js
  * @param defaultWebpackConfig Angular's default webpack config
  */
-exports.default = function(defaultWebpackConfig) {
+module.exports = function(defaultWebpackConfig) {
   // Use postcss-url to inline woff2 and svg files
   _.each(defaultWebpackConfig.module.rules, rule => {
     if (rule.loader === require.resolve('file-loader')) {

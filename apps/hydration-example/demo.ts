@@ -23,6 +23,7 @@ software without specific prior written permission.
 
 import * as config from "config";
 import * as path from "path";
+import * as jsondiffpatch from "jsondiffpatch";
 import { CompareJson, Hydrate } from "percy-cake-hydration-tools";
 
 const hydrate = new Hydrate({
@@ -35,7 +36,7 @@ const hydrate = new Hydrate({
 const compareJson = new CompareJson({});
 
 const demo = async () => {
-  const testDataDir = path.join(__dirname, "../../hydration-script/test/data");
+  const testDataDir = path.join(__dirname, "../data");
   const inputFolder = path.join(testDataDir, "apps");
 
   const outputFolder = path.join(__dirname, "out");
@@ -46,7 +47,9 @@ const demo = async () => {
     path.join(testDataDir, ".percyrc"),
     path.join(testDataDir, "modified.percyrc")
   );
-  console.log(diff);
+  if (diff) {
+    console.log(jsondiffpatch.formatters.console.format(diff, null));
+  }
 };
 
 demo().then(() => {

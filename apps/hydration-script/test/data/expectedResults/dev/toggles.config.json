@@ -1,7 +1,0 @@
-{
-  "jwt.enabled": false,
-  "server": {
-    "url": true
-  },
-  "host": false
-}

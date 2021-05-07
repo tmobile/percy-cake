@@ -20,6 +20,7 @@
         "plugin:@angular-eslint/template/process-inline-templates"
       ],
       "rules": {
+        "no-trailing-spaces": "error",
         "@typescript-eslint/no-use-before-define": "error",
         "@typescript-eslint/quotes": [
           "error",
@@ -50,7 +51,7 @@
           }
         ],
         "no-shadow": "off",
-        "@typescript-eslint/no-shadow": "off",      
+        "@typescript-eslint/no-shadow": "off",
         "@typescript-eslint/member-ordering": "off",
         "@typescript-eslint/no-empty-interface": "off",
         "@typescript-eslint/consistent-type-definitions": "error",
@@ -62,14 +63,18 @@
           }
         ],
         "@typescript-eslint/naming-convention": [
-            "error",
-            {
-              "selector": [
-                "enumMember"
-              ],
-              "format": ["PascalCase"],
-              "modifiers": ["requiresQuotes"]
-            }
+          "error",
+          {
+            "selector": [
+              "enumMember"
+            ],
+            "format": [
+              "PascalCase"
+            ],
+            "modifiers": [
+              "requiresQuotes"
+            ]
+          }
         ],
         "id-blacklist": "off",
         "id-match": "off",

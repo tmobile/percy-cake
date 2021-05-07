@@ -155,4 +155,4 @@ const streams = legacy(ShimFS);
 ShimFS["ReadStream"] = streams.ReadStream;
 ShimFS["WriteStream"] = streams.WriteStream;
 
-export default ShimFS;
+export = ShimFS;

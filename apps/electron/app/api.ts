@@ -164,7 +164,7 @@ export function openFolderDialog(win?: Electron.BrowserWindow): void {
         openFolder(result.filePaths[0], win);
       }
   }).catch(error => {
-      console.log(error); 
+      console.log(error);
   });
 }
 
