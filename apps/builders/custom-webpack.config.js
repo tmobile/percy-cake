@@ -21,12 +21,10 @@ software without specific prior written permission.
 ===========================================================================
 */
 
-const path = require("path");
-
 module.exports = {
   resolve: {
     alias: {
-      fs: "filesystem" // see src/app/filesystem
+      fs: "filesystem" // see webapp/src/app/filesystem
     }
   },
   module: {

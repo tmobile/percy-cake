@@ -1,41 +1,45 @@
 {
-    "root": true,
-    "ignorePatterns": [
-      "apps/**/*"
-    ],
-    "parser": "@typescript-eslint/parser",
-    "plugins": [
-        "@typescript-eslint"
-    ],
-    "extends": [
-        "eslint:recommended",
-        "plugin:@typescript-eslint/recommended"
-    ],
-    "overrides": [
-        {
-            "files": [
-                "*.ts"
-            ],
-            "parserOptions": {
-                "project": [
-                    "tsconfig.json"
-                ]
-            },
-            "rules": {
-                "no-constant-condition": "off",
-                "brace-style": [
-                    "error",
-                    "1tbs"
-                ],
-                "@typescript-eslint/quotes": [
-                    "error",
-                    "double",
-                    {
-                        "allowTemplateLiterals": true
-                    }
-                ],
-                "@typescript-eslint/consistent-type-definitions": "error"
-            }
-        }
-    ]
+  "root": true,
+  "ignorePatterns": [
+    "apps/**/*"
+  ],
+  "env": {
+    "node": true
+  },
+  "parser": "@typescript-eslint/parser",
+  "plugins": [
+    "@typescript-eslint"
+  ],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "overrides": [
+    {
+      "files": [
+        "*.ts"
+      ],
+      "parserOptions": {
+        "project": [
+          "tsconfig.json"
+        ]
+      },
+      "rules": {
+        "no-trailing-spaces": "error",
+        "no-constant-condition": "off",
+        "brace-style": [
+          "error",
+          "1tbs"
+        ],
+        "@typescript-eslint/quotes": [
+          "error",
+          "double",
+          {
+            "allowTemplateLiterals": true
+          }
+        ],
+        "@typescript-eslint/consistent-type-definitions": "error"
+      }
+    }
+  ]
 }

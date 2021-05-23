@@ -35,14 +35,6 @@
       "schematics": {},
       "architect": {}
     },
-    "hydration-script": {
-      "root": "apps/hydration-script",
-      "sourceRoot": "apps/hydration-script/src",
-      "projectType": "application",
-      "prefix": "hydration-script",
-      "schematics": {},
-      "architect": {}
-    },
     "vscode": {
       "root": "apps/vscode",
       "sourceRoot": "apps/vscode/src",

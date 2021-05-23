@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "config": "^3.0.1",
-    "percy-cake-hydration-tools": "^1.0.9"
+    "percy-cake-hydration-tools": "^1.0.10"
   },
   "devDependencies": {
     "typescript": "^3.2.4"

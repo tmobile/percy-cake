@@ -1,6 +1,6 @@
 FROM nginx:1.20-alpine
 
-RUN apk add --no-cache --repository http://nl.alpinelinux.org/alpine/v3.13/main libuv nodejs nodejs-npm
+RUN apk add --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/v3.13/main libuv nodejs nodejs-npm
 
 RUN npm i -g @isomorphic-git/cors-proxy
 

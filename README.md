@@ -23,7 +23,7 @@ The editor is available in 4 flavors:
 
 `npm install percy-cake-hydration-tools`
 
-For more information on how to use the hydration tools please refer to the [hydration tools README](apps/hydration-script/README.md)
+For more information on how to use the hydration tools please refer to the [hydration tools README](https://gitlab.com/tmo-poc/hydration-tool)
 
 # FAQ:
 
@@ -39,7 +39,7 @@ For more information on how to use the hydration tools please refer to the [hydr
 
 Prerequisite
 
-- Node.js 10
+- Node.js 12
 - Npm 6
 
 ```bash

@@ -27,9 +27,6 @@
     },
     "hydration-example": {
       "tags": []
-    },
-    "hydration-script": {
-      "tags": []
     }
   }
 }
